@@ -1,0 +1,45 @@
+CODE
+
+Build order: test source SQL, generate wrapper, test wrapper, compare source and generated resultsets
+Eclipse plugin
+Generated code has test method
+Generated code has verify schema method
+Add runtime "tested" flag to generated code
+Add BETWEEN comparison support
+Add LIKE comparison support
+Add support for date (et al) data type condition parameters
+Fuck JXPath sucks, replace (maybe)
+
+DOCS
+
+Compare SQL strategies, pros/cons
+	string builder
+		pros
+			low entry point
+		cons 
+			tough to debug
+			tough to test
+	API (e.g. Toplink)
+	ORM
+		cons
+			mapping files suck
+			JOINs suck
+			complicated queries revert to SQL/HQL
+			tough to debug
+	Fado generator
+		pros
+			ease of use, typesafe wrappers
+			great for read-only, e.g. report engines
+			JOINs are easy
+			division of labor: 
+				DBA role does SQL, API for Java hides SQL
+				SQL and Java kept separate
+				one-way work flow
+			verification at time of code generation
+			moves many common errors from runtime to compile time
+		cons
+			no support for transactions
+			
+	DAOs
+		cons
+			hand written
