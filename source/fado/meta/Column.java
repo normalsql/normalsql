@@ -11,15 +11,15 @@ public class
 		Alias     // SELECT column AS alias FROM ... 
 	}
 	
-	public static Column equals( String alias, String expr )
-	{
-		return new Column( Style.Equals, expr, alias );
-	}
-	
-	public static Column alias( String expr, String alias )
-	{
-		return new Column( Style.Alias, expr, alias );
-	}
+//	public static Column equals( String alias, String expr )
+//	{
+//		return new Column( Style.Equals, expr, alias );
+//	}
+//	
+//	public static Column alias( String expr, String alias )
+//	{
+//		return new Column( Style.Alias, expr, alias );
+//	}
 	
 	public Column( Table table )
 	{
@@ -102,5 +102,12 @@ public class
 	{
 		String result = TypeConverter.getTypedMethod( getSQLType() );
 		return result;
+	}
+	
+	public String getInitializerValue()
+	{
+		String result = TypeConverter.getInitializerValue( getSQLType() );
+		return result;
+		
 	}
 }

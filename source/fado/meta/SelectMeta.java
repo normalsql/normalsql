@@ -4,8 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class 
-	Meta 
+	SelectMeta 
 {
+	private String _name = null;
+	
+	public void setName( String name )
+	{
+		_name = name;
+	}
+	
+	public String getName()
+	{
+		return _name;
+	}
+	
+	private String _package;
+	public void setPackage( String pkg )
+	{
+		_package = pkg;
+	}
+	
+	public String getPackage()
+	{
+		return _package;
+	}
+	
 	public enum Statement
 	{
 		SELECT, INSERT, DELETE, UPDATE

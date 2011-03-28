@@ -12,7 +12,11 @@ import java.util.List;
 /** This parser listener tracks rule entry/exit and token matches
  *  to build a simple parse tree using MyParseTree nodes.
  */
-public class ParseTreeBuilder extends BlankDebugEventListener {
+public class 
+	ParseTreeBuilder 
+extends 
+	BlankDebugEventListener 
+{
 	public static final String EPSILON_PAYLOAD = "<epsilon>";
 	
 	Stack callStack = new Stack();

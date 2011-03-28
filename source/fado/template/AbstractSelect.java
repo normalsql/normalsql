@@ -20,7 +20,7 @@ public abstract class
 	
 	public abstract String getSQL();
 	
-	public abstract void setParameters( PreparedStatement prepared )
+	protected abstract void setParameters( PreparedStatement prepared )
 		throws SQLException;
 	
 	protected final PreparedStatement getPreparedStatement()

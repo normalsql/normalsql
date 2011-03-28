@@ -2,9 +2,13 @@ package fado;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -14,23 +18,25 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import joptsimple.OptionParser;
-
-import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import fado.meta.Column;
 import fado.meta.Condition;
 import fado.meta.IN;
-import fado.meta.Meta;
+import fado.meta.InsertColumn;
+import fado.meta.InsertMeta;
+import fado.meta.SelectMeta;
 import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
@@ -47,56 +53,124 @@ public class Fado
 		throws Exception 
 	{
 		FadoOptions options = new FadoOptions();
-//		options.parse( args );
-		
-		Fado main = new Fado();
-		main.go( options );
+		options.parse( args );
+		System.out.println( options );
+		Fado fado = new Fado();
+		fado.init( options );
+//		String source = options.getSource();
+//		File sourceDir = new File( source );
+//		String target = options.getTarget();
+//		File targetDir = new File( target );
+//		fado.build( sourceDir, targetDir );
 	}
 	
-	public void go( FadoOptions options )
+	
+	FadoOptions _options = null;
+	Connection _conn = null;
+	
+	public void init( FadoOptions options )
 		throws Exception
 	{
-		// TODO Handle subpackages, eg apple.banana => /apple/banana
+		_options = options;
+		String driver = _options.getDriver();
+		String url = _options.getUrl();
+		String username = _options.getUsername();
+		String password = _options.getPassword();
+		Class.forName( driver );
+		_conn = DriverManager.getConnection( url, username, password );
 
-		String target = options.target + options.packageName;
+		
+
+		_ve = new VelocityEngine();
+		_ve.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+		_ve.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+		_ve.init();
+		
+		String target = options.getTarget();
 		File targetDir = new File( target );
-		targetDir.mkdirs();
 		
-		File sourceDir = new File( options.source );
-		FileFilter filter = new FileFilter() 
+//		String pkg = options.getPackageName();
+			
+		String source = options.getSource();
+		File sourceDir = new File( source );
+		if( !sourceDir.exists() )
 		{
-			public boolean accept( File file )
-			{
-				String name = file.getName();
-				boolean result = name.endsWith( ".sql" );
-				return result;
-			}
-		};
+			String msg = sourceDir.getCanonicalPath().toString() + " (filespec: " + source + ")";
+			throw new FileNotFoundException( msg );
+		}
+		ArrayList<String> path = new ArrayList<String>();
+		crawl( sourceDir, targetDir, path );
 		
-		File[] files = sourceDir.listFiles( filter );
-		for( File file : files)
+	}
+	
+	FileFilter sqlFilter = new FileFilter() 
+	{
+		public boolean accept( File file )
+		{
+			if( file.isHidden() ) return false;
+			if( file.isDirectory() ) return false;
+			String name = file.getName();
+			if( name.startsWith( "." )) return false;
+			return name.endsWith( ".sql" );
+		}
+	};
+	
+	FileFilter dirFilter = new FileFilter() 
+	{
+		public boolean accept( File file )
+		{
+			if( file.isHidden() ) return false;
+			if( file.getName().startsWith( "." )) return false;
+			return file.isDirectory();
+		}
+	};
+	
+	public String join( List<String> list, String sep )
+	{
+		StringBuilder sb = new StringBuilder();
+		for( String item : list )
+		{
+			if( sb.length() > 0 ) sb.append( sep );
+			sb.append( item );
+		}
+		return sb.toString();
+	}
+	
+	public void crawl( File sourceRoot, File targetRoot, List<String> path )
+//		throws FadoException
+	{
+		targetRoot.mkdirs();
+		String pkg = join( path, "." );
+		File[] sourceList = sourceRoot.listFiles( sqlFilter );
+		for( File sourceFile : sourceList )
 		{
 			try
 			{
-				Meta extract = new Meta();
-				String className = getFileName( file );
-				FileReader reader = new FileReader( file );
-				CharStream cs = new ANTLRReaderStream( reader );
-				String retooledSQL = extract( cs, extract );
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				
-				inspectDatabase( options.driver, options.url, options.username, options.password, extract );
-				
-				File targetFile = new File( targetDir, className + "Select.java" );
-				generate( targetFile, options.packageName, className, choppedSQL, extract );
+				String name = getFileName( sourceFile );
+				FileReader reader = new FileReader( sourceFile );
+				File targetFile = new File( targetRoot, name + ".java" );
+				FileWriter writer = new FileWriter( targetFile );
+				extract( pkg, name, reader, writer );
 			}
 			catch( Exception e )
 			{
-				throw new FadoException( "file: " + file.toString(), e );
+				System.out.println( "error processing : " + sourceFile );
+				e.printStackTrace();
+//				throw new FadoException( "file: " + sourceFile.toString(), e );
 			}
 		}
+		
+		File[] childDirList = sourceRoot.listFiles( dirFilter );
+		for( File child : childDirList )
+		{
+			String name = child.getName();
+			path.add( name );
+			File targetDir = new File( targetRoot, name );
+			crawl( child, targetDir, path );
+			System.out.println( child.toString() + " : " + child.getName() );
+		}
 	}
-
+	
 	public String getFileName( File file )
 	{
 		String name = file.getName();
@@ -108,10 +182,12 @@ public class Fado
 		return name;
 	}
 	
-	private String extract( CharStream cs, Meta extract ) 
-		throws Exception 
+	private void extract( String pkg, String name, Reader reader, Writer writer ) 
+		throws Exception
 	{
+		
 		ParseTreeBuilder builder = new ParseTreeBuilder( "GenericSQL.g" );
+		CharStream cs = new ANTLRReaderStream( reader );
 		GenericSQLLexer lexer = new GenericSQLLexer( cs );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens, builder );
@@ -120,34 +196,140 @@ public class Fado
 		
 		FadoParseNode source = builder.getTree();
 		
-//		System.out.println( "string tree: " + builder.getTree().toStringTree() );
-//		System.out.println( "input string: " + builder.getTree().toInputString() );
+		System.out.println( "string tree: " + builder.getTree().toStringTree() );
+		System.out.println( "input string: " + builder.getTree().toInputString() );
 		
 		ParseNodePointerFactory factory = new ParseNodePointerFactory();
 		JXPathContextReferenceImpl.addNodePointerFactory( factory );
+		
+		JXPathContext commandContext = JXPathContext.newContext( source );
 
+		try
+		{
+			Object selectNode =  commandContext.selectSingleNode( "/statement/select" );
+			SelectMeta meta = new SelectMeta();
+			meta.setName( name );
+			meta.setPackage( pkg );
+			extractSelect( source, meta );
+			inspectDatabaseForSelect( _conn, meta );
+			
+			String retooledSQL = builder.getTree().toInputString();
+			List<String> choppedSQL = chopper( retooledSQL.trim() );
+			generateSelect( meta, choppedSQL, writer );
+		}
+		catch( Exception e )
+		{
+			// Jaxen sucks
+		}
 		
-		// Tables
-		extractTables( source, extract );
-		// Columns
-		extractColumns( source, extract );
-		// Parameters
-		extractParams( source, extract );
+		try
+		{
+			Object insertNode =  commandContext.selectSingleNode( "/statement/insert" );
+			try
+			{
+				InsertMeta meta = new InsertMeta();
+				meta.setName( name );
+				meta.setPackage( pkg );
+				extractInsert( source, meta );
+				inspectDatabaseForInsert( _conn, meta );
+				String retooledSQL = builder.getTree().toInputString();
+				List<String> choppedSQL = chopper( retooledSQL.trim() );
+				generateInsert( meta, choppedSQL, writer );
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
+		}
+		catch( Exception e )
+		{
+			// Jaxen sucks
+		}
 		
-		String result = builder.getTree().toInputString();
-//		System.out.println( "rewrite : " + result );
-		return result;
+//		Object updateNode =  commandContext.selectSingleNode( "/statement/update" );
+		
+
+		_conn.close();
+
 	}
 	
-	public List<String> chopper( String sql )
+
+	private void extractSelect( FadoParseNode source, SelectMeta extract )
+		throws Exception
 	{
-		StringReader sr = new StringReader( sql );
-		LineReader lr = new LineReader( sr );
-		List<String> result = lr.toArray();
-		return result;
+		// Tables
+		extractSelectTables( source, extract );
+		// Columns
+		extractSelectColumns( source, extract );
+		// Parameters
+		extractSelectParams( source, extract );
+		
+
 	}
 	
-	public void extractColumns( FadoParseNode source, Meta meta )
+	
+	// TODO support unary literals, need fix for '?' knockouts
+	private void extractInsert( FadoParseNode source, InsertMeta meta )
+		throws Exception
+	{
+		JXPathContext statementContext = JXPathContext.newContext( source );
+		String table = (String) statementContext.selectSingleNode( "/statement/insert/into/tableRef/text()" );
+		meta.setTable( table );
+		
+		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
+		List list = statementContext.selectNodes( "/statement/insert/columnList/columnName" );
+		for( Object item : list )
+		{
+			String name = getTokenText( (FadoParseNode) item );
+			columns.add( new InsertColumn( name ));
+		}
+		
+		List argh = statementContext.selectNodes( "/statement/insert/values/literal" );
+		
+		if( columns.size() != argh.size() )
+		{
+			throw new Exception( "mismatch, columns: " + columns.size() + ", literals: " + argh.size() );
+		}
+		
+		int nth = 0;
+		for( Object item : argh )
+		{
+			FadoParseNode node = (FadoParseNode) item;
+			String literal = getTokenText( node );
+			literal = trimQuotes( literal );
+			
+			// Replace original value with JDBC parameter '?'
+			setTokenText( node, "?" ); 
+			
+//			int literalType = getTokenType( node );
+//			int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
+
+			InsertColumn col = columns.get( nth );
+//			col.setSQLType( sqlType );
+			col.setLiteral( literal );
+			nth++;
+		}
+		meta.setColumns( columns );
+	}
+	
+	public void extractSelectTables( FadoParseNode source, SelectMeta meta )
+	{
+		JXPathContext statementContext = JXPathContext.newContext( source );
+		List list = statementContext.selectNodes("/statement/select/from/fromItem" );
+		for( Object item : list )
+		{
+			JXPathContext context = JXPathContext.newContext( item );
+			
+			String databaseName = (String) context.selectSingleNode( "/tableRef/databaseName/text()" );
+			String tableName = (String) context.selectSingleNode( "/tableRef/tableName/text()" );
+			String alias = (String) context.selectSingleNode( "/alias/text()" );
+			System.out.printf( "database: %s, table: %s, alias: %s \n", databaseName, tableName, alias );
+			Table table = new Table( databaseName, tableName, alias );
+			meta.table( table );
+		}
+	}
+	
+	public void extractSelectColumns( FadoParseNode source, SelectMeta meta )
 		throws Exception
 	{
 		JXPathContext statementContext = JXPathContext.newContext( source );
@@ -198,24 +380,7 @@ public class Fado
 		}
 	}
 	
-	public void extractTables( FadoParseNode source, Meta meta )
-	{
-		JXPathContext statementContext = JXPathContext.newContext( source );
-		List list = statementContext.selectNodes("/statement/select/from/fromItem" );
-		for( Object item : list )
-		{
-			JXPathContext context = JXPathContext.newContext( item );
-			
-			String databaseName = (String) context.selectSingleNode( "/tableRef/databaseName/text()" );
-			String tableName = (String) context.selectSingleNode( "/tableRef/tableName/text()" );
-			String alias = (String) context.selectSingleNode( "/alias/text()" );
-			System.out.printf( "database: %s, table: %s, alias: %s \n", databaseName, tableName, alias );
-			Table table = new Table( databaseName, tableName, alias );
-			meta.table( table );
-		}
-	}
-	
-	public void extractParams( FadoParseNode source, Meta meta )
+	public void extractSelectParams( FadoParseNode source, SelectMeta meta )
 		throws FadoException
 	{
 		JXPathContext context = JXPathContext.newContext( source );
@@ -233,19 +398,19 @@ public class Fado
 			List comparison = conditionContext.selectNodes( "comparison" );
 			if( comparison.size() == 1 )
 			{
-				extractComparisonParams( (FadoParseNode) comparison.get( 0 ), meta );
+				extractSelectComparisonParams( (FadoParseNode) comparison.get( 0 ), meta );
 			}
 			List in = conditionContext.selectNodes( "in" );
 			if( in.size() == 1 )
 			{
-				extractINParams( (FadoParseNode) in.get( 0 ), meta );
+				extractSelectINParams( (FadoParseNode) in.get( 0 ), meta );
 			}
 			List between = conditionContext.selectNodes( "between" );
 		}
 	}
 	
 	// Comparisons, eg column = 'abc'
-	public void extractComparisonParams( FadoParseNode comparison, Meta meta )
+	public void extractSelectComparisonParams( FadoParseNode comparison, SelectMeta meta )
 		throws TableNotFoundException
 	{
 		JXPathContext comparisonContext = JXPathContext.newContext( comparison );
@@ -278,7 +443,7 @@ public class Fado
 	
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractINParams( FadoParseNode in, Meta meta ) 
+	public void extractSelectINParams( FadoParseNode in, SelectMeta meta ) 
 		throws FadoException
 	{
 		JXPathContext inContext = JXPathContext.newContext( in );
@@ -320,50 +485,9 @@ public class Fado
 	// LIKE, eg column LIKE 'abc%'
 	// TODO: LIKE condition
 
-	public String getTokenText( FadoParseNode node )
-	{
-		String result = null;
-		if( node != null )
-		{
-			FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-			Token token = temp.getToken();
-			result = token.getText();
-		}
-		return result;
-	}
-		
-	public void setTokenText( FadoParseNode node, String text )
-	{
-		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-		Token token = temp.getToken();
-		token.setText( text );
-	}
-
-	public int getTokenType( FadoParseNode node )
-	{
-		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-		Token token = temp.getToken();
-		int type = token.getType();
-		return type;
-	}
-	
-	public String trimQuotes( String text )
-	{
-		String result = text;
-		int len = text.length();
-		// Parser ensures token has quotes front and back
-		if( text.indexOf( '[' ) > -1 || text.indexOf( '"' ) > -1 || text.indexOf( '\'' ) > -1 )
-		{
-			result = text.substring( 1, len - 1 );
-		}
-		return result;
-	}	
-	
-	public void inspectDatabase( String driver, String url, String username, String password, Meta extract )
+	public void inspectDatabaseForSelect( Connection conn, SelectMeta extract )
 		throws Exception 
 	{
-		Class.forName( driver );
-		Connection conn = DriverManager.getConnection( url, username, password );
 		
 		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
@@ -452,35 +576,149 @@ public class Fado
 		}
 		tablesPS.close();
 		columnPS.close();
-		conn.close();
 	}
 
 
-	public void generate( File target, String packageName, String className, List<String> sql, Meta extract )
+	public void inspectDatabaseForInsert( Connection conn, InsertMeta extract )
+		throws Exception 
+	{
+		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
+		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+
+		String tableName = extract.getTable().toUpperCase();
+		tablesPS.setString( 1, tableName );
+		if( tablesPS.execute() )
+		{
+			ResultSet gorp = tablesPS.getResultSet();
+			if( gorp.next() )
+			{
+				columnPS.setString( 1, tableName );
+				
+				for( InsertColumn column : extract.getColumns() )
+				{
+					
+					String columnName = column.getName().toUpperCase();
+					columnPS.setString( 2, columnName );
+				
+					if( columnPS.execute() )
+					{
+						ResultSet columnRS = columnPS.getResultSet();
+						if( columnRS.next() )
+						{
+							int sqlType = columnRS.getInt( "DATA_TYPE" );
+							column.setSQLType( sqlType );
+							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+							column.setSQLTypeName( sqlTypeName );
+						}
+						else
+						{
+							throw new Exception( "column not found: "+ columnName );
+						}
+						columnRS.close();
+					}
+				}
+			}
+			else
+			{
+				throw new Exception( "table not found: "+ tableName );
+			}
+		}
+		
+		tablesPS.close();
+		columnPS.close();
+	}
+
+	VelocityEngine _ve = null;
+
+	public void generateSelect( SelectMeta meta, List<String> sql, Writer writer )
 		throws Exception
 	{
-		Velocity.init();
 
-		List<Column> columns = extract.getFinalColumns();
-		List<Condition> conditions = extract.getConditions();
+		List<Column> columns = meta.getFinalColumns();
+		List<Condition> conditions = meta.getConditions();
 		
 		VelocityContext context = new VelocityContext();
-		context.put( "packageName", packageName );
-		context.put( "className", className );
+		context.put( "packageName", meta.getPackage() );
+		context.put( "className", meta.getName() );
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
-
-		Template template = Velocity.getTemplate( "./src/fado/template/Select.vm" );
 		
-//		FileWriter fw = new FileWriter( new File( targetDir, className + "Select.java" ));
-		FileWriter fw = new FileWriter( target );
-//		StringWriter fw = new StringWriter();
-		template.merge( context, fw );
-//		System.out.println( fw );
-		fw.close();
+		// Searches the classpath
+		Template template = _ve.getTemplate( "fado/template/Select.vm" );
+		
+		template.merge( context, writer );
+		writer.close();
 
 	}
+
+	public void generateInsert( InsertMeta meta, List<String> sql, Writer writer )
+		throws Exception
+	{
+
+		List<InsertColumn> columns = meta.getColumns();
+		
+		VelocityContext context = new VelocityContext();
+		context.put( "packageName", meta.getPackage() );
+		context.put( "className", meta.getName() );
+		context.put( "sql", sql );
+		context.put( "columns", columns );
+		
+		// Searches the classpath
+		Template template = _ve.getTemplate( "fado/template/Insert.vm" );
+		
+		template.merge( context, writer );
+		writer.close();
+	}
+
+	public String getTokenText( FadoParseNode node )
+	{
+		String result = null;
+		if( node != null )
+		{
+			FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
+			Token token = temp.getToken();
+			result = token.getText();
+		}
+		return result;
+	}
+		
+	public void setTokenText( FadoParseNode node, String text )
+	{
+		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
+		Token token = temp.getToken();
+		token.setText( text );
+	}
+
+	public int getTokenType( FadoParseNode node )
+	{
+		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
+		Token token = temp.getToken();
+		int type = token.getType();
+//		if( type == )
+		return type;
+	}
+	
+	public String trimQuotes( String text )
+	{
+		String result = text;
+		int len = text.length();
+		// Parser ensures token has quotes front and back
+		if( text.indexOf( '[' ) > -1 || text.indexOf( '"' ) > -1 || text.indexOf( '\'' ) > -1 )
+		{
+			result = text.substring( 1, len - 1 );
+		}
+		return result;
+	}	
+	
+	public List<String> chopper( String sql )
+	{
+		StringReader sr = new StringReader( sql );
+		LineReader lr = new LineReader( sr );
+		List<String> result = lr.toArray();
+		return result;
+	}
+	
 	public static void dumpResultSet( ResultSet set )
 		throws SQLException
 	{

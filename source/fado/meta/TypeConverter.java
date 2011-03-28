@@ -134,6 +134,105 @@ public class
 		return result;
 	}
 
+	public static String getInitializerValue( int sqlType )
+	{
+		String result = null;
+		switch( sqlType )
+		{
+		case ARRAY:
+			result = "null";
+			break;
+		case BIGINT:
+			result = "0L";
+			break;
+		case BINARY:
+			result = "null";
+			break;
+		case BIT:
+			result = "false";
+			break;
+		case BLOB:
+			result = "null";
+			break;
+		case BOOLEAN:
+			result = "false";
+			break;
+		case CHAR:
+			result = "null";
+			break;
+		case CLOB:
+			result = "null";
+			break;
+		case DATALINK:
+			throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+		case DATE:
+			result = "null";
+			break;
+		case DECIMAL:
+			result = "null";
+			break;
+		case DISTINCT:
+			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+		case DOUBLE:
+			result = "0d";
+			break;
+		case FLOAT:
+			result = "0f";
+			break;
+		case INTEGER:
+			result = "0";
+			break;
+		case JAVA_OBJECT:
+			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+		case LONGVARBINARY:
+			result = "null";
+			break;
+		case LONGVARCHAR:
+			result = "null";
+			break;
+			
+		case NUMERIC:
+			result = "null";
+			break;
+		case NULL:
+			throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+		case OTHER:
+			throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+		case REAL:
+			result = "0f";
+			break;
+		case REF:
+			result = "null";
+			break;
+		case SMALLINT:
+			result = "0";
+			break;
+		case STRUCT:
+			result = "null";
+			break;
+		case TINYINT:
+			result = "0";
+			break;
+		case TIME:
+			result = "null";
+			break;
+		case TIMESTAMP:
+			result = "null";
+			break;
+		case VARBINARY:
+			result = "null";
+			break;
+		case VARCHAR:
+			result = "null";
+			break;
+		default:
+			result = "unknown SQL Type: " + sqlType;
+			throw new IllegalArgumentException( result );
+				
+		}
+		return result;
+	}
+
 	/**
 	 * Convert value to an appropriate Java code value/instance declaration. Used by 
 	 * code generating templates.

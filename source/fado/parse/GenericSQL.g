@@ -54,8 +54,8 @@ package fado.parse;
 
 statement
   : select ( SEMI )? EOF
+  | insert ( SEMI )? EOF
 //	| update ( SEMI )? EOF
-//  | insert ( SEMI )? EOF
 //	| delete ( SEMI )? EOF
   ;
   
@@ -77,6 +77,25 @@ select
     ( having )?
     ( orderBy )?
   ;
+  
+insert
+  : INSERT into ( columnList )?
+  ( values
+//| select_statement
+  )
+  ;  
+
+into
+  : INTO tableRef ( COMMA tableRef )*
+  ;
+
+columnList
+  : LPAREN columnName ( COMMA columnName )* RPAREN
+  ;
+  
+values
+  : VALUES LPAREN literal ( COMMA literal )* RPAREN
+  ;  
 
 itemList
   : STAR
@@ -96,9 +115,6 @@ alias
   : Identifier
   ;
   
-into
-  : INTO tableRef ( COMMA tableRef )*
-  ;
   
 from
   : FROM fromItem ( COMMA fromItem )*
@@ -110,7 +126,7 @@ fromItem
     )
     ( ( AS )? alias )?
   ;
-  
+
 joinList
   : ( join )*
   ;
@@ -252,12 +268,16 @@ value
   ;
   
 literal
-  : ( unary )?
-    ( Float
-    | Integer
-    | String
-    )
-  | '{d' Timestamp '}' // Date
+  : ( unary )? Float
+  | ( unary )? Integer
+  | String
+  | TRUE
+  | FALSE
+  | date
+  ;
+
+date
+  : '{d' Timestamp '}' // Date
   | '{t' Timestamp '}' // Time
   | '{ts' Timestamp '}' // Timestamp
   ;
@@ -313,8 +333,6 @@ columnName
   | QuotedIdentifier
   ;
   
-  
-
 ALL       : A L L ;
 AND       : A N D ;
 ANY       : A N Y ;
@@ -336,7 +354,7 @@ END       : E N D ;
 //ESCAPE    : E S C A P E ;
 EXISTS    : E X I S T S ;
 //EXTRACT   : E X T R A C T ;
-//FALSE     : F A L S E ;
+FALSE     : F A L S E ;
 //FOR       : F O R ;
 //FREETEXT  : F R E E T E X T ;
 FROM      : F R O M ;
@@ -376,7 +394,7 @@ UNION     : U N I O N ;
 UNIQUE    : U N I Q U E ;
 UPDATE    : U P D A T E ;
 USING     : U S I N G ;
-//VALUES    : V A L U E S ;
+VALUES    : V A L U E S ;
 WHEN      : W H E N ;
 WHERE     : W H E R E ;
 //YEAR      : Y E A R ;

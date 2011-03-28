@@ -22,26 +22,35 @@ import java.sql.*;
 import fado.template.AbstractSelect;
 
 public class 
-	${className}Select
+	${className}
 extends
 	AbstractSelect
 {
-	public ${className}Select( Connection connection )
+	public ${className}( Connection connection )
 		throws Exception
 	{
 		super( connection );
 	}
 	
 #foreach( $column in $columns )
-	private ${column.JavaType} _${column.AliasOrName} = null;
+	private ${column.JavaType} _${column.AliasOrName} = ${column.InitializerValue};
 #end
 	
 	public void updateValues( boolean success )
 		throws SQLException
 	{
+		if( success )
+		{
 #foreach( $column in $columns )
-		_${column.AliasOrName} = success ? getResultSet().get${column.TypedMethod}( "${column.AliasOrName}" ) : null;
+			_${column.AliasOrName} = getResultSet().get${column.TypedMethod}( "${column.AliasOrName}" );
 #end
+		}
+		else
+		{
+#foreach( $column in $columns )
+			_${column.AliasOrName} = ${column.InitializerValue};
+#end
+		}
 	}
 	
 #foreach( $column in $columns )
@@ -59,16 +68,16 @@ extends
 
 #if( $condition.isComparison() )
 
-	public ${type} _${name} = $condition.getValueAsCode();
+	public ${type} _${name}Param = $condition.getValueAsCode();
 	
 	public void set${name}Param( ${type} ${name} )
 	{
-		_${name} = ${name};
+		_${name}Param = ${name};
 	}
 	
 	public ${type} get${name}Param()
 	{
-		return _${name};
+		return _${name}Param;
 	}
 
 #elseif( $condition.isIN() )
@@ -122,7 +131,8 @@ extends
 		return _sql;
 	}
 	
-	public void setParameters( PreparedStatement prepared )
+	@Override
+	protected void setParameters( PreparedStatement prepared )
 		throws SQLException
 	{
 #set( $nth = 0 )

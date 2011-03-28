@@ -21,41 +21,41 @@ public abstract class
 	
 	public abstract String getSQL();
 	
-//	protected final PreparedStatement getPreparedStatement()
-//		throws SQLException
-//	{
-//		if( _prepared == null )
-//		{
-//			String sql = getSQL();
-//			_prepared = _connection.prepareStatement( sql, PreparedStatement.RETURN_GENERATED_KEYS );
-//
-//			Statement ha = _connection.createStatement();
-//			ha.execute(sql, )
-//		}
-//		return _prepared;
-//	}
+	public abstract void setParameters( PreparedStatement prepared )
+		throws SQLException;
 
+	protected final PreparedStatement getPreparedStatement()
+		throws SQLException
+	{
+		if( _prepared == null )
+		{
+			String sql = getSQL();
+			_prepared = _connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
+	
+		}
+		return _prepared;
+	}
+
+
+	protected boolean _executed = false;
+
+	// TODO: Auto detect if row has key/identity column
+	
 	public final boolean execute()
 		throws SQLException
 	{
-		String sql = getSQL();
-		Statement ha = _connection.createStatement();
-		int rows = ha.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS );
-		
-//		if( rows > 0 )
+		_executed = true;
+		PreparedStatement statement = getPreparedStatement();
+		setParameters( statement );
+
+		boolean success = statement.executeUpdate() > 0;
+		if( success )
 		{
-//			success = true;
-			_resultSet = ha.getGeneratedKeys();
-//			ha.
-			if( _resultSet != null )
-			{
-				if( _resultSet.next() )
-				{
-					_identity = _resultSet.getInt( 1 );
-				}
-			}
+			ResultSet keys = statement.getGeneratedKeys();
+			keys.next();
+			_identity = keys.getInt(1);
 		}
-		boolean success = false;
+		
 		return success;
 	}
 

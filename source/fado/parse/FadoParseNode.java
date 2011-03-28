@@ -124,8 +124,15 @@ extends
 		}
 		else
 		{
-			FadoParseNode node = (FadoParseNode) children.get( 0 );
-			result = node.getToken();
+			for( Object child : children )
+			{
+				FadoParseNode node = ((FadoParseNode) child);
+				if( !"unary".equals( node._payload ))
+				{
+					result = node.getToken();
+				}
+				if( result != null ) break;
+			}
 		}
 		return result;
 	}
