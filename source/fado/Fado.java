@@ -16,18 +16,18 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
@@ -57,40 +57,32 @@ public class Fado
 		System.out.println( options );
 		Fado fado = new Fado();
 		fado.init( options );
-//		String source = options.getSource();
-//		File sourceDir = new File( source );
-//		String target = options.getTarget();
-//		File targetDir = new File( target );
-//		fado.build( sourceDir, targetDir );
 	}
 	
-	
-	FadoOptions _options = null;
+	Template _selectTemplate = null;
+	Template _insertTemplate = null;
 	Connection _conn = null;
 	
 	public void init( FadoOptions options )
 		throws Exception
 	{
-		_options = options;
-		String driver = _options.getDriver();
-		String url = _options.getUrl();
-		String username = _options.getUsername();
-		String password = _options.getPassword();
+		String driver = options.getDriver();
+		String url = options.getUrl();
+		String username = options.getUsername();
+		String password = options.getPassword();
 		Class.forName( driver );
 		_conn = DriverManager.getConnection( url, username, password );
 
-		
+		Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+		Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+		Velocity.init();
 
-		_ve = new VelocityEngine();
-		_ve.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-		_ve.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-		_ve.init();
-		
+		_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
+		_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
+
 		String target = options.getTarget();
 		File targetDir = new File( target );
 		
-//		String pkg = options.getPackageName();
-			
 		String source = options.getSource();
 		File sourceDir = new File( source );
 		if( !sourceDir.exists() )
@@ -100,7 +92,8 @@ public class Fado
 		}
 		ArrayList<String> path = new ArrayList<String>();
 		crawl( sourceDir, targetDir, path );
-		
+		_conn.close();
+
 	}
 	
 	FileFilter sqlFilter = new FileFilter() 
@@ -151,6 +144,9 @@ public class Fado
 				File targetFile = new File( targetRoot, name + ".java" );
 				FileWriter writer = new FileWriter( targetFile );
 				extract( pkg, name, reader, writer );
+				writer.flush();
+				writer.close();
+				reader.close();
 			}
 			catch( Exception e )
 			{
@@ -196,8 +192,8 @@ public class Fado
 		
 		FadoParseNode source = builder.getTree();
 		
-		System.out.println( "string tree: " + builder.getTree().toStringTree() );
-		System.out.println( "input string: " + builder.getTree().toInputString() );
+//		System.out.println( "string tree: " + builder.getTree().toStringTree() );
+//		System.out.println( "input string: " + builder.getTree().toInputString() );
 		
 		ParseNodePointerFactory factory = new ParseNodePointerFactory();
 		JXPathContextReferenceImpl.addNodePointerFactory( factory );
@@ -245,12 +241,6 @@ public class Fado
 		{
 			// Jaxen sucks
 		}
-		
-//		Object updateNode =  commandContext.selectSingleNode( "/statement/update" );
-		
-
-		_conn.close();
-
 	}
 	
 
@@ -263,8 +253,6 @@ public class Fado
 		extractSelectColumns( source, extract );
 		// Parameters
 		extractSelectParams( source, extract );
-		
-
 	}
 	
 	
@@ -301,11 +289,7 @@ public class Fado
 			// Replace original value with JDBC parameter '?'
 			setTokenText( node, "?" ); 
 			
-//			int literalType = getTokenType( node );
-//			int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
-
 			InsertColumn col = columns.get( nth );
-//			col.setSQLType( sqlType );
 			col.setLiteral( literal );
 			nth++;
 		}
@@ -471,8 +455,6 @@ public class Fado
 				
 				int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
 				param.addValue( text, sqlType );
-			
-
 			}
 			meta.comparison( param );
 		}
@@ -628,12 +610,10 @@ public class Fado
 		columnPS.close();
 	}
 
-	VelocityEngine _ve = null;
 
 	public void generateSelect( SelectMeta meta, List<String> sql, Writer writer )
 		throws Exception
 	{
-
 		List<Column> columns = meta.getFinalColumns();
 		List<Condition> conditions = meta.getConditions();
 		
@@ -643,19 +623,14 @@ public class Fado
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
+		context.put( "date", new Date() );
 		
-		// Searches the classpath
-		Template template = _ve.getTemplate( "fado/template/Select.vm" );
-		
-		template.merge( context, writer );
-		writer.close();
-
+		_selectTemplate.merge( context, writer );
 	}
 
 	public void generateInsert( InsertMeta meta, List<String> sql, Writer writer )
 		throws Exception
 	{
-
 		List<InsertColumn> columns = meta.getColumns();
 		
 		VelocityContext context = new VelocityContext();
@@ -663,12 +638,9 @@ public class Fado
 		context.put( "className", meta.getName() );
 		context.put( "sql", sql );
 		context.put( "columns", columns );
+		context.put( "date", new Date() );
 		
-		// Searches the classpath
-		Template template = _ve.getTemplate( "fado/template/Insert.vm" );
-		
-		template.merge( context, writer );
-		writer.close();
+		_insertTemplate.merge( context, writer );
 	}
 
 	public String getTokenText( FadoParseNode node )
@@ -695,7 +667,6 @@ public class Fado
 		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
 		Token token = temp.getToken();
 		int type = token.getType();
-//		if( type == )
 		return type;
 	}
 	

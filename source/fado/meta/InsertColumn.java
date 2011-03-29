@@ -49,7 +49,9 @@ public class
 	
 	public String getInitializerValue()
 	{
-		String result = TypeConverter.getInitializerValue( getSQLType() );
+		int sqlType = getSQLType();
+		String literal = getLiteral();
+		String result = TypeConverter.getValueAsCode( sqlType, literal );
 		return result;
 	}
 	
