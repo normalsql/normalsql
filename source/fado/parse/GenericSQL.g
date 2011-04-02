@@ -55,7 +55,7 @@ package fado.parse;
 statement
   : select ( SEMI )? EOF
   | insert ( SEMI )? EOF
-//	| update ( SEMI )? EOF
+	| update ( SEMI )? EOF
 //	| delete ( SEMI )? EOF
   ;
   
@@ -85,6 +85,15 @@ insert
   )
   ;  
 
+update
+  : UPDATE tableRef SET setter ( COMMA setter )*
+    ( where )?
+  ;
+  
+setter
+  : columnName EQ literal
+  ;
+  
 into
   : INTO tableRef ( COMMA tableRef )*
   ;
@@ -383,7 +392,7 @@ PERCENT   : P E R C E N T ;
 RIGHT     : R I G H T ;
 //SECOND    : S E C O N D ;
 SELECT    : S E L E C T ;
-//SET       : S E T ;
+SET       : S E T ;
 SOME      : S O M E ;
 //SUBSTRING : S U B S T R I N G ;
 THEN      : T H E N ;

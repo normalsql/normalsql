@@ -30,11 +30,31 @@ import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.TINYINT;
 import static java.sql.Types.VARBINARY;
 import static java.sql.Types.VARCHAR;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import fado.parse.GenericSQLLexer;
 
 public class 
 	TypeConverter 
 {
+	
+	public static void main( String[] args )
+		throws Exception
+	{
+		 String dateStr = "2004-09-20"; 
+		 String pattern = "yyyy-MM-dd HH:mm:ss z";
+		 
+		String blah = pattern.substring( 0, dateStr.length() );
+		SimpleDateFormat sdf = new SimpleDateFormat ( blah ) ; 
+		 java.util.Date date = sdf.parse ( dateStr ) ;
+//		 System.out.println( date );
+//		 date = sdf.parse ( "2004-09-20" ) ;
+		 System.out.println( date );
+	}
+	
 	public static String getJavaType( int sqlType )
 	{
 		String result = null;
@@ -238,10 +258,10 @@ public class
 	 * code generating templates.
 	 * 
 	 * @param sqlType
-	 * @param value
+	 * @param literal
 	 * @return
 	 */
-	public static String getValueAsCode( int sqlType, String value )
+	public static String getValueAsCode( int sqlType, String literal )
 	{
 		String result = null;
 		switch( sqlType )
@@ -249,7 +269,7 @@ public class
 		case CHAR:
 		case LONGVARCHAR:
 		case VARCHAR:
-			result = "\"" + value + "\"";
+			result = "\"" + literal + "\"";
 			break;
 		case BIGINT:
 			result = "long";
@@ -258,7 +278,7 @@ public class
 		case BOOLEAN:
 		{
 			// assume value is already either "true" or "false"?
-			boolean ugh = Boolean.parseBoolean( value );
+			boolean ugh = Boolean.parseBoolean( literal );
 			result = ugh ? "true" : "false";
 			break;
 		}
@@ -282,14 +302,14 @@ public class
 		case DISTINCT:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
 		case DOUBLE:
-			result = value + "d";
+			result = literal + "d";
 			break;
 		case FLOAT:
 		case REAL:
-			result = value + "f";
+			result = literal + "f";
 			break;
 		case INTEGER:
-			result = value;
+			result = literal;
 			break;
 		case JAVA_OBJECT:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
@@ -316,8 +336,25 @@ public class
 			result = "java.sql.Struct";
 			break;
 		case DATE:
-			result = "java.sql.Date";
+		{
+			result = literal + " -- conversion failed!!";
+			
+			// I think this is the stock SQL date pattern
+			String pattern = "yyyy-MM-dd HH:mm:ss z";
+			pattern = pattern.substring( 0, literal.length() );
+			SimpleDateFormat sdf = new SimpleDateFormat ( pattern ) ; 
+			try 
+			{
+				java.util.Date date = sdf.parse ( literal ) ;
+				long time = date.getTime();
+				result = "new java.sql.Date( " + time + "L )";
+			} 
+			catch( ParseException e ) 
+			{
+				e.printStackTrace();
+			}
 			break;
+		}
 		case TIME:
 			result = "java.sql.Time";
 			break;

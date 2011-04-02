@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -41,6 +42,8 @@ import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
 import fado.meta.TypeConverter;
+import fado.meta.UpdateColumn;
+import fado.meta.UpdateMeta;
 import fado.parse.FadoParseNode;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
@@ -61,6 +64,7 @@ public class Fado
 	
 	Template _selectTemplate = null;
 	Template _insertTemplate = null;
+	Template _updateTemplate = null;
 	Connection _conn = null;
 	
 	public void init( FadoOptions options )
@@ -79,6 +83,7 @@ public class Fado
 
 		_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
 		_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
+		_updateTemplate = Velocity.getTemplate( "fado/template/Update.vm" );
 
 		String target = options.getTarget();
 		File targetDir = new File( target );
@@ -129,8 +134,10 @@ public class Fado
 		return sb.toString();
 	}
 	
+	// TODO: Create command line option for this? eg. for a clean build operation
+	private boolean _alwaysOverwrite = false;
+	
 	public void crawl( File sourceRoot, File targetRoot, List<String> path )
-//		throws FadoException
 	{
 		targetRoot.mkdirs();
 		String pkg = join( path, "." );
@@ -142,11 +149,22 @@ public class Fado
 				String name = getFileName( sourceFile );
 				FileReader reader = new FileReader( sourceFile );
 				File targetFile = new File( targetRoot, name + ".java" );
-				FileWriter writer = new FileWriter( targetFile );
-				extract( pkg, name, reader, writer );
-				writer.flush();
-				writer.close();
-				reader.close();
+				long a = sourceFile.lastModified();
+				long b = targetFile.lastModified();
+				if( _alwaysOverwrite || !targetFile.exists() || a > b )
+				{
+					System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
+					// TODO: This is bullshit, wipes out existing file, pass File instance instead
+					FileWriter writer = new FileWriter( targetFile );
+					extract( pkg, name, reader, writer );
+					writer.flush();
+					writer.close();
+					reader.close();
+				}
+				else
+				{
+					System.out.println( targetFile + " is current" );
+				}
 			}
 			catch( Exception e )
 			{
@@ -163,7 +181,7 @@ public class Fado
 			path.add( name );
 			File targetDir = new File( targetRoot, name );
 			crawl( child, targetDir, path );
-			System.out.println( child.toString() + " : " + child.getName() );
+//			System.out.println( child.toString() + " : " + child.getName() );
 		}
 	}
 	
@@ -215,6 +233,7 @@ public class Fado
 		}
 		catch( Exception e )
 		{
+//			e.printStackTrace();
 			// Jaxen sucks
 		}
 		
@@ -240,6 +259,32 @@ public class Fado
 		catch( Exception e )
 		{
 			// Jaxen sucks
+//			e.printStackTrace();
+		}
+
+		try
+		{
+			Object updateNode =  commandContext.selectSingleNode( "/statement/update" );
+			try
+			{
+				UpdateMeta meta = new UpdateMeta();
+				meta.setName( name );
+				meta.setPackage( pkg );
+				extractUpdate( source, meta );
+				inspectDatabaseForUpdate( _conn, meta );
+				String retooledSQL = builder.getTree().toInputString();
+				List<String> choppedSQL = chopper( retooledSQL.trim() );
+				generateUpdate( meta, choppedSQL, writer );
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
+		}
+		catch( Exception e )
+		{
+			// Jaxen sucks
+//			e.printStackTrace();
 		}
 	}
 	
@@ -296,6 +341,59 @@ public class Fado
 		meta.setColumns( columns );
 	}
 	
+	// TODO support unary literals, need fix for '?' knockouts
+	private void extractUpdate( FadoParseNode source, UpdateMeta meta )
+		throws Exception
+	{
+		JXPathContext statementContext = JXPathContext.newContext( source );
+		String table = (String) statementContext.selectSingleNode( "/statement/update/tableRef/text()" );
+		meta.setTable( table );
+		
+		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
+		List list = statementContext.selectNodes( "/statement/update/setter" );
+		for( Object setter : list )
+		{
+			JXPathContext setterContext = JXPathContext.newContext( setter );
+			FadoParseNode a = (FadoParseNode) setterContext.selectSingleNode( "/columnName" );
+			String name = getTokenText( a );
+			FadoParseNode b = (FadoParseNode) setterContext.selectSingleNode( "/literal" );
+			String literal = getTokenText( b );
+			literal = trimQuotes( literal );
+			
+			// Replace original value with JDBC parameter '?'
+			setTokenText( b, "?" ); 
+
+			columns.add( new UpdateColumn( name, literal ));
+		}
+		meta.setColumns( columns );
+		
+		JXPathContext context = JXPathContext.newContext( source );
+		List ugh = context.selectNodes( "/statement/update/where" );
+		if( ugh.size() < 1 ) return;
+		
+		FadoParseNode where = (FadoParseNode) ugh.get( 0 );
+		JXPathContext whereContext = JXPathContext.newContext( where );
+		
+		List clist = whereContext.selectNodes( "//condition" );
+		for( Object object : clist )
+		{
+			FadoParseNode condition = (FadoParseNode) object;
+			JXPathContext conditionContext = JXPathContext.newContext( condition );
+			List comparison = conditionContext.selectNodes( "comparison" );
+			if( comparison.size() == 1 )
+			{
+				extractUpdateComparisonParams( (FadoParseNode) comparison.get( 0 ), meta );
+			}
+			List in = conditionContext.selectNodes( "in" );
+			if( in.size() == 1 )
+			{
+				extractUpdateINParams( (FadoParseNode) in.get( 0 ), meta );
+			}
+			List between = conditionContext.selectNodes( "between" );
+		}
+		
+	}
+	
 	public void extractSelectTables( FadoParseNode source, SelectMeta meta )
 	{
 		JXPathContext statementContext = JXPathContext.newContext( source );
@@ -307,7 +405,7 @@ public class Fado
 			String databaseName = (String) context.selectSingleNode( "/tableRef/databaseName/text()" );
 			String tableName = (String) context.selectSingleNode( "/tableRef/tableName/text()" );
 			String alias = (String) context.selectSingleNode( "/alias/text()" );
-			System.out.printf( "database: %s, table: %s, alias: %s \n", databaseName, tableName, alias );
+//			System.out.printf( "database: %s, table: %s, alias: %s \n", databaseName, tableName, alias );
 			Table table = new Table( databaseName, tableName, alias );
 			meta.table( table );
 		}
@@ -402,7 +500,7 @@ public class Fado
 		List literals = comparisonContext.selectNodes( "//literal");
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
-			System.out.println( "found comparison: " + comparison.toInputString() );
+//			System.out.println( "found comparison: " + comparison.toInputString() );
 			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
 			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
 			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
@@ -466,6 +564,71 @@ public class Fado
 	
 	// LIKE, eg column LIKE 'abc%'
 	// TODO: LIKE condition
+
+	public void extractUpdateComparisonParams( FadoParseNode comparison, UpdateMeta meta )
+		throws TableNotFoundException
+	{
+		JXPathContext comparisonContext = JXPathContext.newContext( comparison );
+		List columns = comparisonContext.selectNodes( "//columnRef" );
+		List literals = comparisonContext.selectNodes( "//literal");
+		if( columns.size() == 1 && literals.size() == 1 )
+		{
+	//		System.out.println( "found comparison: " + comparison.toInputString() );
+			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
+			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
+			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
+	
+			FadoParseNode literalNode = (FadoParseNode) literals.get( 0 );
+			String literal = getTokenText( literalNode );
+			literal = trimQuotes( literal );
+			
+			// Replace original value with JDBC parameter '?'
+			setTokenText( literalNode, "?" ); 
+			int literalType = getTokenType( literalNode );
+			
+			int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
+			
+	
+			Comparison c = new Comparison( null, column, sqlType, literal );
+			meta.addCondition( c );
+		}
+	}
+
+	// IN, eg column IN ( 1, 2, 3 )
+	// Very naive pattern extraction, assumes column on left and literals on right
+	public void extractUpdateINParams( FadoParseNode in, UpdateMeta meta ) 
+		throws FadoException
+	{
+		JXPathContext inContext = JXPathContext.newContext( in );
+		List columns = inContext.selectNodes( "//columnRef" );
+		List literals = inContext.selectNodes( "//literal");
+		if( columns.size() == 1 && literals.size() > 0 )
+		{
+			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
+			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
+			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
+//			String tableAlias = (String) columnRefContext.selectSingleNode( "/tableAlias/text()" );
+//			Table table = meta.getTableByAlias( tableAlias );
+
+			IN param = new IN( null, column );
+			
+			for( Object object : literals )
+			{
+				FadoParseNode literal = (FadoParseNode) object;
+				String text = getTokenText( literal );
+				text = trimQuotes( text );
+				
+				// Replace original value with JDBC parameter '?'
+				setTokenText( literal, "?" ); 
+				int literalType = getTokenType( literal );
+				
+				int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
+				param.addValue( text, sqlType );
+			}
+			meta.addCondition( param );
+		}
+	}
+	
 
 	public void inspectDatabaseForSelect( Connection conn, SelectMeta extract )
 		throws Exception 
@@ -594,7 +757,58 @@ public class Fado
 						}
 						else
 						{
-							throw new Exception( "column not found: "+ columnName );
+							// TODO Don't die on first error
+							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'"  );
+						}
+						columnRS.close();
+					}
+				}
+			}
+			else
+			{
+				throw new Exception( "table not found: "+ tableName );
+			}
+		}
+		
+		tablesPS.close();
+		columnPS.close();
+	}
+
+	public void inspectDatabaseForUpdate( Connection conn, UpdateMeta extract )
+		throws Exception 
+	{
+		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
+		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+	
+		String tableName = extract.getTable().toUpperCase();
+		tablesPS.setString( 1, tableName );
+		if( tablesPS.execute() )
+		{
+			ResultSet gorp = tablesPS.getResultSet();
+			if( gorp.next() )
+			{
+				columnPS.setString( 1, tableName );
+				
+				for( UpdateColumn column : extract.getColumns() )
+				{
+					
+					String columnName = column.getName().toUpperCase();
+					columnPS.setString( 2, columnName );
+				
+					if( columnPS.execute() )
+					{
+						ResultSet columnRS = columnPS.getResultSet();
+						if( columnRS.next() )
+						{
+							int sqlType = columnRS.getInt( "DATA_TYPE" );
+							column.setSQLType( sqlType );
+							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+							column.setSQLTypeName( sqlTypeName );
+						}
+						else
+						{
+							// TODO Don't die on first error
+							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'"  );
 						}
 						columnRS.close();
 					}
@@ -614,6 +828,7 @@ public class Fado
 	public void generateSelect( SelectMeta meta, List<String> sql, Writer writer )
 		throws Exception
 	{
+		StringWriter sw = new StringWriter();
 		List<Column> columns = meta.getFinalColumns();
 		List<Condition> conditions = meta.getConditions();
 		
@@ -625,6 +840,7 @@ public class Fado
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
 		
+		_selectTemplate.merge( context, sw );
 		_selectTemplate.merge( context, writer );
 	}
 
@@ -641,6 +857,23 @@ public class Fado
 		context.put( "date", new Date() );
 		
 		_insertTemplate.merge( context, writer );
+	}
+
+	public void generateUpdate( UpdateMeta meta, List<String> sql, Writer writer )
+		throws Exception
+	{
+		List<UpdateColumn> columns = meta.getColumns();
+		List<Condition> conditions = meta.getConditions();
+
+		VelocityContext context = new VelocityContext();
+		context.put( "packageName", meta.getPackage() );
+		context.put( "className", meta.getName() );
+		context.put( "sql", sql );
+		context.put( "columns", columns );
+		context.put( "conditions", conditions );
+		context.put( "date", new Date() );
+		
+		_updateTemplate.merge( context, writer );
 	}
 
 	public String getTokenText( FadoParseNode node )

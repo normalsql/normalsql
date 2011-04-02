@@ -120,5 +120,19 @@ public abstract class
 		return result;
 	}
 	
+	/**
+	 * Done with current response (ResultSet), clears this instance, prior to reuse.
+	 * 
+	 * @throws SQLException
+	 */
+	public void done()
+		throws SQLException
+	{
+		updateValues( false );
+		_resultSet.close();
+		_resultSet = null;
+		_executed = false;
+		
+	}
 
 }
