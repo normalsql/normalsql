@@ -40,21 +40,6 @@ import fado.parse.GenericSQLLexer;
 public class 
 	TypeConverter 
 {
-	
-	public static void main( String[] args )
-		throws Exception
-	{
-		 String dateStr = "2004-09-20"; 
-		 String pattern = "yyyy-MM-dd HH:mm:ss z";
-		 
-		String blah = pattern.substring( 0, dateStr.length() );
-		SimpleDateFormat sdf = new SimpleDateFormat ( blah ) ; 
-		 java.util.Date date = sdf.parse ( dateStr ) ;
-//		 System.out.println( date );
-//		 date = sdf.parse ( "2004-09-20" ) ;
-		 System.out.println( date );
-	}
-	
 	public static String getJavaType( int sqlType )
 	{
 		String result = null;
@@ -337,29 +322,14 @@ public class
 			break;
 		case DATE:
 		{
-			result = literal + " -- conversion failed!!";
-			
-			// I think this is the stock SQL date pattern
-			String pattern = "yyyy-MM-dd HH:mm:ss z";
-			pattern = pattern.substring( 0, literal.length() );
-			SimpleDateFormat sdf = new SimpleDateFormat ( pattern ) ; 
-			try 
-			{
-				java.util.Date date = sdf.parse ( literal ) ;
-				long time = date.getTime();
-				result = "new java.sql.Date( " + time + "L )";
-			} 
-			catch( ParseException e ) 
-			{
-				e.printStackTrace();
-			}
+			result = "java.sql.Date.valueOf( \"" + literal + "\" )";
 			break;
 		}
 		case TIME:
-			result = "java.sql.Time";
+			result = "java.sql.Time.valueOf( \"" + literal + "\" )";
 			break;
 		case TIMESTAMP:
-			result = "Date";
+			result = "java.sql.Timestamp.valueOf( \"" + literal + "\" )";
 			break;
 		case VARBINARY:
 			result = "byte[]";
