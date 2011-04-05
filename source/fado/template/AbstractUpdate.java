@@ -29,6 +29,7 @@ public abstract class
 		if( _prepared == null )
 		{
 			String sql = getSQL();
+			_prepared = _connection.prepareStatement( sql );
 		}
 		return _prepared;
 	}
