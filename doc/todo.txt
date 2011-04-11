@@ -8,7 +8,11 @@ Add runtime "tested" flag to generated code
 Add BETWEEN comparison support
 Add LIKE comparison support
 Add support for date (et al) data type condition parameters
-Fuck JXPath sucks, replace (maybe)
+Replace use of xpath lib with my glob stuff
+Add null tests to generated accessors for "not null" columns
+When column, table, etc not found, suggest alternative
+	"column 'appel' not found in table 'fruit', did you mean 'apple'?"
+For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
 
 DOCS
 
