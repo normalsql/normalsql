@@ -5,7 +5,6 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -24,8 +23,8 @@ import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.Token;
-import org.apache.commons.jxpath.JXPathContext;
-import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
+//import org.apache.commons.jxpath.JXPathContext;
+//import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -47,7 +46,6 @@ import fado.meta.UpdateMeta;
 import fado.parse.FadoParseNode;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
-import fado.parse.ParseNodePointerFactory;
 import fado.parse.ParseTreeBuilder;
 
 public class Fado 
@@ -135,7 +133,7 @@ public class Fado
 	}
 	
 	// TODO: Create command line option for this? eg. for a clean build operation
-	private boolean _alwaysOverwrite = false;
+	private boolean _alwaysOverwrite = true;
 	
 	public void crawl( File sourceRoot, File targetRoot, List<String> path )
 	{
@@ -196,6 +194,8 @@ public class Fado
 		return name;
 	}
 	
+	public boolean displayTree = true;
+	
 	private void extract( String pkg, String name, Reader reader, Writer writer ) 
 		throws Exception
 	{
@@ -210,114 +210,81 @@ public class Fado
 		
 		FadoParseNode source = builder.getTree();
 		
-//		System.out.println( "string tree: " + builder.getTree().toStringTree() );
-//		System.out.println( "input string: " + builder.getTree().toInputString() );
-		
-		ParseNodePointerFactory factory = new ParseNodePointerFactory();
-		JXPathContextReferenceImpl.addNodePointerFactory( factory );
-		
-		JXPathContext commandContext = JXPathContext.newContext( source );
-
-		try
+		if( displayTree )
 		{
-			Object selectNode =  commandContext.selectSingleNode( "/statement/select" );
+			System.out.println( "string tree: " + builder.getTree().toStringTree() );
+		}
+		
+		FadoParseNode selectNode = source.findFirst( "statement/select" );
+		if( selectNode != null )
+		{
 			SelectMeta meta = new SelectMeta();
 			meta.setName( name );
 			meta.setPackage( pkg );
-			extractSelect( source, meta );
+			extractSelect( selectNode, meta );
 			inspectDatabaseForSelect( _conn, meta );
 			
 			String retooledSQL = builder.getTree().toInputString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
 			generateSelect( meta, choppedSQL, writer );
 		}
-		catch( Exception e )
-		{
-//			e.printStackTrace();
-			// Jaxen sucks
-		}
 		
-		try
+		FadoParseNode insertNode = source.findFirst( "statement/insert" );
+		if( insertNode != null )
 		{
-			Object insertNode =  commandContext.selectSingleNode( "/statement/insert" );
-			try
-			{
-				InsertMeta meta = new InsertMeta();
-				meta.setName( name );
-				meta.setPackage( pkg );
-				extractInsert( source, meta );
-				inspectDatabaseForInsert( _conn, meta );
-				String retooledSQL = builder.getTree().toInputString();
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateInsert( meta, choppedSQL, writer );
-			}
-			catch( Exception e )
-			{
-				e.printStackTrace();
-			}
-		}
-		catch( Exception e )
-		{
-			// Jaxen sucks
-//			e.printStackTrace();
+			InsertMeta meta = new InsertMeta();
+			meta.setName( name );
+			meta.setPackage( pkg );
+			extractInsert( insertNode, meta );
+			inspectDatabaseForInsert( _conn, meta );
+			String retooledSQL = builder.getTree().toInputString();
+			List<String> choppedSQL = chopper( retooledSQL.trim() );
+			generateInsert( meta, choppedSQL, writer );
 		}
 
-		try
+		FadoParseNode updateNode = source.findFirst( "statement/update" );
+		if( updateNode != null )
 		{
-			Object updateNode =  commandContext.selectSingleNode( "/statement/update" );
-			try
-			{
-				UpdateMeta meta = new UpdateMeta();
-				meta.setName( name );
-				meta.setPackage( pkg );
-				extractUpdate( source, meta );
-				inspectDatabaseForUpdate( _conn, meta );
-				String retooledSQL = builder.getTree().toInputString();
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateUpdate( meta, choppedSQL, writer );
-			}
-			catch( Exception e )
-			{
-				e.printStackTrace();
-			}
-		}
-		catch( Exception e )
-		{
-			// Jaxen sucks
-//			e.printStackTrace();
+			UpdateMeta meta = new UpdateMeta();
+			meta.setName( name );
+			meta.setPackage( pkg );
+			extractUpdate( updateNode, meta );
+			inspectDatabaseForUpdate( _conn, meta );
+			String retooledSQL = builder.getTree().toInputString();
+			List<String> choppedSQL = chopper( retooledSQL.trim() );
+			generateUpdate( meta, choppedSQL, writer );
 		}
 	}
 	
 
-	private void extractSelect( FadoParseNode source, SelectMeta extract )
+	private void extractSelect( FadoParseNode selectNode, SelectMeta extract )
 		throws Exception
 	{
 		// Tables
-		extractSelectTables( source, extract );
+		extractSelectTables( selectNode, extract );
 		// Columns
-		extractSelectColumns( source, extract );
+		extractSelectColumns( selectNode, extract );
 		// Parameters
-		extractSelectParams( source, extract );
+		extractSelectParams( selectNode, extract );
 	}
 	
 	
 	// TODO support unary literals, need fix for '?' knockouts
-	private void extractInsert( FadoParseNode source, InsertMeta meta )
+	private void extractInsert( FadoParseNode insertNode, InsertMeta meta )
 		throws Exception
 	{
-		JXPathContext statementContext = JXPathContext.newContext( source );
-		String table = (String) statementContext.selectSingleNode( "/statement/insert/into/tableRef/text()" );
+		String table = insertNode.findFirstString( "into/tableRef" );
 		meta.setTable( table );
 		
 		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
-		List list = statementContext.selectNodes( "/statement/insert/columnList/columnName" );
-		for( Object item : list )
+		List<FadoParseNode> list = insertNode.find( "columnList/columnName" );
+		for( FadoParseNode item : list )
 		{
-			String name = getTokenText( (FadoParseNode) item );
+			String name = getTokenText( item );
 			columns.add( new InsertColumn( name ));
 		}
 		
-		List argh = statementContext.selectNodes( "/statement/insert/values/literal" );
+		List<FadoParseNode> argh = insertNode.find( "values/literal" );
 		
 		if( columns.size() != argh.size() )
 		{
@@ -325,14 +292,13 @@ public class Fado
 		}
 		
 		int nth = 0;
-		for( Object item : argh )
+		for( FadoParseNode item : argh )
 		{
-			FadoParseNode node = (FadoParseNode) item;
-			String literal = getTokenText( node );
+			String literal = getTokenText( item );
 			literal = trimQuotes( literal );
 			
 			// Replace original value with JDBC parameter '?'
-			setTokenText( node, "?" ); 
+			setTokenText( item, "?" ); 
 			
 			InsertColumn col = columns.get( nth );
 			col.setLiteral( literal );
@@ -342,81 +308,67 @@ public class Fado
 	}
 	
 	// TODO support unary literals, need fix for '?' knockouts
-	private void extractUpdate( FadoParseNode source, UpdateMeta meta )
+	private void extractUpdate( FadoParseNode updateNode, UpdateMeta meta )
 		throws Exception
 	{
-		JXPathContext statementContext = JXPathContext.newContext( source );
-		String table = (String) statementContext.selectSingleNode( "/statement/update/tableRef/text()" );
+		String table = updateNode.findFirstString( "tableRef" );
 		meta.setTable( table );
 		
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
-		List list = statementContext.selectNodes( "/statement/update/setter" );
-		for( Object setter : list )
+		List<FadoParseNode> list = updateNode.find( "setter" );
+		for( FadoParseNode setter : list )
 		{
-			JXPathContext setterContext = JXPathContext.newContext( setter );
-			FadoParseNode a = (FadoParseNode) setterContext.selectSingleNode( "/columnName" );
-			String name = getTokenText( a );
-			FadoParseNode b = (FadoParseNode) setterContext.selectSingleNode( "/literal" );
-			String literal = getTokenText( b );
+			String name = setter.findFirstString( "columnName" );
+			FadoParseNode literalNode = setter.findFirst( "literal" );
+			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
 			
 			// Replace original value with JDBC parameter '?'
-			setTokenText( b, "?" ); 
+			setTokenText( literalNode, "?" ); 
 
 			columns.add( new UpdateColumn( name, literal ));
 		}
 		meta.setColumns( columns );
 		
-		JXPathContext context = JXPathContext.newContext( source );
-		List ugh = context.selectNodes( "/statement/update/where" );
-		if( ugh.size() < 1 ) return;
-		
-		FadoParseNode where = (FadoParseNode) ugh.get( 0 );
-		JXPathContext whereContext = JXPathContext.newContext( where );
-		
-		List clist = whereContext.selectNodes( "//condition" );
-		for( Object object : clist )
+		FadoParseNode where = updateNode.findFirst( "where" );
+		if( where != null )
 		{
-			FadoParseNode condition = (FadoParseNode) object;
-			JXPathContext conditionContext = JXPathContext.newContext( condition );
-			List comparison = conditionContext.selectNodes( "comparison" );
-			if( comparison.size() == 1 )
+			List<FadoParseNode> clist = where.find( "**/condition" );
+			for( FadoParseNode condition : clist )
 			{
-				extractUpdateComparisonParams( (FadoParseNode) comparison.get( 0 ), meta );
+				List<FadoParseNode> comparison = condition.find( "comparison" );
+				if( comparison.size() == 1 )
+				{
+					extractUpdateComparisonParams( comparison.get( 0 ), meta );
+				}
+				List<FadoParseNode> in = condition.find( "in" );
+				if( in.size() == 1 )
+				{
+					extractUpdateINParams( in.get( 0 ), meta );
+				}
+				List<FadoParseNode> between = condition.find( "between" );
+				// TODO: extract BETWEEN params
 			}
-			List in = conditionContext.selectNodes( "in" );
-			if( in.size() == 1 )
-			{
-				extractUpdateINParams( (FadoParseNode) in.get( 0 ), meta );
-			}
-			List between = conditionContext.selectNodes( "between" );
 		}
-		
 	}
 	
-	public void extractSelectTables( FadoParseNode source, SelectMeta meta )
+	public void extractSelectTables( FadoParseNode selectNode, SelectMeta meta )
 	{
-		JXPathContext statementContext = JXPathContext.newContext( source );
-		List list = statementContext.selectNodes("/statement/select/from/fromItem" );
-		for( Object item : list )
+		List<FadoParseNode> list = selectNode.find( "from/fromItem" );
+		for( FadoParseNode item : list )
 		{
-			JXPathContext context = JXPathContext.newContext( item );
-			
-			String databaseName = (String) context.selectSingleNode( "/tableRef/databaseName/text()" );
-			String tableName = (String) context.selectSingleNode( "/tableRef/tableName/text()" );
-			String alias = (String) context.selectSingleNode( "/alias/text()" );
-//			System.out.printf( "database: %s, table: %s, alias: %s \n", databaseName, tableName, alias );
+			String databaseName = item.findFirstString( "tableRef/databaseName" );
+			String tableName = item.findFirstString( "tableRef/tableName" );
+			String alias = item.findFirstString( "alias" );
 			Table table = new Table( databaseName, tableName, alias );
 			meta.table( table );
 		}
 	}
 	
-	public void extractSelectColumns( FadoParseNode source, SelectMeta meta )
+	public void extractSelectColumns( FadoParseNode selectNode, SelectMeta meta )
 		throws Exception
 	{
-		JXPathContext statementContext = JXPathContext.newContext( source );
-		
-		String allStar = (String) statementContext.selectSingleNode("/statement/select/itemList/text()" );
+		String allStar = selectNode.findFirstString( "itemList" );
 		if( "*".equals( allStar ))
 		{
 			for( Table table : meta.getTables() )
@@ -426,13 +378,11 @@ public class Fado
 		}
 		else
 		{
-			List list = statementContext.selectNodes("/statement/select/itemList/item" );
-			for( Object item : list )
+			List<FadoParseNode> list = selectNode.find( "itemList/item" );
+			for( FadoParseNode item : list )
 			{
-				JXPathContext itemContext = JXPathContext.newContext( item );
-				
 				// All columns from a table, eg alias.*
-				String tableAlias = (String) itemContext.selectSingleNode( "/allColumns/tableAlias/text()" );
+				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
 				if( tableAlias != null )
 				{
 					Table table = meta.getTableByAlias( tableAlias );
@@ -442,13 +392,12 @@ public class Fado
 				}
 				
 				// Single column reference, eg alias.FamilyName
-				String columnName = (String) itemContext.selectSingleNode( "/value/columnRef/columnName/text()" );
-				
+				String columnName = item.findFirstString( "value/columnRef/columnName" );
 				if( columnName != null )
 				{
 					columnName = trimQuotes( columnName );
-					tableAlias = (String) itemContext.selectSingleNode( "/value/columnRef/tableAlias/text()" );
-					String columnAlias = (String) itemContext.selectSingleNode( "/alias/text()" );
+					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
+					String columnAlias =  item.findFirstString( "alias" );
 					Table table = meta.getTableByAlias( tableAlias );
 					Column column = new Column( table, columnName, columnAlias );
 					meta.tempColumn( column );
@@ -462,51 +411,47 @@ public class Fado
 		}
 	}
 	
-	public void extractSelectParams( FadoParseNode source, SelectMeta meta )
+	public void extractSelectParams( FadoParseNode selectNode, SelectMeta meta )
 		throws FadoException
 	{
-		JXPathContext context = JXPathContext.newContext( source );
-		List ugh = context.selectNodes( "/statement/select/where" );
-		if( ugh.size() < 1 ) return;
-		
-		FadoParseNode where = (FadoParseNode) ugh.get( 0 );
-		JXPathContext whereContext = JXPathContext.newContext( where );
-		
-		List list = whereContext.selectNodes( "//condition" );
-		for( Object object : list )
+		FadoParseNode where = selectNode.findFirst( "where" );
+
+		if( where != null )
 		{
-			FadoParseNode condition = (FadoParseNode) object;
-			JXPathContext conditionContext = JXPathContext.newContext( condition );
-			List comparison = conditionContext.selectNodes( "comparison" );
-			if( comparison.size() == 1 )
+			List<FadoParseNode> clist = where.find( "**/condition" );
+			for( FadoParseNode condition : clist )
 			{
-				extractSelectComparisonParams( (FadoParseNode) comparison.get( 0 ), meta );
+				List<FadoParseNode> comparison = condition.find( "comparison" );
+				if( comparison.size() == 1 )
+				{
+					extractSelectComparisonParams( comparison.get( 0 ), meta );
+				}
+				List<FadoParseNode> in = condition.find( "in" );
+				if( in.size() == 1 )
+				{
+					extractSelectINParams( in.get( 0 ), meta );
+				}
+				List<FadoParseNode> between = condition.find( "between" );
+				// TODO: extract BETWEEN params
 			}
-			List in = conditionContext.selectNodes( "in" );
-			if( in.size() == 1 )
-			{
-				extractSelectINParams( (FadoParseNode) in.get( 0 ), meta );
-			}
-			List between = conditionContext.selectNodes( "between" );
 		}
+
 	}
 	
 	// Comparisons, eg column = 'abc'
 	public void extractSelectComparisonParams( FadoParseNode comparison, SelectMeta meta )
 		throws TableNotFoundException
 	{
-		JXPathContext comparisonContext = JXPathContext.newContext( comparison );
-		List columns = comparisonContext.selectNodes( "//columnRef" );
-		List literals = comparisonContext.selectNodes( "//literal");
+		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
+		List<FadoParseNode> literals = comparison.find( "**/literal");
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 //			System.out.println( "found comparison: " + comparison.toInputString() );
-			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
-			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
-			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
-			String tableAlias = (String) columnRefContext.selectSingleNode( "/tableAlias/text()" );
+			FadoParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
+			String tableAlias = columnRef.findFirstString( "tableAlias" );
 
-			FadoParseNode literalNode = (FadoParseNode) literals.get( 0 );
+			FadoParseNode literalNode = literals.get( 0 );
 			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
 			
@@ -528,22 +473,19 @@ public class Fado
 	public void extractSelectINParams( FadoParseNode in, SelectMeta meta ) 
 		throws FadoException
 	{
-		JXPathContext inContext = JXPathContext.newContext( in );
-		List columns = inContext.selectNodes( "//columnRef" );
-		List literals = inContext.selectNodes( "//literal");
+		List<FadoParseNode> columns = in.find( "**/columnRef" );
+		List<FadoParseNode> literals = in.find( "**/literal");
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
-			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
-			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
-			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
-			String tableAlias = (String) columnRefContext.selectSingleNode( "/tableAlias/text()" );
+			FadoParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
+			String tableAlias = columnRef.findFirstString( "tableAlias" );
 			Table table = meta.getTableByAlias( tableAlias );
 
 			IN param = new IN( table, column );
 			
-			for( Object object : literals )
+			for( FadoParseNode literal : literals )
 			{
-				FadoParseNode literal = (FadoParseNode) object;
 				String text = getTokenText( literal );
 				text = trimQuotes( text );
 				
@@ -568,17 +510,15 @@ public class Fado
 	public void extractUpdateComparisonParams( FadoParseNode comparison, UpdateMeta meta )
 		throws TableNotFoundException
 	{
-		JXPathContext comparisonContext = JXPathContext.newContext( comparison );
-		List columns = comparisonContext.selectNodes( "//columnRef" );
-		List literals = comparisonContext.selectNodes( "//literal");
+		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
+		List<FadoParseNode> literals = comparison.find( "**/literal");
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 	//		System.out.println( "found comparison: " + comparison.toInputString() );
-			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
-			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
-			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
+			FadoParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
 	
-			FadoParseNode literalNode = (FadoParseNode) literals.get( 0 );
+			FadoParseNode literalNode = literals.get( 0 );
 			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
 			
@@ -599,22 +539,19 @@ public class Fado
 	public void extractUpdateINParams( FadoParseNode in, UpdateMeta meta ) 
 		throws FadoException
 	{
-		JXPathContext inContext = JXPathContext.newContext( in );
-		List columns = inContext.selectNodes( "//columnRef" );
-		List literals = inContext.selectNodes( "//literal");
+		List<FadoParseNode> columns = in.find( "**/columnRef" );
+		List<FadoParseNode> literals = in.find( "**/literal");
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
-			FadoParseNode columnRef = (FadoParseNode) columns.get( 0 );
-			JXPathContext columnRefContext = JXPathContext.newContext( columnRef );
-			String column = (String) columnRefContext.selectSingleNode( "/columnName/text()" );
+			FadoParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
 //			String tableAlias = (String) columnRefContext.selectSingleNode( "/tableAlias/text()" );
 //			Table table = meta.getTableByAlias( tableAlias );
 
 			IN param = new IN( null, column );
 			
-			for( Object object : literals )
+			for( FadoParseNode literal : literals )
 			{
-				FadoParseNode literal = (FadoParseNode) object;
 				String text = getTokenText( literal );
 				text = trimQuotes( text );
 				
