@@ -73,18 +73,18 @@ public abstract class
 		return success;
 	}
 	
-	public final boolean nextNoFail()
-	{
-		try
-		{
-			return next();
-		}
-		catch( SQLException e )
-		{
-			e.printStackTrace();
-		}
-		return false;
-	}
+//	public final boolean nextNoFail()
+//	{
+//		try
+//		{
+//			return next();
+//		}
+//		catch( SQLException e )
+//		{
+//			e.printStackTrace();
+//		}
+//		return false;
+//	}
 	
 	public abstract void updateValues( boolean success ) throws SQLException;
 
@@ -125,12 +125,15 @@ public abstract class
 	 * 
 	 * @throws SQLException
 	 */
-	public void done()
+	public void close()
 		throws SQLException
 	{
 		updateValues( false );
-		_resultSet.close();
-		_resultSet = null;
+		if( _resultSet != null )
+		{
+			_resultSet.close();
+			_resultSet = null;
+		}
 		_executed = false;
 		
 	}

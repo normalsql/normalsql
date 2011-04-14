@@ -23,8 +23,6 @@ import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.Token;
-//import org.apache.commons.jxpath.JXPathContext;
-//import org.apache.commons.jxpath.ri.JXPathContextReferenceImpl;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -545,8 +543,6 @@ public class Fado
 		{
 			FadoParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
-//			String tableAlias = (String) columnRefContext.selectSingleNode( "/tableAlias/text()" );
-//			Table table = meta.getTableByAlias( tableAlias );
 
 			IN param = new IN( null, column );
 			
