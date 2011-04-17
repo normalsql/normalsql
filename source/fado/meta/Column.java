@@ -66,7 +66,9 @@ public class
 	
 	public String getAliasOrName()
 	{
-		return getAlias() != null ? getAlias() : getName(); 
+		String result = getAlias() != null ? getAlias() : getName();
+		// TODO: Convert first char to lowercase, java style
+		return result; 
 	}
 	
 	private int _sqlType;

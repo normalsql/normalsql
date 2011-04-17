@@ -143,7 +143,6 @@ public class Fado
 			try
 			{
 				String name = getFileName( sourceFile );
-				FileReader reader = new FileReader( sourceFile );
 				File targetFile = new File( targetRoot, name + ".java" );
 				long a = sourceFile.lastModified();
 				long b = targetFile.lastModified();
@@ -151,11 +150,7 @@ public class Fado
 				{
 					System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
 					// TODO: This is bullshit, wipes out existing file, pass File instance instead
-					FileWriter writer = new FileWriter( targetFile );
-					extract( pkg, name, reader, writer );
-					writer.flush();
-					writer.close();
-					reader.close();
+					extract( pkg, name, sourceFile, targetFile );
 				}
 				else
 				{
@@ -194,9 +189,10 @@ public class Fado
 	
 	public boolean displayTree = true;
 	
-	private void extract( String pkg, String name, Reader reader, Writer writer ) 
+	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
 		throws Exception
 	{
+		FileReader reader = new FileReader( sourceFile );
 		
 		ParseTreeBuilder builder = new ParseTreeBuilder( "GenericSQL.g" );
 		CharStream cs = new ANTLRReaderStream( reader );
@@ -205,7 +201,11 @@ public class Fado
 		GenericSQLParser parser = new GenericSQLParser( tokens, builder );
 
 		parser.statement();
+		reader.close();
+
 		
+		String temp = builder.getTree().toInputString();
+		List<String> originalSQL = chopper( temp.trim() );
 		FadoParseNode source = builder.getTree();
 		
 		if( displayTree )
@@ -219,12 +219,14 @@ public class Fado
 			SelectMeta meta = new SelectMeta();
 			meta.setName( name );
 			meta.setPackage( pkg );
+			meta.setOriginalFileName( sourceFile.toString() );
+			meta.setOriginalSQL( originalSQL );
 			extractSelect( selectNode, meta );
 			inspectDatabaseForSelect( _conn, meta );
 			
 			String retooledSQL = builder.getTree().toInputString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateSelect( meta, choppedSQL, writer );
+			generateSelect( meta, choppedSQL, targetFile );
 		}
 		
 		FadoParseNode insertNode = source.findFirst( "statement/insert" );
@@ -233,11 +235,13 @@ public class Fado
 			InsertMeta meta = new InsertMeta();
 			meta.setName( name );
 			meta.setPackage( pkg );
+			meta.setOriginalFileName( sourceFile.toString() );
+			meta.setOriginalSQL( originalSQL );
 			extractInsert( insertNode, meta );
 			inspectDatabaseForInsert( _conn, meta );
 			String retooledSQL = builder.getTree().toInputString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateInsert( meta, choppedSQL, writer );
+			generateInsert( meta, choppedSQL, targetFile );
 		}
 
 		FadoParseNode updateNode = source.findFirst( "statement/update" );
@@ -246,11 +250,13 @@ public class Fado
 			UpdateMeta meta = new UpdateMeta();
 			meta.setName( name );
 			meta.setPackage( pkg );
+			meta.setOriginalFileName( sourceFile.toString() );
+			meta.setOriginalSQL( originalSQL );
 			extractUpdate( updateNode, meta );
 			inspectDatabaseForUpdate( _conn, meta );
 			String retooledSQL = builder.getTree().toInputString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateUpdate( meta, choppedSQL, writer );
+			generateUpdate( meta, choppedSQL, targetFile );
 		}
 	}
 	
@@ -758,10 +764,9 @@ public class Fado
 	}
 
 
-	public void generateSelect( SelectMeta meta, List<String> sql, Writer writer )
+	public void generateSelect( SelectMeta meta, List<String> sql, File targetFile )
 		throws Exception
 	{
-		StringWriter sw = new StringWriter();
 		List<Column> columns = meta.getFinalColumns();
 		List<Condition> conditions = meta.getConditions();
 		
@@ -772,12 +777,16 @@ public class Fado
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
+		context.put( "originalfile", meta.getOriginalFileName() );
+		context.put( "originalsql", meta.getOriginalSQL() );
 		
-		_selectTemplate.merge( context, sw );
+		FileWriter writer = new FileWriter( targetFile );
 		_selectTemplate.merge( context, writer );
+		writer.flush();
+		writer.close();
 	}
 
-	public void generateInsert( InsertMeta meta, List<String> sql, Writer writer )
+	public void generateInsert( InsertMeta meta, List<String> sql, File targetFile )
 		throws Exception
 	{
 		List<InsertColumn> columns = meta.getColumns();
@@ -788,11 +797,16 @@ public class Fado
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "date", new Date() );
-		
+		context.put( "originalfile", meta.getOriginalFileName() );
+		context.put( "originalsql", meta.getOriginalSQL() );
+
+		FileWriter writer = new FileWriter( targetFile );
 		_insertTemplate.merge( context, writer );
+		writer.flush();
+		writer.close();
 	}
 
-	public void generateUpdate( UpdateMeta meta, List<String> sql, Writer writer )
+	public void generateUpdate( UpdateMeta meta, List<String> sql, File targetFile )
 		throws Exception
 	{
 		List<UpdateColumn> columns = meta.getColumns();
@@ -805,8 +819,13 @@ public class Fado
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
+		context.put( "originalfile", meta.getOriginalFileName() );
+		context.put( "originalsql", meta.getOriginalSQL() );
 		
+		FileWriter writer = new FileWriter( targetFile );
 		_updateTemplate.merge( context, writer );
+		writer.flush();
+		writer.close();
 	}
 
 	public String getTokenText( FadoParseNode node )

@@ -88,4 +88,29 @@ public class
 	{
 		return _rewrite;
 	}
+	
+	
+	private String _originalFileName = null;
+	
+	public void setOriginalFileName( String originalFileName )
+	{
+		_originalFileName = originalFileName;
+	}
+	
+	public String getOriginalFileName()
+	{
+		return _originalFileName;
+	}
+	
+	private List<String> _originalSQL = null;
+	
+	public void setOriginalSQL( List<String> originalSQL )
+	{
+		_originalSQL = originalSQL;
+	}
+	
+	public List<String> getOriginalSQL()
+	{
+		return _originalSQL;
+	}
 }
