@@ -1,5 +1,9 @@
 package fado.meta;
 
+import static java.lang.Character.isLetter;
+import static java.lang.Character.isLowerCase;
+import static java.lang.Character.toLowerCase;
+
 public class 
 	UpdateColumn
 {
@@ -13,6 +17,19 @@ public class
 	
 	public String getName() { return _name; }
 	
+	public String getNameAsVariable()
+	{
+		String result = getName();
+		char first = result.charAt( 0 );
+		if( isLetter( first ) && !isLowerCase( first ))
+		{
+			result = new StringBuffer( result.length() )
+				.append( toLowerCase( first ) )
+				.append( result.substring( 1 ))
+				.toString();
+		}
+		return result; 
+	}
 	private int _sqlType;
 	
 	public int getSQLType()

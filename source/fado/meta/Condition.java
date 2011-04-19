@@ -1,5 +1,9 @@
 package fado.meta;
 
+import static java.lang.Character.isLetter;
+import static java.lang.Character.isLowerCase;
+import static java.lang.Character.toLowerCase;
+
 public abstract class 
 	Condition 
 {
@@ -21,6 +25,21 @@ public abstract class
 	
 	private String _column = null;
 	public final String getColumn() { return _column; } 
+	
+	public String getColumnAsVariable()
+	{
+		String result = getColumn();
+		char first = result.charAt( 0 );
+		if( isLetter( first ) && !isLowerCase( first ))
+		{
+			result = new StringBuffer( result.length() )
+				.append( toLowerCase( first ) )
+				.append( result.substring( 1 ))
+				.toString();
+		}
+		return result; 
+	}
+	
 	
 	private int _sqlType = Integer.MIN_VALUE;
 	public final void setSQLType( int sqlType ) { _sqlType = sqlType; }

@@ -29,37 +29,37 @@ public class
 		return _package;
 	}
 	
-	public enum Statement
-	{
-		SELECT, INSERT, DELETE, UPDATE
-	}
+//	public enum Statement
+//	{
+//		SELECT, INSERT, DELETE, UPDATE
+//	}
 	
-	private Statement _statement = null;
-
-	public void select()
-	{
-		_statement = Statement.SELECT;
-	}
-	
-	public void insert()
-	{
-		_statement = Statement.INSERT;
-	}
-	
-	public void delete()
-	{
-		_statement = Statement.DELETE;
-	}
-	
-	public void update()
-	{
-		_statement = Statement.UPDATE;
-	}
-
-	public Statement getStatement()
-	{
-		return _statement;
-	}
+//	private Statement _statement = null;
+//
+//	public void select()
+//	{
+//		_statement = Statement.SELECT;
+//	}
+//	
+//	public void insert()
+//	{
+//		_statement = Statement.INSERT;
+//	}
+//	
+//	public void delete()
+//	{
+//		_statement = Statement.DELETE;
+//	}
+//	
+//	public void update()
+//	{
+//		_statement = Statement.UPDATE;
+//	}
+//
+//	public Statement getStatement()
+//	{
+//		return _statement;
+//	}
 	
 	/** Temporary columns are what's found in the parsed SQL command. When found,
 	 * they're moved to the final columns list.

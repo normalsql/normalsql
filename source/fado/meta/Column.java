@@ -1,5 +1,7 @@
 package fado.meta;
 
+import static java.lang.Character.*;
+
 public class 
 	Column
 {
@@ -64,10 +66,23 @@ public class
 	private String _alias;
 	public String getAlias() { return _alias; }
 	
-	public String getAliasOrName()
+	public String getNameAsMethod()
 	{
 		String result = getAlias() != null ? getAlias() : getName();
-		// TODO: Convert first char to lowercase, java style
+		return result; 
+	}
+	
+	public String getNameAsVariable()
+	{
+		String result = getNameAsMethod();
+		char first = result.charAt( 0 );
+		if( isLetter( first ) && !isLowerCase( first ))
+		{
+			result = new StringBuffer( result.length() )
+				.append( toLowerCase( first ) )
+				.append( result.substring( 1 ))
+				.toString();
+		}
 		return result; 
 	}
 	

@@ -44,18 +44,18 @@ extends
 	}
 	
 #foreach( $column in $columns )
-	private ${column.JavaType} _${column.Name} = ${column.InitializerValue};
+	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
 #end
 
 #foreach( $column in $columns )
-	public void set${column.Name}( ${column.JavaType} ${column.Name} )
+	public void set${column.Name}( ${column.JavaType} ${column.NameAsVariable} )
 	{
-		_${column.Name} = ${column.Name};
+		_${column.NameAsVariable} = ${column.NameAsVariable};
 	}
 	
 	public ${column.JavaType} get${column.Name}()
 	{
-		return _${column.Name};
+		return _${column.NameAsVariable};
 	}	
 
 #end
