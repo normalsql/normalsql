@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Stack;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
@@ -91,7 +92,7 @@ public class Fado
 			String msg = sourceDir.getCanonicalPath().toString() + " (filespec: " + source + ")";
 			throw new FileNotFoundException( msg );
 		}
-		ArrayList<String> path = new ArrayList<String>();
+		Stack<String> path = new Stack<String>();
 		crawl( sourceDir, targetDir, path );
 		_conn.close();
 
@@ -133,7 +134,7 @@ public class Fado
 	// TODO: Create command line option for this? eg. for a clean build operation
 	private boolean _alwaysOverwrite = true;
 	
-	public void crawl( File sourceRoot, File targetRoot, List<String> path )
+	public void crawl( File sourceRoot, File targetRoot, Stack<String> path )
 	{
 		targetRoot.mkdirs();
 		String pkg = join( path, "." );
@@ -169,9 +170,10 @@ public class Fado
 		for( File child : childDirList )
 		{
 			String name = child.getName();
-			path.add( name );
+			path.push( name );
 			File targetDir = new File( targetRoot, name );
 			crawl( child, targetDir, path );
+			path.pop();
 //			System.out.println( child.toString() + " : " + child.getName() );
 		}
 	}
