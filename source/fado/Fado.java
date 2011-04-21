@@ -102,7 +102,9 @@ public class Fado
 			if( file.isDirectory() ) return false;
 			String name = file.getName();
 			if( name.startsWith( "." )) return false;
-			return name.endsWith( ".sql" );
+			if( !name.endsWith( ".sql" )) return false;
+			if( name.toLowerCase().contains( "create" )) return false;
+			return true;
 		}
 	};
 	
