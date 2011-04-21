@@ -1,6 +1,7 @@
 package fado.meta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class 
@@ -81,6 +82,7 @@ public class
 	}
 	
 	private ArrayList<Column> _columns = new ArrayList<Column>();
+	private HashMap<String,Column> _columnMap = new HashMap<String,Column>();
 	
 	public void addFinalColumn( Column column )
 	{
@@ -89,11 +91,18 @@ public class
 			throw new NullPointerException( "column" );
 		}
 		_columns.add( column );
+		String key = column.getName();
+		_columnMap.put( key, column );
 	}
 	
 	public List<Column> getFinalColumns()
 	{
 		return _columns;
+	}
+	
+	public Column getFinalColumn( String key )
+	{
+		return _columnMap.get( key );
 	}
 	
 	private ArrayList<Table> _tables = new ArrayList<Table>(); 
@@ -115,16 +124,23 @@ public class
 	public Table getTableByAlias( String alias )
 		throws TableNotFoundException
 	{
-		if( alias == null ) return null;
-
+		List<Table> tables = getTables();
+		
 		Table result = null;
-
-		for( Table table : getTables() )
+		
+		if( alias == null ) 
 		{
-			if( alias.equals( table.getAlias() ))
+			result = tables.get( 0 );
+		}
+		else
+		{
+			for( Table table : tables )
 			{
-				result = table;
-				break;
+				if( alias.equals( table.getAlias() ))
+				{
+					result = table;
+					break;
+				}
 			}
 		}
 		

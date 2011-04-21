@@ -5,10 +5,7 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Reader;
 import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -39,7 +36,6 @@ import fado.meta.SelectMeta;
 import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
-import fado.meta.TypeConverter;
 import fado.meta.UpdateColumn;
 import fado.meta.UpdateMeta;
 import fado.parse.FadoParseNode;
@@ -150,7 +146,6 @@ public class Fado
 				if( _alwaysOverwrite || !targetFile.exists() || a > b )
 				{
 					System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
-					// TODO: This is bullshit, wipes out existing file, pass File instance instead
 					extract( pkg, name, sourceFile, targetFile );
 				}
 				else
@@ -189,7 +184,7 @@ public class Fado
 		return name;
 	}
 	
-	public boolean displayTree = true;
+	public boolean displayTree = false;
 	
 	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
 		throws Exception
@@ -317,7 +312,8 @@ public class Fado
 	private void extractUpdate( FadoParseNode updateNode, UpdateMeta meta )
 		throws Exception
 	{
-		String table = updateNode.findFirstString( "tableRef" );
+		String tableName = updateNode.findFirstString( "tableRef" );
+		Table table = new Table( null, tableName, null );
 		meta.setTable( table );
 		
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
@@ -463,13 +459,11 @@ public class Fado
 			
 			// Replace original value with JDBC parameter '?'
 			setTokenText( literalNode, "?" ); 
-			int literalType = getTokenType( literalNode );
-			
-			int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
+//			int literalType = getTokenType( literalNode );
 			
 			Table table = meta.getTableByAlias( tableAlias );
 
-			Comparison c = new Comparison( table, column, sqlType, literal );
+			Comparison c = new Comparison( table, column, literal );
 			meta.comparison( c );
 		}
 	}
@@ -497,10 +491,9 @@ public class Fado
 				
 				// Replace original value with JDBC parameter '?'
 				setTokenText( literal, "?" ); 
-				int literalType = getTokenType( literal );
+//				int literalType = getTokenType( literal );
 				
-				int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
-				param.addValue( text, sqlType );
+				param.addValue( text );
 			}
 			meta.comparison( param );
 		}
@@ -530,12 +523,10 @@ public class Fado
 			
 			// Replace original value with JDBC parameter '?'
 			setTokenText( literalNode, "?" ); 
-			int literalType = getTokenType( literalNode );
+//			int literalType = getTokenType( literalNode );
+			Table table = meta.getTable();
 			
-			int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
-			
-	
-			Comparison c = new Comparison( null, column, sqlType, literal );
+			Comparison c = new Comparison( table, column, literal );
 			meta.addCondition( c );
 		}
 	}
@@ -561,10 +552,8 @@ public class Fado
 				
 				// Replace original value with JDBC parameter '?'
 				setTokenText( literal, "?" ); 
-				int literalType = getTokenType( literal );
 				
-				int sqlType = TypeConverter.fromLiteralTypeToSqlType( literalType );
-				param.addValue( text, sqlType );
+				param.addValue( text );
 			}
 			meta.addCondition( param );
 		}
@@ -660,6 +649,30 @@ public class Fado
 					break;
 			}
 		}
+		
+		for( Condition condition : extract.getConditions() )
+		{
+			String tableName = condition.getTable().getName().toUpperCase();
+			String columnName = condition.getColumn().toUpperCase();
+			columnPS.setString( 1, tableName );
+			columnPS.setString( 2, columnName );
+		
+			if( columnPS.execute() )
+			{
+				ResultSet columnRS = columnPS.getResultSet();
+				if( columnRS.next() )
+				{
+					int sqlType = columnRS.getInt( "DATA_TYPE" );
+					condition.setSQLType( sqlType );
+				}
+				else
+				{
+					throw new Exception( "column not found: "+ columnName );
+				}
+				columnRS.close();
+			}
+		}
+		
 		tablesPS.close();
 		columnPS.close();
 	}
@@ -721,7 +734,7 @@ public class Fado
 		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
 	
-		String tableName = extract.getTable().toUpperCase();
+		String tableName = extract.getTable().getName().toUpperCase();
 		tablesPS.setString( 1, tableName );
 		if( tablesPS.execute() )
 		{
@@ -760,7 +773,29 @@ public class Fado
 				throw new Exception( "table not found: "+ tableName );
 			}
 		}
+
+		for( Condition condition : extract.getConditions() )
+		{
+			String columnName = condition.getColumn().toUpperCase();
+			columnPS.setString( 1, tableName );
+			columnPS.setString( 2, columnName );
 		
+			if( columnPS.execute() )
+			{
+				ResultSet columnRS = columnPS.getResultSet();
+				if( columnRS.next() )
+				{
+					int sqlType = columnRS.getInt( "DATA_TYPE" );
+					condition.setSQLType( sqlType );
+				}
+				else
+				{
+					throw new Exception( "column not found: "+ columnName );
+				}
+				columnRS.close();
+			}
+		}
+
 		tablesPS.close();
 		columnPS.close();
 	}
@@ -849,14 +884,6 @@ public class Fado
 		token.setText( text );
 	}
 
-	public int getTokenType( FadoParseNode node )
-	{
-		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-		Token token = temp.getToken();
-		int type = token.getType();
-		return type;
-	}
-	
 	public String trimQuotes( String text )
 	{
 		String result = text;

@@ -5,9 +5,9 @@ public class
 extends
 	Condition
 {
-	public Comparison( Table table, String accessor, int sqlType, String value )
+	public Comparison( Table table, String accessor, String value )
 	{
-		super( table, accessor, sqlType );
+		super( table, accessor );
 		_value = value;
 	}
 	

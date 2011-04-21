@@ -41,9 +41,9 @@ public class
 		return _columns;
 	}
 	
-	private String _table = null; 
+	private Table _table = null; 
 	
-	public void setTable( String table )
+	public void setTable( Table table )
 	{
 		if( table == null )
 		{
@@ -52,7 +52,7 @@ public class
 		_table = table;
 	}
 	
-	public String getTable()
+	public Table getTable()
 	{
 		return _table;
 	}

@@ -7,12 +7,12 @@ import static java.lang.Character.toLowerCase;
 public abstract class 
 	Condition 
 {
-	public Condition( Table table, String column, int sqlType )
-	{
-		_table = table;
-		_column = column;
-		_sqlType = sqlType;
-	}
+//	public Condition( Table table, String column, int sqlType )
+//	{
+//		_table = table;
+//		_column = column;
+//		_sqlType = sqlType;
+//	}
 	
 	public Condition( Table table, String column )
 	{

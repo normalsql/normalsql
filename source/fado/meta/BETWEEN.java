@@ -5,9 +5,9 @@ public class
 extends
 	Condition
 {
-	public BETWEEN( Table table, String accessor, int sqlType, String left, String right )
+	public BETWEEN( Table table, String accessor, String left, String right )
 	{
-		super( table, accessor, sqlType );
+		super( table, accessor );
 		setLeft( left );
 		setRight( right );
 	}

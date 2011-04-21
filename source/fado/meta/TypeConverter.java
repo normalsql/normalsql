@@ -31,12 +31,6 @@ import static java.sql.Types.TINYINT;
 import static java.sql.Types.VARBINARY;
 import static java.sql.Types.VARCHAR;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-
-import fado.parse.GenericSQLLexer;
-
 public class 
 	TypeConverter 
 {
@@ -440,28 +434,4 @@ public class
 		}
 		return result;
 	}
-
-	public static int fromLiteralTypeToSqlType( int literalType )
-	{
-		int sqlType = java.sql.Types.TIMESTAMP;
-		switch( literalType )
-		{
-			case GenericSQLLexer.Timestamp:
-				sqlType = java.sql.Types.TIMESTAMP;
-				break;
-			case GenericSQLLexer.String:
-				sqlType = java.sql.Types.VARCHAR;
-				break;
-			case GenericSQLLexer.Float:
-				sqlType = java.sql.Types.REAL;
-				break;
-			case GenericSQLLexer.Integer:
-				sqlType = java.sql.Types.INTEGER;
-				break;
-			default:
-				break;
-		}
-		return sqlType;
-	}	
-
 }
