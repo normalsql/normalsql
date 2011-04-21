@@ -73,19 +73,6 @@ public abstract class
 		return success;
 	}
 	
-//	public final boolean nextNoFail()
-//	{
-//		try
-//		{
-//			return next();
-//		}
-//		catch( SQLException e )
-//		{
-//			e.printStackTrace();
-//		}
-//		return false;
-//	}
-	
 	public abstract void updateValues( boolean success ) throws SQLException;
 
 	public int count()
