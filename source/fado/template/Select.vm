@@ -8,7 +8,6 @@
 ## columns - columns found in source SQL as List<fado.meta.Column>
 ## conditions - conditions found in source SQL as List<fado.meta.Condition>
 ## date - Fado's timestamp
-
 /**
 
 ${className}.java   ${date}
@@ -92,7 +91,7 @@ extends
 	}
 
 #elseif( $condition.isIN() )
-	private ${type}[] _${name}List = new ${type}[] { $condition.getValueAsCode() };
+	private ${type}[] _${vari}List = new ${type}[] { $condition.getValueAsCode() };
 	private int _${vari}Count = 0;
 	public void add${name}Param( ${type} ${vari} )
 	{
@@ -184,7 +183,15 @@ extends
 		String result = getSQL();
 #foreach( $condition in $conditions )
 #set( $name = $condition.getColumn() )
+#if( $condition.isIN() )
+#set( $size = $condition.getValues().size() - 1 )
+#foreach( $abc in [0..$size] )
+#set( $nth = $nth + 1 )
+		result = result.replaceFirst( "\\?", quotifyString( get${name}Param( ${abc} )));
+#end
+#else
 		result = result.replaceFirst( "\\?", quotifyString( get${name}Param() ));
+#end
 #end
 		return result;
 	}

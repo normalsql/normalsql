@@ -1,6 +1,11 @@
 CODE
 
-Build order: test source SQL, generate wrapper, test wrapper, compare source and generated resultsets
+Build order: 
+	test source SQL, 
+	generate wrapper (only part working thus far)
+	test wrapper, 
+	compare source and generated resultsets
+	
 Eclipse plugin
 Generated code has test method
 Generated code has verify schema method
@@ -8,11 +13,20 @@ Add runtime "tested" flag to generated code
 Add BETWEEN comparison support
 Add LIKE comparison support
 Add support for date (et al) data type condition parameters
-Replace use of xpath lib with my glob stuff
 Add null tests to generated accessors for "not null" columns
 When column, table, etc not found, suggest alternative
 	"column 'appel' not found in table 'fruit', did you mean 'apple'?"
 For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
+ID Generators
+	Detect identity columns for inserts, updates
+Figure out something for transactions 
+	maybe nothing, just use JDBC
+	
+GRAMMARS
+
+Full SQL-92
+TransactSQL
+unit tests
 
 DOCS
 
