@@ -127,4 +127,13 @@ public class
 		return result;
 		
 	}
+
+	@Override
+	public String toString()
+	{
+		return "Column [_style=" + _style + ", _table=" + _table + ", _name=" + _name + ", _alias=" + _alias
+				+ ", _sqlType=" + _sqlType + ", _sqlTypeName=" + _sqlTypeName + "]";
+	}
+	
+	
 }

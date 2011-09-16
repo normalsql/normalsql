@@ -28,30 +28,164 @@ package ${packageName};
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.sql.*;
-import fado.template.AbstractSelect;
 
 public class 
 	${className}
-extends
-	AbstractSelect
 {
+	protected Connection __connection = null;
+
 	public ${className}( Connection connection )
-		throws Exception
 	{
-		super( connection );
+		__connection = connection;
 	}
 	
-#foreach( $column in $columns )
-	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
-#end
+	private int __scrolling = ResultSet.TYPE_SCROLL_SENSITIVE;
 	
-	public void updateValues( boolean success )
+	public void setScrolling( int scrolling )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__scrolling = scrolling;
+	}
+	
+	public int getScrolling()
+	{
+		return __scrolling;
+	}
+	
+	private int __concurrency = ResultSet.CONCUR_UPDATABLE;
+	
+	public void setConcurrency( int concurrency )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__concurrency = concurrency;
+	}
+	
+	public int getConcurrency()
+	{
+		return __concurrency;
+	}
+	
+	protected PreparedStatement __prepared = null;
+
+	protected final PreparedStatement getPreparedStatement()
+		throws SQLException
+	{
+		if( __prepared == null )
+		{
+			String sql = getSQL();
+			int scrolling = getScrolling();
+			int concurrency = getConcurrency();
+			__prepared = __connection.prepareStatement( sql, scrolling, concurrency );
+
+		}
+		return __prepared;
+	}
+
+	protected boolean __executed = false;
+	
+	public final boolean execute()
+		throws SQLException
+	{
+		boolean success = false;
+		if( !__executed )
+		{
+			__executed = true;
+			PreparedStatement statement = getPreparedStatement();
+			setParameters( statement );
+			success = statement.execute();
+			if( success )
+			{
+				__resultSet = statement.getResultSet();
+			}
+		}
+		return success;
+	}
+
+	/**
+	 * Done with current response (ResultSet), clears this instance, prior to reuse.
+	 * 
+	 * @throws SQLException
+	 */
+	public void close()
+		throws SQLException
+	{
+		getNextRow( false );
+		if( __resultSet != null )
+		{
+			__resultSet.close();
+			__resultSet = null;
+		}
+		__executed = false;
+		
+	}
+
+	protected ResultSet __resultSet = null;
+
+	public final ResultSet getResultSet()
+	{
+		return __resultSet;
+	}
+	
+	public final boolean next()
+		throws SQLException
+	{
+		execute();
+		
+		boolean success = false;
+		if( __resultSet != null )
+		{
+			success = __resultSet.next();
+			getNextRow( success );
+
+		}
+		return success;
+	}
+	
+	public int count()
+	{
+		int result = 0;
+		try
+		{
+			execute();
+			ResultSet rs = getResultSet();
+			int current = rs.getRow();
+			if( rs.last() )
+			{
+				result = rs.getRow();
+				if( current == 0 )
+				{
+					rs.beforeFirst();
+				}
+				else
+				{
+					rs.absolute( current );
+				}
+			}
+				
+		}
+		catch( SQLException e )
+		{
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public void getNextRow( boolean success )
 		throws SQLException
 	{
 		if( success )
 		{
+			ResultSet rs = getResultSet();
 #foreach( $column in $columns )
-			_${column.NameAsVariable} = getResultSet().get${column.TypedMethod}( "${column.NameAsMethod}" );
+			_${column.NameAsVariable} = rs.get${column.TypedMethod}( "${column.NameAsMethod}" );
 #end
 		}
 		else
@@ -63,12 +197,145 @@ extends
 	}
 	
 #foreach( $column in $columns )
+	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+
+	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
+		throws SQLException
+	{
+		if( __inserting || __updating )
+		{
+			_${column.NameAsVariable} = ${column.NameAsVariable};
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
 	public ${column.JavaType} get${column.NameAsMethod}()
 	{
 		return _${column.NameAsVariable};
 	}	
 
 #end
+
+	private boolean __inserting = false;
+	
+	/**
+	 * Tries to start inserting mode. Throws SQLException if 
+	 * 
+	 * @throws SQLException
+	 */
+	public void startInsert()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__inserting = true;
+			_id = 0;
+			_actionCode = null;
+			_code = null;
+			_description = null;
+			_discoveredDate = null;
+			_reaction = null;
+			_sensitivityDescription = null;
+			_severity = null;
+			_severityDescription = null;
+			_status = null;
+			_type = null;
+			_message_ID = 0;
+			_patientKey_ID = 0;
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
+	public void finishInsert()
+		throws SQLException
+	{
+		if( __inserting )
+		{
+			__inserting = false;
+			ResultSet rs = getResultSet();
+			rs.moveToInsertRow();
+			rs.updateInt( "ID", _id );
+			rs.updateString( "ActionCode", _actionCode );
+			rs.updateString( "Code", _code );
+			rs.updateString( "Description", _description );
+			rs.updateTimestamp( "DiscoveredDate", _discoveredDate );
+			rs.updateString( "Reaction", _reaction );
+			rs.updateString( "SensitivityDescription", _sensitivityDescription );
+			rs.updateString( "Severity", _severity );
+			rs.updateString( "SeverityDescription", _severityDescription );
+			rs.updateString( "Status", _status );
+			rs.updateString( "Type", _type );
+			rs.updateInt( "Message_ID", _message_ID );
+			rs.updateInt( "PatientKey_ID", _patientKey_ID );
+			rs.insertRow();
+			rs.moveToCurrentRow();
+			rs.next();
+			getNextRow( true );
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	}
+	
+	
+	private boolean __updating = false;
+	
+	public void startUpdating()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__updating = true;
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
+	public void finishUpdating()
+		throws SQLException
+	{
+		if( __updating )
+		{
+			__updating = false;
+			ResultSet rs = getResultSet();
+			rs.updateInt( "ID", _id );
+			rs.updateString( "ActionCode", _actionCode );
+			rs.updateString( "Code", _code );
+			rs.updateString( "Description", _description );
+			rs.updateTimestamp( "DiscoveredDate", _discoveredDate );
+			rs.updateString( "Reaction", _reaction );
+			rs.updateString( "SensitivityDescription", _sensitivityDescription );
+			rs.updateString( "Severity", _severity );
+			rs.updateString( "SeverityDescription", _severityDescription );
+			rs.updateString( "Status", _status );
+			rs.updateString( "Type", _type );
+			rs.updateInt( "Message_ID", _message_ID );
+			rs.updateInt( "PatientKey_ID", _patientKey_ID );
+			rs.updateRow();
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	
+	}
+
+
 
 #foreach( $condition in $conditions )
 
@@ -125,10 +392,11 @@ extends
 #end
 #end
 
-	private static String _sql = null;
+	private static String __sql = null;
+	
 	public String getSQL()
 	{
-		if( _sql == null )
+		if( __sql == null )
 		{
 			StringWriter writer = new StringWriter();
 			PrintWriter w = new PrintWriter( writer );
@@ -136,12 +404,11 @@ extends
 			w.println( "$line" );
 #end
 			w.close();
-			_sql = writer.toString();
+			__sql = writer.toString();
 		}
-		return _sql;
+		return __sql;
 	}
 	
-	@Override
 	protected void setParameters( PreparedStatement prepared )
 		throws SQLException
 	{

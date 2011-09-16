@@ -1,0 +1,211 @@
+## Fado's SELECT Statement Template
+## 
+## Template Parameters:
+## 
+## packageName - target Java package name as String
+## className - target Java class name as String
+## sql - lines of retooled SQL statement as List<String>
+## columns - columns found in source SQL as List<fado.meta.Column>
+## conditions - conditions found in source SQL as List<fado.meta.Condition>
+## date - Fado's timestamp
+/**
+
+${className}.java   ${date}
+  
+Generated using Fado's Select template. Original SQL:
+    
+#foreach( $line in $originalsql )
+$line
+#end
+
+@see ${originalfile}
+  
+
+**/
+
+package ${packageName};
+
+import java.io.StringWriter;
+import java.io.PrintWriter;
+import java.sql.*;
+import fado.template.AbstractSelect;
+
+public class 
+	${className}
+extends
+	AbstractSelect
+{
+	public ${className}( Connection connection )
+		throws Exception
+	{
+		super( connection );
+	}
+	
+#foreach( $column in $columns )
+	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+#end
+	
+	public void updateValues( boolean success )
+		throws SQLException
+	{
+		if( success )
+		{
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = getResultSet().get${column.TypedMethod}( "${column.NameAsMethod}" );
+#end
+		}
+		else
+		{
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = ${column.InitializerValue};
+#end
+		}
+	}
+	
+#foreach( $column in $columns )
+	public ${column.JavaType} get${column.NameAsMethod}()
+	{
+		return _${column.NameAsVariable};
+	}	
+
+#end
+
+#foreach( $condition in $conditions )
+
+#set( $type = $condition.getJavaType() )
+#set( $name = $condition.getColumn() )
+#set( $vari = $condition.getColumnAsVariable() )
+
+#if( $condition.isComparison() )
+
+	public ${type} _${vari}Param = $condition.getValueAsCode();
+	
+	public void set${name}Param( ${type} ${vari} )
+	{
+		_${vari}Param = ${vari};
+	}
+	
+	public ${type} get${name}Param()
+	{
+		return _${vari}Param;
+	}
+
+#elseif( $condition.isIN() )
+	private ${type}[] _${vari}List = new ${type}[] { $condition.getValueAsCode() };
+	private int _${vari}Count = 0;
+	public void add${name}Param( ${type} ${vari} )
+	{
+		if( _${vari}Count == _${vari}List.length )
+		{
+			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${vari}List.length );
+		}
+		int count = _${vari}Count;
+		
+		// Parameter array get filled to the right, so there are no holes
+		for( int i = count; count < _${vari}List.length; count++ )
+		{
+			_${vari}List[i] = ${vari};
+		}
+		_${vari}Count++;
+	}
+	
+	public ${type} get${name}Param( int nth )
+	{
+		return _${vari}List[ nth ];
+	}
+	
+#elseif( $condition.isBETWEEN() )
+
+    BETWEEN!
+
+#elseif( $condition.isLIKE() )
+
+    LIKE!
+
+#end
+#end
+
+	private static String _sql = null;
+	public String getSQL()
+	{
+		if( _sql == null )
+		{
+			StringWriter writer = new StringWriter();
+			PrintWriter w = new PrintWriter( writer );
+#foreach( $line in $sql )
+			w.println( "$line" );
+#end
+			w.close();
+			_sql = writer.toString();
+		}
+		return _sql;
+	}
+	
+	@Override
+	protected void setParameters( PreparedStatement prepared )
+		throws SQLException
+	{
+#set( $nth = 0 )
+#foreach( $condition in $conditions )
+##
+#set( $type = $condition.getJavaType() )
+#set( $name = $condition.getColumn() )
+#set( $method = $condition.getTypedMethod() )
+##
+#if( $condition.isComparison() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${method}( ${nth}, get${name}Param() );
+##
+#elseif( $condition.isIN() )
+##
+#set( $size = $condition.getValues().size() - 1 )
+##
+#foreach( $abc in [0..$size] )
+#set( $nth = $nth + 1 )
+		prepared.set${method}( ${nth}, get${name}Param( ${abc} ));
+#end
+##
+#elseif( $condition.isBETWEEN() )
+
+    BETWEEN!
+
+#elseif( $condition.isLIKE() )
+
+    LIKE!
+
+#end
+#end
+	}
+
+	public String toString()
+	{
+		String result = getSQL();
+#foreach( $condition in $conditions )
+#set( $name = $condition.getColumn() )
+#if( $condition.isIN() )
+#set( $size = $condition.getValues().size() - 1 )
+#foreach( $abc in [0..$size] )
+#set( $nth = $nth + 1 )
+		result = result.replaceFirst( "\\?", quotifyString( get${name}Param( ${abc} )));
+#end
+#else
+		result = result.replaceFirst( "\\?", quotifyString( get${name}Param() ));
+#end
+#end
+		return result;
+	}
+	
+	private String quotifyString( Object value )
+	{
+		if( value instanceof String )
+		{
+			return "'" + value.toString() + "'";
+		}
+		else
+		{
+			return value.toString();
+		}
+	}
+
+}

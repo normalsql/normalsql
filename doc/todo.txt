@@ -21,7 +21,9 @@ ID Generators
 	Detect identity columns for inserts, updates
 Figure out something for transactions 
 	maybe nothing, just use JDBC
-	
+Better strategy for converting SQL column names into Java variables/accessors
+	Capitalizer, or alias list, or...
+
 GRAMMARS
 
 Full SQL-92

@@ -1,4 +1,4 @@
-package fado;
+package play;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

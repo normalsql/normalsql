@@ -13,15 +13,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Very simple properties file. Preserves order of entries in file, including
- * comments and blank lines.
+ * Very simple properties file. Preserves order of entries in file, including comments and blank lines.
  * 
  * Format of each line:
  * 
  * key = value # comment
  * 
- * If duplicate key is in file, a later key entry hides the prior entry. For
- * example
+ * If duplicate key is in file, a later key entry hides the prior entry. For example
  * 
  * fruit = apple fruit = banana
  * 
@@ -97,10 +95,9 @@ public class Properties
 		}
 		return value;
 	}
-	
+
 	/**
-	 * Feed in list of parameters which make up the compound key. Null parameters and
-	 * empty strings are dropped.
+	 * Feed in list of parameters which make up the compound key. Null parameters and empty strings are dropped.
 	 * 
 	 * @param args
 	 */
@@ -109,7 +106,7 @@ public class Properties
 		String key = merge( args );
 		return get( key );
 	}
-	
+
 	public String merge( String... args )
 	{
 		StringBuilder sb = new StringBuilder();
@@ -123,10 +120,9 @@ public class Properties
 			sb.append( arg );
 			more = true;
 		}
-		
+
 		return sb.toString();
 	}
-
 
 	public void remove( String key )
 	{
@@ -172,14 +168,13 @@ public class Properties
 		}
 	}
 
-	public void load( String name ) 
-		throws IOException
+	public void load( String name ) throws IOException
 	{
 		ClassLoader loader = getClass().getClassLoader();
 		InputStream in = loader.getResourceAsStream( name + ".properties" );
 		load( in );
 	}
-	
+
 	public void load( InputStream in ) throws IOException
 	{
 		InputStreamReader reader = new InputStreamReader( in );

@@ -43,10 +43,11 @@ import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.ParseTreeBuilder;
 
-public class Fado 
+public class 
+	Fado
 {
-	public static void main( String[] args )
-		throws Exception 
+	public static void main( String[] args ) 
+		throws Exception
 	{
 		FadoOptions options = new FadoOptions();
 		options.parse( args );
@@ -54,13 +55,13 @@ public class Fado
 		Fado fado = new Fado();
 		fado.init( options );
 	}
-	
+
 	Template _selectTemplate = null;
 	Template _insertTemplate = null;
 	Template _updateTemplate = null;
 	Connection _conn = null;
-	
-	public void init( FadoOptions options )
+
+	public void init( FadoOptions options ) 
 		throws Exception
 	{
 		String driver = options.getDriver();
@@ -80,7 +81,7 @@ public class Fado
 
 		String target = options.getTarget();
 		File targetDir = new File( target );
-		
+
 		String source = options.getSource();
 		File sourceDir = new File( source );
 		if( !sourceDir.exists() )
@@ -93,45 +94,48 @@ public class Fado
 		_conn.close();
 
 	}
-	
-	FileFilter sqlFilter = new FileFilter() 
+
+	FileFilter sqlFilter = new FileFilter()
 	{
 		public boolean accept( File file )
 		{
 			if( file.isHidden() ) return false;
 			if( file.isDirectory() ) return false;
 			String name = file.getName();
-			if( name.startsWith( "." )) return false;
-			if( !name.endsWith( ".sql" )) return false;
-			if( name.toLowerCase().contains( "create" )) return false;
+			if( name.startsWith( "." ) ) return false;
+			if( !name.endsWith( ".sql" ) ) return false;
+			if( name.toLowerCase().contains( "create" ) ) return false;
 			return true;
 		}
 	};
-	
-	FileFilter dirFilter = new FileFilter() 
+
+	FileFilter dirFilter = new FileFilter()
 	{
 		public boolean accept( File file )
 		{
 			if( file.isHidden() ) return false;
-			if( file.getName().startsWith( "." )) return false;
+			if( file.getName().startsWith( "." ) ) return false;
 			return file.isDirectory();
 		}
 	};
-	
+
 	public String join( List<String> list, String sep )
 	{
 		StringBuilder sb = new StringBuilder();
 		for( String item : list )
 		{
-			if( sb.length() > 0 ) sb.append( sep );
+			if( sb.length() > 0 )
+			{
+				sb.append( sep );
+			}
 			sb.append( item );
 		}
 		return sb.toString();
 	}
-	
+
 	// TODO: Create command line option for this? eg. for a clean build operation
 	private boolean _alwaysOverwrite = true;
-	
+
 	public void crawl( File sourceRoot, File targetRoot, Stack<String> path )
 	{
 		targetRoot.mkdirs();
@@ -159,10 +163,10 @@ public class Fado
 			{
 				System.out.println( "error processing : " + sourceFile );
 				e.printStackTrace();
-//				throw new FadoException( "file: " + sourceFile.toString(), e );
+				// throw new FadoException( "file: " + sourceFile.toString(), e );
 			}
 		}
-		
+
 		File[] childDirList = sourceRoot.listFiles( dirFilter );
 		for( File child : childDirList )
 		{
@@ -171,10 +175,10 @@ public class Fado
 			File targetDir = new File( targetRoot, name );
 			crawl( child, targetDir, path );
 			path.pop();
-//			System.out.println( child.toString() + " : " + child.getName() );
+			// System.out.println( child.toString() + " : " + child.getName() );
 		}
 	}
-	
+
 	public String getFileName( File file )
 	{
 		String name = file.getName();
@@ -185,14 +189,14 @@ public class Fado
 		}
 		return name;
 	}
-	
+
 	public boolean displayTree = false;
-	
+
 	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
 		throws Exception
 	{
 		FileReader reader = new FileReader( sourceFile );
-		
+
 		ParseTreeBuilder builder = new ParseTreeBuilder( "GenericSQL.g" );
 		CharStream cs = new ANTLRReaderStream( reader );
 		GenericSQLLexer lexer = new GenericSQLLexer( cs );
@@ -202,16 +206,15 @@ public class Fado
 		parser.statement();
 		reader.close();
 
-		
 		String temp = builder.getTree().toInputString();
 		List<String> originalSQL = chopper( temp.trim() );
 		FadoParseNode source = builder.getTree();
-		
+
 		if( displayTree )
 		{
 			System.out.println( "string tree: " + builder.getTree().toStringTree() );
 		}
-		
+
 		FadoParseNode selectNode = source.findFirst( "statement/select" );
 		if( selectNode != null )
 		{
@@ -222,12 +225,12 @@ public class Fado
 			meta.setOriginalSQL( originalSQL );
 			extractSelect( selectNode, meta );
 			inspectDatabaseForSelect( _conn, meta );
-			
+
 			String retooledSQL = builder.getTree().toInputString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
 			generateSelect( meta, choppedSQL, targetFile );
 		}
-		
+
 		FadoParseNode insertNode = source.findFirst( "statement/insert" );
 		if( insertNode != null )
 		{
@@ -258,9 +261,8 @@ public class Fado
 			generateUpdate( meta, choppedSQL, targetFile );
 		}
 	}
-	
 
-	private void extractSelect( FadoParseNode selectNode, SelectMeta extract )
+	private void extractSelect( FadoParseNode selectNode, SelectMeta extract ) 
 		throws Exception
 	{
 		// Tables
@@ -270,54 +272,53 @@ public class Fado
 		// Parameters
 		extractSelectParams( selectNode, extract );
 	}
-	
-	
+
 	// TODO support unary literals, need fix for '?' knockouts
-	private void extractInsert( FadoParseNode insertNode, InsertMeta meta )
+	private void extractInsert( FadoParseNode insertNode, InsertMeta meta ) 
 		throws Exception
 	{
 		String table = insertNode.findFirstString( "into/tableRef" );
 		meta.setTable( table );
-		
+
 		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
 		List<FadoParseNode> list = insertNode.find( "columnList/columnName" );
 		for( FadoParseNode item : list )
 		{
 			String name = getTokenText( item );
-			columns.add( new InsertColumn( name ));
+			columns.add( new InsertColumn( name ) );
 		}
-		
+
 		List<FadoParseNode> argh = insertNode.find( "values/literal" );
-		
+
 		if( columns.size() != argh.size() )
 		{
 			throw new Exception( "mismatch, columns: " + columns.size() + ", literals: " + argh.size() );
 		}
-		
+
 		int nth = 0;
 		for( FadoParseNode item : argh )
 		{
 			String literal = getTokenText( item );
 			literal = trimQuotes( literal );
-			
+
 			// Replace original value with JDBC parameter '?'
-			setTokenText( item, "?" ); 
-			
+			setTokenText( item, "?" );
+
 			InsertColumn col = columns.get( nth );
 			col.setLiteral( literal );
 			nth++;
 		}
 		meta.setColumns( columns );
 	}
-	
+
 	// TODO support unary literals, need fix for '?' knockouts
-	private void extractUpdate( FadoParseNode updateNode, UpdateMeta meta )
+	private void extractUpdate( FadoParseNode updateNode, UpdateMeta meta ) 
 		throws Exception
 	{
 		String tableName = updateNode.findFirstString( "tableRef" );
 		Table table = new Table( null, tableName, null );
 		meta.setTable( table );
-		
+
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
 		List<FadoParseNode> list = updateNode.find( "setter" );
 		for( FadoParseNode setter : list )
@@ -326,14 +327,14 @@ public class Fado
 			FadoParseNode literalNode = setter.findFirst( "literal" );
 			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
-			
-			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" ); 
 
-			columns.add( new UpdateColumn( name, literal ));
+			// Replace original value with JDBC parameter '?'
+			setTokenText( literalNode, "?" );
+
+			columns.add( new UpdateColumn( name, literal ) );
 		}
 		meta.setColumns( columns );
-		
+
 		FadoParseNode where = updateNode.findFirst( "where" );
 		if( where != null )
 		{
@@ -355,7 +356,7 @@ public class Fado
 			}
 		}
 	}
-	
+
 	public void extractSelectTables( FadoParseNode selectNode, SelectMeta meta )
 	{
 		List<FadoParseNode> list = selectNode.find( "from/fromItem" );
@@ -368,16 +369,16 @@ public class Fado
 			meta.table( table );
 		}
 	}
-	
-	public void extractSelectColumns( FadoParseNode selectNode, SelectMeta meta )
+
+	public void extractSelectColumns( FadoParseNode selectNode, SelectMeta meta ) 
 		throws Exception
 	{
 		String allStar = selectNode.findFirstString( "itemList" );
-		if( "*".equals( allStar ))
+		if( "*".equals( allStar ) )
 		{
 			for( Table table : meta.getTables() )
 			{
-				meta.tempColumn( new Column( table ));
+				meta.tempColumn( new Column( table ) );
 			}
 		}
 		else
@@ -391,31 +392,31 @@ public class Fado
 				{
 					Table table = meta.getTableByAlias( tableAlias );
 					Column column = new Column( table );
-					meta.tempColumn( column);
+					meta.tempColumn( column );
 					continue;
 				}
-				
+
 				// Single column reference, eg alias.FamilyName
 				String columnName = item.findFirstString( "value/columnRef/columnName" );
 				if( columnName != null )
 				{
 					columnName = trimQuotes( columnName );
 					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
-					String columnAlias =  item.findFirstString( "alias" );
+					String columnAlias = item.findFirstString( "alias" );
 					Table table = meta.getTableByAlias( tableAlias );
 					Column column = new Column( table, columnName, columnAlias );
 					meta.tempColumn( column );
 					continue;
 				}
-				
+
 				// Expression returned as column
 				// TODO: expression columns
-				
+
 			}
 		}
 	}
-	
-	public void extractSelectParams( FadoParseNode selectNode, SelectMeta meta )
+
+	public void extractSelectParams( FadoParseNode selectNode, SelectMeta meta ) 
 		throws FadoException
 	{
 		FadoParseNode where = selectNode.findFirst( "where" );
@@ -441,16 +442,16 @@ public class Fado
 		}
 
 	}
-	
+
 	// Comparisons, eg column = 'abc'
 	public void extractSelectComparisonParams( FadoParseNode comparison, SelectMeta meta )
 		throws TableNotFoundException
 	{
 		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
-		List<FadoParseNode> literals = comparison.find( "**/literal");
+		List<FadoParseNode> literals = comparison.find( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
-//			System.out.println( "found comparison: " + comparison.toInputString() );
+			// System.out.println( "found comparison: " + comparison.toInputString() );
 			FadoParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 			String tableAlias = columnRef.findFirstString( "tableAlias" );
@@ -458,25 +459,25 @@ public class Fado
 			FadoParseNode literalNode = literals.get( 0 );
 			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
-			
+
 			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" ); 
-//			int literalType = getTokenType( literalNode );
-			
+			setTokenText( literalNode, "?" );
+			// int literalType = getTokenType( literalNode );
+
 			Table table = meta.getTableByAlias( tableAlias );
 
 			Comparison c = new Comparison( table, column, literal );
 			meta.comparison( c );
 		}
 	}
-	
+
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
 	public void extractSelectINParams( FadoParseNode in, SelectMeta meta ) 
 		throws FadoException
 	{
 		List<FadoParseNode> columns = in.find( "**/columnRef" );
-		List<FadoParseNode> literals = in.find( "**/literal");
+		List<FadoParseNode> literals = in.find( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
 			FadoParseNode columnRef = columns.get( 0 );
@@ -485,26 +486,25 @@ public class Fado
 			Table table = meta.getTableByAlias( tableAlias );
 
 			IN param = new IN( table, column );
-			
+
 			for( FadoParseNode literal : literals )
 			{
 				String text = getTokenText( literal );
 				text = trimQuotes( text );
-				
+
 				// Replace original value with JDBC parameter '?'
-				setTokenText( literal, "?" ); 
-//				int literalType = getTokenType( literal );
-				
+				setTokenText( literal, "?" );
+				// int literalType = getTokenType( literal );
+
 				param.addValue( text );
 			}
 			meta.comparison( param );
 		}
 	}
-	
-	
+
 	// BETWEEN, eg column BETWEEN 1 AND 100
 	// TODO: BETWEEN condition
-	
+
 	// LIKE, eg column LIKE 'abc%'
 	// TODO: LIKE condition
 
@@ -512,22 +512,22 @@ public class Fado
 		throws TableNotFoundException
 	{
 		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
-		List<FadoParseNode> literals = comparison.find( "**/literal");
+		List<FadoParseNode> literals = comparison.find( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
-	//		System.out.println( "found comparison: " + comparison.toInputString() );
+			// System.out.println( "found comparison: " + comparison.toInputString() );
 			FadoParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
-	
+
 			FadoParseNode literalNode = literals.get( 0 );
 			String literal = getTokenText( literalNode );
 			literal = trimQuotes( literal );
-			
+
 			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" ); 
-//			int literalType = getTokenType( literalNode );
+			setTokenText( literalNode, "?" );
+			// int literalType = getTokenType( literalNode );
 			Table table = meta.getTable();
-			
+
 			Comparison c = new Comparison( table, column, literal );
 			meta.addCondition( c );
 		}
@@ -539,36 +539,37 @@ public class Fado
 		throws FadoException
 	{
 		List<FadoParseNode> columns = in.find( "**/columnRef" );
-		List<FadoParseNode> literals = in.find( "**/literal");
+		List<FadoParseNode> literals = in.find( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
 			FadoParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 
 			IN param = new IN( null, column );
-			
+
 			for( FadoParseNode literal : literals )
 			{
 				String text = getTokenText( literal );
 				text = trimQuotes( text );
-				
+
 				// Replace original value with JDBC parameter '?'
-				setTokenText( literal, "?" ); 
-				
+				setTokenText( literal, "?" );
+
 				param.addValue( text );
 			}
 			meta.addCondition( param );
 		}
 	}
-	
 
-	public void inspectDatabaseForSelect( Connection conn, SelectMeta extract )
-		throws Exception 
+	public void inspectDatabaseForSelect( Connection conn, SelectMeta extract ) throws Exception
 	{
-		
-		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
-		PreparedStatement allColumnsPS = conn.prepareStatement( "SELECT COLUMN_NAME, DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION" );
+
+		PreparedStatement tablesPS = conn
+				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
+		PreparedStatement columnPS = conn
+				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+		PreparedStatement allColumnsPS = conn
+				.prepareStatement( "SELECT COLUMN_NAME, DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION" );
 
 		for( Column tempColumn : extract.getTempColumns() )
 		{
@@ -578,7 +579,7 @@ public class Fado
 				{
 					String tableName = tempColumn.getTable().getName().toUpperCase();
 					allColumnsPS.setString( 1, tableName );
-					
+
 					if( allColumnsPS.execute() )
 					{
 						ResultSet allColumnsRS = allColumnsPS.getResultSet();
@@ -587,16 +588,16 @@ public class Fado
 							String name = allColumnsRS.getString( "COLUMN_NAME" );
 							int sqlType = allColumnsRS.getInt( "DATA_TYPE" );
 							String sqlTypeName = allColumnsRS.getString( "TYPE_NAME" );
-							
+
 							Column column = new Column( name, sqlType, sqlTypeName );
 							extract.addFinalColumn( column );
 						}
 						allColumnsRS.close();
 					}
-					
+
 					break;
 				}
-				
+
 				case Column:
 				case Alias:
 				{
@@ -611,16 +612,16 @@ public class Fado
 					{
 						tables = extract.getTables();
 					}
-					
+
 					boolean found = false;
 					for( Table table : tables )
 					{
 						String tableName = table.getName().toUpperCase();
 						columnPS.setString( 1, tableName );
-					
+
 						String columnName = tempColumn.getName().toUpperCase();
 						columnPS.setString( 2, columnName );
-					
+
 						if( columnPS.execute() )
 						{
 							ResultSet columnRS = columnPS.getResultSet();
@@ -637,28 +638,28 @@ public class Fado
 						}
 						if( found ) break;
 					}
-					
+
 					if( !found )
 					{
 						String columnName = tempColumn.getName().toUpperCase();
-						throw new Exception( "column not found: "+ columnName );
+						throw new Exception( "column not found: " + columnName );
 					}
 					break;
 				}
-				
+
 				case Equals:
 				default:
 					break;
 			}
 		}
-		
+
 		for( Condition condition : extract.getConditions() )
 		{
 			String tableName = condition.getTable().getName().toUpperCase();
 			String columnName = condition.getColumn().toUpperCase();
 			columnPS.setString( 1, tableName );
 			columnPS.setString( 2, columnName );
-		
+
 			if( columnPS.execute() )
 			{
 				ResultSet columnRS = columnPS.getResultSet();
@@ -669,22 +670,22 @@ public class Fado
 				}
 				else
 				{
-					throw new Exception( "column not found: "+ columnName );
+					throw new Exception( "column not found: " + columnName );
 				}
 				columnRS.close();
 			}
 		}
-		
+
 		tablesPS.close();
 		columnPS.close();
 	}
 
-
-	public void inspectDatabaseForInsert( Connection conn, InsertMeta extract )
-		throws Exception 
+	public void inspectDatabaseForInsert( Connection conn, InsertMeta extract ) throws Exception
 	{
-		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+		PreparedStatement tablesPS = conn
+				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
+		PreparedStatement columnPS = conn
+				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
 
 		String tableName = extract.getTable().toUpperCase();
 		tablesPS.setString( 1, tableName );
@@ -694,13 +695,13 @@ public class Fado
 			if( gorp.next() )
 			{
 				columnPS.setString( 1, tableName );
-				
+
 				for( InsertColumn column : extract.getColumns() )
 				{
-					
+
 					String columnName = column.getName().toUpperCase();
 					columnPS.setString( 2, columnName );
-				
+
 					if( columnPS.execute() )
 					{
 						ResultSet columnRS = columnPS.getResultSet();
@@ -714,7 +715,7 @@ public class Fado
 						else
 						{
 							// TODO Don't die on first error
-							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'"  );
+							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
 						}
 						columnRS.close();
 					}
@@ -722,20 +723,21 @@ public class Fado
 			}
 			else
 			{
-				throw new Exception( "table not found: "+ tableName );
+				throw new Exception( "table not found: " + tableName );
 			}
 		}
-		
+
 		tablesPS.close();
 		columnPS.close();
 	}
 
-	public void inspectDatabaseForUpdate( Connection conn, UpdateMeta extract )
-		throws Exception 
+	public void inspectDatabaseForUpdate( Connection conn, UpdateMeta extract ) throws Exception
 	{
-		PreparedStatement tablesPS = conn.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
-	
+		PreparedStatement tablesPS = conn
+				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
+		PreparedStatement columnPS = conn
+				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+
 		String tableName = extract.getTable().getName().toUpperCase();
 		tablesPS.setString( 1, tableName );
 		if( tablesPS.execute() )
@@ -744,13 +746,13 @@ public class Fado
 			if( gorp.next() )
 			{
 				columnPS.setString( 1, tableName );
-				
+
 				for( UpdateColumn column : extract.getColumns() )
 				{
-					
+
 					String columnName = column.getName().toUpperCase();
 					columnPS.setString( 2, columnName );
-				
+
 					if( columnPS.execute() )
 					{
 						ResultSet columnRS = columnPS.getResultSet();
@@ -764,7 +766,7 @@ public class Fado
 						else
 						{
 							// TODO Don't die on first error
-							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'"  );
+							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
 						}
 						columnRS.close();
 					}
@@ -772,7 +774,7 @@ public class Fado
 			}
 			else
 			{
-				throw new Exception( "table not found: "+ tableName );
+				throw new Exception( "table not found: " + tableName );
 			}
 		}
 
@@ -781,7 +783,7 @@ public class Fado
 			String columnName = condition.getColumn().toUpperCase();
 			columnPS.setString( 1, tableName );
 			columnPS.setString( 2, columnName );
-		
+
 			if( columnPS.execute() )
 			{
 				ResultSet columnRS = columnPS.getResultSet();
@@ -792,7 +794,7 @@ public class Fado
 				}
 				else
 				{
-					throw new Exception( "column not found: "+ columnName );
+					throw new Exception( "column not found: " + columnName );
 				}
 				columnRS.close();
 			}
@@ -802,13 +804,11 @@ public class Fado
 		columnPS.close();
 	}
 
-
-	public void generateSelect( SelectMeta meta, List<String> sql, File targetFile )
-		throws Exception
+	public void generateSelect( SelectMeta meta, List<String> sql, File targetFile ) throws Exception
 	{
 		List<Column> columns = meta.getFinalColumns();
 		List<Condition> conditions = meta.getConditions();
-		
+
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", meta.getPackage() );
 		context.put( "className", meta.getName() );
@@ -818,18 +818,17 @@ public class Fado
 		context.put( "date", new Date() );
 		context.put( "originalfile", meta.getOriginalFileName() );
 		context.put( "originalsql", meta.getOriginalSQL() );
-		
+
 		FileWriter writer = new FileWriter( targetFile );
 		_selectTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
 	}
 
-	public void generateInsert( InsertMeta meta, List<String> sql, File targetFile )
-		throws Exception
+	public void generateInsert( InsertMeta meta, List<String> sql, File targetFile ) throws Exception
 	{
 		List<InsertColumn> columns = meta.getColumns();
-		
+
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", meta.getPackage() );
 		context.put( "className", meta.getName() );
@@ -845,8 +844,7 @@ public class Fado
 		writer.close();
 	}
 
-	public void generateUpdate( UpdateMeta meta, List<String> sql, File targetFile )
-		throws Exception
+	public void generateUpdate( UpdateMeta meta, List<String> sql, File targetFile ) throws Exception
 	{
 		List<UpdateColumn> columns = meta.getColumns();
 		List<Condition> conditions = meta.getConditions();
@@ -860,7 +858,7 @@ public class Fado
 		context.put( "date", new Date() );
 		context.put( "originalfile", meta.getOriginalFileName() );
 		context.put( "originalsql", meta.getOriginalSQL() );
-		
+
 		FileWriter writer = new FileWriter( targetFile );
 		_updateTemplate.merge( context, writer );
 		writer.flush();
@@ -878,7 +876,7 @@ public class Fado
 		}
 		return result;
 	}
-		
+
 	public void setTokenText( FadoParseNode node, String text )
 	{
 		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
@@ -896,8 +894,8 @@ public class Fado
 			result = text.substring( 1, len - 1 );
 		}
 		return result;
-	}	
-	
+	}
+
 	public List<String> chopper( String sql )
 	{
 		StringReader sr = new StringReader( sql );
@@ -905,9 +903,8 @@ public class Fado
 		List<String> result = lr.toArray();
 		return result;
 	}
-	
-	public static void dumpResultSet( ResultSet set )
-		throws SQLException
+
+	public static void dumpResultSet( ResultSet set ) throws SQLException
 	{
 		System.out.println();
 		ResultSetMetaData meta = set.getMetaData();
@@ -917,7 +914,7 @@ public class Fado
 			String temp = meta.getColumnName( i + 1 );
 			System.out.print( temp + "\t" );
 		}
-		System.out.print(  "\n--\n" );
+		System.out.print( "\n--\n" );
 		set.first();
 		while( set.next() )
 		{
@@ -926,10 +923,10 @@ public class Fado
 				Object temp = set.getObject( i + 1 );
 				System.out.print( temp + "\t" );
 			}
-			System.out.print(  "\n" );
-			
+			System.out.print( "\n" );
+
 		}
 		System.out.println();
 	}
-	
+
 }
