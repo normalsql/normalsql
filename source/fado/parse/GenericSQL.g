@@ -1,7 +1,7 @@
 /*
- GenericSQL.g, for ANTLR 3.2
+ GenericSQL.g, for ANTLR 3.4
 
- Copyright 2010 Jason Osgood 
+ Copyright 2010, 2011 Jason Osgood 
 
  Generic SQL grammar. Compile with ANTLR's generate parse tree command line option.
 

@@ -19,8 +19,8 @@ import java.util.Stack;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
+import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.Token;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -38,7 +38,7 @@ import fado.meta.Table;
 import fado.meta.TableNotFoundException;
 import fado.meta.UpdateColumn;
 import fado.meta.UpdateMeta;
-import fado.parse.FadoParseNode;
+import fado.parse.ParseNode;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.ParseTreeBuilder;
@@ -175,7 +175,6 @@ public class
 			File targetDir = new File( targetRoot, name );
 			crawl( child, targetDir, path );
 			path.pop();
-			// System.out.println( child.toString() + " : " + child.getName() );
 		}
 	}
 
@@ -197,7 +196,7 @@ public class
 	{
 		FileReader reader = new FileReader( sourceFile );
 
-		ParseTreeBuilder builder = new ParseTreeBuilder( "GenericSQL.g" );
+		ParseTreeBuilder builder = new ParseTreeBuilder();
 		CharStream cs = new ANTLRReaderStream( reader );
 		GenericSQLLexer lexer = new GenericSQLLexer( cs );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
@@ -206,16 +205,16 @@ public class
 		parser.statement();
 		reader.close();
 
-		String temp = builder.getTree().toInputString();
+		ParseNode source = builder.getTree();
+		String temp = source.toOriginalString();
 		List<String> originalSQL = chopper( temp.trim() );
-		FadoParseNode source = builder.getTree();
 
 		if( displayTree )
 		{
-			System.out.println( "string tree: " + builder.getTree().toStringTree() );
+			System.out.println( "string tree: " + builder.getTree().toParseTree() );
 		}
 
-		FadoParseNode selectNode = source.findFirst( "statement/select" );
+		ParseNode selectNode = source.findFirstNode( "statement/select" );
 		if( selectNode != null )
 		{
 			SelectMeta meta = new SelectMeta();
@@ -226,12 +225,12 @@ public class
 			extractSelect( selectNode, meta );
 			inspectDatabaseForSelect( _conn, meta );
 
-			String retooledSQL = builder.getTree().toInputString();
+			String retooledSQL = builder.getTree().toOriginalString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
 			generateSelect( meta, choppedSQL, targetFile );
 		}
 
-		FadoParseNode insertNode = source.findFirst( "statement/insert" );
+		ParseNode insertNode = source.findFirstNode( "statement/insert" );
 		if( insertNode != null )
 		{
 			InsertMeta meta = new InsertMeta();
@@ -241,12 +240,12 @@ public class
 			meta.setOriginalSQL( originalSQL );
 			extractInsert( insertNode, meta );
 			inspectDatabaseForInsert( _conn, meta );
-			String retooledSQL = builder.getTree().toInputString();
+			String retooledSQL = builder.getTree().toOriginalString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
 			generateInsert( meta, choppedSQL, targetFile );
 		}
 
-		FadoParseNode updateNode = source.findFirst( "statement/update" );
+		ParseNode updateNode = source.findFirstNode( "statement/update" );
 		if( updateNode != null )
 		{
 			UpdateMeta meta = new UpdateMeta();
@@ -256,13 +255,13 @@ public class
 			meta.setOriginalSQL( originalSQL );
 			extractUpdate( updateNode, meta );
 			inspectDatabaseForUpdate( _conn, meta );
-			String retooledSQL = builder.getTree().toInputString();
+			String retooledSQL = builder.getTree().toOriginalString();
 			List<String> choppedSQL = chopper( retooledSQL.trim() );
 			generateUpdate( meta, choppedSQL, targetFile );
 		}
 	}
 
-	private void extractSelect( FadoParseNode selectNode, SelectMeta extract ) 
+	private void extractSelect( ParseNode selectNode, SelectMeta extract ) 
 		throws Exception
 	{
 		// Tables
@@ -273,36 +272,34 @@ public class
 		extractSelectParams( selectNode, extract );
 	}
 
-	// TODO support unary literals, need fix for '?' knockouts
-	private void extractInsert( FadoParseNode insertNode, InsertMeta meta ) 
+	private void extractInsert( ParseNode insertNode, InsertMeta meta ) 
 		throws Exception
 	{
 		String table = insertNode.findFirstString( "into/tableRef" );
 		meta.setTable( table );
 
 		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
-		List<FadoParseNode> list = insertNode.find( "columnList/columnName" );
-		for( FadoParseNode item : list )
+		List<ParseNode> list = insertNode.findNodes( "columnList/columnName" );
+		for( ParseNode item : list )
 		{
-			String name = getTokenText( item );
+			String name = item.toOriginalString();
 			columns.add( new InsertColumn( name ) );
 		}
 
-		List<FadoParseNode> argh = insertNode.find( "values/literal" );
+		List<ParseNode> literals = insertNode.findNodes( "values/literal" );
 
-		if( columns.size() != argh.size() )
+		if( columns.size() != literals.size() )
 		{
-			throw new Exception( "mismatch, columns: " + columns.size() + ", literals: " + argh.size() );
+			throw new Exception( "mismatch, columns: " + columns.size() + ", literals: " + literals.size() );
 		}
 
 		int nth = 0;
-		for( FadoParseNode item : argh )
+		for( ParseNode node : literals )
 		{
-			String literal = getTokenText( item );
+			String literal = node.toParsedString();
 			literal = trimQuotes( literal );
 
-			// Replace original value with JDBC parameter '?'
-			setTokenText( item, "?" );
+			node.convertToJDBCParam();
 
 			InsertColumn col = columns.get( nth );
 			col.setLiteral( literal );
@@ -311,8 +308,8 @@ public class
 		meta.setColumns( columns );
 	}
 
-	// TODO support unary literals, need fix for '?' knockouts
-	private void extractUpdate( FadoParseNode updateNode, UpdateMeta meta ) 
+	// TODO support unary literals (done?)
+	private void extractUpdate( ParseNode updateNode, UpdateMeta meta ) 
 		throws Exception
 	{
 		String tableName = updateNode.findFirstString( "tableRef" );
@@ -320,57 +317,57 @@ public class
 		meta.setTable( table );
 
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
-		List<FadoParseNode> list = updateNode.find( "setter" );
-		for( FadoParseNode setter : list )
+		List<ParseNode> setters = updateNode.findNodes( "setter" );
+		for( ParseNode node : setters )
 		{
-			String name = setter.findFirstString( "columnName" );
-			FadoParseNode literalNode = setter.findFirst( "literal" );
-			String literal = getTokenText( literalNode );
+			String name = node.findFirstString( "columnName" );
+			ParseNode literalNode = node.findFirstNode( "literal" );
+			String literal = literalNode.toParsedString();
 			literal = trimQuotes( literal );
-
-			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" );
+			
+			literalNode.convertToJDBCParam();
 
 			columns.add( new UpdateColumn( name, literal ) );
 		}
 		meta.setColumns( columns );
 
-		FadoParseNode where = updateNode.findFirst( "where" );
+		ParseNode where = updateNode.findFirstNode( "where" );
 		if( where != null )
 		{
-			List<FadoParseNode> clist = where.find( "**/condition" );
-			for( FadoParseNode condition : clist )
+			List<ParseNode> clist = where.findNodes( "**/condition" );
+			for( ParseNode condition : clist )
 			{
-				List<FadoParseNode> comparison = condition.find( "comparison" );
+				List<ParseNode> comparison = condition.findNodes( "comparison" );
 				if( comparison.size() == 1 )
 				{
 					extractUpdateComparisonParams( comparison.get( 0 ), meta );
 				}
-				List<FadoParseNode> in = condition.find( "in" );
+				List<ParseNode> in = condition.findNodes( "in" );
 				if( in.size() == 1 )
 				{
 					extractUpdateINParams( in.get( 0 ), meta );
 				}
-				List<FadoParseNode> between = condition.find( "between" );
+				List<ParseNode> between = condition.findNodes( "between" );
 				// TODO: extract BETWEEN params
 			}
 		}
 	}
 
-	public void extractSelectTables( FadoParseNode selectNode, SelectMeta meta )
+	public void extractSelectTables( ParseNode selectNode, SelectMeta meta )
 	{
-		List<FadoParseNode> list = selectNode.find( "from/fromItem" );
-		for( FadoParseNode item : list )
+		List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
+		for( ParseNode item : list )
 		{
-			String databaseName = item.findFirstString( "tableRef/databaseName" );
-			String tableName = item.findFirstString( "tableRef/tableName" );
+			ParseNode tableRef = item.findFirstNode( "tableRef" );
+			String databaseName = tableRef.findFirstString( "databaseName" );
+			String tableName = tableRef.findFirstString( "**/tableName" );
 			String alias = item.findFirstString( "alias" );
 			Table table = new Table( databaseName, tableName, alias );
 			meta.table( table );
 		}
 	}
 
-	public void extractSelectColumns( FadoParseNode selectNode, SelectMeta meta ) 
+	public void extractSelectColumns( ParseNode selectNode, SelectMeta meta ) 
 		throws Exception
 	{
 		String allStar = selectNode.findFirstString( "itemList" );
@@ -383,8 +380,8 @@ public class
 		}
 		else
 		{
-			List<FadoParseNode> list = selectNode.find( "itemList/item" );
-			for( FadoParseNode item : list )
+			List<ParseNode> list = selectNode.findNodes( "itemList/item" );
+			for( ParseNode item : list )
 			{
 				// All columns from a table, eg alias.*
 				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
@@ -416,27 +413,27 @@ public class
 		}
 	}
 
-	public void extractSelectParams( FadoParseNode selectNode, SelectMeta meta ) 
+	public void extractSelectParams( ParseNode selectNode, SelectMeta meta ) 
 		throws FadoException
 	{
-		FadoParseNode where = selectNode.findFirst( "where" );
+		ParseNode where = selectNode.findFirstNode( "where" );
 
 		if( where != null )
 		{
-			List<FadoParseNode> clist = where.find( "**/condition" );
-			for( FadoParseNode condition : clist )
+			List<ParseNode> clist = where.findNodes( "**/condition" );
+			for( ParseNode condition : clist )
 			{
-				List<FadoParseNode> comparison = condition.find( "comparison" );
+				List<ParseNode> comparison = condition.findNodes( "comparison" );
 				if( comparison.size() == 1 )
 				{
 					extractSelectComparisonParams( comparison.get( 0 ), meta );
 				}
-				List<FadoParseNode> in = condition.find( "in" );
+				List<ParseNode> in = condition.findNodes( "in" );
 				if( in.size() == 1 )
 				{
 					extractSelectINParams( in.get( 0 ), meta );
 				}
-				List<FadoParseNode> between = condition.find( "between" );
+				List<ParseNode> between = condition.findNodes( "between" );
 				// TODO: extract BETWEEN params
 			}
 		}
@@ -444,25 +441,23 @@ public class
 	}
 
 	// Comparisons, eg column = 'abc'
-	public void extractSelectComparisonParams( FadoParseNode comparison, SelectMeta meta )
+	public void extractSelectComparisonParams( ParseNode comparison, SelectMeta meta )
 		throws TableNotFoundException
 	{
-		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
-		List<FadoParseNode> literals = comparison.find( "**/literal" );
+		List<ParseNode> columns = comparison.findNodes( "**/columnRef" );
+		List<ParseNode> literals = comparison.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 			// System.out.println( "found comparison: " + comparison.toInputString() );
-			FadoParseNode columnRef = columns.get( 0 );
+			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 			String tableAlias = columnRef.findFirstString( "tableAlias" );
 
-			FadoParseNode literalNode = literals.get( 0 );
-			String literal = getTokenText( literalNode );
+			ParseNode node = literals.get( 0 );
+			String literal = node.toParsedString();
 			literal = trimQuotes( literal );
 
-			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" );
-			// int literalType = getTokenType( literalNode );
+			node.convertToJDBCParam();
 
 			Table table = meta.getTableByAlias( tableAlias );
 
@@ -473,28 +468,26 @@ public class
 
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractSelectINParams( FadoParseNode in, SelectMeta meta ) 
+	public void extractSelectINParams( ParseNode in, SelectMeta meta ) 
 		throws FadoException
 	{
-		List<FadoParseNode> columns = in.find( "**/columnRef" );
-		List<FadoParseNode> literals = in.find( "**/literal" );
+		List<ParseNode> columns = in.findNodes( "**/columnRef" );
+		List<ParseNode> literals = in.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
-			FadoParseNode columnRef = columns.get( 0 );
+			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 			String tableAlias = columnRef.findFirstString( "tableAlias" );
 			Table table = meta.getTableByAlias( tableAlias );
 
 			IN param = new IN( table, column );
 
-			for( FadoParseNode literal : literals )
+			for( ParseNode node : literals )
 			{
-				String text = getTokenText( literal );
+				String text = node.toParsedString();
 				text = trimQuotes( text );
 
-				// Replace original value with JDBC parameter '?'
-				setTokenText( literal, "?" );
-				// int literalType = getTokenType( literal );
+				node.convertToJDBCParam();
 
 				param.addValue( text );
 			}
@@ -508,54 +501,53 @@ public class
 	// LIKE, eg column LIKE 'abc%'
 	// TODO: LIKE condition
 
-	public void extractUpdateComparisonParams( FadoParseNode comparison, UpdateMeta meta )
+	public void extractUpdateComparisonParams( ParseNode comparison, UpdateMeta meta )
 		throws TableNotFoundException
 	{
-		List<FadoParseNode> columns = comparison.find( "**/columnRef" );
-		List<FadoParseNode> literals = comparison.find( "**/literal" );
+		List<ParseNode> columns = comparison.findNodes( "**/columnRef" );
+		List<ParseNode> literals = comparison.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 			// System.out.println( "found comparison: " + comparison.toInputString() );
-			FadoParseNode columnRef = columns.get( 0 );
+			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 
-			FadoParseNode literalNode = literals.get( 0 );
-			String literal = getTokenText( literalNode );
+			ParseNode node = literals.get( 0 );
+			String literal = node.toParsedString();
 			literal = trimQuotes( literal );
 
-			// Replace original value with JDBC parameter '?'
-			setTokenText( literalNode, "?" );
-			// int literalType = getTokenType( literalNode );
+			node.convertToJDBCParam();
+			
 			Table table = meta.getTable();
 
 			Comparison c = new Comparison( table, column, literal );
+			
 			meta.addCondition( c );
 		}
 	}
 
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractUpdateINParams( FadoParseNode in, UpdateMeta meta ) 
+	public void extractUpdateINParams( ParseNode in, UpdateMeta meta ) 
 		throws FadoException
 	{
-		List<FadoParseNode> columns = in.find( "**/columnRef" );
-		List<FadoParseNode> literals = in.find( "**/literal" );
+		List<ParseNode> columns = in.findNodes( "**/columnRef" );
+		List<ParseNode> literals = in.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
-			FadoParseNode columnRef = columns.get( 0 );
+			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 
 			IN param = new IN( null, column );
 
-			for( FadoParseNode literal : literals )
+			for( ParseNode node : literals )
 			{
-				String text = getTokenText( literal );
-				text = trimQuotes( text );
+				String literal = node.toParsedString();
+				literal = trimQuotes( literal );
 
-				// Replace original value with JDBC parameter '?'
-				setTokenText( literal, "?" );
+				node.convertToJDBCParam();
 
-				param.addValue( text );
+				param.addValue( literal );
 			}
 			meta.addCondition( param );
 		}
@@ -863,25 +855,6 @@ public class
 		_updateTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
-	}
-
-	public String getTokenText( FadoParseNode node )
-	{
-		String result = null;
-		if( node != null )
-		{
-			FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-			Token token = temp.getToken();
-			result = token.getText();
-		}
-		return result;
-	}
-
-	public void setTokenText( FadoParseNode node, String text )
-	{
-		FadoParseNode temp = (FadoParseNode) node.getChild( 0 );
-		Token token = temp.getToken();
-		token.setText( text );
 	}
 
 	public String trimQuotes( String text )

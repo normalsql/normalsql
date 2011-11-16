@@ -4,84 +4,75 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.debug.BlankDebugEventListener;
 
-
 import java.util.Stack;
-import java.util.ArrayList;
-import java.util.List;
 
-/** This parser listener tracks rule entry/exit and token matches
- *  to build a simple parse tree using MyParseTree nodes.
+/** 
+ * Captures parse tree from execution of grammar. 
  */
+
 public class 
 	ParseTreeBuilder 
 extends 
 	BlankDebugEventListener 
 {
-	public static final String EPSILON_PAYLOAD = "<epsilon>";
-	
-	Stack callStack = new Stack();
-	List hiddenTokens = new ArrayList();
+	Stack<ParseNode> _stack = new Stack<ParseNode>();
 	int backtracking = 0;
 
-	public ParseTreeBuilder(String grammarName) {
-		FadoParseNode root = create("<grammar "+grammarName+">");
-		callStack.push(root);
+	public ParseTreeBuilder() 
+	{
+		ParseNode root = new ParseNode( "<>" );
+		_stack.push( root );
 	}
 
-	public FadoParseNode getTree() {
-		return (FadoParseNode)callStack.elementAt(0);
-	}
-
-	/**  What kind of node to create.  You might want to override
-	 *   so I factored out creation here.
-	 */
-	public FadoParseNode create(Object payload) {
-		return new FadoParseNode(payload);
-	}
-
-	public FadoParseNode epsilonNode() {
-		return create(EPSILON_PAYLOAD);
+	public ParseNode getTree() 
+	{
+		return _stack.elementAt( 0 );
 	}
 
 	/** Backtracking or cyclic DFA, don't want to add nodes to tree */
-	public void enterDecision(int d) { backtracking++; }
-	public void exitDecision(int i) { backtracking--; }
-
-	public void enterRule(String filename, String ruleName) {
-		if ( backtracking>0 ) return;
-		FadoParseNode parentRuleNode = (FadoParseNode)callStack.peek();
-		FadoParseNode ruleNode = create(ruleName);
-		parentRuleNode.addChild(ruleNode);
-		callStack.push(ruleNode);
+	/** I don't even know what this stuff does... -- Jason */
+	public void enterDecision( int d ) 
+	{ 
+		backtracking++; 
+	}
+	
+	public void exitDecision( int i ) 
+	{ 
+		backtracking--; 
 	}
 
-	public void exitRule(String filename, String ruleName) {
-		if ( backtracking>0 ) return;
-		FadoParseNode ruleNode = (FadoParseNode)callStack.peek();
-		if ( ruleNode.getChildCount()==0 ) {
-			ruleNode.addChild(epsilonNode());
-		}
-		callStack.pop();		
+	public void enterRule( String filename, String rule ) 
+	{
+		if( backtracking > 0 ) return;
+		ParseNode top = _stack.peek();
+		ParseNode child = new ParseNode( rule );
+		top.addChild( child );
+		_stack.push( child );
 	}
 
-	public void consumeToken(Token token) {
-		if ( backtracking>0 ) return;
-		FadoParseNode ruleNode = (FadoParseNode)callStack.peek();
-		FadoParseNode elementNode = create(token);
-		elementNode.hiddenTokens = this.hiddenTokens;
-		this.hiddenTokens = new ArrayList();
-		ruleNode.addChild(elementNode);
+	public void exitRule( String filename, String ruleName ) 
+	{
+		if( backtracking > 0 ) return;
+		_stack.pop();		
 	}
 
-	public void consumeHiddenToken(Token token) {
-		if ( backtracking>0 ) return;
-		hiddenTokens.add(token);
+	public void consumeToken( Token token ) 
+	{
+		if( backtracking > 0 ) return;
+		if( token.getType() == Token.EOF ) return;
+		ParseNode top = _stack.peek();
+		top.addChild( token );
 	}
 
-	public void recognitionException(RecognitionException e) {
-		if ( backtracking>0 ) return;
-		FadoParseNode ruleNode = (FadoParseNode)callStack.peek();
-		FadoParseNode errorNode = create(e);
-		ruleNode.addChild(errorNode);
+	public void consumeHiddenToken( Token token ) 
+	{
+		consumeToken( token );
+	}
+
+	public void recognitionException( RecognitionException e ) 
+	{
+		if( backtracking > 0 ) return;
+		ParseNode ruleNode = _stack.peek();
+		ruleNode.addChild( e );
 	}
 }
