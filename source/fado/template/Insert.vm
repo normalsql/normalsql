@@ -29,18 +29,61 @@ import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
-import fado.template.AbstractInsert;
+import java.sql.Statement;
+import java.sql.ResultSet;
 
 public class 
 	${className}
-extends
-	AbstractInsert
 {
+	private Connection __connection = null;
+	private PreparedStatement __prepared = null;
+
 	public ${className}( Connection connection )
 		throws Exception
 	{
-		super( connection );
+		__connection = connection;
+	}
+
+	protected final PreparedStatement getPreparedStatement()
+		throws SQLException
+	{
+		if( __prepared == null )
+		{
+			String sql = getSQL();
+			__prepared = __connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
+	
+		}
+		return __prepared;
+	}
+
+
+	protected boolean __executed = false;
+
+	// TODO: Auto detect if row has key/identity column
+	
+	public final boolean execute()
+		throws SQLException
+	{
+		__executed = true;
+		PreparedStatement statement = getPreparedStatement();
+		setParameters( statement );
+
+		boolean success = statement.executeUpdate() > 0;
+		if( success )
+		{
+			ResultSet keys = statement.getGeneratedKeys();
+			keys.next();
+			__identity = keys.getInt( 1 );
+		}
+		
+		return success;
+	}
+
+	private long __identity = 0L;
+
+	public long getIdentity()
+	{
+		return __identity;
 	}
 	
 #foreach( $column in $columns )
@@ -48,24 +91,23 @@ extends
 #end
 
 #foreach( $column in $columns )
-	public void set${column.Name}( ${column.JavaType} ${column.NameAsVariable} )
+	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
 	{
 		_${column.NameAsVariable} = ${column.NameAsVariable};
 	}
 	
-	public ${column.JavaType} get${column.Name}()
+	public ${column.JavaType} get${column.NameAsMethod}()
 	{
 		return _${column.NameAsVariable};
 	}	
 
 #end
 	
-	private static String _sql = null;
+	private static String __sql = null;
 
-	@Override
 	public String getSQL()
 	{
-		if( _sql == null )
+		if( __sql == null )
 		{
 			StringWriter writer = new StringWriter();
 			PrintWriter w = new PrintWriter( writer );
@@ -73,9 +115,9 @@ extends
 			w.println( "$line" );
 #end
 			w.close();
-			_sql = writer.toString();
+			__sql = writer.toString();
 		}
-		return _sql;
+		return __sql;
 	}
 
 	public void setParameters( PreparedStatement prepared )
@@ -84,10 +126,9 @@ extends
 #set( $nth = 0 )
 #foreach( $column in $columns )
 ##
-#set( $name = $column.getName() )
 #set( $method = $column.getTypedMethod() )
 #set( $nth = $nth + 1 )
-		prepared.set${method}( ${nth}, get${name}() );
+		prepared.set${method}( ${nth}, get${column.NameAsMethod}() );
 ##
 #end
 	}
@@ -96,8 +137,7 @@ extends
 	{
 		String result = getSQL();
 #foreach( $column in $columns )
-#set( $name = $column.getName() )
-		result = result.replaceFirst( "\\?", quotifyString( get${name}() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${column.NameAsMethod}() ));
 #end
 		return result;
 	}

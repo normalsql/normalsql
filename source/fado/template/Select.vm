@@ -235,19 +235,10 @@ public class
 		if( concurrency == ResultSet.CONCUR_UPDATABLE )
 		{
 			__inserting = true;
-			_id = 0;
-			_actionCode = null;
-			_code = null;
-			_description = null;
-			_discoveredDate = null;
-			_reaction = null;
-			_sensitivityDescription = null;
-			_severity = null;
-			_severityDescription = null;
-			_status = null;
-			_type = null;
-			_message_ID = 0;
-			_patientKey_ID = 0;
+
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = ${column.InitializerValue};
+#end
 		}
 		else
 		{
@@ -261,21 +252,14 @@ public class
 		if( __inserting )
 		{
 			__inserting = false;
+			
 			ResultSet rs = getResultSet();
 			rs.moveToInsertRow();
-			rs.updateInt( "ID", _id );
-			rs.updateString( "ActionCode", _actionCode );
-			rs.updateString( "Code", _code );
-			rs.updateString( "Description", _description );
-			rs.updateTimestamp( "DiscoveredDate", _discoveredDate );
-			rs.updateString( "Reaction", _reaction );
-			rs.updateString( "SensitivityDescription", _sensitivityDescription );
-			rs.updateString( "Severity", _severity );
-			rs.updateString( "SeverityDescription", _severityDescription );
-			rs.updateString( "Status", _status );
-			rs.updateString( "Type", _type );
-			rs.updateInt( "Message_ID", _message_ID );
-			rs.updateInt( "PatientKey_ID", _patientKey_ID );
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
 			rs.insertRow();
 			rs.moveToCurrentRow();
 			rs.next();
@@ -313,19 +297,11 @@ public class
 		{
 			__updating = false;
 			ResultSet rs = getResultSet();
-			rs.updateInt( "ID", _id );
-			rs.updateString( "ActionCode", _actionCode );
-			rs.updateString( "Code", _code );
-			rs.updateString( "Description", _description );
-			rs.updateTimestamp( "DiscoveredDate", _discoveredDate );
-			rs.updateString( "Reaction", _reaction );
-			rs.updateString( "SensitivityDescription", _sensitivityDescription );
-			rs.updateString( "Severity", _severity );
-			rs.updateString( "SeverityDescription", _severityDescription );
-			rs.updateString( "Status", _status );
-			rs.updateString( "Type", _type );
-			rs.updateInt( "Message_ID", _message_ID );
-			rs.updateInt( "PatientKey_ID", _patientKey_ID );
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
 			rs.updateRow();
 		}
 		else
@@ -335,14 +311,12 @@ public class
 	
 	}
 
-
-
 #foreach( $condition in $conditions )
-
+##
 #set( $type = $condition.getJavaType() )
 #set( $name = $condition.getColumn() )
 #set( $vari = $condition.getColumnAsVariable() )
-
+##
 #if( $condition.isComparison() )
 
 	public ${type} _${vari}Param = $condition.getValueAsCode();

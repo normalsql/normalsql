@@ -31,17 +31,36 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import fado.template.AbstractUpdate;
-
 public class 
 	${className}
-extends
-	AbstractUpdate
 {
+	private Connection __connection = null;
+	private PreparedStatement __prepared = null;
+	
 	public ${className}( Connection connection )
 		throws Exception
 	{
-		super( connection );
+		__connection = connection;
+	}
+
+	private PreparedStatement getPreparedStatement()
+		throws SQLException
+	{
+		if( __prepared == null )
+		{
+			String sql = getSQL();
+			__prepared = __connection.prepareStatement( sql );
+		}
+		return __prepared;
+	}
+
+	public int execute()
+		throws SQLException
+	{
+		PreparedStatement statement = getPreparedStatement();
+		setParameters( statement );
+		int rows = statement.executeUpdate();
+		return rows;
 	}
 	
 #foreach( $column in $columns )
@@ -49,12 +68,12 @@ extends
 #end
 
 #foreach( $column in $columns )
-	public void set${column.Name}( ${column.JavaType} ${column.NameAsVariable} )
+	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
 	{
 		_${column.NameAsVariable} = ${column.NameAsVariable};
 	}
 	
-	public ${column.JavaType} get${column.Name}()
+	public ${column.JavaType} get${column.NameAsMethod}()
 	{
 		return _${column.NameAsVariable};
 	}	
@@ -117,12 +136,11 @@ extends
 #end
 
 	
-	private static String _sql = null;
+	private static String __sql = null;
 
-	@Override
 	public String getSQL()
 	{
-		if( _sql == null )
+		if( __sql == null )
 		{
 			StringWriter writer = new StringWriter();
 			PrintWriter w = new PrintWriter( writer );
@@ -130,9 +148,9 @@ extends
 			w.println( "$line" );
 #end
 			w.close();
-			_sql = writer.toString();
+			__sql = writer.toString();
 		}
-		return _sql;
+		return __sql;
 	}
 
 	public void setParameters( PreparedStatement prepared )
@@ -141,10 +159,9 @@ extends
 #set( $nth = 0 )
 #foreach( $column in $columns )
 ##
-#set( $name = $column.getName() )
 #set( $method = $column.getTypedMethod() )
 #set( $nth = $nth + 1 )
-		prepared.set${method}( ${nth}, get${name}() );
+		prepared.set${method}( ${nth}, get${column.NameAsMethod}() );
 ##
 #end
 ##
@@ -185,8 +202,7 @@ extends
 	{
 		String result = getSQL();
 #foreach( $column in $columns )
-#set( $name = $column.getName() )
-		result = result.replaceFirst( "\\?", quotifyString( get${name}() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${column.NameAsMethod}() ));
 #end
 #foreach( $condition in $conditions )
 #set( $name = $condition.getColumn() )

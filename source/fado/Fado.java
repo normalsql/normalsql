@@ -189,7 +189,7 @@ public class
 		return name;
 	}
 
-	public boolean displayTree = false;
+	public boolean displayTree = true;
 
 	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
 		throws Exception
@@ -264,11 +264,8 @@ public class
 	private void extractSelect( ParseNode selectNode, SelectMeta extract ) 
 		throws Exception
 	{
-		// Tables
 		extractSelectTables( selectNode, extract );
-		// Columns
 		extractSelectColumns( selectNode, extract );
-		// Parameters
 		extractSelectParams( selectNode, extract );
 	}
 
@@ -282,7 +279,7 @@ public class
 		List<ParseNode> list = insertNode.findNodes( "columnList/columnName" );
 		for( ParseNode item : list )
 		{
-			String name = item.toOriginalString();
+			String name = item.toParsedString();
 			columns.add( new InsertColumn( name ) );
 		}
 
@@ -387,7 +384,7 @@ public class
 				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
 				if( tableAlias != null )
 				{
-					Table table = meta.getTableByAlias( tableAlias );
+					Table table = meta.getTable( tableAlias );
 					Column column = new Column( table );
 					meta.tempColumn( column );
 					continue;
@@ -400,7 +397,7 @@ public class
 					columnName = trimQuotes( columnName );
 					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
 					String columnAlias = item.findFirstString( "alias" );
-					Table table = meta.getTableByAlias( tableAlias );
+					Table table = meta.getTable( tableAlias );
 					Column column = new Column( table, columnName, columnAlias );
 					meta.tempColumn( column );
 					continue;
@@ -459,7 +456,7 @@ public class
 
 			node.convertToJDBCParam();
 
-			Table table = meta.getTableByAlias( tableAlias );
+			Table table = meta.getTable( tableAlias );
 
 			Comparison c = new Comparison( table, column, literal );
 			meta.comparison( c );
@@ -478,7 +475,7 @@ public class
 			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = meta.getTableByAlias( tableAlias );
+			Table table = meta.getTable( tableAlias );
 
 			IN param = new IN( table, column );
 

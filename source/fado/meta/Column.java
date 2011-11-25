@@ -1,6 +1,5 @@
 package fado.meta;
 
-import static java.lang.Character.*;
 
 public class 
 	Column
@@ -13,16 +12,6 @@ public class
 		Alias     // SELECT column AS alias FROM ... 
 	}
 	
-//	public static Column equals( String alias, String expr )
-//	{
-//		return new Column( Style.Equals, expr, alias );
-//	}
-//	
-//	public static Column alias( String expr, String alias )
-//	{
-//		return new Column( Style.Alias, expr, alias );
-//	}
-	
 	public Column( Table table )
 	{
 		_style = Style.WholeTable;
@@ -34,13 +23,6 @@ public class
 	{
 		_style = Style.Column;
 		_table = table;
-		_name = name;
-		_alias = alias;
-	}
-
-	public Column( Style style, String name, String alias )
-	{
-		_style = style;
 		_name = name;
 		_alias = alias;
 	}
@@ -64,26 +46,19 @@ public class
 	public String getName() { return _name; }
 	
 	private String _alias;
-	public String getAlias() { return _alias; }
+	public String getAlias() 
+	{ 
+		return _alias != null ? getAlias() : getName();
+	}
 	
 	public String getNameAsMethod()
 	{
-		String result = getAlias() != null ? getAlias() : getName();
-		return result; 
+		return Util.toMethodName( getName() );
 	}
 	
 	public String getNameAsVariable()
 	{
-		String result = getNameAsMethod();
-		char first = result.charAt( 0 );
-		if( isLetter( first ) && !isLowerCase( first ))
-		{
-			result = new StringBuffer( result.length() )
-				.append( toLowerCase( first ) )
-				.append( result.substring( 1 ))
-				.toString();
-		}
-		return result; 
+		return Util.toVariableName( getName() );
 	}
 	
 	private int _sqlType;

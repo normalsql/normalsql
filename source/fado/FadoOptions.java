@@ -17,7 +17,6 @@ public class FadoOptions
 	public final static String URL = "url";
 	public final static String USERNAME = "username";
 	public final static String PASSWORD = "password";
-	// public final static String PACKAGENAME = "package";
 	public final static String SOURCE = "source";
 	public final static String TARGET = "target";
 	public final static String PROPERTY = "property";
@@ -48,11 +47,6 @@ public class FadoOptions
 		return coalesce( (String) _options.valueOf( PASSWORD ), _props.get( PASSWORD ) );
 	}
 
-	// public String getPackageName()
-	// {
-	// return coalesce( (String) _options.valueOf( PACKAGENAME ), _props.get( PACKAGENAME ));
-	// }
-
 	public String getSource()
 	{
 		return coalesce( (String) _options.valueOf( SOURCE ), _props.get( SOURCE ) );
@@ -71,7 +65,6 @@ public class FadoOptions
 		parser.accepts( USERNAME ).withRequiredArg();
 		parser.accepts( PASSWORD ).withRequiredArg();
 
-		// parser.accepts( PACKAGENAME ).withRequiredArg();
 		parser.accepts( SOURCE ).withRequiredArg();
 		parser.accepts( TARGET ).withRequiredArg();
 		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( _filename );
@@ -103,13 +96,15 @@ public class FadoOptions
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append( DRIVER ).append( ": " ).append( getDriver() ).append( '\n' );
-		sb.append( URL ).append( ": " ).append( getUrl() ).append( '\n' );
-		sb.append( USERNAME ).append( ": " ).append( getUsername() ).append( '\n' );
-		sb.append( PASSWORD ).append( ": " ).append( getPassword() ).append( '\n' );
-		// sb.append( PACKAGENAME ).append( ": " ).append( getPackageName() ).append( '\n' );
-		sb.append( SOURCE ).append( ": " ).append( getSource() ).append( '\n' );
-		sb.append( TARGET ).append( ": " ).append( getTarget() );
+		sb.append( "fado properties loaded from " ).append( _props.getURL() ).append( '\n' );
+		sb.append( '\n' );
+		sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
+		sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
+		sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
+		sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
+		sb.append( SOURCE ).append( " = " ).append( getSource() ).append( '\n' );
+		sb.append( TARGET ).append( " = " ).append( getTarget() );
+		sb.append( '\n' );
 		return sb.toString();
 	}
 

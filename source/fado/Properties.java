@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,10 @@ public class Properties
 		clear();
 	}
 
+	private URL _url = null;
+	
+	public URL getURL() { return _url; }
+	
 	public void clear()
 	{
 		lines = new ArrayList<Line>();
@@ -171,14 +176,13 @@ public class Properties
 	public void load( String name ) throws IOException
 	{
 		ClassLoader loader = getClass().getClassLoader();
-		InputStream in = loader.getResourceAsStream( name + ".properties" );
-		load( in );
-	}
-
-	public void load( InputStream in ) throws IOException
-	{
-		InputStreamReader reader = new InputStreamReader( in );
-		load( reader );
+		_url = loader.getResource( name + ".properties" );
+		if( _url != null )
+		{
+			InputStream in = _url.openStream();
+			InputStreamReader reader = new InputStreamReader( in );
+			load( reader );
+		}
 	}
 
 	public void load( Reader reader ) throws IOException

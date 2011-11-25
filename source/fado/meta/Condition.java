@@ -7,13 +7,6 @@ import static java.lang.Character.toLowerCase;
 public abstract class 
 	Condition 
 {
-//	public Condition( Table table, String column, int sqlType )
-//	{
-//		_table = table;
-//		_column = column;
-//		_sqlType = sqlType;
-//	}
-	
 	public Condition( Table table, String column )
 	{
 		_table = table;
@@ -26,20 +19,15 @@ public abstract class
 	private String _column = null;
 	public final String getColumn() { return _column; } 
 	
-	public String getColumnAsVariable()
+	public String getColumnAsMethod()
 	{
-		String result = getColumn();
-		char first = result.charAt( 0 );
-		if( isLetter( first ) && !isLowerCase( first ))
-		{
-			result = new StringBuffer( result.length() )
-				.append( toLowerCase( first ) )
-				.append( result.substring( 1 ))
-				.toString();
-		}
-		return result; 
+		return Util.toMethodName( getColumn() );
 	}
 	
+	public String getColumnAsVariable()
+	{
+		return Util.toVariableName( getColumn() );
+	}
 	
 	private int _sqlType = Integer.MIN_VALUE;
 	public final void setSQLType( int sqlType ) { _sqlType = sqlType; }

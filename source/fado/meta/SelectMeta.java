@@ -30,38 +30,6 @@ public class
 		return _package;
 	}
 	
-//	public enum Statement
-//	{
-//		SELECT, INSERT, DELETE, UPDATE
-//	}
-	
-//	private Statement _statement = null;
-//
-//	public void select()
-//	{
-//		_statement = Statement.SELECT;
-//	}
-//	
-//	public void insert()
-//	{
-//		_statement = Statement.INSERT;
-//	}
-//	
-//	public void delete()
-//	{
-//		_statement = Statement.DELETE;
-//	}
-//	
-//	public void update()
-//	{
-//		_statement = Statement.UPDATE;
-//	}
-//
-//	public Statement getStatement()
-//	{
-//		return _statement;
-//	}
-	
 	/** Temporary columns are what's found in the parsed SQL command. When found,
 	 * they're moved to the final columns list.
 	 */
@@ -121,35 +89,21 @@ public class
 		return _tables;
 	}
 	
-	public Table getTableByAlias( String alias )
+	public Table getTable( String name )
 		throws TableNotFoundException
 	{
+		if( name == null ) return null;
 		List<Table> tables = getTables();
 		
-		Table result = null;
-		
-		if( alias == null ) 
+		for( Table table : tables )
 		{
-			result = tables.get( 0 );
-		}
-		else
-		{
-			for( Table table : tables )
+			if( name.equals( table.getAlias() ) || name.equals( table.getName() ))
 			{
-				if( alias.equals( table.getAlias() ))
-				{
-					result = table;
-					break;
-				}
+				return table;
 			}
 		}
 		
-		if( result == null )
-		{
-			throw new TableNotFoundException( "table alias not found: " + alias );
-		}
-		
-		return result;
+		throw new TableNotFoundException( "table alias not found: " + name );
 	}
 	
 	private ArrayList<Condition> _conditions = new ArrayList<Condition>();
