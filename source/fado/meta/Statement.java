@@ -3,8 +3,8 @@ package fado.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-public class 
-	InsertMeta 
+public abstract class 
+	Statement 
 {
 	private String _name = null;
 	
@@ -29,33 +29,7 @@ public class
 		return _package;
 	}
 	
-	private ArrayList<InsertColumn> _columns = null;
 	
-	public void setColumns( ArrayList<InsertColumn> columns )
-	{
-		_columns = columns;
-	}
-	
-	public List<InsertColumn> getColumns()
-	{
-		return _columns;
-	}
-	
-	private String _table = null; 
-	
-	public void setTable( String table )
-	{
-		if( table == null )
-		{
-			throw new NullPointerException( "table" );
-		}
-		_table = table;
-	}
-	
-	public String getTable()
-	{
-		return _table;
-	}
 	
 	private String _rewrite = "n/a";
 
@@ -97,5 +71,38 @@ public class
 	{
 		return _originalSQL;
 	}
+
+	private ArrayList<Table> _tables = new ArrayList<Table>(); 
 	
+	public void addTable( Table table )
+	{
+		if( table == null )
+		{
+			throw new NullPointerException( "table" );
+		}
+		_tables.add( table );
+	}
+	
+	public List<Table> getTables()
+	{
+		return _tables;
+	}
+	
+	public Table getTable( String name )
+		throws TableNotFoundException
+	{
+		if( name == null ) return null;
+		List<Table> tables = getTables();
+		
+		for( Table table : tables )
+		{
+			if( name.equals( table.getAlias() ) || name.equals( table.getName() ))
+			{
+				return table;
+			}
+		}
+		
+		throw new TableNotFoundException( "table alias not found: " + name );
+	}
+
 }

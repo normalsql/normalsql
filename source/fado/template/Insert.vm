@@ -26,11 +26,8 @@ package ${packageName};
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.ResultSet;
+import java.sql.*;
+import java.math.BigDecimal;
 
 public class 
 	${className}

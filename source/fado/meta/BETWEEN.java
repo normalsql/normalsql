@@ -5,6 +5,11 @@ public class
 extends
 	Condition
 {
+	public BETWEEN( Table table, String accessor )
+	{
+		super( table, accessor );
+	}
+	
 	public BETWEEN( Table table, String accessor, String left, String right )
 	{
 		super( table, accessor );

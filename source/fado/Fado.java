@@ -19,7 +19,6 @@ import java.util.Stack;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
-import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.CommonTokenStream;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -27,17 +26,19 @@ import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
+import fado.meta.BETWEEN;
 import fado.meta.Column;
 import fado.meta.Condition;
 import fado.meta.IN;
 import fado.meta.InsertColumn;
-import fado.meta.InsertMeta;
-import fado.meta.SelectMeta;
+import fado.meta.InsertStatement;
+import fado.meta.SelectStatement;
 import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
 import fado.meta.UpdateColumn;
-import fado.meta.UpdateMeta;
+import fado.meta.UpdateStatement;
+import fado.meta.WhereStatement;
 import fado.parse.ParseNode;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
@@ -194,74 +195,81 @@ public class
 	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
 		throws Exception
 	{
-		FileReader reader = new FileReader( sourceFile );
-
-		ParseTreeBuilder builder = new ParseTreeBuilder();
-		CharStream cs = new ANTLRReaderStream( reader );
-		GenericSQLLexer lexer = new GenericSQLLexer( cs );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		GenericSQLParser parser = new GenericSQLParser( tokens, builder );
-
-		parser.statement();
-		reader.close();
-
-		ParseNode source = builder.getTree();
-		String temp = source.toOriginalString();
-		List<String> originalSQL = chopper( temp.trim() );
-
-		if( displayTree )
+		ParseTreeBuilder builder = null;
+		try 
 		{
-			System.out.println( "string tree: " + builder.getTree().toParseTree() );
+			FileReader reader = new FileReader( sourceFile );
+	
+			builder = new ParseTreeBuilder();
+			CharStream cs = new ANTLRReaderStream( reader );
+			GenericSQLLexer lexer = new GenericSQLLexer( cs );
+			CommonTokenStream tokens = new CommonTokenStream( lexer );
+			GenericSQLParser parser = new GenericSQLParser( tokens, builder );
+	
+			parser.statement();
+			reader.close();
+	
+			ParseNode source = builder.getTree();
+			String temp = source.toOriginalString();
+			List<String> originalSQL = chopper( temp.trim() );
+	
+			ParseNode selectNode = source.findFirstNode( "statement/select" );
+			if( selectNode != null )
+			{
+				SelectStatement meta = new SelectStatement();
+				meta.setName( name );
+				meta.setPackage( pkg );
+				meta.setOriginalFileName( sourceFile.toString() );
+				meta.setOriginalSQL( originalSQL );
+				extractSelect( selectNode, meta );
+				inspectDatabaseForSelect( _conn, meta );
+	
+				String retooledSQL = builder.getTree().toOriginalString();
+				List<String> choppedSQL = chopper( retooledSQL.trim() );
+				generateSelect( meta, choppedSQL, targetFile );
+			}
+	
+			ParseNode insertNode = source.findFirstNode( "statement/insert" );
+			if( insertNode != null )
+			{
+				InsertStatement meta = new InsertStatement();
+				meta.setName( name );
+				meta.setPackage( pkg );
+				meta.setOriginalFileName( sourceFile.toString() );
+				meta.setOriginalSQL( originalSQL );
+				extractInsert( insertNode, meta );
+				inspectDatabaseForInsert( _conn, meta );
+				String retooledSQL = builder.getTree().toOriginalString();
+				List<String> choppedSQL = chopper( retooledSQL.trim() );
+				generateInsert( meta, choppedSQL, targetFile );
+			}
+	
+			ParseNode updateNode = source.findFirstNode( "statement/update" );
+			if( updateNode != null )
+			{
+				UpdateStatement meta = new UpdateStatement();
+				meta.setName( name );
+				meta.setPackage( pkg );
+				meta.setOriginalFileName( sourceFile.toString() );
+				meta.setOriginalSQL( originalSQL );
+				extractUpdate( updateNode, meta );
+				inspectDatabaseForUpdate( _conn, meta );
+				String retooledSQL = builder.getTree().toOriginalString();
+				List<String> choppedSQL = chopper( retooledSQL.trim() );
+				generateUpdate( meta, choppedSQL, targetFile );
+			}
 		}
-
-		ParseNode selectNode = source.findFirstNode( "statement/select" );
-		if( selectNode != null )
+		catch( Exception e )
 		{
-			SelectMeta meta = new SelectMeta();
-			meta.setName( name );
-			meta.setPackage( pkg );
-			meta.setOriginalFileName( sourceFile.toString() );
-			meta.setOriginalSQL( originalSQL );
-			extractSelect( selectNode, meta );
-			inspectDatabaseForSelect( _conn, meta );
-
-			String retooledSQL = builder.getTree().toOriginalString();
-			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateSelect( meta, choppedSQL, targetFile );
-		}
-
-		ParseNode insertNode = source.findFirstNode( "statement/insert" );
-		if( insertNode != null )
-		{
-			InsertMeta meta = new InsertMeta();
-			meta.setName( name );
-			meta.setPackage( pkg );
-			meta.setOriginalFileName( sourceFile.toString() );
-			meta.setOriginalSQL( originalSQL );
-			extractInsert( insertNode, meta );
-			inspectDatabaseForInsert( _conn, meta );
-			String retooledSQL = builder.getTree().toOriginalString();
-			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateInsert( meta, choppedSQL, targetFile );
-		}
-
-		ParseNode updateNode = source.findFirstNode( "statement/update" );
-		if( updateNode != null )
-		{
-			UpdateMeta meta = new UpdateMeta();
-			meta.setName( name );
-			meta.setPackage( pkg );
-			meta.setOriginalFileName( sourceFile.toString() );
-			meta.setOriginalSQL( originalSQL );
-			extractUpdate( updateNode, meta );
-			inspectDatabaseForUpdate( _conn, meta );
-			String retooledSQL = builder.getTree().toOriginalString();
-			List<String> choppedSQL = chopper( retooledSQL.trim() );
-			generateUpdate( meta, choppedSQL, targetFile );
+			if( displayTree )
+			{
+				System.out.println( "string tree: " + builder.getTree().toParseTree() );
+			}
+			throw e;
 		}
 	}
 
-	private void extractSelect( ParseNode selectNode, SelectMeta extract ) 
+	private void extractSelect( ParseNode selectNode, SelectStatement extract ) 
 		throws Exception
 	{
 		extractSelectTables( selectNode, extract );
@@ -269,11 +277,16 @@ public class
 		extractSelectParams( selectNode, extract );
 	}
 
-	private void extractInsert( ParseNode insertNode, InsertMeta meta ) 
+	private void extractInsert( ParseNode insertNode, InsertStatement meta ) 
 		throws Exception
 	{
-		String table = insertNode.findFirstString( "into/tableRef" );
-		meta.setTable( table );
+		ParseNode tableRef = insertNode.findFirstNode( "into/tableRef" );
+		String databaseName = tableRef.findFirstString( "databaseName" );
+		String tableName = tableRef.findFirstString( "**/tableName" );
+//		String alias = item.findFirstString( "alias" );
+		String alias = null;
+		Table table = new Table( databaseName, tableName, alias );
+		meta.addTable( table );
 
 		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
 		List<ParseNode> list = insertNode.findNodes( "columnList/columnName" );
@@ -306,12 +319,16 @@ public class
 	}
 
 	// TODO support unary literals (done?)
-	private void extractUpdate( ParseNode updateNode, UpdateMeta meta ) 
+	private void extractUpdate( ParseNode updateNode, UpdateStatement meta ) 
 		throws Exception
 	{
-		String tableName = updateNode.findFirstString( "tableRef" );
-		Table table = new Table( null, tableName, null );
-		meta.setTable( table );
+		ParseNode tableRef = updateNode.findFirstNode( "tableRef" );
+		String databaseName = tableRef.findFirstString( "databaseName" );
+		String tableName = tableRef.findFirstString( "**/tableName" );
+//		String alias = item.findFirstString( "alias" );
+		String alias = null;
+		Table table = new Table( databaseName, tableName, alias );
+		meta.addTable( table );
 
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
 		List<ParseNode> setters = updateNode.findNodes( "setter" );
@@ -337,12 +354,12 @@ public class
 				List<ParseNode> comparison = condition.findNodes( "comparison" );
 				if( comparison.size() == 1 )
 				{
-					extractUpdateComparisonParams( comparison.get( 0 ), meta );
+					extractComparisonParams( comparison.get( 0 ), meta );
 				}
 				List<ParseNode> in = condition.findNodes( "in" );
 				if( in.size() == 1 )
 				{
-					extractUpdateINParams( in.get( 0 ), meta );
+					extractINParams( in.get( 0 ), meta );
 				}
 				List<ParseNode> between = condition.findNodes( "between" );
 				// TODO: extract BETWEEN params
@@ -350,7 +367,7 @@ public class
 		}
 	}
 
-	public void extractSelectTables( ParseNode selectNode, SelectMeta meta )
+	public void extractSelectTables( ParseNode selectNode, SelectStatement meta )
 	{
 		List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
 		for( ParseNode item : list )
@@ -360,11 +377,11 @@ public class
 			String tableName = tableRef.findFirstString( "**/tableName" );
 			String alias = item.findFirstString( "alias" );
 			Table table = new Table( databaseName, tableName, alias );
-			meta.table( table );
+			meta.addTable( table );
 		}
 	}
 
-	public void extractSelectColumns( ParseNode selectNode, SelectMeta meta ) 
+	public void extractSelectColumns( ParseNode selectNode, SelectStatement meta ) 
 		throws Exception
 	{
 		String allStar = selectNode.findFirstString( "itemList" );
@@ -410,7 +427,7 @@ public class
 		}
 	}
 
-	public void extractSelectParams( ParseNode selectNode, SelectMeta meta ) 
+	public void extractSelectParams( ParseNode selectNode, SelectStatement meta ) 
 		throws FadoException
 	{
 		ParseNode where = selectNode.findFirstNode( "where" );
@@ -423,61 +440,107 @@ public class
 				List<ParseNode> comparison = condition.findNodes( "comparison" );
 				if( comparison.size() == 1 )
 				{
-					extractSelectComparisonParams( comparison.get( 0 ), meta );
+					extractComparisonParams( comparison.get( 0 ), meta );
 				}
 				List<ParseNode> in = condition.findNodes( "in" );
 				if( in.size() == 1 )
 				{
-					extractSelectINParams( in.get( 0 ), meta );
+					extractINParams( in.get( 0 ), meta );
 				}
 				List<ParseNode> between = condition.findNodes( "between" );
-				// TODO: extract BETWEEN params
+				if( between.size() == 1 )
+				{
+					extractBETWEENParams( between.get( 0 ), meta );
+				}
 			}
 		}
 
 	}
 
 	// Comparisons, eg column = 'abc'
-	public void extractSelectComparisonParams( ParseNode comparison, SelectMeta meta )
-		throws TableNotFoundException
-	{
-		List<ParseNode> columns = comparison.findNodes( "**/columnRef" );
-		List<ParseNode> literals = comparison.findNodes( "**/literal" );
-		if( columns.size() == 1 && literals.size() == 1 )
+	public void extractComparisonParams( ParseNode comparisonNode, WhereStatement statement )
+			throws TableNotFoundException
 		{
-			// System.out.println( "found comparison: " + comparison.toInputString() );
-			ParseNode columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-			String tableAlias = columnRef.findFirstString( "tableAlias" );
+			List<ParseNode> columns = comparisonNode.findNodes( "**/columnRef" );
+			List<ParseNode> literals = comparisonNode.findNodes( "**/literal" );
+			if( columns.size() == 1 && literals.size() == 1 )
+			{
+				// System.out.println( "found comparison: " + comparison.toInputString() );
+				ParseNode columnRef = columns.get( 0 );
+				String column = columnRef.findFirstString( "columnName" );
+				String tableAlias = columnRef.findFirstString( "tableAlias" );
+				Table table = null;
+				if( tableAlias != null )
+				{
+					table = statement.getTable( tableAlias );
+				}
 
-			ParseNode node = literals.get( 0 );
-			String literal = node.toParsedString();
-			literal = trimQuotes( literal );
-
-			node.convertToJDBCParam();
-
-			Table table = meta.getTable( tableAlias );
-
-			Comparison c = new Comparison( table, column, literal );
-			meta.comparison( c );
+				ParseNode node = literals.get( 0 );
+				String literal = node.toParsedString();
+				literal = trimQuotes( literal );
+				Comparison comparison = new Comparison( table, column, literal );
+				
+				statement.addCondition( comparison );
+				
+				node.convertToJDBCParam();
+			}
 		}
-	}
 
-	// IN, eg column IN ( 1, 2, 3 )
-	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractSelectINParams( ParseNode in, SelectMeta meta ) 
+
+	// BETWEEN, eg column BETWEEN 1 AND 100
+	// TODO: BETWEEN condition
+	public void extractBETWEENParams( ParseNode in, SelectStatement statement ) 
 		throws FadoException
 	{
 		List<ParseNode> columns = in.findNodes( "**/columnRef" );
 		List<ParseNode> literals = in.findNodes( "**/literal" );
+		if( columns.size() == 1 && literals.size() == 2 )
+		{
+			ParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
+			String tableAlias = columnRef.findFirstString( "tableAlias" );
+			Table table = statement.getTable( tableAlias );
+
+			BETWEEN between = new BETWEEN( table, column );
+
+			ParseNode leftNode = literals.get( 0 );
+			String left = leftNode.toParsedString();
+			left = trimQuotes( left );
+			leftNode.convertToJDBCParam();
+			between.setLeft( left );
+
+			ParseNode rightNode = literals.get( 1 );
+			String right = rightNode.toParsedString();
+			right = trimQuotes( right );
+			rightNode.convertToJDBCParam();
+			between.setRight( right );
+
+			statement.addCondition( between );
+		}
+	}
+
+
+	// LIKE, eg column LIKE 'abc%'
+	// TODO: LIKE condition
+
+	// IN, eg column IN ( 1, 2, 3 )
+	// Very naive pattern extraction, assumes column on left and literals on right
+	public void extractINParams( ParseNode inNode, WhereStatement statement ) 
+		throws FadoException
+	{
+		List<ParseNode> columns = inNode.findNodes( "**/columnRef" );
+		List<ParseNode> literals = inNode.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
 			ParseNode columnRef = columns.get( 0 );
 			String column = columnRef.findFirstString( "columnName" );
 			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = meta.getTable( tableAlias );
-
-			IN param = new IN( table, column );
+			Table table = null;
+			if( tableAlias != null )
+			{
+				table = statement.getTable( tableAlias );
+			}
+			IN in = new IN( table, column );
 
 			for( ParseNode node : literals )
 			{
@@ -486,71 +549,14 @@ public class
 
 				node.convertToJDBCParam();
 
-				param.addValue( text );
+				in.addValue( text );
 			}
-			meta.comparison( param );
+			statement.addCondition( in );
 		}
 	}
 
-	// BETWEEN, eg column BETWEEN 1 AND 100
-	// TODO: BETWEEN condition
-
-	// LIKE, eg column LIKE 'abc%'
-	// TODO: LIKE condition
-
-	public void extractUpdateComparisonParams( ParseNode comparison, UpdateMeta meta )
-		throws TableNotFoundException
-	{
-		List<ParseNode> columns = comparison.findNodes( "**/columnRef" );
-		List<ParseNode> literals = comparison.findNodes( "**/literal" );
-		if( columns.size() == 1 && literals.size() == 1 )
-		{
-			// System.out.println( "found comparison: " + comparison.toInputString() );
-			ParseNode columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-
-			ParseNode node = literals.get( 0 );
-			String literal = node.toParsedString();
-			literal = trimQuotes( literal );
-
-			node.convertToJDBCParam();
-			
-			Table table = meta.getTable();
-
-			Comparison c = new Comparison( table, column, literal );
-			
-			meta.addCondition( c );
-		}
-	}
-
-	// IN, eg column IN ( 1, 2, 3 )
-	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractUpdateINParams( ParseNode in, UpdateMeta meta ) 
-		throws FadoException
-	{
-		List<ParseNode> columns = in.findNodes( "**/columnRef" );
-		List<ParseNode> literals = in.findNodes( "**/literal" );
-		if( columns.size() == 1 && literals.size() > 0 )
-		{
-			ParseNode columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-
-			IN param = new IN( null, column );
-
-			for( ParseNode node : literals )
-			{
-				String literal = node.toParsedString();
-				literal = trimQuotes( literal );
-
-				node.convertToJDBCParam();
-
-				param.addValue( literal );
-			}
-			meta.addCondition( param );
-		}
-	}
-
-	public void inspectDatabaseForSelect( Connection conn, SelectMeta extract ) throws Exception
+	public void inspectDatabaseForSelect( Connection conn, SelectStatement extract ) 
+		throws Exception
 	{
 
 		PreparedStatement tablesPS = conn
@@ -644,24 +650,45 @@ public class
 
 		for( Condition condition : extract.getConditions() )
 		{
-			String tableName = condition.getTable().getName().toUpperCase();
 			String columnName = condition.getColumn().toUpperCase();
-			columnPS.setString( 1, tableName );
 			columnPS.setString( 2, columnName );
-
-			if( columnPS.execute() )
+			
+			List<Table> tables = null;
+			if( condition.hasTable() )
 			{
-				ResultSet columnRS = columnPS.getResultSet();
-				if( columnRS.next() )
+				tables = new ArrayList<Table>();
+				Table table = condition.getTable();
+				tables.add( table );
+			}
+			else
+			{
+				tables = extract.getTables();
+			}
+
+			boolean found = false;
+
+			for( Table table : tables )
+			{
+				String tableName = table.getName().toUpperCase();
+				columnPS.setString( 1, tableName );
+
+				if( columnPS.execute() )
 				{
-					int sqlType = columnRS.getInt( "DATA_TYPE" );
-					condition.setSQLType( sqlType );
+					ResultSet columnRS = columnPS.getResultSet();
+					if( columnRS.next() )
+					{
+						int sqlType = columnRS.getInt( "DATA_TYPE" );
+						condition.setSQLType( sqlType );
+						found = true;
+					}
+					columnRS.close();
 				}
-				else
-				{
-					throw new Exception( "column not found: " + columnName );
-				}
-				columnRS.close();
+				if( found ) break;
+			}
+
+			if( !found )
+			{
+				throw new Exception( "condition's column ref not found: " + columnName );
 			}
 		}
 
@@ -669,14 +696,16 @@ public class
 		columnPS.close();
 	}
 
-	public void inspectDatabaseForInsert( Connection conn, InsertMeta extract ) throws Exception
+	public void inspectDatabaseForInsert( Connection conn, InsertStatement extract ) 
+		throws Exception
 	{
 		PreparedStatement tablesPS = conn
 				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn
 				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
 
-		String tableName = extract.getTable().toUpperCase();
+		Table table = extract.getTables().get( 0 );
+		String tableName = table.getName().toUpperCase();
 		tablesPS.setString( 1, tableName );
 		if( tablesPS.execute() )
 		{
@@ -720,14 +749,16 @@ public class
 		columnPS.close();
 	}
 
-	public void inspectDatabaseForUpdate( Connection conn, UpdateMeta extract ) throws Exception
+	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement extract ) 
+		throws Exception
 	{
 		PreparedStatement tablesPS = conn
 				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn
 				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
 
-		String tableName = extract.getTable().getName().toUpperCase();
+		Table table = extract.getTables().get( 0 );
+		String tableName = table.getName().toUpperCase();
 		tablesPS.setString( 1, tableName );
 		if( tablesPS.execute() )
 		{
@@ -793,7 +824,8 @@ public class
 		columnPS.close();
 	}
 
-	public void generateSelect( SelectMeta meta, List<String> sql, File targetFile ) throws Exception
+	public void generateSelect( SelectStatement meta, List<String> sql, File targetFile ) 
+		throws Exception
 	{
 		List<Column> columns = meta.getFinalColumns();
 		List<Condition> conditions = meta.getConditions();
@@ -814,7 +846,8 @@ public class
 		writer.close();
 	}
 
-	public void generateInsert( InsertMeta meta, List<String> sql, File targetFile ) throws Exception
+	public void generateInsert( InsertStatement meta, List<String> sql, File targetFile ) 
+		throws Exception
 	{
 		List<InsertColumn> columns = meta.getColumns();
 
@@ -833,7 +866,8 @@ public class
 		writer.close();
 	}
 
-	public void generateUpdate( UpdateMeta meta, List<String> sql, File targetFile ) throws Exception
+	public void generateUpdate( UpdateStatement meta, List<String> sql, File targetFile ) 
+		throws Exception
 	{
 		List<UpdateColumn> columns = meta.getColumns();
 		List<Condition> conditions = meta.getConditions();
@@ -874,7 +908,8 @@ public class
 		return result;
 	}
 
-	public static void dumpResultSet( ResultSet set ) throws SQLException
+	public static void dumpResultSet( ResultSet set ) 
+		throws SQLException
 	{
 		System.out.println();
 		ResultSetMetaData meta = set.getMetaData();

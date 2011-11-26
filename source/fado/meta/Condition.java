@@ -1,9 +1,5 @@
 package fado.meta;
 
-import static java.lang.Character.isLetter;
-import static java.lang.Character.isLowerCase;
-import static java.lang.Character.toLowerCase;
-
 public abstract class 
 	Condition 
 {
@@ -15,16 +11,17 @@ public abstract class
 	
 	private Table _table = null;
 	public final Table getTable() { return _table; }
+	public boolean hasTable() { return _table != null; }
 	
 	private String _column = null;
 	public final String getColumn() { return _column; } 
 	
-	public String getColumnAsMethod()
+	public String getNameAsMethod()
 	{
 		return Util.toMethodName( getColumn() );
 	}
 	
-	public String getColumnAsVariable()
+	public String getNameAsVariable()
 	{
 		return Util.toVariableName( getColumn() );
 	}

@@ -27,9 +27,8 @@ package ${packageName};
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.math.BigDecimal;
 
 public class 
 	${className}
@@ -81,52 +80,68 @@ public class
 #end
 
 #foreach( $condition in $conditions )
-
-#set( $type = $condition.getJavaType() )
-#set( $name = $condition.getColumn() )
-#set( $vari = $condition.getColumnAsVariable() )
-
 #if( $condition.isComparison() )
-
-	public ${type} _${vari}Param = $condition.getValueAsCode();
+	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
 	
-	public void set${name}Param( ${type} ${vari} )
+	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
 	{
-		_${vari}Param = ${vari};
+		_${condition.NameAsVariable}Param = ${condition.NameAsVariable};
 	}
 	
-	public ${type} get${name}Param()
+	public ${condition.JavaType} get${condition.NameAsMethod}Param()
 	{
-		return _${vari}Param;
+		return _${condition.NameAsVariable}Param;
 	}
 
 #elseif( $condition.isIN() )
-	private ${type}[] _${name}List = new ${type}[] { $condition.getValueAsCode() };
-	private int _${vari}Count = 0;
-	public void add${name}Param( ${type} ${vari} )
+	private ${condition.JavaType}[] _${condition.NameAsMethod}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
+	private int _${condition.NameAsVariable}Count = 0;
+	public void add${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
 	{
-		if( _${vari}Count == _${vari}List.length )
+		if( _${condition.NameAsVariable}Count == _${condition.NameAsVariable}List.length )
 		{
-			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${vari}List.length );
+			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${condition.NameAsVariable}List.length );
 		}
-		int count = _${vari}Count;
+		int count = _${condition.NameAsVariable}Count;
 		
 		// Parameter array get filled to the right, so there are no holes
-		for( int i = count; count < _${vari}List.length; count++ )
+		for( int i = count; count < _${condition.NameAsVariable}List.length; count++ )
 		{
-			_${vari}List[i] = ${vari};
+			_${condition.NameAsVariable}List[i] = ${condition.NameAsVariable};
 		}
-		_${vari}Count++;
+		_${condition.NameAsVariable}Count++;
 	}
 	
-	public ${type} get${name}Param( int nth )
+	public ${condition.JavaType} get${condition.NameAsMethod}Param( int nth )
 	{
-		return _${vari}List[ nth ];
+		return _${condition.NameAsVariable}List[ nth ];
 	}
 	
 #elseif( $condition.isBETWEEN() )
 
-    BETWEEN!
+	public ${condition.JavaType} _${condition.NameAsVariable}LeftParam = $condition.getLeftAsCode();
+	
+	public void set${condition.NameAsMethod}LeftParam( ${condition.JavaType} ${condition.NameAsVariable} )
+	{
+		_${condition.NameAsVariable}LeftParam = ${condition.NameAsVariable};
+	}
+	
+	public ${condition.JavaType} get${condition.NameAsMethod}LeftParam()
+	{
+		return _${condition.NameAsVariable}LeftParam;
+	}
+
+	public ${condition.JavaType} _${condition.NameAsVariable}RightParam = $condition.getRightAsCode();
+	
+	public void set${condition.NameAsMethod}RightParam( ${condition.JavaType} ${condition.NameAsVariable} )
+	{
+		_${condition.NameAsVariable}RightParam = ${condition.NameAsVariable};
+	}
+	
+	public ${condition.JavaType} get${condition.NameAsMethod}RightParam()
+	{
+		return _${condition.NameAsVariable}RightParam;
+	}
 
 #elseif( $condition.isLIKE() )
 
@@ -168,7 +183,7 @@ public class
 #foreach( $condition in $conditions )
 ##
 #set( $type = $condition.getJavaType() )
-#set( $name = $condition.getColumn() )
+#set( $name = $condition.getNameAsMethod() )
 #set( $method = $condition.getTypedMethod() )
 ##
 #if( $condition.isComparison() )

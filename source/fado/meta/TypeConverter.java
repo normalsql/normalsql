@@ -276,7 +276,7 @@ public class
 		case DATALINK:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
 		case DECIMAL:
-			result = "java.math.BigDecimal";
+			result = "new java.math.BigDecimal( " + literal + " );";
 			break;
 		case DISTINCT:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
@@ -296,7 +296,7 @@ public class
 			result = "byte[]";
 			
 		case NUMERIC:
-			result = "java.math.BigDecimal";
+			result = "new java.math.BigDecimal( " + literal + " );";
 			break;
 		case NULL:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );

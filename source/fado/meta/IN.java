@@ -19,11 +19,6 @@ extends
 	public void addValue( String value )
 		throws FadoException
 	{
-//		if( getSQLType() != Integer.MIN_VALUE && sqlType != getSQLType() )
-//		{
-//			throw new FadoException( "All literals must be of same SQL type, mismatched prev: " + getSQLType() + " new: " + sqlType );
-//		}
-//		setSQLType( sqlType );
 		_values.add( value );
 	}
 	
