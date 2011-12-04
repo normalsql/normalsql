@@ -5,16 +5,9 @@ public class
 extends
 	Condition
 {
-	public BETWEEN( Table table, String accessor )
+	public BETWEEN( Table table, String column )
 	{
-		super( table, accessor );
-	}
-	
-	public BETWEEN( Table table, String accessor, String left, String right )
-	{
-		super( table, accessor );
-		setLeft( left );
-		setRight( right );
+		super( table, column );
 	}
 	
 	String _left = null;

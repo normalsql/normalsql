@@ -32,6 +32,7 @@ import fado.meta.Condition;
 import fado.meta.IN;
 import fado.meta.InsertColumn;
 import fado.meta.InsertStatement;
+import fado.meta.LIKE;
 import fado.meta.SelectStatement;
 import fado.meta.Comparison;
 import fado.meta.Table;
@@ -210,53 +211,55 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
+			source.addLexType( "String", GenericSQLParser.String );
+			
 			String temp = source.toOriginalString();
 			List<String> originalSQL = chopper( temp.trim() );
 	
 			ParseNode selectNode = source.findFirstNode( "statement/select" );
 			if( selectNode != null )
 			{
-				SelectStatement meta = new SelectStatement();
-				meta.setName( name );
-				meta.setPackage( pkg );
-				meta.setOriginalFileName( sourceFile.toString() );
-				meta.setOriginalSQL( originalSQL );
-				extractSelect( selectNode, meta );
-				inspectDatabaseForSelect( _conn, meta );
+				SelectStatement statement = new SelectStatement();
+				statement.setName( name );
+				statement.setPackage( pkg );
+				statement.setOriginalFileName( sourceFile.toString() );
+				statement.setOriginalSQL( originalSQL );
+				extractSelect( selectNode, statement );
+				inspectDatabaseForSelect( _conn, statement );
 	
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateSelect( meta, choppedSQL, targetFile );
+				generateSelect( statement, choppedSQL, targetFile );
 			}
 	
 			ParseNode insertNode = source.findFirstNode( "statement/insert" );
 			if( insertNode != null )
 			{
-				InsertStatement meta = new InsertStatement();
-				meta.setName( name );
-				meta.setPackage( pkg );
-				meta.setOriginalFileName( sourceFile.toString() );
-				meta.setOriginalSQL( originalSQL );
-				extractInsert( insertNode, meta );
-				inspectDatabaseForInsert( _conn, meta );
+				InsertStatement statement = new InsertStatement();
+				statement.setName( name );
+				statement.setPackage( pkg );
+				statement.setOriginalFileName( sourceFile.toString() );
+				statement.setOriginalSQL( originalSQL );
+				extractInsert( insertNode, statement );
+				inspectDatabaseForInsert( _conn, statement );
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateInsert( meta, choppedSQL, targetFile );
+				generateInsert( statement, choppedSQL, targetFile );
 			}
 	
 			ParseNode updateNode = source.findFirstNode( "statement/update" );
 			if( updateNode != null )
 			{
-				UpdateStatement meta = new UpdateStatement();
-				meta.setName( name );
-				meta.setPackage( pkg );
-				meta.setOriginalFileName( sourceFile.toString() );
-				meta.setOriginalSQL( originalSQL );
-				extractUpdate( updateNode, meta );
-				inspectDatabaseForUpdate( _conn, meta );
+				UpdateStatement statement = new UpdateStatement();
+				statement.setName( name );
+				statement.setPackage( pkg );
+				statement.setOriginalFileName( sourceFile.toString() );
+				statement.setOriginalSQL( originalSQL );
+				extractUpdate( updateNode, statement );
+				inspectDatabaseForUpdate( _conn, statement );
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateUpdate( meta, choppedSQL, targetFile );
+				generateUpdate( statement, choppedSQL, targetFile );
 			}
 		}
 		catch( Exception e )
@@ -277,7 +280,104 @@ public class
 		extractSelectParams( selectNode, extract );
 	}
 
-	private void extractInsert( ParseNode insertNode, InsertStatement meta ) 
+	public void extractSelectTables( ParseNode selectNode, SelectStatement statement )
+	{
+		List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
+		for( ParseNode item : list )
+		{
+			ParseNode tableRef = item.findFirstNode( "tableRef" );
+			String databaseName = tableRef.findFirstString( "databaseName" );
+			String tableName = tableRef.findFirstString( "**/tableName" );
+			String alias = item.findFirstString( "alias" );
+			Table table = new Table( databaseName, tableName, alias );
+			statement.addTable( table );
+		}
+	}
+
+	public void extractSelectColumns( ParseNode selectNode, SelectStatement statement ) 
+		throws Exception
+	{
+		String allStar = selectNode.findFirstString( "itemList" );
+		if( "*".equals( allStar ) )
+		{
+			for( Table table : statement.getTables() )
+			{
+				statement.tempColumn( new Column( table ) );
+			}
+		}
+		else
+		{
+			List<ParseNode> list = selectNode.findNodes( "itemList/item" );
+			for( ParseNode item : list )
+			{
+				// All columns from a table, eg alias.*
+				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
+				if( tableAlias != null )
+				{
+					Table table = statement.getTable( tableAlias );
+					Column column = new Column( table );
+					statement.tempColumn( column );
+					continue;
+				}
+
+				// Single column reference, eg alias.FamilyName
+				String columnName = item.findFirstString( "value/columnRef/columnName" );
+				if( columnName != null )
+				{
+					columnName = trimQuotes( columnName );
+					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
+					String columnAlias = item.findFirstString( "alias" );
+					Table table = statement.getTable( tableAlias );
+					Column column = new Column( table, columnName, columnAlias );
+					statement.tempColumn( column );
+					continue;
+				}
+
+				// Expression returned as column
+				// TODO: expression columns
+
+			}
+		}
+	}
+
+	public void extractSelectParams( ParseNode selectNode, SelectStatement statement ) 
+		throws FadoException
+	{
+		for( ParseNode where : selectNode.findNodes( "where" ))
+		{
+			List<ParseNode> clist = where.findNodes( "**/condition" );
+			for( ParseNode condition : clist )
+			{
+				for( ParseNode comparison : condition.findNodes( "comparison" ))
+				{
+					extractComparisonParams( comparison, statement );
+					break;
+				}
+				
+				for( ParseNode in : condition.findNodes( "in" ))
+				{
+					extractINParams( in, statement );
+					break;
+				}
+				
+				for( ParseNode between : condition.findNodes( "between" ))
+				{
+					extractBETWEENParams( between, statement );
+					break;
+				}
+				
+				for( ParseNode like : condition.findNodes( "like" ))
+				{
+					extractLIKEParams( like, statement );
+					break;
+				}
+			}
+			break;
+		}
+
+	}
+
+	private void extractInsert( ParseNode insertNode, InsertStatement statement ) 
 		throws Exception
 	{
 		ParseNode tableRef = insertNode.findFirstNode( "into/tableRef" );
@@ -286,7 +386,7 @@ public class
 //		String alias = item.findFirstString( "alias" );
 		String alias = null;
 		Table table = new Table( databaseName, tableName, alias );
-		meta.addTable( table );
+		statement.addTable( table );
 
 		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
 		List<ParseNode> list = insertNode.findNodes( "columnList/columnName" );
@@ -315,11 +415,11 @@ public class
 			col.setLiteral( literal );
 			nth++;
 		}
-		meta.setColumns( columns );
+		statement.setColumns( columns );
 	}
 
 	// TODO support unary literals (done?)
-	private void extractUpdate( ParseNode updateNode, UpdateStatement meta ) 
+	private void extractUpdate( ParseNode updateNode, UpdateStatement statement ) 
 		throws Exception
 	{
 		ParseNode tableRef = updateNode.findFirstNode( "tableRef" );
@@ -328,7 +428,7 @@ public class
 //		String alias = item.findFirstString( "alias" );
 		String alias = null;
 		Table table = new Table( databaseName, tableName, alias );
-		meta.addTable( table );
+		statement.addTable( table );
 
 		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
 		List<ParseNode> setters = updateNode.findNodes( "setter" );
@@ -343,157 +443,79 @@ public class
 
 			columns.add( new UpdateColumn( name, literal ) );
 		}
-		meta.setColumns( columns );
+		statement.setColumns( columns );
 
-		ParseNode where = updateNode.findFirstNode( "where" );
-		if( where != null )
+		for( ParseNode where : updateNode.findNodes( "where" ))
 		{
 			List<ParseNode> clist = where.findNodes( "**/condition" );
 			for( ParseNode condition : clist )
 			{
-				List<ParseNode> comparison = condition.findNodes( "comparison" );
-				if( comparison.size() == 1 )
+				for( ParseNode comparison : condition.findNodes( "comparison" ))
 				{
-					extractComparisonParams( comparison.get( 0 ), meta );
+					extractComparisonParams( comparison, statement );
+					break;
 				}
-				List<ParseNode> in = condition.findNodes( "in" );
-				if( in.size() == 1 )
+				
+				for( ParseNode in : condition.findNodes( "in" ))
 				{
-					extractINParams( in.get( 0 ), meta );
+					extractINParams( in, statement );
+					break;
 				}
-				List<ParseNode> between = condition.findNodes( "between" );
-				// TODO: extract BETWEEN params
+				
+				for( ParseNode between : condition.findNodes( "between" ))
+				{
+					extractBETWEENParams( between, statement );
+					break;
+				}
+				
+				for( ParseNode like : condition.findNodes( "like" ))
+				{
+					extractLIKEParams( like, statement );
+					break;
+				}
 			}
+			break;
 		}
 	}
 
-	public void extractSelectTables( ParseNode selectNode, SelectStatement meta )
-	{
-		List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
-		for( ParseNode item : list )
-		{
-			ParseNode tableRef = item.findFirstNode( "tableRef" );
-			String databaseName = tableRef.findFirstString( "databaseName" );
-			String tableName = tableRef.findFirstString( "**/tableName" );
-			String alias = item.findFirstString( "alias" );
-			Table table = new Table( databaseName, tableName, alias );
-			meta.addTable( table );
-		}
-	}
-
-	public void extractSelectColumns( ParseNode selectNode, SelectStatement meta ) 
-		throws Exception
-	{
-		String allStar = selectNode.findFirstString( "itemList" );
-		if( "*".equals( allStar ) )
-		{
-			for( Table table : meta.getTables() )
-			{
-				meta.tempColumn( new Column( table ) );
-			}
-		}
-		else
-		{
-			List<ParseNode> list = selectNode.findNodes( "itemList/item" );
-			for( ParseNode item : list )
-			{
-				// All columns from a table, eg alias.*
-				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
-				if( tableAlias != null )
-				{
-					Table table = meta.getTable( tableAlias );
-					Column column = new Column( table );
-					meta.tempColumn( column );
-					continue;
-				}
-
-				// Single column reference, eg alias.FamilyName
-				String columnName = item.findFirstString( "value/columnRef/columnName" );
-				if( columnName != null )
-				{
-					columnName = trimQuotes( columnName );
-					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
-					String columnAlias = item.findFirstString( "alias" );
-					Table table = meta.getTable( tableAlias );
-					Column column = new Column( table, columnName, columnAlias );
-					meta.tempColumn( column );
-					continue;
-				}
-
-				// Expression returned as column
-				// TODO: expression columns
-
-			}
-		}
-	}
-
-	public void extractSelectParams( ParseNode selectNode, SelectStatement meta ) 
-		throws FadoException
-	{
-		ParseNode where = selectNode.findFirstNode( "where" );
-
-		if( where != null )
-		{
-			List<ParseNode> clist = where.findNodes( "**/condition" );
-			for( ParseNode condition : clist )
-			{
-				List<ParseNode> comparison = condition.findNodes( "comparison" );
-				if( comparison.size() == 1 )
-				{
-					extractComparisonParams( comparison.get( 0 ), meta );
-				}
-				List<ParseNode> in = condition.findNodes( "in" );
-				if( in.size() == 1 )
-				{
-					extractINParams( in.get( 0 ), meta );
-				}
-				List<ParseNode> between = condition.findNodes( "between" );
-				if( between.size() == 1 )
-				{
-					extractBETWEENParams( between.get( 0 ), meta );
-				}
-			}
-		}
-
-	}
-
+	
 	// Comparisons, eg column = 'abc'
 	public void extractComparisonParams( ParseNode comparisonNode, WhereStatement statement )
-			throws TableNotFoundException
+		throws TableNotFoundException
+	{
+		List<ParseNode> columns = comparisonNode.findNodes( "**/columnRef" );
+		List<ParseNode> literals = comparisonNode.findNodes( "**/literal" );
+		if( columns.size() == 1 && literals.size() == 1 )
 		{
-			List<ParseNode> columns = comparisonNode.findNodes( "**/columnRef" );
-			List<ParseNode> literals = comparisonNode.findNodes( "**/literal" );
-			if( columns.size() == 1 && literals.size() == 1 )
+			// System.out.println( "found comparison: " + comparison.toInputString() );
+			ParseNode columnRef = columns.get( 0 );
+			String column = columnRef.findFirstString( "columnName" );
+			String tableAlias = columnRef.findFirstString( "tableAlias" );
+			Table table = null;
+			if( tableAlias != null )
 			{
-				// System.out.println( "found comparison: " + comparison.toInputString() );
-				ParseNode columnRef = columns.get( 0 );
-				String column = columnRef.findFirstString( "columnName" );
-				String tableAlias = columnRef.findFirstString( "tableAlias" );
-				Table table = null;
-				if( tableAlias != null )
-				{
-					table = statement.getTable( tableAlias );
-				}
-
-				ParseNode node = literals.get( 0 );
-				String literal = node.toParsedString();
-				literal = trimQuotes( literal );
-				Comparison comparison = new Comparison( table, column, literal );
-				
-				statement.addCondition( comparison );
-				
-				node.convertToJDBCParam();
+				table = statement.getTable( tableAlias );
 			}
+
+			ParseNode node = literals.get( 0 );
+			String literal = node.toParsedString();
+			literal = trimQuotes( literal );
+			Comparison comparison = new Comparison( table, column, literal );
+			
+			statement.addCondition( comparison );
+			
+			node.convertToJDBCParam();
 		}
+	}
 
 
 	// BETWEEN, eg column BETWEEN 1 AND 100
 	// TODO: BETWEEN condition
-	public void extractBETWEENParams( ParseNode in, SelectStatement statement ) 
+	public void extractBETWEENParams( ParseNode betweenNode, WhereStatement statement ) 
 		throws FadoException
 	{
-		List<ParseNode> columns = in.findNodes( "**/columnRef" );
-		List<ParseNode> literals = in.findNodes( "**/literal" );
+		List<ParseNode> columns = betweenNode.findNodes( "**/columnRef" );
+		List<ParseNode> literals = betweenNode.findNodes( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 2 )
 		{
 			ParseNode columnRef = columns.get( 0 );
@@ -519,9 +541,32 @@ public class
 		}
 	}
 
-
 	// LIKE, eg column LIKE 'abc%'
 	// TODO: LIKE condition
+	public void extractLIKEParams( ParseNode likeNode, WhereStatement statement ) 
+			throws FadoException
+		{
+			List<ParseNode> columns = likeNode.findNodes( "**/columnRef" );
+			List<ParseNode> literals = likeNode.findNodes( "**/literal" );
+			if( columns.size() == 1 && literals.size() == 1 )
+			{
+				ParseNode columnRef = columns.get( 0 );
+				String column = columnRef.findFirstString( "columnName" );
+				String tableAlias = columnRef.findFirstString( "tableAlias" );
+				Table table = statement.getTable( tableAlias );
+
+				LIKE like = new LIKE( table, column );
+
+				ParseNode patternNode = literals.get( 0 );
+				String pattern = patternNode.toParsedString();
+				pattern = trimQuotes( pattern );
+				patternNode.convertToJDBCParam();
+				like.setPattern( pattern );
+
+				statement.addCondition( like );
+			}
+		}
+
 
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
@@ -824,21 +869,21 @@ public class
 		columnPS.close();
 	}
 
-	public void generateSelect( SelectStatement meta, List<String> sql, File targetFile ) 
+	public void generateSelect( SelectStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
-		List<Column> columns = meta.getFinalColumns();
-		List<Condition> conditions = meta.getConditions();
+		List<Column> columns = statement.getFinalColumns();
+		List<Condition> conditions = statement.getConditions();
 
 		VelocityContext context = new VelocityContext();
-		context.put( "packageName", meta.getPackage() );
-		context.put( "className", meta.getName() );
+		context.put( "packageName", statement.getPackage() );
+		context.put( "className", statement.getName() );
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
-		context.put( "originalfile", meta.getOriginalFileName() );
-		context.put( "originalsql", meta.getOriginalSQL() );
+		context.put( "originalfile", statement.getOriginalFileName() );
+		context.put( "originalsql", statement.getOriginalSQL() );
 
 		FileWriter writer = new FileWriter( targetFile );
 		_selectTemplate.merge( context, writer );
@@ -846,19 +891,19 @@ public class
 		writer.close();
 	}
 
-	public void generateInsert( InsertStatement meta, List<String> sql, File targetFile ) 
+	public void generateInsert( InsertStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
-		List<InsertColumn> columns = meta.getColumns();
+		List<InsertColumn> columns = statement.getColumns();
 
 		VelocityContext context = new VelocityContext();
-		context.put( "packageName", meta.getPackage() );
-		context.put( "className", meta.getName() );
+		context.put( "packageName", statement.getPackage() );
+		context.put( "className", statement.getName() );
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "date", new Date() );
-		context.put( "originalfile", meta.getOriginalFileName() );
-		context.put( "originalsql", meta.getOriginalSQL() );
+		context.put( "originalfile", statement.getOriginalFileName() );
+		context.put( "originalsql", statement.getOriginalSQL() );
 
 		FileWriter writer = new FileWriter( targetFile );
 		_insertTemplate.merge( context, writer );
@@ -866,21 +911,21 @@ public class
 		writer.close();
 	}
 
-	public void generateUpdate( UpdateStatement meta, List<String> sql, File targetFile ) 
+	public void generateUpdate( UpdateStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
-		List<UpdateColumn> columns = meta.getColumns();
-		List<Condition> conditions = meta.getConditions();
+		List<UpdateColumn> columns = statement.getColumns();
+		List<Condition> conditions = statement.getConditions();
 
 		VelocityContext context = new VelocityContext();
-		context.put( "packageName", meta.getPackage() );
-		context.put( "className", meta.getName() );
+		context.put( "packageName", statement.getPackage() );
+		context.put( "className", statement.getName() );
 		context.put( "sql", sql );
 		context.put( "columns", columns );
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
-		context.put( "originalfile", meta.getOriginalFileName() );
-		context.put( "originalsql", meta.getOriginalSQL() );
+		context.put( "originalfile", statement.getOriginalFileName() );
+		context.put( "originalsql", statement.getOriginalSQL() );
 
 		FileWriter writer = new FileWriter( targetFile );
 		_updateTemplate.merge( context, writer );

@@ -80,7 +80,23 @@ public class
 #end
 
 #foreach( $condition in $conditions )
+##
 #if( $condition.isComparison() )
+
+	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
+	
+	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+	{
+		_${condition.NameAsVariable}Param = ${condition.NameAsVariable};
+	}
+	
+	public ${condition.JavaType} get${condition.NameAsMethod}Param()
+	{
+		return _${condition.NameAsVariable}Param;
+	}
+
+#elseif( $condition.isLIKE() )
+
 	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
 	
 	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
@@ -94,7 +110,7 @@ public class
 	}
 
 #elseif( $condition.isIN() )
-	private ${condition.JavaType}[] _${condition.NameAsMethod}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
+	private ${condition.JavaType}[] _${condition.NameAsVariable}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
 	private int _${condition.NameAsVariable}Count = 0;
 	public void add${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
 	{
@@ -142,14 +158,8 @@ public class
 	{
 		return _${condition.NameAsVariable}RightParam;
 	}
-
-#elseif( $condition.isLIKE() )
-
-    LIKE!
-
 #end
 #end
-
 	
 	private static String __sql = null;
 
@@ -179,17 +189,17 @@ public class
 		prepared.set${method}( ${nth}, get${column.NameAsMethod}() );
 ##
 #end
-##
 #foreach( $condition in $conditions )
-##
-#set( $type = $condition.getJavaType() )
-#set( $name = $condition.getNameAsMethod() )
-#set( $method = $condition.getTypedMethod() )
 ##
 #if( $condition.isComparison() )
 ##
 #set( $nth = $nth + 1 )
-		prepared.set${method}( ${nth}, get${name}Param() );
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
+##
+#elseif( $condition.isLIKE() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
 ##
 #elseif( $condition.isIN() )
 ##
@@ -197,20 +207,18 @@ public class
 ##
 #foreach( $abc in [0..$size] )
 #set( $nth = $nth + 1 )
-		prepared.set${method}( ${nth}, get${name}Param( ${abc} ));
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param( ${abc} ));
 #end
 ##
 #elseif( $condition.isBETWEEN() )
-
-    BETWEEN!
-
-#elseif( $condition.isLIKE() )
-
-    LIKE!
-
+##
+#set( $nth = $nth + 1 )
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}LeftParam() );
+#set( $nth = $nth + 1 )
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}RightParam() );
+##
 #end
 #end
-
 	}
 	
 	public String toString()
@@ -220,8 +228,21 @@ public class
 		result = result.replaceFirst( "\\?", quotifyString( get${column.NameAsMethod}() ));
 #end
 #foreach( $condition in $conditions )
-#set( $name = $condition.getColumn() )
-		result = result.replaceFirst( "\\?", quotifyString( get${name}Param() ));
+##
+#if( $condition.isIN() )
+##
+#set( $size = $condition.getValues().size() - 1 )
+#foreach( $abc in [0..$size] )
+		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Param( ${abc} )));
+#end
+##
+#elseif( $condition.isBETWEEN() )
+##
+		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}LeftParam() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}RightParam() ));
+#elseif( $condition.isComparison() || $condition.isLIKE() )
+		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Param() ));
+#end
 #end
 		return result;
 	}

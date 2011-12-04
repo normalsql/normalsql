@@ -1,6 +1,5 @@
 package fado.parse;
 
-import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 
 import java.util.ArrayList;
@@ -248,7 +247,7 @@ public class
 					result.add( token );
 				}
 			}
-			else if( child instanceof ParseNode )
+			else if( child instanceof ParseNode && Character.isLowerCase( spot.charAt( 0 )) )
 			{
 				ParseNode childNode = (ParseNode) child;
 				if( "*".equals( spot ) || childNode.getRule().equals( spot ))

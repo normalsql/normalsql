@@ -28,10 +28,13 @@ package ${packageName};
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.sql.*;
+import java.util.Iterator;
 import java.math.BigDecimal;
 
 public class 
 	${className}
+implements 
+	Iterable<${className}.Row>, Iterator<${className}.Row>
 {
 	protected Connection __connection = null;
 
@@ -135,7 +138,7 @@ public class
 		return __resultSet;
 	}
 	
-	public final boolean next()
+	public final boolean hasNextRow()
 		throws SQLException
 	{
 		execute();
@@ -328,6 +331,20 @@ public class
 		return _${condition.NameAsVariable}Param;
 	}
 
+#elseif( $condition.isLIKE() )
+
+	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
+	
+	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+	{
+		_${condition.NameAsVariable}Param = ${condition.NameAsVariable};
+	}
+	
+	public ${condition.JavaType} get${condition.NameAsMethod}Param()
+	{
+		return _${condition.NameAsVariable}Param;
+	}
+
 #elseif( $condition.isIN() )
 	private ${condition.JavaType}[] _${condition.NameAsVariable}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
 	private int _${condition.NameAsVariable}Count = 0;
@@ -377,11 +394,6 @@ public class
 	{
 		return _${condition.NameAsVariable}RightParam;
 	}
-
-#elseif( $condition.isLIKE() )
-
-    LIKE!
-
 #end
 #end
 
@@ -413,6 +425,11 @@ public class
 #set( $nth = $nth + 1 )
 		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
 ##
+#elseif( $condition.isLIKE() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
+##
 #elseif( $condition.isIN() )
 ##
 #set( $size = $condition.getValues().size() - 1 )
@@ -429,10 +446,6 @@ public class
 #set( $nth = $nth + 1 )
 		prepared.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}RightParam() );
 ##
-#elseif( $condition.isLIKE() )
-
-    LIKE!
-
 #end
 #end
 	}
@@ -454,7 +467,7 @@ public class
 ##
 		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}LeftParam() ));
 		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}RightParam() ));
-#else
+#elseif( $condition.isComparison() || $condition.isLIKE() )
 		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Param() ));
 #end
 #end
@@ -473,4 +486,57 @@ public class
 		}
 	}
 
+
+	public class Row
+	{
+#foreach( $column in $columns )
+		private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+	
+		public ${column.JavaType} get${column.NameAsMethod}()
+		{
+			return _${column.NameAsVariable};
+		}	
+		
+#end
+	}
+
+	private Row __row = null;
+
+	public boolean hasNext() 
+	{
+		if( __row != null ) return true;
+		try 
+		{
+			boolean next = hasNextRow();
+			if( next )
+			{
+				__row = new Row();
+#foreach( $column in $columns )
+				__row._${column.NameAsVariable} = _${column.NameAsVariable};
+#end
+			}
+			return next;
+		} 
+		catch( SQLException e ) 
+		{
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public ${className}.Row next()
+	{
+		Row row = __row;
+		__row = null;
+		return row;
+	}
+	
+	public void remove() 
+	{
+		throw new UnsupportedOperationException();
+	}
+
+	public Iterator<${className}.Row> iterator() {
+		return this;
+	}
 }

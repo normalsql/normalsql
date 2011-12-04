@@ -50,8 +50,6 @@ package fado.parse;
 package fado.parse; 
 }
 
-
-
 statement
   : select ( SEMI )? EOF
   | insert ( SEMI )? EOF
@@ -213,6 +211,8 @@ exists
   ;
   
 like
+//  : columnRef ( NOT )? LIKE String
+  
   : expression ( NOT )? LIKE expression
 //    ESCAPE Literal
   ;
