@@ -48,17 +48,17 @@ public class
 	private String _alias;
 	public String getAlias() 
 	{ 
-		return _alias != null ? getAlias() : getName();
+		return _alias != null ? _alias : getName();
 	}
 	
 	public String getNameAsMethod()
 	{
-		return Util.toMethodName( getName() );
+		return Util.toMethodName( getAlias() );
 	}
 	
 	public String getNameAsVariable()
 	{
-		return Util.toVariableName( getName() );
+		return Util.toVariableName( getAlias() );
 	}
 	
 	private int _sqlType;
