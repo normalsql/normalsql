@@ -20,6 +20,7 @@ public class FadoOptions
 	public final static String SOURCE = "source";
 	public final static String TARGET = "target";
 	public final static String PROPERTY = "property";
+	public final static String ONLYPARSE = "onlyparse";
 
 	String _filename = "fado";
 
@@ -56,6 +57,12 @@ public class FadoOptions
 	{
 		return coalesce( (String) _options.valueOf( TARGET ), _props.get( TARGET ) );
 	}
+	
+	public boolean getOnlyParse()
+	{
+		String onlyParse = coalesce( (String) _options.valueOf( ONLYPARSE ), _props.get( ONLYPARSE ));
+		return Boolean.valueOf( onlyParse );
+	}
 
 	public void parse( String[] args )
 	{
@@ -68,6 +75,7 @@ public class FadoOptions
 		parser.accepts( SOURCE ).withRequiredArg();
 		parser.accepts( TARGET ).withRequiredArg();
 		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( _filename );
+		parser.accepts( ONLYPARSE ).withRequiredArg();
 
 		_options = parser.parse( args );
 
@@ -103,7 +111,8 @@ public class FadoOptions
 		sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
 		sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
 		sb.append( SOURCE ).append( " = " ).append( getSource() ).append( '\n' );
-		sb.append( TARGET ).append( " = " ).append( getTarget() );
+		sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
+		sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));
 		sb.append( '\n' );
 		return sb.toString();
 	}

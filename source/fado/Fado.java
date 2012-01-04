@@ -63,24 +63,31 @@ public class
 	Template _updateTemplate = null;
 	Connection _conn = null;
 
+	boolean _onlyParse = false;
+	
 	public void init( FadoOptions options ) 
 		throws Exception
 	{
-		String driver = options.getDriver();
-		String url = options.getUrl();
-		String username = options.getUsername();
-		String password = options.getPassword();
-		Class.forName( driver );
-		_conn = DriverManager.getConnection( url, username, password );
-
-		Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-		Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-		Velocity.init();
-
-		_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
-		_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
-		_updateTemplate = Velocity.getTemplate( "fado/template/Update.vm" );
-
+		_onlyParse = options.getOnlyParse();
+		
+		if( !_onlyParse )
+		{
+			String driver = options.getDriver();
+			String url = options.getUrl();
+			String username = options.getUsername();
+			String password = options.getPassword();
+			Class.forName( driver );
+			_conn = DriverManager.getConnection( url, username, password );
+	
+			Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+			Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+			Velocity.init();
+	
+			_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
+			_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
+			_updateTemplate = Velocity.getTemplate( "fado/template/Update.vm" );
+		}
+		
 		String target = options.getTarget();
 		File targetDir = new File( target );
 
@@ -93,7 +100,11 @@ public class
 		}
 		Stack<String> path = new Stack<String>();
 		crawl( sourceDir, targetDir, path );
-		_conn.close();
+
+		if( _conn != null ) 
+		{
+			_conn.close();
+		}
 
 	}
 
@@ -153,7 +164,14 @@ public class
 				long b = targetFile.lastModified();
 				if( _alwaysOverwrite || !targetFile.exists() || a > b )
 				{
-					System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
+					if( _onlyParse )
+					{
+						System.out.println( "parsing " + sourceFile );
+					}
+					else
+					{
+						System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
+					}
 					extract( pkg, name, sourceFile, targetFile );
 				}
 				else
@@ -211,6 +229,7 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
+			System.out.println( source.toParseTree() );
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
@@ -275,6 +294,7 @@ public class
 	private void extractSelect( ParseNode selectNode, SelectStatement extract ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
 		extractSelectTables( selectNode, extract );
 		extractSelectColumns( selectNode, extract );
 		extractSelectParams( selectNode, extract );
@@ -380,6 +400,7 @@ public class
 	private void extractInsert( ParseNode insertNode, InsertStatement statement ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
 		ParseNode tableRef = insertNode.findFirstNode( "into/tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
@@ -422,6 +443,7 @@ public class
 	private void extractUpdate( ParseNode updateNode, UpdateStatement statement ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
 		ParseNode tableRef = updateNode.findFirstNode( "tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
@@ -603,7 +625,8 @@ public class
 	public void inspectDatabaseForSelect( Connection conn, SelectStatement extract ) 
 		throws Exception
 	{
-
+		if( _onlyParse ) return;
+		
 		PreparedStatement tablesPS = conn
 				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn
@@ -744,6 +767,8 @@ public class
 	public void inspectDatabaseForInsert( Connection conn, InsertStatement extract ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
+		
 		PreparedStatement tablesPS = conn
 				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn
@@ -797,6 +822,8 @@ public class
 	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement extract ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
+		
 		PreparedStatement tablesPS = conn
 				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
 		PreparedStatement columnPS = conn
@@ -872,6 +899,8 @@ public class
 	public void generateSelect( SelectStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
+		
 		List<Column> columns = statement.getFinalColumns();
 		List<Condition> conditions = statement.getConditions();
 
@@ -894,6 +923,8 @@ public class
 	public void generateInsert( InsertStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
+		
 		List<InsertColumn> columns = statement.getColumns();
 
 		VelocityContext context = new VelocityContext();
@@ -914,6 +945,8 @@ public class
 	public void generateUpdate( UpdateStatement statement, List<String> sql, File targetFile ) 
 		throws Exception
 	{
+		if( _onlyParse ) return;
+		
 		List<UpdateColumn> columns = statement.getColumns();
 		List<Condition> conditions = statement.getConditions();
 

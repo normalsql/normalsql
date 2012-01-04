@@ -69,7 +69,7 @@ select
     itemList
     ( into )?
     from
-//    ( joinList )?
+    ( joinList )?
     ( where )?
     ( groupBy )?
     ( having )?
@@ -111,7 +111,8 @@ itemList
   
 item
   : value ( ( AS )? alias )?
-  | allColumns 
+  | allColumns
+  | function ( AS? alias )? 
   ;
 
 allColumns
@@ -122,6 +123,15 @@ alias
   : Identifier
   ;
   
+function
+  : functionName LPAREN ( value ( COMMA value )* )? RPAREN
+  ;  
+
+functionName
+  : COUNT
+  | MIN
+  | MAX
+  ;
   
 from
   : FROM fromItem ( COMMA fromItem )*
@@ -139,12 +149,20 @@ joinList
   ;
   
 join
-  : ( INNER
-    | ( LEFT | RIGHT | FULL ) ( OUTER )? 
-    )? JOIN
-    ( ON conditionList
-    | USING LPAREN columnRef ( COMMA columnRef )*
-    )?
+  : 
+    ( JOIN
+    | INNER JOIN
+    | LEFT JOIN
+    | LEFT OUTER JOIN
+    | RIGHT JOIN 
+    | RIGHT OUTER JOIN
+    | OUTER JOIN 
+    | NATURAL JOIN
+    ) 
+  fromItem
+  ( ON conditionList
+  | USING LPAREN columnRef ( COMMA columnRef )* RPAREN
+  )?
   ;
   
 
@@ -166,7 +184,7 @@ having
   ;
   
 orderBy
-  :  ORDER BY orderByItem ( COMMA orderByItem )*
+  : ORDER BY orderByItem ( COMMA orderByItem )*
   ;
   
 orderByItem
@@ -382,6 +400,7 @@ LEFT      : L E F T ;
 LIKE      : L I K E ;
 //MINUTE    : M I N U T E ;
 //MONTH     : M O N T H ;
+NATURAL   : N A T U R A L ;
 NOT       : N O T ;
 NULL      : N U L L ;
 ON        : O N ;
@@ -407,6 +426,10 @@ VALUES    : V A L U E S ;
 WHEN      : W H E N ;
 WHERE     : W H E R E ;
 //YEAR      : Y E A R ;
+
+MAX       : M A X ;
+MIN       : M I N ;
+COUNT     : C O U N T ;
 
 fragment A:('a'|'A');
 fragment B:('b'|'B');

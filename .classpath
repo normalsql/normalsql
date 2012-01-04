@@ -4,7 +4,7 @@
 	<classpathentry kind="src" path="generated"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/h2-1.2.147.jar"/>
-	<classpathentry kind="lib" path="lib/jopt-simple-3.2.jar"/>
+	<classpathentry kind="lib" path="lib/jopt-simple-3.2.jar" sourcepath="/Users/jasonosgood/.m2/repository/net/sf/jopt-simple/jopt-simple/3.2/jopt-simple-3.2-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/velocity-dep-1.5.jar"/>
 	<classpathentry kind="lib" path="lib/antlr-3.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

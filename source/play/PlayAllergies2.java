@@ -12,7 +12,7 @@ public class PlayAllergies2
 		throws Exception
 	{
 		String driver = "org.h2.Driver";
-		String url = "jdbc:h2:tcp://localhost/~/hydra";
+		String url = "jdbc:h2:tcp://localhost/~/test";
 		String username = "sa";
 		String password = "";
 
@@ -22,12 +22,12 @@ public class PlayAllergies2
 		Allergies2 plus = new Allergies2( connection );
 
 		System.out.println( "*** BEFORE ****" );
-		while( plus.next() )
+		while( plus.hasNext() )
 		{
 			System.out.printf( "\r%s %s", plus.getId(), plus.getDescription()  );
 		}
 		plus.close();
-		while( plus.next() )
+		while( plus.hasNext() )
 		{
 			plus.startUpdating();
 			String desc = plus.getDescription();
@@ -37,7 +37,7 @@ public class PlayAllergies2
 		
 		System.out.println( "\n\n\n\n*** AFTER ****" );
 		plus.close();
-		while( plus.next() )
+		while( plus.hasNext() )
 		{
 			System.out.printf( "\r%s %s", plus.getId(), plus.getDescription()  );
 		}
