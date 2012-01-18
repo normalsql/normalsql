@@ -504,7 +504,7 @@ implements
 
 	public boolean hasNext() 
 	{
-		if( __row != null ) return true;
+//		if( __row != null ) return true;
 		try 
 		{
 			boolean next = hasNextRow();
