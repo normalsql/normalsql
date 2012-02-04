@@ -49,7 +49,7 @@ public class
 		if( __prepared == null )
 		{
 			String sql = getSQL();
-			__prepared = __connection.prepareStatement( sql );
+			__prepared = __connection.prepareStatement( sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 
 		}
 		return __prepared;
