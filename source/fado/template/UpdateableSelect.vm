@@ -33,6 +33,8 @@ import java.math.BigDecimal;
 
 public class 
 	${className}
+implements 
+	Iterable<${className}.Row>, Iterator<${className}.Row>
 {
 	protected Connection __connection = null;
 
@@ -40,7 +42,7 @@ public class
 	{
 		__connection = connection;
 	}
-
+	
 	protected PreparedStatement __prepared = null;
 
 	protected final PreparedStatement getPreparedStatement()
@@ -49,7 +51,9 @@ public class
 		if( __prepared == null )
 		{
 			String sql = getSQL();
-			__prepared = __connection.prepareStatement( sql );
+			int scrolling = getScrolling();
+			int concurrency = getConcurrency();
+			__prepared = __connection.prepareStatement( sql, scrolling, concurrency );
 
 		}
 		return __prepared;
@@ -98,6 +102,18 @@ public class
 	public final ResultSet getResultSet()
 	{
 		return __resultSet;
+	}
+	
+	private int __scrolling = ResultSet.TYPE_SCROLL_SENSITIVE;
+	
+	public void setScrolling( int scrolling )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__scrolling = scrolling;
 	}
 	
 	public final boolean hasNextRow()
@@ -162,7 +178,6 @@ public class
 		}
 	}
 	
-	
 #foreach( $column in $columns )
 	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
 
@@ -171,25 +186,112 @@ public class
 		return _${column.NameAsVariable};
 	}	
 
-#end
-	
-	public void updateValues( boolean success )
+	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
 		throws SQLException
 	{
-		if( success )
+		if( __inserting || __updating )
 		{
-#foreach( $column in $columns )
-			_${column.NameAsVariable} = getResultSet().get${column.TypedMethod}( "${column.NameAsMethod}" );
-#end
+			_${column.NameAsVariable} = ${column.NameAsVariable};
 		}
 		else
 		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+
+#end
+
+	private boolean __inserting = false;
+	
+	/**
+	 * Tries to start inserting mode. Throws SQLException if 
+	 * 
+	 * @throws SQLException
+	 */
+	public void startInsert()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__inserting = true;
+
 #foreach( $column in $columns )
 			_${column.NameAsVariable} = ${column.InitializerValue};
 #end
 		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
 	}
 	
+	public void finishInsert()
+		throws SQLException
+	{
+		if( __inserting )
+		{
+			__inserting = false;
+			
+			ResultSet rs = getResultSet();
+			rs.moveToInsertRow();
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
+			rs.insertRow();
+			rs.moveToCurrentRow();
+			rs.next();
+			getNextRow( true );
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	}
+	
+	
+	private boolean __updating = false;
+	
+	public void startUpdating()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__updating = true;
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
+	public void finishUpdating()
+		throws SQLException
+	{
+		if( __updating )
+		{
+			__updating = false;
+			ResultSet rs = getResultSet();
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
+			rs.updateRow();
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	
+	}
 
 #foreach( $condition in $conditions )
 ##
@@ -362,4 +464,81 @@ public class
 		}
 	}
 
+
+	public class Row
+	{
+#foreach( $column in $columns )
+		private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+	
+		public ${column.JavaType} get${column.NameAsMethod}()
+		{
+			return _${column.NameAsVariable};
+		}	
+		
+#end
+	}
+
+	private Row __row = null;
+
+	public boolean hasNext() 
+	{
+//		if( __row != null ) return true;
+		try 
+		{
+			boolean next = hasNextRow();
+			if( next )
+			{
+				__row = new Row();
+#foreach( $column in $columns )
+				__row._${column.NameAsVariable} = _${column.NameAsVariable};
+#end
+			}
+			return next;
+		} 
+		catch( SQLException e ) 
+		{
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public ${className}.Row next()
+	{
+		Row row = __row;
+		__row = null;
+		return row;
+	}
+	
+	public void remove() 
+	{
+		throw new UnsupportedOperationException();
+	}
+
+	public Iterator<${className}.Row> iterator() {
+		return this;
+	}
+	
+		public int getScrolling()
+	{
+		return __scrolling;
+	}
+	
+	private int __concurrency = ResultSet.CONCUR_UPDATABLE;
+	
+	public void setConcurrency( int concurrency )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__concurrency = concurrency;
+	}
+	
+	public int getConcurrency()
+	{
+		return __concurrency;
+	}
+	
+	
 }

@@ -24,6 +24,12 @@ Figure out something for transactions
 Better strategy for converting SQL column names into Java variables/accessors
 	Capitalizer, or alias list, or...
 
+Different templates for different types of SELECT
+   - normal readonly ResultSet, default
+   - single column ResultSet eg SELECT Name FROM Person, iterate over values (vs rows)
+   - single value ResultSet eg SELECT Count( * ) FROM Person, no iteration
+   - updateable ResultSet, probably new interface: eg implements Iterable<Row>
+
 GRAMMARS
 
 Full SQL-92
