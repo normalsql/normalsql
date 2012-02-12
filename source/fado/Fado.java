@@ -45,6 +45,8 @@ import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.ParseTreeBuilder;
 
+// TODO: Cull some of the duplicate code.
+
 public class 
 	Fado
 {
@@ -59,6 +61,7 @@ public class
 	}
 
 	Template _selectTemplate = null;
+	Template _resultSetTemplate = null;
 	Template _insertTemplate = null;
 	Template _updateTemplate = null;
 	Connection _conn = null;
@@ -84,6 +87,7 @@ public class
 			Velocity.init();
 	
 			_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
+			_resultSetTemplate = Velocity.getTemplate( "fado/template/ResultSet.vm" );
 			_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
 			_updateTemplate = Velocity.getTemplate( "fado/template/Update.vm" );
 		}
@@ -172,7 +176,7 @@ public class
 					{
 						System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
 					}
-					extract( pkg, name, sourceFile, targetFile );
+					extract( pkg, name, sourceFile, targetRoot, name );
 				}
 				else
 				{
@@ -211,7 +215,7 @@ public class
 
 	public boolean displayTree = true;
 
-	private void extract( String pkg, String name, File sourceFile, File targetFile ) 
+	private void extract( String pkg, String name, File sourceFile, File targetRoot, String targetName ) 
 		throws Exception
 	{
 		ParseTreeBuilder builder = null;
@@ -248,7 +252,8 @@ public class
 	
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateSelect( statement, choppedSQL, targetFile );
+				generateSelect( statement, choppedSQL, targetRoot, name );
+				generateResultSet( statement, choppedSQL, targetRoot, name );
 			}
 	
 			ParseNode insertNode = source.findFirstNode( "statement/insert" );
@@ -263,7 +268,7 @@ public class
 				inspectDatabaseForInsert( _conn, statement );
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateInsert( statement, choppedSQL, targetFile );
+				generateInsert( statement, choppedSQL, targetRoot, name );
 			}
 	
 			ParseNode updateNode = source.findFirstNode( "statement/update" );
@@ -278,7 +283,7 @@ public class
 				inspectDatabaseForUpdate( _conn, statement );
 				String retooledSQL = builder.getTree().toOriginalString();
 				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateUpdate( statement, choppedSQL, targetFile );
+				generateUpdate( statement, choppedSQL, targetRoot, name );
 			}
 		}
 		catch( Exception e )
@@ -896,31 +901,57 @@ public class
 		columnPS.close();
 	}
 
-	public void generateSelect( SelectStatement statement, List<String> sql, File targetFile ) 
+	public void generateSelect( SelectStatement statement, List<String> sql, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
 		
-		List<Column> columns = statement.getFinalColumns();
+//		List<Column> columns = statement.getFinalColumns();
 		List<Condition> conditions = statement.getConditions();
 
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
 		context.put( "sql", sql );
-		context.put( "columns", columns );
+//		context.put( "columns", columns );
 		context.put( "conditions", conditions );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
 
+		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
 		_selectTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
 	}
 
-	public void generateInsert( InsertStatement statement, List<String> sql, File targetFile ) 
+	public void generateResultSet( SelectStatement statement, List<String> sql, File targetRoot, String name ) 
+		throws Exception
+	{
+		if( _onlyParse ) return;
+		
+		List<Column> columns = statement.getFinalColumns();
+//		List<Condition> conditions = statement.getConditions();
+
+		VelocityContext context = new VelocityContext();
+		context.put( "packageName", statement.getPackage() );
+		context.put( "className", statement.getName() );
+		context.put( "sql", sql );
+		context.put( "columns", columns );
+//			context.put( "conditions", conditions );
+		context.put( "date", new Date() );
+		context.put( "originalfile", statement.getOriginalFileName() );
+		context.put( "originalsql", statement.getOriginalSQL() );
+
+		File targetFile = new File( targetRoot, name + "ResultSet.java" );
+		FileWriter writer = new FileWriter( targetFile );
+		_resultSetTemplate.merge( context, writer );
+		writer.flush();
+		writer.close();
+	}
+
+	public void generateInsert( InsertStatement statement, List<String> sql, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -936,13 +967,14 @@ public class
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
 
+		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
 		_insertTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
 	}
 
-	public void generateUpdate( UpdateStatement statement, List<String> sql, File targetFile ) 
+	public void generateUpdate( UpdateStatement statement, List<String> sql, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -960,6 +992,7 @@ public class
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
 
+		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
 		_updateTemplate.merge( context, writer );
 		writer.flush();
