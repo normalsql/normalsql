@@ -72,8 +72,10 @@ public class
 		if( rows > 0 )
 		{
 			ResultSet keys = ps.getGeneratedKeys();
-			keys.next();
-			__identity = keys.getInt( 1 );
+			if( keys.next() )
+			{
+				__identity = keys.getInt( 1 );
+			}
 		}
 		
 		return rows;
