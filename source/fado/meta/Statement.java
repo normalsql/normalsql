@@ -1,5 +1,6 @@
 package fado.meta;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,4 +106,15 @@ public abstract class
 		throw new TableNotFoundException( "table alias not found: " + name );
 	}
 
+	private File _source;
+	
+	public void setSourceFile( File source )
+	{
+		_source = source;
+	}
+	
+	public File getSourceFile()
+	{
+		return _source;
+	}
 }

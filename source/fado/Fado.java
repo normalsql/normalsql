@@ -213,7 +213,7 @@ public class
 		return name;
 	}
 
-	public boolean displayTree = true;
+	public boolean displayParseTree = false;
 
 	private void extract( String pkg, String name, File sourceFile, File targetRoot, String targetName ) 
 		throws Exception
@@ -233,7 +233,7 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
-			System.out.println( source.toParseTree() );
+//			System.out.println( source.toParseTree() );
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
@@ -243,6 +243,7 @@ public class
 			if( selectNode != null )
 			{
 				SelectStatement statement = new SelectStatement();
+				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
@@ -260,6 +261,7 @@ public class
 			if( insertNode != null )
 			{
 				InsertStatement statement = new InsertStatement();
+				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
@@ -275,6 +277,7 @@ public class
 			if( updateNode != null )
 			{
 				UpdateStatement statement = new UpdateStatement();
+				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
@@ -288,7 +291,7 @@ public class
 		}
 		catch( Exception e )
 		{
-			if( displayTree )
+			if( displayParseTree )
 			{
 				System.out.println( "string tree: " + builder.getTree().toParseTree() );
 			}
@@ -709,8 +712,11 @@ public class
 
 					if( !found )
 					{
-						String columnName = tempColumn.getName().toUpperCase();
-						throw new Exception( "column not found: " + columnName );
+						String columnName = tempColumn.getName();
+//						columnName = columnName.toUpperCase();
+						String file = extract.getSourceFile().getName();
+						String msg = "column not found: " + columnName;
+						throw new Exception( msg );
 					}
 					break;
 				}

@@ -10,15 +10,18 @@ Eclipse plugin
 Generated code has test method
 Generated code has verify schema method
 Add runtime "tested" flag to generated code
-Add BETWEEN comparison support
-Add LIKE comparison support
+
 Add support for date (et al) data type condition parameters
 Add null tests to generated accessors for "not null" columns
 When column, table, etc not found, suggest alternative
 	"column 'appel' not found in table 'fruit', did you mean 'apple'?"
+Maybe not fail on first schema error, so that if multiple column, table are wrong, report all.
+
 For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
 ID Generators
 	Detect identity columns for inserts, updates
+
+	
 Figure out something for transactions 
 	maybe nothing, just use JDBC
 Better strategy for converting SQL column names into Java variables/accessors
@@ -28,6 +31,7 @@ Different templates for different types of SELECT
    - normal readonly ResultSet, default
    - single column ResultSet eg SELECT Name FROM Person, iterate over values (vs rows)
    - single value ResultSet eg SELECT Count( * ) FROM Person, no iteration
+   - single *typed* value ResultSet eg SELECT Count( * ) > 0 FROM Person, no iteration
    - updateable ResultSet, probably new interface: eg implements Iterable<Row>
 
 GRAMMARS
@@ -69,3 +73,8 @@ Compare SQL strategies, pros/cons
 	DAOs
 		cons
 			hand written
+			
+BUGS
+grammar accepts 'SELECT id, FROM Legislation', should barf on tailing comma
+misses incorrect table name and reports column not found
+grammar for dates are not to spec eg 'yyyy-MM-dd hh:mm:ss' 
