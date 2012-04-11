@@ -310,15 +310,29 @@ public class
 
 	public void extractSelectTables( ParseNode selectNode, SelectStatement statement )
 	{
-		List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
-		for( ParseNode item : list )
 		{
-			ParseNode tableRef = item.findFirstNode( "tableRef" );
-			String databaseName = tableRef.findFirstString( "databaseName" );
-			String tableName = tableRef.findFirstString( "**/tableName" );
-			String alias = item.findFirstString( "alias" );
-			Table table = new Table( databaseName, tableName, alias );
-			statement.addTable( table );
+			List<ParseNode> list = selectNode.findNodes( "from/fromItem" );
+			for( ParseNode item : list )
+			{
+				ParseNode tableRef = item.findFirstNode( "tableRef" );
+				String databaseName = tableRef.findFirstString( "databaseName" );
+				String tableName = tableRef.findFirstString( "**/tableName" );
+				String alias = item.findFirstString( "alias" );
+				Table table = new Table( databaseName, tableName, alias );
+				statement.addTable( table );
+			}
+		}
+		{
+			List<ParseNode> list = selectNode.findNodes( "joinList/join" );
+			for( ParseNode item : list )
+			{
+				ParseNode tableRef = item.findFirstNode( "**/tableRef" );
+				String databaseName = tableRef.findFirstString( "databaseName" );
+				String tableName = tableRef.findFirstString( "**/tableName" );
+				String alias = item.findFirstString( "alias" );
+				Table table = new Table( databaseName, tableName, alias );
+				statement.addTable( table );
+			}
 		}
 	}
 

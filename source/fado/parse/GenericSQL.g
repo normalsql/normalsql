@@ -159,10 +159,13 @@ join
     | OUTER JOIN 
     | NATURAL JOIN
     ) 
-  fromItem
+  fromItem alias
+  /*
   ( ON conditionList
   | USING LPAREN columnRef ( COMMA columnRef )* RPAREN
   )?
+  */
+  ON conditionList
   ;
   
 
