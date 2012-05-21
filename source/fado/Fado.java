@@ -6,9 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -44,8 +45,6 @@ import fado.parse.ParseNode;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.ParseTreeBuilder;
-
-// TODO: Cull some of the duplicate code.
 
 public class 
 	Fado
@@ -136,7 +135,21 @@ public class
 		}
 	};
 
-	public String join( List<String> list, String sep )
+	public static String join( List<String> list, String sep )
+	{
+		StringBuilder sb = new StringBuilder();
+		for( String item : list )
+		{
+			if( sb.length() > 0 )
+			{
+				sb.append( sep );
+			}
+			sb.append( item );
+		}
+		return sb.toString();
+	}
+
+	public static String join( String[] list, String sep )
 	{
 		StringBuilder sb = new StringBuilder();
 		for( String item : list )
@@ -163,6 +176,7 @@ public class
 			try
 			{
 				String name = getFileName( sourceFile );
+				// TODO: Also check lastModified of generated ResultSet wrapper
 				File targetFile = new File( targetRoot, name + ".java" );
 				long a = sourceFile.lastModified();
 				long b = targetFile.lastModified();
@@ -176,7 +190,7 @@ public class
 					{
 						System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
 					}
-					extract( pkg, name, sourceFile, targetRoot, name );
+					process( pkg, name, sourceFile, targetRoot );
 				}
 				else
 				{
@@ -215,7 +229,7 @@ public class
 
 	public boolean displayParseTree = false;
 
-	private void extract( String pkg, String name, File sourceFile, File targetRoot, String targetName ) 
+	public void process( String pkg, String name, File sourceFile, File targetRoot ) 
 		throws Exception
 	{
 		ParseTreeBuilder builder = null;
@@ -233,7 +247,6 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
-//			System.out.println( source.toParseTree() );
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
@@ -243,55 +256,59 @@ public class
 			if( selectNode != null )
 			{
 				SelectStatement statement = new SelectStatement();
-				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
 				statement.setOriginalSQL( originalSQL );
+				
 				extractSelect( selectNode, statement );
+				String retooledSQL = builder.getTree().toOriginalString().trim();
+				statement.setRetooledSQL( chopper( retooledSQL ));
+				
 				inspectDatabaseForSelect( _conn, statement );
 	
-				String retooledSQL = builder.getTree().toOriginalString();
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateSelect( statement, choppedSQL, targetRoot, name );
-				generateResultSet( statement, choppedSQL, targetRoot, name );
+				generateSelect( statement, targetRoot, name );
+				generateResultSet( statement, targetRoot, name );
 			}
 	
 			ParseNode insertNode = source.findFirstNode( "statement/insert" );
 			if( insertNode != null )
 			{
 				InsertStatement statement = new InsertStatement();
-				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
 				statement.setOriginalSQL( originalSQL );
+				
 				extractInsert( insertNode, statement );
+				String retooledSQL = builder.getTree().toOriginalString().trim();
+				statement.setRetooledSQL( chopper( retooledSQL ));
+
 				inspectDatabaseForInsert( _conn, statement );
-				String retooledSQL = builder.getTree().toOriginalString();
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateInsert( statement, choppedSQL, targetRoot, name );
+				generateInsert( statement, targetRoot, name );
 			}
 	
 			ParseNode updateNode = source.findFirstNode( "statement/update" );
 			if( updateNode != null )
 			{
 				UpdateStatement statement = new UpdateStatement();
-				statement.setSourceFile( sourceFile );
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
 				statement.setOriginalSQL( originalSQL );
+				
 				extractUpdate( updateNode, statement );
+				String retooledSQL = builder.getTree().toOriginalString().trim();
+				statement.setRetooledSQL( chopper( retooledSQL ));
+				
 				inspectDatabaseForUpdate( _conn, statement );
-				String retooledSQL = builder.getTree().toOriginalString();
-				List<String> choppedSQL = chopper( retooledSQL.trim() );
-				generateUpdate( statement, choppedSQL, targetRoot, name );
+				
+				generateUpdate( statement, targetRoot, name );
 			}
 		}
 		catch( Exception e )
 		{
-			if( displayParseTree )
+			if( displayParseTree && builder != null )
 			{
 				System.out.println( "string tree: " + builder.getTree().toParseTree() );
 			}
@@ -299,13 +316,13 @@ public class
 		}
 	}
 
-	private void extractSelect( ParseNode selectNode, SelectStatement extract ) 
+	private void extractSelect( ParseNode selectNode, SelectStatement statement ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
-		extractSelectTables( selectNode, extract );
-		extractSelectColumns( selectNode, extract );
-		extractSelectParams( selectNode, extract );
+		extractSelectTables( selectNode, statement );
+		extractSelectColumns( selectNode, statement );
+		extractSelectParams( selectNode, statement );
 	}
 
 	public void extractSelectTables( ParseNode selectNode, SelectStatement statement )
@@ -426,7 +443,6 @@ public class
 		ParseNode tableRef = insertNode.findFirstNode( "into/tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
-//		String alias = item.findFirstString( "alias" );
 		String alias = null;
 		Table table = new Table( databaseName, tableName, alias );
 		statement.addTable( table );
@@ -469,7 +485,6 @@ public class
 		ParseNode tableRef = updateNode.findFirstNode( "tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
-//		String alias = item.findFirstString( "alias" );
 		String alias = null;
 		Table table = new Table( databaseName, tableName, alias );
 		statement.addTable( table );
@@ -521,7 +536,6 @@ public class
 			break;
 		}
 	}
-
 	
 	// Comparisons, eg column = 'abc'
 	public void extractComparisonParams( ParseNode comparisonNode, WhereStatement statement )
@@ -551,7 +565,6 @@ public class
 			node.convertToJDBCParam();
 		}
 	}
-
 
 	// BETWEEN, eg column BETWEEN 1 AND 100
 	// TODO: BETWEEN condition
@@ -648,14 +661,11 @@ public class
 		throws Exception
 	{
 		if( _onlyParse ) return;
-		
-		PreparedStatement tablesPS = conn
-				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn
-				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
-		PreparedStatement allColumnsPS = conn
-				.prepareStatement( "SELECT COLUMN_NAME, DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION" );
 
+		String catalog = null;
+		String schemaPattern = null;
+		DatabaseMetaData meta = conn.getMetaData();
+		
 		for( Column tempColumn : extract.getTempColumns() )
 		{
 			switch( tempColumn.getStyle() )
@@ -663,22 +673,26 @@ public class
 				case WholeTable:
 				{
 					String tableName = tempColumn.getTable().getName().toUpperCase();
-					allColumnsPS.setString( 1, tableName );
-
-					if( allColumnsPS.execute() )
+					ResultSet tableRS = meta.getTables( catalog, schemaPattern, tableName, null );
+					if( tableRS.next() )
 					{
-						ResultSet allColumnsRS = allColumnsPS.getResultSet();
+						ResultSet allColumnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
 						while( allColumnsRS.next() )
 						{
 							String name = allColumnsRS.getString( "COLUMN_NAME" );
 							int sqlType = allColumnsRS.getInt( "DATA_TYPE" );
 							String sqlTypeName = allColumnsRS.getString( "TYPE_NAME" );
-
+	
 							Column column = new Column( name, sqlType, sqlTypeName );
 							extract.addFinalColumn( column );
 						}
 						allColumnsRS.close();
 					}
+					else
+					{
+						throw new Exception( "table not found: " + tableName );						
+					}
+					tableRS.close();
 
 					break;
 				}
@@ -702,14 +716,11 @@ public class
 					for( Table table : tables )
 					{
 						String tableName = table.getName().toUpperCase();
-						columnPS.setString( 1, tableName );
-
-						String columnName = tempColumn.getName().toUpperCase();
-						columnPS.setString( 2, columnName );
-
-						if( columnPS.execute() )
+						ResultSet tableRS = meta.getTables( catalog, schemaPattern, tableName, null );
+						if( tableRS.next() )
 						{
-							ResultSet columnRS = columnPS.getResultSet();
+							String columnName = tempColumn.getName().toUpperCase();
+							ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
 							if( columnRS.next() )
 							{
 								int sqlType = columnRS.getInt( "DATA_TYPE" );
@@ -721,6 +732,8 @@ public class
 							}
 							columnRS.close();
 						}
+						tableRS.close();
+
 						if( found ) break;
 					}
 
@@ -728,8 +741,9 @@ public class
 					{
 						String columnName = tempColumn.getName();
 //						columnName = columnName.toUpperCase();
-						String file = extract.getSourceFile().getName();
-						String msg = "column not found: " + columnName;
+//						String file = extract.getSourceFile().getName();
+//						String msg = "table & column not found: " + tempColumn.getTable().getName() + "." + columnName;
+						String msg = "table & column not found: " + columnName;
 						throw new Exception( msg );
 					}
 					break;
@@ -744,7 +758,6 @@ public class
 		for( Condition condition : extract.getConditions() )
 		{
 			String columnName = condition.getColumn().toUpperCase();
-			columnPS.setString( 2, columnName );
 			
 			List<Table> tables = null;
 			if( condition.hasTable() )
@@ -763,19 +776,14 @@ public class
 			for( Table table : tables )
 			{
 				String tableName = table.getName().toUpperCase();
-				columnPS.setString( 1, tableName );
-
-				if( columnPS.execute() )
+				ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
+				if( columnRS.next() )
 				{
-					ResultSet columnRS = columnPS.getResultSet();
-					if( columnRS.next() )
-					{
-						int sqlType = columnRS.getInt( "DATA_TYPE" );
-						condition.setSQLType( sqlType );
-						found = true;
-					}
-					columnRS.close();
+					int sqlType = columnRS.getInt( "DATA_TYPE" );
+					condition.setSQLType( sqlType );
+					found = true;
 				}
+				columnRS.close();
 				if( found ) break;
 			}
 
@@ -784,157 +792,102 @@ public class
 				throw new Exception( "condition's column ref not found: " + columnName );
 			}
 		}
-
-		tablesPS.close();
-		columnPS.close();
 	}
 
 	public void inspectDatabaseForInsert( Connection conn, InsertStatement extract ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
-		
-		PreparedStatement tablesPS = conn
-				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn
-				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+
+		String catalog = null;
+		String schema = null;
+		DatabaseMetaData meta = conn.getMetaData();
 
 		Table table = extract.getTables().get( 0 );
 		String tableName = table.getName().toUpperCase();
-		tablesPS.setString( 1, tableName );
-		if( tablesPS.execute() )
+		for( InsertColumn column : extract.getColumns() )
 		{
-			ResultSet gorp = tablesPS.getResultSet();
-			if( gorp.next() )
+	
+			String columnName = column.getName().toUpperCase();
+			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
+			if( columnRS.next() )
 			{
-				columnPS.setString( 1, tableName );
-
-				for( InsertColumn column : extract.getColumns() )
-				{
-
-					String columnName = column.getName().toUpperCase();
-					columnPS.setString( 2, columnName );
-
-					if( columnPS.execute() )
-					{
-						ResultSet columnRS = columnPS.getResultSet();
-						if( columnRS.next() )
-						{
-							int sqlType = columnRS.getInt( "DATA_TYPE" );
-							column.setSQLType( sqlType );
-							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-							column.setSQLTypeName( sqlTypeName );
-						}
-						else
-						{
-							// TODO Don't die on first error
-							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
-						}
-						columnRS.close();
-					}
-				}
+				int sqlType = columnRS.getInt( "DATA_TYPE" );
+				column.setSQLType( sqlType );
+				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+				column.setSQLTypeName( sqlTypeName );
 			}
 			else
 			{
-				throw new Exception( "table not found: " + tableName );
+				// TODO Don't die on first error
+				throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
 			}
+			columnRS.close();
 		}
 
-		tablesPS.close();
-		columnPS.close();
+//				throw new Exception( "table not found: " + tableName );
+
 	}
 
 	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement extract ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
-		
-		PreparedStatement tablesPS = conn
-				.prepareStatement( "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" );
-		PreparedStatement columnPS = conn
-				.prepareStatement( "SELECT DATA_TYPE, TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?" );
+		String catalog = null;
+		String schema = null;
+		DatabaseMetaData meta = conn.getMetaData();
 
 		Table table = extract.getTables().get( 0 );
 		String tableName = table.getName().toUpperCase();
-		tablesPS.setString( 1, tableName );
-		if( tablesPS.execute() )
+		
+		for( UpdateColumn column : extract.getColumns() )
 		{
-			ResultSet gorp = tablesPS.getResultSet();
-			if( gorp.next() )
+
+			String columnName = column.getName().toUpperCase();
+			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
+			if( columnRS.next() )
 			{
-				columnPS.setString( 1, tableName );
-
-				for( UpdateColumn column : extract.getColumns() )
-				{
-
-					String columnName = column.getName().toUpperCase();
-					columnPS.setString( 2, columnName );
-
-					if( columnPS.execute() )
-					{
-						ResultSet columnRS = columnPS.getResultSet();
-						if( columnRS.next() )
-						{
-							int sqlType = columnRS.getInt( "DATA_TYPE" );
-							column.setSQLType( sqlType );
-							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-							column.setSQLTypeName( sqlTypeName );
-						}
-						else
-						{
-							// TODO Don't die on first error
-							throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
-						}
-						columnRS.close();
-					}
-				}
+				int sqlType = columnRS.getInt( "DATA_TYPE" );
+				column.setSQLType( sqlType );
+				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+				column.setSQLTypeName( sqlTypeName );
 			}
 			else
 			{
-				throw new Exception( "table not found: " + tableName );
+				// TODO Don't die on first error
+				throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
 			}
+			columnRS.close();
 		}
+//				throw new Exception( "table not found: " + tableName );
 
 		for( Condition condition : extract.getConditions() )
 		{
 			String columnName = condition.getColumn().toUpperCase();
-			columnPS.setString( 1, tableName );
-			columnPS.setString( 2, columnName );
-
-			if( columnPS.execute() )
+			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
+			if( columnRS.next() )
 			{
-				ResultSet columnRS = columnPS.getResultSet();
-				if( columnRS.next() )
-				{
-					int sqlType = columnRS.getInt( "DATA_TYPE" );
-					condition.setSQLType( sqlType );
-				}
-				else
-				{
-					throw new Exception( "column not found: " + columnName );
-				}
-				columnRS.close();
+				int sqlType = columnRS.getInt( "DATA_TYPE" );
+				condition.setSQLType( sqlType );
 			}
+			else
+			{
+				throw new Exception( "column not found: " + columnName );
+			}
+			columnRS.close();
 		}
-
-		tablesPS.close();
-		columnPS.close();
 	}
 
-	public void generateSelect( SelectStatement statement, List<String> sql, File targetRoot, String name ) 
+	public void generateSelect( SelectStatement statement, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
 		
-//		List<Column> columns = statement.getFinalColumns();
-		List<Condition> conditions = statement.getConditions();
-
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
-		context.put( "sql", sql );
-//		context.put( "columns", columns );
-		context.put( "conditions", conditions );
+		context.put( "sql", statement.getRetooledSQL() );
+		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
@@ -946,20 +899,31 @@ public class
 		writer.close();
 	}
 
-	public void generateResultSet( SelectStatement statement, List<String> sql, File targetRoot, String name ) 
+	public void generateSelect( SelectStatement statement, Writer writer ) 
+		throws Exception
+	{
+		VelocityContext context = new VelocityContext();
+		context.put( "packageName", statement.getPackage() );
+		context.put( "className", statement.getName() );
+		context.put( "sql", statement.getRetooledSQL() );
+		context.put( "conditions", statement.getConditions() );
+		context.put( "date", new Date() );
+		context.put( "originalfile", statement.getOriginalFileName() );
+		context.put( "originalsql", statement.getOriginalSQL() );
+
+		_selectTemplate.merge( context, writer );
+	}
+
+	public void generateResultSet( SelectStatement statement, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
 		
-		List<Column> columns = statement.getFinalColumns();
-//		List<Condition> conditions = statement.getConditions();
-
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
-		context.put( "sql", sql );
-		context.put( "columns", columns );
-//			context.put( "conditions", conditions );
+		context.put( "sql", statement.getRetooledSQL() );
+		context.put( "columns", statement.getFinalColumns() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
@@ -971,18 +935,16 @@ public class
 		writer.close();
 	}
 
-	public void generateInsert( InsertStatement statement, List<String> sql, File targetRoot, String name ) 
+	public void generateInsert( InsertStatement statement, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
 		
-		List<InsertColumn> columns = statement.getColumns();
-
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
-		context.put( "sql", sql );
-		context.put( "columns", columns );
+		context.put( "sql", statement.getRetooledSQL() );
+		context.put( "columns", statement.getColumns() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
@@ -994,20 +956,17 @@ public class
 		writer.close();
 	}
 
-	public void generateUpdate( UpdateStatement statement, List<String> sql, File targetRoot, String name ) 
+	public void generateUpdate( UpdateStatement statement, File targetRoot, String name ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
 		
-		List<UpdateColumn> columns = statement.getColumns();
-		List<Condition> conditions = statement.getConditions();
-
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
-		context.put( "sql", sql );
-		context.put( "columns", columns );
-		context.put( "conditions", conditions );
+		context.put( "sql", statement.getRetooledSQL() );
+		context.put( "columns", statement.getColumns() );
+		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originalsql", statement.getOriginalSQL() );
@@ -1051,7 +1010,7 @@ public class
 			System.out.print( temp + "\t" );
 		}
 		System.out.print( "\n--\n" );
-		set.first();
+//		set.first();
 		while( set.next() )
 		{
 			for( int i = 0; i < count; i++ )

@@ -1,6 +1,5 @@
 package fado.meta;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +71,18 @@ public abstract class
 	{
 		return _originalSQL;
 	}
+	
+	private List<String> _retooledSQL = null;
+	
+	public void setRetooledSQL( List<String> retooledSQL )
+	{
+		_retooledSQL = retooledSQL;
+	}
+	
+	public List<String> getRetooledSQL()
+	{
+		return _retooledSQL;
+	}
 
 	private ArrayList<Table> _tables = new ArrayList<Table>(); 
 	
@@ -104,17 +115,5 @@ public abstract class
 		}
 		
 		throw new TableNotFoundException( "table alias not found: " + name );
-	}
-
-	private File _source;
-	
-	public void setSourceFile( File source )
-	{
-		_source = source;
-	}
-	
-	public File getSourceFile()
-	{
-		return _source;
 	}
 }
