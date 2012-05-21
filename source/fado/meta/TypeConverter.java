@@ -18,6 +18,7 @@ import static java.sql.Types.INTEGER;
 import static java.sql.Types.JAVA_OBJECT;
 import static java.sql.Types.LONGVARBINARY;
 import static java.sql.Types.LONGVARCHAR;
+import static java.sql.Types.LONGNVARCHAR;
 import static java.sql.Types.NULL;
 import static java.sql.Types.NUMERIC;
 import static java.sql.Types.OTHER;
@@ -88,6 +89,7 @@ public class
 			result = "byte[]";
 			break;
 		case LONGVARCHAR:
+		case LONGNVARCHAR:
 			result = "java.lang.String";
 			break;
 			
@@ -187,6 +189,7 @@ public class
 			result = "null";
 			break;
 		case LONGVARCHAR:
+		case LONGNVARCHAR:
 			result = "null";
 			break;
 			
@@ -246,8 +249,9 @@ public class
 		switch( sqlType )
 		{
 		case CHAR:
-		case LONGVARCHAR:
 		case VARCHAR:
+		case LONGVARCHAR:
+		case LONGNVARCHAR:
 			result = "\"" + literal + "\"";
 			break;
 		case BIGINT:
@@ -390,6 +394,7 @@ public class
 			result = "byte[]";
 			break;
 		case LONGVARCHAR:
+		case LONGNVARCHAR:
 			result = "String";
 			break;
 			
