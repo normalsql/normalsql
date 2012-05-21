@@ -66,8 +66,10 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
+#set( $nth = 0 )
 #foreach( $column in $columns )
-			_${column.NameAsVariable} = rs.get${column.TypedMethod}( "${column.NameAsMethod}" );
+#set( $nth = $nth + 1 )
+			_${column.NameAsVariable} = rs.get${column.TypedMethod}( ${nth} );
 #end
 		}
 		return success;
