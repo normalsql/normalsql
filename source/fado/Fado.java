@@ -250,7 +250,12 @@ public class
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
+			// "escape" any Java-style nested comments, which would screw up Java compiler
+			temp = temp.replace( "/*", "/@" ); 
+			temp = temp.replace( "*/", "@/" ); 
 			List<String> originalSQL = chopper( temp.trim() );
+			
+			
 	
 			ParseNode selectNode = source.findFirstNode( "statement/select" );
 			if( selectNode != null )
