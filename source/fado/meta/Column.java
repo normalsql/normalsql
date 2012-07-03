@@ -106,8 +106,8 @@ public class
 	@Override
 	public String toString()
 	{
-		return "Column [_style=" + _style + ", _table=" + _table + ", _name=" + _name + ", _alias=" + _alias
-				+ ", _sqlType=" + _sqlType + ", _sqlTypeName=" + _sqlTypeName + "]";
+		return "Column [style=" + _style + ", table=" + _table + ", name=" + _name + ", alias=" + _alias
+				+ ", sqlType=" + _sqlType + ", sqlTypeName=" + _sqlTypeName + "]";
 	}
 	
 	

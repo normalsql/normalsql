@@ -25,39 +25,19 @@ $line
 package ${packageName};
 
 import java.sql.*;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class 
 	${className}
 {
-	private Connection __connection = null;
-	private PreparedStatement __prepared = null;
-
-	public ${className}( Connection connection )
-		throws Exception
-	{
-		__connection = connection;
-	}
-
-	protected final PreparedStatement getPreparedStatement()
-		throws SQLException
-	{
-		if( __prepared == null )
-		{
-			String sql = getSQL();
-			__prepared = __connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-	
-		}
-		return __prepared;
-	}
-
-
 	// TODO: Auto detect if row has key/identity column
 	
-	public final int execute()
+	public final int execute( Connection connection )
 		throws SQLException
 	{
-		PreparedStatement ps = getPreparedStatement();
+		String sql = getSQL();
+		PreparedStatement ps = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
 		
 #set( $nth = 0 )
 #foreach( $column in $columns )
@@ -77,7 +57,19 @@ public class
 				__identity = keys.getInt( 1 );
 			}
 		}
-		
+		ps.close();
+		return rows;
+	}
+
+	/**
+		Pass a DataSource, a Connection instance is created, call its close() method when done. 
+	**/
+	public final int execute( DataSource dataSource )
+		throws SQLException
+	{
+		Connection connection = dataSource.getConnection();
+		int rows = execute( connection );
+		connection.close();
 		return rows;
 	}
 

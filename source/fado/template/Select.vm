@@ -22,39 +22,51 @@ $line
 
 **/
 
+## add null check here
 package ${packageName};
 
 import java.sql.*;
-import java.util.Iterator;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class 
 	${className}
 {
-	protected Connection __connection = null;
-
-	public ${className}( Connection connection )
+	private int __resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
+	
+	public void setResultSetType( int resultSetType )
 	{
-		__connection = connection;
+		__resultSetType = resultSetType;
 	}
+	
+	public int getResultSetType()
+	{
+		return __resultSetType;
+	}
+	
+	private int __resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
 
-	protected PreparedStatement __prepared = null;
+	public void setResultSetConcurrency( int resultSetConcurrency )
+	{
+		__resultSetConcurrency = resultSetConcurrency;
+	}
+	
+	public int getResultSetConcurrency()
+	{
+		return __resultSetConcurrency;
+	}
+	
 
-	protected final PreparedStatement getPreparedStatement()
+	/**
+		Pass a Connection instance, you are responsible for closing it, method ${className}ResultSet.close()
+		WILL NOT call that instance's Connection.close() method. 
+		 
+	**/
+	public final ${className}ResultSet execute( Connection connection )
 		throws SQLException
 	{
-		if( __prepared == null )
-		{
-			String sql = getSQL();
-			__prepared = __connection.prepareStatement( sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-		}
-		return __prepared;
-	}
-
-	public final boolean execute()
-		throws SQLException
-	{
-		PreparedStatement ps = getPreparedStatement();
+		String sql = getSQL();
+		PreparedStatement ps = connection.prepareStatement( sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 			
 #set( $nth = 0 )
 #foreach( $condition in $conditions )
@@ -88,34 +100,28 @@ public class
 #end
 #end
 			
-		boolean success = ps.execute();
-		return success;
-	}
-
-	public final ${className}ResultSet getResultSet()
-		throws SQLException
-	{
-		execute();
-		PreparedStatement ps = getPreparedStatement();
-		ResultSet rs = ps.getResultSet();
+		ResultSet rs = null;
+		if( ps.execute() )
+		{
+			rs = ps.getResultSet();
+		}
 		${className}ResultSet result = new ${className}ResultSet( rs );
 		return result;
 	}
 
 	/**
-	 * Done with current response (ResultSet), clears this instance, prior to reuse.
-	 * 
-	 * @throws SQLException
-	 */
-	public void close()
+		Pass a DataSource, a Connection instance is created, method ${className}ResultSet.close() WILL 
+		also call that instance's Connection.close() method. 
+	**/
+	public final ${className}ResultSet execute( DataSource dataSource )
 		throws SQLException
 	{
-		if( __prepared != null )
-		{
-			__prepared.close();
-			__prepared = null;
-		}
+		Connection connection = dataSource.getConnection();
+		${className}ResultSet result = execute( connection );
+		result.setConnection( connection );
+		return result;
 	}
+
 
 #foreach( $condition in $conditions )
 ##

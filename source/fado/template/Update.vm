@@ -26,35 +26,32 @@ $line
 package ${packageName};
 
 import java.sql.*;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class 
 	${className}
 {
-	private Connection __connection = null;
-	private PreparedStatement __prepared = null;
-	
-	public ${className}( Connection connection )
-		throws Exception
-	{
-		__connection = connection;
-	}
 
-	private PreparedStatement getPreparedStatement()
+	/**
+		Pass a DataSource, a Connection instance is created, call its close() method when done. 
+	**/
+	public final int execute( DataSource dataSource )
 		throws SQLException
 	{
-		if( __prepared == null )
-		{
-			String sql = getSQL();
-			__prepared = __connection.prepareStatement( sql );
-		}
-		return __prepared;
+		Connection connection = dataSource.getConnection();
+		int rows = execute( connection );
+		connection.close();
+		return rows;
 	}
 
-	public int execute()
+	public final int execute( Connection connection )
 		throws SQLException
 	{
-		PreparedStatement ps = getPreparedStatement();
+		String sql = getSQL();
+		PreparedStatement ps = connection.prepareStatement( sql );
+		
+		
 #set( $nth = 0 )
 #foreach( $column in $columns )
 ##
@@ -96,6 +93,8 @@ public class
 		int rows = ps.executeUpdate();
 		return rows;
 	}
+	
+	
 	
 #foreach( $column in $columns )
 	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};

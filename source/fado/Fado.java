@@ -250,7 +250,7 @@ public class
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
-			// "escape" any Java-style nested comments, which would screw up Java compiler
+			// Replace Java style comments in generated code, so /* */ becomes /@ @/.
 			temp = temp.replace( "/*", "/@" ); 
 			temp = temp.replace( "*/", "@/" ); 
 			List<String> originalSQL = chopper( temp.trim() );
@@ -682,6 +682,7 @@ public class
 					if( tableRS.next() )
 					{
 						ResultSet allColumnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
+//						dumpResultSet( allColumnsRS );
 						while( allColumnsRS.next() )
 						{
 							String name = allColumnsRS.getString( "COLUMN_NAME" );

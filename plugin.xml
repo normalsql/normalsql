@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="fadoBuilder"
+         name="Fado Project Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="fado.eclipse.builder.FadoBuilder">
+         </run>
+      </builder>
+   </extension>
+   <extension
+         id="fadoNature"
+         name="Fado Project Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="fado.eclipse.builder.FadoNature">
+         </run>
+      </runtime>
+      <builder
+            id="fado.eclipse.fadoBuilder">
+      </builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IProject"
+            nameFilter="*"
+            id="fado.eclipse.contribution1">
+         <action
+               label="Toggle Fado Nature"
+               class="fado.eclipse.builder.ToggleNatureAction"
+               menubarPath="additions"
+               enablesFor="+"
+               id="fado.eclipse.addRemoveNatureAction">
+         </action>
+      </objectContribution>
+   </extension>
+   <extension
+         id="fadoProblem"
+         name="Fado Problem"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+   </extension>
+
+</plugin>

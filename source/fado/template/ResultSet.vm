@@ -42,12 +42,15 @@ public class
 		return __resultSet;
 	}
 	
-
+	public boolean getSuccess()
+	{
+		return __resultSet != null;
+	}
+	
 	/**
-	 * Done with current response (ResultSet), clears this instance, prior to reuse.
-	 * 
-	 * @throws SQLException
-	 */
+		Closes the contained ResultSet instance. Also closes contained Connection instance 
+		created via a DataSource connection factory.
+	**/
 	public void close()
 		throws SQLException
 	{
@@ -56,8 +59,27 @@ public class
 			__resultSet.close();
 			__resultSet = null;
 		}
+		Connection connection = getConnection();
+		if( connection != null )
+		{
+			connection.close();
+		}
 	}
 
+	
+	private Connection __connection = null;
+	
+	public void setConnection( Connection connection )
+	{
+		__connection = connection;
+	}
+	
+	public Connection getConnection()
+	{
+		return __connection;
+	}
+	
+	
 	public final boolean hasNext()
 		throws SQLException
 	{
@@ -114,6 +136,10 @@ public class
 #end
 	public String toString()
 	{
+		if( getResultSet() == null )
+		{
+			return "No results";
+		}
 		StringBuilder sb = new StringBuilder();
 #foreach( $column in $columns )
 		sb.append( "${column.NameAsMethod}: " );
