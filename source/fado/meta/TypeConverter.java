@@ -188,6 +188,7 @@ public class
 		case LONGVARBINARY:
 			result = "null";
 			break;
+			
 		case LONGVARCHAR:
 		case LONGNVARCHAR:
 			result = "null";
@@ -266,8 +267,8 @@ public class
 			break;
 		}
 		case BINARY:
-			result = "byte[]";
-			break;
+			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			
 		case ARRAY:
 			result = "java.sql.Array";
 			break;
@@ -296,8 +297,9 @@ public class
 			break;
 		case JAVA_OBJECT:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+			
 		case LONGVARBINARY:
-			result = "byte[]";
+			throw new IllegalArgumentException( "don't know what to do with SQL Type LONGVARBINARY" );
 			
 		case NUMERIC:
 			result = "new java.math.BigDecimal( " + literal + " );";
@@ -330,8 +332,8 @@ public class
 			result = "java.sql.Timestamp.valueOf( \"" + literal + "\" )";
 			break;
 		case VARBINARY:
-			result = "byte[]";
-			break;
+			throw new IllegalArgumentException( "don't know what to do with SQL Type VARBINARY" );
+			
 		default:
 			result = "unknown SQL Type: " + sqlType;
 			throw new IllegalArgumentException( result );
@@ -391,7 +393,7 @@ public class
 		case JAVA_OBJECT:
 			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
 		case LONGVARBINARY:
-			result = "byte[]";
+			result = "Bytes";
 			break;
 		case LONGVARCHAR:
 		case LONGNVARCHAR:
