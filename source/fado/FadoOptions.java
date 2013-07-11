@@ -1,5 +1,7 @@
 package fado;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 import joptsimple.OptionParser;
@@ -79,15 +81,36 @@ public class FadoOptions
 
 		_options = parser.parse( args );
 
+		String filename = (String) _options.valueOf( PROPERTY );
+		if( !filename.endsWith( ".properties" )) 
+		{
+			filename = filename + ".properties";
+		}
+
+		// try straight filename then file in current dir. do not try classpath.
+		
 		try
 		{
-			_props = new Properties();
-			String filename = (String) _options.valueOf( PROPERTY );
-			_props.load( filename );
+			File file = new File( filename );
+			if( !file.exists() ) 
+			{
+				File cwd = new File( "." ).getCanonicalFile();
+				file = new File( cwd, filename );
+				if( !file.exists() ) 
+				{
+					file = null;
+				}
+			}
+			
+			if( file != null ) 
+			{
+				FileReader reader = new FileReader( file );
+				_props = Properties.load( reader );
+				_props.setURL( file.toURL() );
+			}
 		}
-		catch( IOException e )
+		catch( Exception e ) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

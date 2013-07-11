@@ -1,6 +1,9 @@
 package fado;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,6 +46,8 @@ public class Properties
 	}
 
 	private URL _url = null;
+	
+	public void setURL( URL url ) { _url = url; }
 	
 	public URL getURL() { return _url; }
 	
@@ -173,20 +178,29 @@ public class Properties
 		}
 	}
 
-	public void load( String name ) throws IOException
+	public static Properties load( String filename ) throws IOException
 	{
-		ClassLoader loader = getClass().getClassLoader();
-		_url = loader.getResource( name + ".properties" );
-		if( _url != null )
+		ClassLoader loader = Properties.class.getClassLoader();
+		URL url = loader.getResource( filename + ".properties" );
+		if( url != null )
 		{
-			InputStream in = _url.openStream();
+			InputStream in = url.openStream();
 			InputStreamReader reader = new InputStreamReader( in );
-			load( reader );
+			Properties props = load( reader );
+			props._url = url;
+			return props;
 		}
+		throw new FileNotFoundException( filename );
 	}
 
-	public void load( Reader reader ) throws IOException
+	public static Properties load( Reader reader ) throws IOException
 	{
+		if( reader == null ) 
+		{
+			throw new NullPointerException( "reader" );
+		}
+		
+		Properties props = new Properties();
 		BufferedReader buffer = new BufferedReader( reader );
 		while( true )
 		{
@@ -211,12 +225,14 @@ public class Properties
 				String value = data.substring( equal + 1 );
 				line.value = value.trim();
 			}
-			lines.add( line );
+			props.lines.add( line );
 			if( line.key != null )
 			{
-				map.put( line.key, line );
+				props.map.put( line.key, line );
 			}
 		}
+		
+		return props;
 	}
 
 	public void store( Writer writer ) throws IOException
@@ -279,4 +295,5 @@ public class Properties
 	{
 		return map.hashCode();
 	}
+
 }
