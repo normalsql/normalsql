@@ -128,6 +128,7 @@ public class
 #foreach( $column in $columns )
 	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
 
+	/** ${column.JavaDocText} **/
 	public ${column.JavaType} get${column.NameAsMethod}()
 	{
 		return _${column.NameAsVariable};

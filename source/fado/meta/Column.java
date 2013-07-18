@@ -100,7 +100,16 @@ public class
 	{
 		String result = TypeConverter.getInitializerValue( getSQLType() );
 		return result;
-		
+	}
+	
+	public String getJavaDocText()
+	{
+		String source = getName();
+		if( _alias != null )
+		{
+			source = source + " AS " + _alias;
+		}
+		return source;
 	}
 
 	@Override
