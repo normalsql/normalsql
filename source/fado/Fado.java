@@ -681,8 +681,7 @@ public class
 	{
 		if( _onlyParse ) return;
 
-		String catalog = null;
-		String schemaPattern = null;
+		String catalog = conn.getCatalog();
 		DatabaseMetaData meta = conn.getMetaData();
 		
 		for( Column tempColumn : extract.getTempColumns() )
@@ -691,23 +690,23 @@ public class
 			{
 				case WholeTable:
 				{
-					// TODO: add table's schema to filter
 					String tableName = tempColumn.getTable().getName().toUpperCase();
-					ResultSet tableRS = meta.getTables( catalog, schemaPattern, tableName, null );
+					ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
 					if( tableRS.next() )
 					{
-						ResultSet allColumnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
-						dumpResultSet( allColumnsRS );
-						while( allColumnsRS.next() )
+						String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
+						ResultSet columnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
+						dumpResultSet( columnsRS );
+						while( columnsRS.next() )
 						{
-							String name = allColumnsRS.getString( "COLUMN_NAME" );
-							int sqlType = allColumnsRS.getInt( "DATA_TYPE" );
-							String sqlTypeName = allColumnsRS.getString( "TYPE_NAME" );
+							String name = columnsRS.getString( "COLUMN_NAME" );
+							int sqlType = columnsRS.getInt( "DATA_TYPE" );
+							String sqlTypeName = columnsRS.getString( "TYPE_NAME" );
 	
 							Column column = new Column( name, sqlType, sqlTypeName );
 							extract.addFinalColumn( column );
 						}
-						allColumnsRS.close();
+						columnsRS.close();
 					}
 					else
 					{
@@ -737,9 +736,10 @@ public class
 					for( Table table : tables )
 					{
 						String tableName = table.getName().toUpperCase();
-						ResultSet tableRS = meta.getTables( catalog, schemaPattern, tableName, null );
+						ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
 						if( tableRS.next() )
 						{
+							String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
 							String columnName = tempColumn.getName().toUpperCase();
 							ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
 							if( columnRS.next() )
@@ -797,14 +797,25 @@ public class
 			for( Table table : tables )
 			{
 				String tableName = table.getName().toUpperCase();
-				ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
-				if( columnRS.next() )
+				ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
+				if( tableRS.next() )
 				{
-					int sqlType = columnRS.getInt( "DATA_TYPE" );
-					condition.setSQLType( sqlType );
-					found = true;
+					String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
+					ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
+					if( columnRS.next() )
+					{
+						int sqlType = columnRS.getInt( "DATA_TYPE" );
+						condition.setSQLType( sqlType );
+						found = true;
+					}
+					columnRS.close();
 				}
-				columnRS.close();
+				else
+				{
+					throw new Exception( "table not found: " + tableName );						
+				}
+				tableRS.close();
+
 				if( found ) break;
 			}
 
