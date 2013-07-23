@@ -93,7 +93,21 @@ public class
 		
 		String target = options.getTarget();
 		File targetDir = new File( target );
-
+		
+		Stack<String> path = new Stack<String>();
+		String pkg = options.getPackage().trim();
+		if( !"".equals( pkg )) 
+		{
+			// TODO regex to validate package
+			String[] list = pkg.split( "\\." );
+			for( String item : list )
+			{
+				path.push( item );
+				targetDir = new File( targetDir, item );
+				
+			}
+		}
+		
 		String source = options.getSource();
 		File sourceDir = new File( source );
 		if( !sourceDir.exists() )
@@ -101,7 +115,7 @@ public class
 			String msg = sourceDir.getCanonicalPath().toString() + " (filespec: " + source + ")";
 			throw new FileNotFoundException( msg );
 		}
-		Stack<String> path = new Stack<String>();
+		
 		crawl( sourceDir, targetDir, path );
 
 		if( _conn != null ) 
@@ -677,12 +691,13 @@ public class
 			{
 				case WholeTable:
 				{
+					// TODO: add table's schema to filter
 					String tableName = tempColumn.getTable().getName().toUpperCase();
 					ResultSet tableRS = meta.getTables( catalog, schemaPattern, tableName, null );
 					if( tableRS.next() )
 					{
 						ResultSet allColumnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
-//						dumpResultSet( allColumnsRS );
+						dumpResultSet( allColumnsRS );
 						while( allColumnsRS.next() )
 						{
 							String name = allColumnsRS.getString( "COLUMN_NAME" );

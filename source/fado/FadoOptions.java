@@ -19,6 +19,7 @@ public class FadoOptions
 	public final static String URL = "url";
 	public final static String USERNAME = "username";
 	public final static String PASSWORD = "password";
+	public final static String PACKAGE = "package";
 	public final static String SOURCE = "source";
 	public final static String TARGET = "target";
 	public final static String PROPERTY = "property";
@@ -42,27 +43,32 @@ public class FadoOptions
 
 	public String getUsername()
 	{
-		return coalesce( (String) _options.valueOf( USERNAME ), _props.get( USERNAME ) );
+		return coalesce( (String) _options.valueOf( USERNAME ), _props.get( USERNAME ), "" );
 	}
 
 	public String getPassword()
 	{
-		return coalesce( (String) _options.valueOf( PASSWORD ), _props.get( PASSWORD ) );
+		return coalesce( (String) _options.valueOf( PASSWORD ), _props.get( PASSWORD ), "" );
 	}
 
 	public String getSource()
 	{
-		return coalesce( (String) _options.valueOf( SOURCE ), _props.get( SOURCE ) );
+		return coalesce( (String) _options.valueOf( SOURCE ), _props.get( SOURCE ), "." );
+	}
+
+	public String getPackage()
+	{
+		return coalesce( (String) _options.valueOf( PACKAGE ), _props.get( PACKAGE ), "" );
 	}
 
 	public String getTarget()
 	{
-		return coalesce( (String) _options.valueOf( TARGET ), _props.get( TARGET ) );
+		return coalesce( (String) _options.valueOf( TARGET ), _props.get( TARGET ), "." );
 	}
 	
 	public boolean getOnlyParse()
 	{
-		String onlyParse = coalesce( (String) _options.valueOf( ONLYPARSE ), _props.get( ONLYPARSE ));
+		String onlyParse = coalesce( (String) _options.valueOf( ONLYPARSE ), _props.get( ONLYPARSE ), "false" );
 		return Boolean.valueOf( onlyParse );
 	}
 
@@ -73,7 +79,8 @@ public class FadoOptions
 		parser.accepts( URL ).withRequiredArg();
 		parser.accepts( USERNAME ).withRequiredArg();
 		parser.accepts( PASSWORD ).withRequiredArg();
-
+		
+		parser.accepts( PACKAGE ).withRequiredArg();
 		parser.accepts( SOURCE ).withRequiredArg();
 		parser.accepts( TARGET ).withRequiredArg();
 		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( _filename );
@@ -133,6 +140,7 @@ public class FadoOptions
 		sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
 		sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
 		sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
+		sb.append( PACKAGE ).append( " = " ).append( getPackage() ).append( '\n' );
 		sb.append( SOURCE ).append( " = " ).append( getSource() ).append( '\n' );
 		sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
 		sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));

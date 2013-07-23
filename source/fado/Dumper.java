@@ -41,16 +41,20 @@ public class Dumper {
 		}
 		ps.println();
 
-		set.beforeFirst();
+//		set.beforeFirst();
 		while( set.next() )
 		{
 			for( int i = 0; i < count; i++ )
 			{
+				String s = null;
 				Object o = set.getObject( i + 1 );
-				String s = o.toString();
-				s = s.replace( "\n", "\\n" );
-				s = s.replace( "\t", "\\t" );
-				ps.print( o + "\t" );
+				if( o != null ) 
+				{
+					s = o.toString();
+					s = s.replace( "\n", "\\n" );
+					s = s.replace( "\t", "\\t" );
+				}
+				ps.print( s + "\t" );
 			}
 			ps.println();
 		}
