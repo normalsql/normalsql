@@ -696,7 +696,7 @@ public class
 					{
 						String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
 						ResultSet columnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
-						dumpResultSet( columnsRS );
+//						dumpResultSet( columnsRS );
 						while( columnsRS.next() )
 						{
 							String name = columnsRS.getString( "COLUMN_NAME" );
@@ -704,6 +704,9 @@ public class
 							String sqlTypeName = columnsRS.getString( "TYPE_NAME" );
 	
 							Column column = new Column( name, sqlType, sqlTypeName );
+							int nullable = columnsRS.getInt( "NULLABLE" );
+							column.setNullable( nullable == DatabaseMetaData.columnNullable );
+
 							extract.addFinalColumn( column );
 						}
 						columnsRS.close();
@@ -748,6 +751,9 @@ public class
 								tempColumn.setSQLType( sqlType );
 								String sqlTypeName = columnRS.getString( "TYPE_NAME" );
 								tempColumn.setSQLTypeName( sqlTypeName );
+								int nullable = columnRS.getInt( "NULLABLE" );
+								tempColumn.setNullable( nullable == DatabaseMetaData.columnNullable );
+
 								extract.addFinalColumn( tempColumn );
 								found = true;
 							}
@@ -806,6 +812,9 @@ public class
 					{
 						int sqlType = columnRS.getInt( "DATA_TYPE" );
 						condition.setSQLType( sqlType );
+						int nullable = columnRS.getInt( "NULLABLE" );
+						condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+
 						found = true;
 					}
 					columnRS.close();
@@ -848,6 +857,8 @@ public class
 				column.setSQLType( sqlType );
 				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
 				column.setSQLTypeName( sqlTypeName );
+				int nullable = columnRS.getInt( "NULLABLE" );
+				column.setNullable( nullable == DatabaseMetaData.columnNullable );
 			}
 			else
 			{
@@ -883,6 +894,9 @@ public class
 				column.setSQLType( sqlType );
 				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
 				column.setSQLTypeName( sqlTypeName );
+				int nullable = columnRS.getInt( "NULLABLE" );
+				column.setNullable( nullable == DatabaseMetaData.columnNullable );
+
 			}
 			else
 			{
@@ -901,6 +915,9 @@ public class
 			{
 				int sqlType = columnRS.getInt( "DATA_TYPE" );
 				condition.setSQLType( sqlType );
+				int nullable = columnRS.getInt( "NULLABLE" );
+				condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+
 			}
 			else
 			{

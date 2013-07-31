@@ -77,4 +77,10 @@ public class
 	{
 		return _literal;
 	}
+	
+	private boolean _nullable;
+	public void setNullable( boolean nullable ) { _nullable = nullable; }
+	public boolean isNullable() { return _nullable; }
+	
+
 }

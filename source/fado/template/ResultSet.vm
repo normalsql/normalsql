@@ -92,6 +92,9 @@ public class
 #foreach( $column in $columns )
 #set( $nth = $nth + 1 )
 			_${column.NameAsVariable} = rs.get${column.TypedMethod}( ${nth} );
+#if( $column.Nullable )
+			_${column.NameAsVariable}_has = !rs.wasNull();
+#end
 #end
 		}
 		return success;
@@ -134,7 +137,18 @@ public class
 		return _${column.NameAsVariable};
 	}	
 
+#if( $column.Nullable )
+	private boolean _${column.NameAsVariable}_has = false;
+	
+	/** returns true if ${column.JavaDocText} is non-null **/
+	public boolean has${column.NameAsMethod}()
+	{
+		return _${column.NameAsVariable}_has;
+	}	
+	
+#end	
 #end
+
 	public String toString()
 	{
 		if( getResultSet() == null )

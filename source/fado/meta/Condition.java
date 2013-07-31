@@ -40,6 +40,11 @@ public abstract class
 		String result = TypeConverter.getTypedMethod( getSQLType() );
 		return result;
 	}
+	
+	private boolean _nullable;
+	public void setNullable( boolean nullable ) { _nullable = nullable; }
+	public boolean isNullable() { return _nullable; }
+
 
 	/** 
 	 * These four are used by Velocity template, because I don't know how to do Java instanceof

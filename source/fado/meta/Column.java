@@ -51,6 +51,10 @@ public class
 		return _alias != null ? _alias : getName();
 	}
 	
+	private boolean _nullable;
+	public void setNullable( boolean nullable ) { _nullable = nullable; }
+	public boolean isNullable() { return _nullable; }
+	
 	public String getNameAsMethod()
 	{
 		return Util.toMethodName( getAlias() );
