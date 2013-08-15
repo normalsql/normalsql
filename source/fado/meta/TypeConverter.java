@@ -44,7 +44,7 @@ public class
 			result = "java.sql.Array";
 			break;
 		case BIGINT:
-			result = "long";
+			result = "java.math.BigInteger";
 			break;
 		case BINARY:
 			result = "byte[]";
@@ -140,97 +140,98 @@ public class
 		String result = null;
 		switch( sqlType )
 		{
-		case ARRAY:
-			result = "null";
-			break;
-		case BIGINT:
-			result = "0L";
-			break;
-		case BINARY:
-			result = "null";
-			break;
-		case BIT:
-			result = "false";
-			break;
-		case BLOB:
-			result = "null";
-			break;
-		case BOOLEAN:
-			result = "false";
-			break;
-		case CHAR:
-			result = "null";
-			break;
-		case CLOB:
-			result = "null";
-			break;
-		case DATALINK:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
-		case DATE:
-			result = "null";
-			break;
-		case DECIMAL:
-			result = "null";
-			break;
-		case DISTINCT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
-		case DOUBLE:
-			result = "0d";
-			break;
-		case FLOAT:
-			result = "0f";
-			break;
-		case INTEGER:
-			result = "0";
-			break;
-		case JAVA_OBJECT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
-		case LONGVARBINARY:
-			result = "null";
-			break;
-			
-		case LONGVARCHAR:
-		case LONGNVARCHAR:
-			result = "null";
-			break;
-			
-		case NUMERIC:
-			result = "null";
-			break;
-		case NULL:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
-		case OTHER:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
-		case REAL:
-			result = "0f";
-			break;
-		case REF:
-			result = "null";
-			break;
-		case SMALLINT:
-			result = "0";
-			break;
-		case STRUCT:
-			result = "null";
-			break;
-		case TINYINT:
-			result = "0";
-			break;
-		case TIME:
-			result = "null";
-			break;
-		case TIMESTAMP:
-			result = "null";
-			break;
-		case VARBINARY:
-			result = "null";
-			break;
-		case VARCHAR:
-			result = "null";
-			break;
-		default:
-			result = "unknown SQL Type: " + sqlType;
-			throw new IllegalArgumentException( result );
+			case ARRAY:
+				result = "null";
+				break;
+			case BIGINT:
+	//			result = "0L";
+				result = "null";
+				break;
+			case BINARY:
+				result = "null";
+				break;
+			case BIT:
+				result = "false";
+				break;
+			case BLOB:
+				result = "null";
+				break;
+			case BOOLEAN:
+				result = "false";
+				break;
+			case CHAR:
+				result = "null";
+				break;
+			case CLOB:
+				result = "null";
+				break;
+			case DATALINK:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+			case DATE:
+				result = "null";
+				break;
+			case DECIMAL:
+				result = "null";
+				break;
+			case DISTINCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			case DOUBLE:
+				result = "0d";
+				break;
+			case FLOAT:
+				result = "0f";
+				break;
+			case INTEGER:
+				result = "0";
+				break;
+			case JAVA_OBJECT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+			case LONGVARBINARY:
+				result = "null";
+				break;
+				
+			case LONGVARCHAR:
+			case LONGNVARCHAR:
+				result = "null";
+				break;
+				
+			case NUMERIC:
+				result = "null";
+				break;
+			case NULL:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+			case OTHER:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+			case REAL:
+				result = "0f";
+				break;
+			case REF:
+				result = "null";
+				break;
+			case SMALLINT:
+				result = "0";
+				break;
+			case STRUCT:
+				result = "null";
+				break;
+			case TINYINT:
+				result = "0";
+				break;
+			case TIME:
+				result = "null";
+				break;
+			case TIMESTAMP:
+				result = "null";
+				break;
+			case VARBINARY:
+				result = "null";
+				break;
+			case VARCHAR:
+				result = "null";
+				break;
+			default:
+				result = "unknown SQL Type: " + sqlType;
+				throw new IllegalArgumentException( result );
 				
 		}
 		return result;
@@ -249,95 +250,90 @@ public class
 		String result = null;
 		switch( sqlType )
 		{
-		case CHAR:
-		case VARCHAR:
-		case LONGVARCHAR:
-		case LONGNVARCHAR:
-			result = "\"" + literal + "\"";
-			break;
-		case BIGINT:
-			result = "long";
-			break;
-		case BIT:
-		case BOOLEAN:
-		{
-			// assume value is already either "true" or "false"?
-			boolean ugh = Boolean.parseBoolean( literal );
-			result = ugh ? "true" : "false";
-			break;
-		}
-		case BINARY:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
-			
-		case ARRAY:
-			result = "java.sql.Array";
-			break;
-		case BLOB:
-			result = "java.sql.Blob";
-			break;
-		case CLOB:
-			result = "java.sql.Clob";
-			break;
-		case DATALINK:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
-		case DECIMAL:
-			result = "new java.math.BigDecimal( " + literal + " );";
-			break;
-		case DISTINCT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
-		case DOUBLE:
-			result = literal + "d";
-			break;
-		case FLOAT:
-		case REAL:
-			result = literal + "f";
-			break;
-		case INTEGER:
-			result = literal;
-			break;
-		case JAVA_OBJECT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
-			
-		case LONGVARBINARY:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type LONGVARBINARY" );
-			
-		case NUMERIC:
-			result = "new java.math.BigDecimal( " + literal + " );";
-			break;
-		case NULL:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
-		case OTHER:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
-		case REF:
-			result = "java.sql.Ref";
-			break;
-		case SMALLINT:
-			result = "short";
-			break;
-		case TINYINT:
-			result = "byte";
-			break;
-		case STRUCT:
-			result = "java.sql.Struct";
-			break;
-		case DATE:
-		{
-			result = "java.sql.Date.valueOf( \"" + literal + "\" )";
-			break;
-		}
-		case TIME:
-			result = "java.sql.Time.valueOf( \"" + literal + "\" )";
-			break;
-		case TIMESTAMP:
-			result = "java.sql.Timestamp.valueOf( \"" + literal + "\" )";
-			break;
-		case VARBINARY:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type VARBINARY" );
-			
-		default:
-			result = "unknown SQL Type: " + sqlType;
-			throw new IllegalArgumentException( result );
+			case CHAR:
+			case VARCHAR:
+			case LONGVARCHAR:
+			case LONGNVARCHAR:
+				result = "\"" + literal + "\"";
+				break;
+			case BIGINT:
+				result = "new java.math.BigInteger( " + literal + " );";
+				break;
+			case BIT:
+			case BOOLEAN:
+			{
+				// assume value is already either "true" or "false"?
+				boolean ugh = Boolean.parseBoolean( literal );
+				result = ugh ? "true" : "false";
+				break;
+			}
+			case BINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BINARY" );
 				
+			case ARRAY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BINARY" );
+			case BLOB:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BLOB" );
+			case CLOB:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type CLOB" );
+			case DATALINK:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+			case DECIMAL:
+				result = "new java.math.BigDecimal( " + literal + " );";
+				break;
+			case DISTINCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			case DOUBLE:
+				result = literal + "d";
+				break;
+			case FLOAT:
+			case REAL:
+				result = literal + "f";
+				break;
+			case INTEGER:
+				result = literal;
+				break;
+			case JAVA_OBJECT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+				
+			case LONGVARBINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type LONGVARBINARY" );
+				
+			case NUMERIC:
+				result = "new java.math.BigDecimal( " + literal + " );";
+				break;
+			case NULL:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+			case OTHER:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+			case REF:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type REF" );
+			case SMALLINT:
+				result = "(short) " + literal;
+				break;
+			case TINYINT:
+				result = "(byte) " + literal;
+				break;
+				
+			case STRUCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type STRUCT" );
+				
+			case DATE:
+				result = "java.sql.Date.valueOf( \"" + literal + "\" )";
+				break;
+			case TIME:
+				result = "java.sql.Time.valueOf( \"" + literal + "\" )";
+				break;
+			case TIMESTAMP:
+				result = "java.sql.Timestamp.valueOf( \"" + literal + "\" )";
+				break;
+			case VARBINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type VARBINARY" );
+				
+			default:
+				result = "unknown SQL Type: " + sqlType;
+				throw new IllegalArgumentException( result );
+					
 		}
 		return result;
 	}
@@ -347,97 +343,97 @@ public class
 		String result = null;
 		switch( sqlType )
 		{
-		case ARRAY:
-			result = "Array";
-			break;
-		case BIGINT:
-			result = "Long";
-			break;
-		case BINARY:
-			result = "byte[]";
-			break;
-		case BIT:
-			result = "Boolean";
-			break;
-		case BLOB:
-			result = "Blob";
-			break;
-		case BOOLEAN:
-			result = "Boolean";
-			break;
-		case CHAR:
-			result = "String";
-			break;
-		case CLOB:
-			result = "Clob";
-			break;
-		case DATALINK:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
-		case DATE:
-			result = "Date";
-			break;
-		case DECIMAL:
-			result = "BigDecimal";
-			break;
-		case DISTINCT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
-		case DOUBLE:
-			result = "Double";
-			break;
-		case FLOAT:
-			result = "Double";
-			break;
-		case INTEGER:
-			result = "Int";
-			break;
-		case JAVA_OBJECT:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
-		case LONGVARBINARY:
-			result = "Bytes";
-			break;
-		case LONGVARCHAR:
-		case LONGNVARCHAR:
-			result = "String";
-			break;
-			
-		case NUMERIC:
-			result = "BigDecimal";
-			break;
-		case NULL:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
-		case OTHER:
-			throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
-		case REAL:
-			result = "Float";
-			break;
-		case REF:
-			result = "Ref";
-			break;
-		case SMALLINT:
-			result = "Short";
-			break;
-		case STRUCT:
-			result = "Object";
-			break;
-		case TINYINT:
-			result = "Byte";
-			break;
-		case TIME:
-			result = "Time";
-			break;
-		case TIMESTAMP:
-			result = "Timestamp";
-			break;
-		case VARBINARY:
-			result = "byte[]";
-			break;
-		case VARCHAR:
-			result = "String";
-			break;
-		default:
-			result = "unknown SQL Type: " + sqlType;
-			throw new IllegalArgumentException( result );
+			case ARRAY:
+				result = "Array";
+				break;
+			case BIGINT:
+				result = "BigInteger";
+				break;
+			case BINARY:
+				result = "byte[]";
+				break;
+			case BIT:
+				result = "Boolean";
+				break;
+			case BLOB:
+				result = "Blob";
+				break;
+			case BOOLEAN:
+				result = "Boolean";
+				break;
+			case CHAR:
+				result = "String";
+				break;
+			case CLOB:
+				result = "Clob";
+				break;
+			case DATALINK:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+			case DATE:
+				result = "Date";
+				break;
+			case DECIMAL:
+				result = "BigDecimal";
+				break;
+			case DISTINCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			case DOUBLE:
+				result = "Double";
+				break;
+			case FLOAT:
+				result = "Double";
+				break;
+			case INTEGER:
+				result = "Int";
+				break;
+			case JAVA_OBJECT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+			case LONGVARBINARY:
+				result = "Bytes";
+				break;
+			case LONGVARCHAR:
+			case LONGNVARCHAR:
+				result = "String";
+				break;
 				
+			case NUMERIC:
+				result = "BigDecimal";
+				break;
+			case NULL:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+			case OTHER:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+			case REAL:
+				result = "Float";
+				break;
+			case REF:
+				result = "Ref";
+				break;
+			case SMALLINT:
+				result = "Short";
+				break;
+			case STRUCT:
+				result = "Object";
+				break;
+			case TINYINT:
+				result = "Byte";
+				break;
+			case TIME:
+				result = "Time";
+				break;
+			case TIMESTAMP:
+				result = "Timestamp";
+				break;
+			case VARBINARY:
+				result = "byte[]";
+				break;
+			case VARCHAR:
+				result = "String";
+				break;
+			default:
+				result = "unknown SQL Type: " + sqlType;
+				throw new IllegalArgumentException( result );
+					
 		}
 		return result;
 	}
