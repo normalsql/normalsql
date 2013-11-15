@@ -192,6 +192,20 @@ public class Properties
 		}
 		throw new FileNotFoundException( filename );
 	}
+	
+	public static Properties load( File file ) 
+		throws IOException
+	{
+		if( file.exists() ) 
+		{
+			FileReader reader = new FileReader( file );
+			Properties props = load( reader );
+			props._url = file.toURL();
+			return props;
+		}
+		throw new FileNotFoundException( file.toString() );
+	
+	}
 
 	public static Properties load( Reader reader ) throws IOException
 	{

@@ -15,6 +15,15 @@ public class FadoOptions
 	{
 	}
 
+	public FadoOptions( Properties props )
+	{
+		if( props == null )
+		{
+			throw new NullPointerException( "props" );
+		}
+		_props = props;
+	}
+
 	public final static String DRIVER = "driver";
 	public final static String URL = "url";
 	public final static String USERNAME = "username";
@@ -134,7 +143,9 @@ public class FadoOptions
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append( "fado properties loaded from " ).append( _props.getURL() ).append( '\n' );
+		if( _props != null )
+		{
+			sb.append( "fado properties loaded from " ).append( _props.getURL() ).append( '\n' );
 		sb.append( '\n' );
 		sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
 		sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
@@ -145,6 +156,7 @@ public class FadoOptions
 		sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
 		sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));
 		sb.append( '\n' );
+		}
 		return sb.toString();
 	}
 

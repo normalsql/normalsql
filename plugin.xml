@@ -26,6 +26,87 @@
             id="fado.eclipse.fadoBuilder">
       </builder>
    </extension>
+      <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.jdt.ui.PackageExplorer?after=additions">
+         <command
+               commandId="fado.eclipse.addBuilder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false"
+                        operator="and">
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                     </adapt>
+                  </iterate>
+                  <iterate>
+                     <not>
+                        <test
+                              forcePluginActivation="true"
+                              property="fado.eclipse.isEnabled">
+                        </test>
+                     </not>
+                  </iterate>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="fado.eclipse.removeBuilder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false"
+                        operator="and">
+                     <adapt type="org.eclipse.core.resources.IProject" />
+                  </iterate>
+                  <iterate>
+                     <test
+                           forcePluginActivation="true"
+                           property="fado.eclipse.isEnabled">
+                     </test>
+                  </iterate>
+               </and>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="fado.eclipse.AddBuilder"
+            id="fado.eclipse.addBuilder"
+            name="Add Fado Builder">
+      </command>
+      <command
+            defaultHandler="fado.eclipse.RemoveBuilder"
+            id="fado.eclipse.removeBuilder"
+            name="Remove Fado Builder">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="fado.eclipse.TestFadoEnabled"
+            id="fado.eclipse.testFadoEnabled"
+            namespace="fado.eclipse"
+            properties="isEnabled"
+            type="java.lang.Object">
+      </propertyTester>
+   </extension>
+<!--
    <extension
          point="org.eclipse.ui.popupMenus">
       <objectContribution
@@ -42,6 +123,7 @@
          </action>
       </objectContribution>
    </extension>
+   -->
    <extension
          id="fadoProblem"
          name="Fado Problem"

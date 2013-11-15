@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g 2012-05-11 13:32:20
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g 2013-11-14 17:12:40
  
 package fado.parse;
 
@@ -134,46 +134,45 @@ public class GenericSQLParser extends DebugParser {
     // delegators
 
     public static final String[] ruleNames = new String[] {
-        "invalidRule", "synpred56_GenericSQL", "synpred62_GenericSQL", "having", 
-        "synpred20_GenericSQL", "synpred33_GenericSQL", "tableRef", "columnRef", 
-        "synpred51_GenericSQL", "synpred57_GenericSQL", "synpred10_GenericSQL", 
-        "synpred42_GenericSQL", "orderBy", "synpred68_GenericSQL", "synpred90_GenericSQL", 
-        "synpred4_GenericSQL", "synpred64_GenericSQL", "synpred2_GenericSQL", 
-        "fromItem", "synpred8_GenericSQL", "synpred96_GenericSQL", "synpred70_GenericSQL", 
-        "synpred45_GenericSQL", "synpred79_GenericSQL", "synpred35_GenericSQL", 
-        "synpred34_GenericSQL", "synpred22_GenericSQL", "columnName", "like", 
-        "synpred48_GenericSQL", "literal", "synpred21_GenericSQL", "functionName", 
-        "statement", "synpred11_GenericSQL", "into", "insert", "synpred77_GenericSQL", 
-        "synpred75_GenericSQL", "expression", "synpred76_GenericSQL", "unary", 
-        "from", "synpred80_GenericSQL", "alias", "synpred6_GenericSQL", 
-        "subSelect", "synpred16_GenericSQL", "synpred50_GenericSQL", "synpred92_GenericSQL", 
-        "condition", "joinList", "synpred72_GenericSQL", "databaseName", 
-        "quantifier", "synpred52_GenericSQL", "synpred93_GenericSQL", "synpred78_GenericSQL", 
-        "synpred69_GenericSQL", "synpred94_GenericSQL", "columnList", "synpred40_GenericSQL", 
-        "synpred9_GenericSQL", "orderByItem", "synpred54_GenericSQL", "itemList", 
-        "synpred14_GenericSQL", "synpred66_GenericSQL", "synpred27_GenericSQL", 
-        "synpred46_GenericSQL", "synpred38_GenericSQL", "values", "synpred25_GenericSQL", 
-        "synpred88_GenericSQL", "synpred19_GenericSQL", "nestedCondition", 
-        "synpred29_GenericSQL", "synpred82_GenericSQL", "synpred84_GenericSQL", 
-        "tableAlias", "synpred89_GenericSQL", "synpred97_GenericSQL", "update", 
-        "synpred44_GenericSQL", "synpred12_GenericSQL", "synpred55_GenericSQL", 
-        "synpred18_GenericSQL", "synpred24_GenericSQL", "synpred37_GenericSQL", 
-        "synpred43_GenericSQL", "nestedExpression", "synpred95_GenericSQL", 
-        "synpred13_GenericSQL", "synpred47_GenericSQL", "synpred36_GenericSQL", 
-        "in", "synpred58_GenericSQL", "synpred49_GenericSQL", "synpred15_GenericSQL", 
-        "synpred83_GenericSQL", "synpred71_GenericSQL", "synpred65_GenericSQL", 
-        "synpred73_GenericSQL", "synpred60_GenericSQL", "exists", "comparator", 
-        "groupBy", "synpred17_GenericSQL", "synpred30_GenericSQL", "item", 
-        "tableName", "expressionList", "between", "synpred1_GenericSQL", 
-        "synpred81_GenericSQL", "setter", "comparison", "function", "synpred7_GenericSQL", 
-        "synpred41_GenericSQL", "synpred26_GenericSQL", "synpred32_GenericSQL", 
-        "synpred91_GenericSQL", "synpred87_GenericSQL", "allColumns", "where", 
-        "synpred31_GenericSQL", "multiply", "conditionList", "synpred67_GenericSQL", 
-        "synpred3_GenericSQL", "synpred86_GenericSQL", "synpred59_GenericSQL", 
-        "value", "select", "join", "date", "synpred61_GenericSQL", "synpred74_GenericSQL", 
-        "synpred28_GenericSQL", "synpred85_GenericSQL", "isNull", "synpred23_GenericSQL", 
-        "synpred5_GenericSQL", "synpred63_GenericSQL", "synpred53_GenericSQL", 
-        "synpred39_GenericSQL"
+        "invalidRule", "expressionList", "synpred76_GenericSQL", "synpred14_GenericSQL", 
+        "synpred37_GenericSQL", "synpred42_GenericSQL", "columnRef", "tableAlias", 
+        "synpred67_GenericSQL", "synpred96_GenericSQL", "synpred65_GenericSQL", 
+        "synpred60_GenericSQL", "into", "synpred35_GenericSQL", "synpred87_GenericSQL", 
+        "tableName", "synpred78_GenericSQL", "synpred20_GenericSQL", "synpred2_GenericSQL", 
+        "expression", "orderBy", "synpred43_GenericSQL", "synpred89_GenericSQL", 
+        "value", "synpred64_GenericSQL", "synpred27_GenericSQL", "synpred56_GenericSQL", 
+        "comparison", "having", "join", "synpred5_GenericSQL", "synpred32_GenericSQL", 
+        "synpred70_GenericSQL", "synpred19_GenericSQL", "synpred12_GenericSQL", 
+        "update", "statement", "synpred7_GenericSQL", "synpred15_GenericSQL", 
+        "synpred25_GenericSQL", "synpred75_GenericSQL", "synpred92_GenericSQL", 
+        "synpred82_GenericSQL", "synpred94_GenericSQL", "synpred31_GenericSQL", 
+        "synpred80_GenericSQL", "synpred10_GenericSQL", "synpred91_GenericSQL", 
+        "from", "groupBy", "synpred9_GenericSQL", "synpred49_GenericSQL", 
+        "unary", "synpred57_GenericSQL", "synpred55_GenericSQL", "synpred97_GenericSQL", 
+        "itemList", "exists", "synpred72_GenericSQL", "synpred24_GenericSQL", 
+        "synpred59_GenericSQL", "synpred22_GenericSQL", "synpred29_GenericSQL", 
+        "synpred73_GenericSQL", "synpred33_GenericSQL", "synpred47_GenericSQL", 
+        "joinList", "synpred90_GenericSQL", "synpred51_GenericSQL", "synpred48_GenericSQL", 
+        "literal", "synpred38_GenericSQL", "synpred85_GenericSQL", "alias", 
+        "conditionList", "between", "isNull", "synpred83_GenericSQL", "date", 
+        "nestedCondition", "setter", "synpred58_GenericSQL", "in", "like", 
+        "comparator", "insert", "synpred1_GenericSQL", "synpred68_GenericSQL", 
+        "synpred84_GenericSQL", "synpred95_GenericSQL", "synpred53_GenericSQL", 
+        "synpred81_GenericSQL", "condition", "synpred13_GenericSQL", "synpred39_GenericSQL", 
+        "synpred3_GenericSQL", "synpred17_GenericSQL", "quantifier", "subSelect", 
+        "synpred23_GenericSQL", "select", "synpred34_GenericSQL", "synpred50_GenericSQL", 
+        "orderByItem", "synpred93_GenericSQL", "synpred41_GenericSQL", "columnName", 
+        "synpred11_GenericSQL", "synpred30_GenericSQL", "synpred18_GenericSQL", 
+        "synpred88_GenericSQL", "synpred46_GenericSQL", "synpred86_GenericSQL", 
+        "synpred26_GenericSQL", "synpred79_GenericSQL", "multiply", "synpred4_GenericSQL", 
+        "allColumns", "synpred21_GenericSQL", "synpred69_GenericSQL", "synpred63_GenericSQL", 
+        "columnList", "item", "synpred77_GenericSQL", "tableRef", "synpred36_GenericSQL", 
+        "synpred62_GenericSQL", "databaseName", "functionName", "synpred71_GenericSQL", 
+        "nestedExpression", "synpred6_GenericSQL", "synpred45_GenericSQL", 
+        "synpred66_GenericSQL", "synpred28_GenericSQL", "synpred16_GenericSQL", 
+        "function", "synpred61_GenericSQL", "fromItem", "synpred52_GenericSQL", 
+        "synpred44_GenericSQL", "synpred8_GenericSQL", "values", "synpred40_GenericSQL", 
+        "where", "synpred74_GenericSQL", "synpred54_GenericSQL"
     };
      
         public int ruleLevel = 0;
@@ -206,14 +205,14 @@ public class GenericSQLParser extends DebugParser {
 
 
     public String[] getTokenNames() { return GenericSQLParser.tokenNames; }
-    public String getGrammarFileName() { return "/Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g"; }
+    public String getGrammarFileName() { return "/Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g"; }
 
 
 
 
 
     // $ANTLR start "statement"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:53:1: statement : ( select ( SEMI )? EOF | insert ( SEMI )? EOF | update ( SEMI )? EOF );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:53:1: statement : ( select ( SEMI )? EOF | insert ( SEMI )? EOF | update ( SEMI )? EOF );
     public final void statement() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "statement");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -221,7 +220,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(53, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:54:3: ( select ( SEMI )? EOF | insert ( SEMI )? EOF | update ( SEMI )? EOF )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:54:3: ( select ( SEMI )? EOF | insert ( SEMI )? EOF | update ( SEMI )? EOF )
             int alt4=3;
             try { dbg.enterDecision(4);
 
@@ -256,7 +255,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:54:5: select ( SEMI )? EOF
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:54:5: select ( SEMI )? EOF
                     {
                     dbg.location(54,5);
                     pushFollow(FOLLOW_select_in_statement67);
@@ -265,7 +264,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(54,12);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:54:12: ( SEMI )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:54:12: ( SEMI )?
                     int alt1=2;
                     try { dbg.enterSubRule(1);
                     try { dbg.enterDecision(1);
@@ -281,7 +280,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:54:14: SEMI
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:54:14: SEMI
                             {
                             dbg.location(54,14);
                             match(input,SEMI,FOLLOW_SEMI_in_statement71); if (state.failed) return ;
@@ -300,7 +299,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:55:5: insert ( SEMI )? EOF
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:55:5: insert ( SEMI )? EOF
                     {
                     dbg.location(55,5);
                     pushFollow(FOLLOW_insert_in_statement82);
@@ -309,7 +308,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(55,12);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:55:12: ( SEMI )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:55:12: ( SEMI )?
                     int alt2=2;
                     try { dbg.enterSubRule(2);
                     try { dbg.enterDecision(2);
@@ -325,7 +324,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:55:14: SEMI
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:55:14: SEMI
                             {
                             dbg.location(55,14);
                             match(input,SEMI,FOLLOW_SEMI_in_statement86); if (state.failed) return ;
@@ -344,7 +343,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:56:4: update ( SEMI )? EOF
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:4: update ( SEMI )? EOF
                     {
                     dbg.location(56,4);
                     pushFollow(FOLLOW_update_in_statement96);
@@ -353,7 +352,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(56,11);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:56:11: ( SEMI )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:11: ( SEMI )?
                     int alt3=2;
                     try { dbg.enterSubRule(3);
                     try { dbg.enterDecision(3);
@@ -369,7 +368,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:56:13: SEMI
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:13: SEMI
                             {
                             dbg.location(56,13);
                             match(input,SEMI,FOLLOW_SEMI_in_statement100); if (state.failed) return ;
@@ -409,7 +408,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "subSelect"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:60:1: subSelect : ( select | LPAREN select RPAREN );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:60:1: subSelect : ( select | LPAREN select RPAREN );
     public final void subSelect() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "subSelect");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -417,7 +416,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(60, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:61:3: ( select | LPAREN select RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:61:3: ( select | LPAREN select RPAREN )
             int alt5=2;
             try { dbg.enterDecision(5);
 
@@ -443,7 +442,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:61:5: select
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:61:5: select
                     {
                     dbg.location(61,5);
                     pushFollow(FOLLOW_select_in_subSelect121);
@@ -457,7 +456,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:62:5: LPAREN select RPAREN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:62:5: LPAREN select RPAREN
                     {
                     dbg.location(62,5);
                     match(input,LPAREN,FOLLOW_LPAREN_in_subSelect127); if (state.failed) return ;
@@ -496,7 +495,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "select"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:65:1: select : SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:65:1: select : SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )? ;
     public final void select() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "select");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -504,15 +503,15 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(65, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:66:3: ( SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:66:3: ( SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:66:5: SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:66:5: SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )?
             {
             dbg.location(66,5);
             match(input,SELECT,FOLLOW_SELECT_in_select146); if (state.failed) return ;
             dbg.location(67,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:67:5: ( ALL | DISTINCT | UNIQUE )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:67:5: ( ALL | DISTINCT | UNIQUE )?
             int alt6=2;
             try { dbg.enterSubRule(6);
             try { dbg.enterDecision(6);
@@ -528,7 +527,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
                     {
                     dbg.location(67,5);
                     if ( (input.LA(1)>=ALL && input.LA(1)<=UNIQUE) ) {
@@ -550,7 +549,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(6);}
 
             dbg.location(68,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:68:5: ( TOP Integer ( PERCENT )? )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:5: ( TOP Integer ( PERCENT )? )?
             int alt8=2;
             try { dbg.enterSubRule(8);
             try { dbg.enterDecision(8);
@@ -566,14 +565,14 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:68:7: TOP Integer ( PERCENT )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:7: TOP Integer ( PERCENT )?
                     {
                     dbg.location(68,7);
                     match(input,TOP,FOLLOW_TOP_in_select173); if (state.failed) return ;
                     dbg.location(68,11);
                     match(input,Integer,FOLLOW_Integer_in_select175); if (state.failed) return ;
                     dbg.location(68,19);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:68:19: ( PERCENT )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:19: ( PERCENT )?
                     int alt7=2;
                     try { dbg.enterSubRule(7);
                     try { dbg.enterDecision(7);
@@ -589,7 +588,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:68:21: PERCENT
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:21: PERCENT
                             {
                             dbg.location(68,21);
                             match(input,PERCENT,FOLLOW_PERCENT_in_select179); if (state.failed) return ;
@@ -614,7 +613,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(70,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:70:5: ( into )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:70:5: ( into )?
             int alt9=2;
             try { dbg.enterSubRule(9);
             try { dbg.enterDecision(9);
@@ -630,7 +629,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:70:7: into
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:70:7: into
                     {
                     dbg.location(70,7);
                     pushFollow(FOLLOW_into_in_select199);
@@ -652,7 +651,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(72,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:72:5: ( joinList )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:5: ( joinList )?
             int alt10=2;
             try { dbg.enterSubRule(10);
             try { dbg.enterDecision(10);
@@ -671,7 +670,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:72:7: joinList
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:7: joinList
                     {
                     dbg.location(72,7);
                     pushFollow(FOLLOW_joinList_in_select216);
@@ -687,7 +686,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(10);}
 
             dbg.location(73,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:73:5: ( where )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:73:5: ( where )?
             int alt11=2;
             try { dbg.enterSubRule(11);
             try { dbg.enterDecision(11);
@@ -703,7 +702,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:73:7: where
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:73:7: where
                     {
                     dbg.location(73,7);
                     pushFollow(FOLLOW_where_in_select227);
@@ -719,7 +718,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(11);}
 
             dbg.location(74,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:74:5: ( groupBy )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:74:5: ( groupBy )?
             int alt12=2;
             try { dbg.enterSubRule(12);
             try { dbg.enterDecision(12);
@@ -735,7 +734,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:74:7: groupBy
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:74:7: groupBy
                     {
                     dbg.location(74,7);
                     pushFollow(FOLLOW_groupBy_in_select238);
@@ -751,7 +750,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(12);}
 
             dbg.location(75,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:75:5: ( having )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:75:5: ( having )?
             int alt13=2;
             try { dbg.enterSubRule(13);
             try { dbg.enterDecision(13);
@@ -767,7 +766,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:75:7: having
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:75:7: having
                     {
                     dbg.location(75,7);
                     pushFollow(FOLLOW_having_in_select249);
@@ -783,7 +782,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(13);}
 
             dbg.location(76,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:76:5: ( orderBy )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:76:5: ( orderBy )?
             int alt14=2;
             try { dbg.enterSubRule(14);
             try { dbg.enterDecision(14);
@@ -799,7 +798,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:76:7: orderBy
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:76:7: orderBy
                     {
                     dbg.location(76,7);
                     pushFollow(FOLLOW_orderBy_in_select260);
@@ -839,7 +838,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "insert"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:79:1: insert : INSERT into ( columnList )? ( values ) ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:79:1: insert : INSERT into ( columnList )? ( values ) ;
     public final void insert() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "insert");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -847,10 +846,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(79, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:80:3: ( INSERT into ( columnList )? ( values ) )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:3: ( INSERT into ( columnList )? ( values ) )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:80:5: INSERT into ( columnList )? ( values )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:5: INSERT into ( columnList )? ( values )
             {
             dbg.location(80,5);
             match(input,INSERT,FOLLOW_INSERT_in_insert278); if (state.failed) return ;
@@ -861,7 +860,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(80,17);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:80:17: ( columnList )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:17: ( columnList )?
             int alt15=2;
             try { dbg.enterSubRule(15);
             try { dbg.enterDecision(15);
@@ -877,7 +876,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:80:19: columnList
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:19: columnList
                     {
                     dbg.location(80,19);
                     pushFollow(FOLLOW_columnList_in_insert284);
@@ -893,10 +892,10 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(15);}
 
             dbg.location(81,3);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:81:3: ( values )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:81:3: ( values )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:81:5: values
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:81:5: values
             {
             dbg.location(81,5);
             pushFollow(FOLLOW_values_in_insert293);
@@ -932,7 +931,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "update"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:86:1: update : UPDATE tableRef SET setter ( COMMA setter )* ( where )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:86:1: update : UPDATE tableRef SET setter ( COMMA setter )* ( where )? ;
     public final void update() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "update");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -940,10 +939,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(86, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:87:3: ( UPDATE tableRef SET setter ( COMMA setter )* ( where )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:3: ( UPDATE tableRef SET setter ( COMMA setter )* ( where )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:87:5: UPDATE tableRef SET setter ( COMMA setter )* ( where )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:5: UPDATE tableRef SET setter ( COMMA setter )* ( where )?
             {
             dbg.location(87,5);
             match(input,UPDATE,FOLLOW_UPDATE_in_update313); if (state.failed) return ;
@@ -962,7 +961,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(87,32);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:87:32: ( COMMA setter )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:32: ( COMMA setter )*
             try { dbg.enterSubRule(16);
 
             loop16:
@@ -983,7 +982,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:87:34: COMMA setter
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:34: COMMA setter
             	    {
             	    dbg.location(87,34);
             	    match(input,COMMA,FOLLOW_COMMA_in_update323); if (state.failed) return ;
@@ -1004,7 +1003,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(16);}
 
             dbg.location(88,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:88:5: ( where )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:88:5: ( where )?
             int alt17=2;
             try { dbg.enterSubRule(17);
             try { dbg.enterDecision(17);
@@ -1020,7 +1019,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:88:7: where
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:88:7: where
                     {
                     dbg.location(88,7);
                     pushFollow(FOLLOW_where_in_update336);
@@ -1060,7 +1059,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "setter"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:91:1: setter : columnName EQ literal ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:91:1: setter : columnName EQ literal ;
     public final void setter() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "setter");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1068,10 +1067,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(91, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:92:3: ( columnName EQ literal )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:92:3: ( columnName EQ literal )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:92:5: columnName EQ literal
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:92:5: columnName EQ literal
             {
             dbg.location(92,5);
             pushFollow(FOLLOW_columnName_in_setter354);
@@ -1112,7 +1111,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "into"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:95:1: into : INTO tableRef ( COMMA tableRef )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:95:1: into : INTO tableRef ( COMMA tableRef )* ;
     public final void into() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "into");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1120,10 +1119,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(95, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:96:3: ( INTO tableRef ( COMMA tableRef )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:3: ( INTO tableRef ( COMMA tableRef )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:96:5: INTO tableRef ( COMMA tableRef )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:5: INTO tableRef ( COMMA tableRef )*
             {
             dbg.location(96,5);
             match(input,INTO,FOLLOW_INTO_in_into373); if (state.failed) return ;
@@ -1134,7 +1133,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(96,19);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:96:19: ( COMMA tableRef )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:19: ( COMMA tableRef )*
             try { dbg.enterSubRule(18);
 
             loop18:
@@ -1155,7 +1154,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:96:21: COMMA tableRef
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:21: COMMA tableRef
             	    {
             	    dbg.location(96,21);
             	    match(input,COMMA,FOLLOW_COMMA_in_into379); if (state.failed) return ;
@@ -1200,7 +1199,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "columnList"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:99:1: columnList : LPAREN columnName ( COMMA columnName )* RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:99:1: columnList : LPAREN columnName ( COMMA columnName )* RPAREN ;
     public final void columnList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "columnList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1208,10 +1207,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(99, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:100:3: ( LPAREN columnName ( COMMA columnName )* RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:3: ( LPAREN columnName ( COMMA columnName )* RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:100:5: LPAREN columnName ( COMMA columnName )* RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:5: LPAREN columnName ( COMMA columnName )* RPAREN
             {
             dbg.location(100,5);
             match(input,LPAREN,FOLLOW_LPAREN_in_columnList397); if (state.failed) return ;
@@ -1222,7 +1221,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(100,23);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:100:23: ( COMMA columnName )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:23: ( COMMA columnName )*
             try { dbg.enterSubRule(19);
 
             loop19:
@@ -1243,7 +1242,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:100:25: COMMA columnName
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:25: COMMA columnName
             	    {
             	    dbg.location(100,25);
             	    match(input,COMMA,FOLLOW_COMMA_in_columnList403); if (state.failed) return ;
@@ -1290,7 +1289,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "values"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:103:1: values : VALUES LPAREN literal ( COMMA literal )* RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:103:1: values : VALUES LPAREN literal ( COMMA literal )* RPAREN ;
     public final void values() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "values");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1298,10 +1297,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(103, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:104:3: ( VALUES LPAREN literal ( COMMA literal )* RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:3: ( VALUES LPAREN literal ( COMMA literal )* RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:104:5: VALUES LPAREN literal ( COMMA literal )* RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:5: VALUES LPAREN literal ( COMMA literal )* RPAREN
             {
             dbg.location(104,5);
             match(input,VALUES,FOLLOW_VALUES_in_values425); if (state.failed) return ;
@@ -1314,7 +1313,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(104,27);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:104:27: ( COMMA literal )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:27: ( COMMA literal )*
             try { dbg.enterSubRule(20);
 
             loop20:
@@ -1335,7 +1334,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:104:29: COMMA literal
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:29: COMMA literal
             	    {
             	    dbg.location(104,29);
             	    match(input,COMMA,FOLLOW_COMMA_in_values433); if (state.failed) return ;
@@ -1382,7 +1381,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "itemList"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:107:1: itemList : ( STAR | item ( COMMA item )* );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:107:1: itemList : ( STAR | item ( COMMA item )* );
     public final void itemList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "itemList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1390,7 +1389,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(107, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:108:3: ( STAR | item ( COMMA item )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:108:3: ( STAR | item ( COMMA item )* )
             int alt22=2;
             try { dbg.enterDecision(22);
 
@@ -1416,7 +1415,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:108:5: STAR
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:108:5: STAR
                     {
                     dbg.location(108,5);
                     match(input,STAR,FOLLOW_STAR_in_itemList455); if (state.failed) return ;
@@ -1426,7 +1425,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:109:5: item ( COMMA item )*
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:109:5: item ( COMMA item )*
                     {
                     dbg.location(109,5);
                     pushFollow(FOLLOW_item_in_itemList461);
@@ -1435,7 +1434,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(109,10);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:109:10: ( COMMA item )*
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:109:10: ( COMMA item )*
                     try { dbg.enterSubRule(21);
 
                     loop21:
@@ -1456,7 +1455,7 @@ public class GenericSQLParser extends DebugParser {
                     	case 1 :
                     	    dbg.enterAlt(1);
 
-                    	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:109:12: COMMA item
+                    	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:109:12: COMMA item
                     	    {
                     	    dbg.location(109,12);
                     	    match(input,COMMA,FOLLOW_COMMA_in_itemList465); if (state.failed) return ;
@@ -1503,7 +1502,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "item"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:112:1: item : ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:112:1: item : ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? );
     public final void item() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "item");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1511,7 +1510,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(112, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:3: ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:3: ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? )
             int alt27=3;
             try { dbg.enterDecision(27);
 
@@ -1589,7 +1588,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:5: value ( ( AS )? alias )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:5: value ( ( AS )? alias )?
                     {
                     dbg.location(113,5);
                     pushFollow(FOLLOW_value_in_item485);
@@ -1598,7 +1597,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(113,11);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:11: ( ( AS )? alias )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:11: ( ( AS )? alias )?
                     int alt24=2;
                     try { dbg.enterSubRule(24);
                     try { dbg.enterDecision(24);
@@ -1614,10 +1613,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )? alias
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )? alias
                             {
                             dbg.location(113,13);
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )?
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )?
                             int alt23=2;
                             try { dbg.enterSubRule(23);
                             try { dbg.enterDecision(23);
@@ -1633,7 +1632,7 @@ public class GenericSQLParser extends DebugParser {
                                 case 1 :
                                     dbg.enterAlt(1);
 
-                                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:113:15: AS
+                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:15: AS
                                     {
                                     dbg.location(113,15);
                                     match(input,AS,FOLLOW_AS_in_item491); if (state.failed) return ;
@@ -1663,7 +1662,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:114:5: allColumns
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:5: allColumns
                     {
                     dbg.location(114,5);
                     pushFollow(FOLLOW_allColumns_in_item505);
@@ -1677,7 +1676,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:115:5: function ( ( AS )? alias )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:5: function ( ( AS )? alias )?
                     {
                     dbg.location(115,5);
                     pushFollow(FOLLOW_function_in_item511);
@@ -1686,7 +1685,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(115,14);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:115:14: ( ( AS )? alias )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:14: ( ( AS )? alias )?
                     int alt26=2;
                     try { dbg.enterSubRule(26);
                     try { dbg.enterDecision(26);
@@ -1702,10 +1701,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )? alias
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )? alias
                             {
                             dbg.location(115,16);
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )?
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )?
                             int alt25=2;
                             try { dbg.enterSubRule(25);
                             try { dbg.enterDecision(25);
@@ -1721,7 +1720,7 @@ public class GenericSQLParser extends DebugParser {
                                 case 1 :
                                     dbg.enterAlt(1);
 
-                                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:0:0: AS
+                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:0:0: AS
                                     {
                                     dbg.location(115,16);
                                     match(input,AS,FOLLOW_AS_in_item515); if (state.failed) return ;
@@ -1772,7 +1771,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "allColumns"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:118:1: allColumns : tableAlias DOT STAR ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:118:1: allColumns : tableAlias DOT STAR ;
     public final void allColumns() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "allColumns");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1780,10 +1779,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(118, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:119:3: ( tableAlias DOT STAR )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:119:3: ( tableAlias DOT STAR )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:119:5: tableAlias DOT STAR
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:119:5: tableAlias DOT STAR
             {
             dbg.location(119,5);
             pushFollow(FOLLOW_tableAlias_in_allColumns535);
@@ -1820,7 +1819,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "alias"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:122:1: alias : Identifier ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:122:1: alias : Identifier ;
     public final void alias() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "alias");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1828,10 +1827,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(122, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:123:3: ( Identifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:123:3: ( Identifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:123:5: Identifier
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:123:5: Identifier
             {
             dbg.location(123,5);
             match(input,Identifier,FOLLOW_Identifier_in_alias552); if (state.failed) return ;
@@ -1860,7 +1859,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "function"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:126:1: function : functionName LPAREN ( value ( COMMA value )* )? RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:126:1: function : functionName LPAREN ( value ( COMMA value )* )? RPAREN ;
     public final void function() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "function");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1868,10 +1867,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(126, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:3: ( functionName LPAREN ( value ( COMMA value )* )? RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:3: ( functionName LPAREN ( value ( COMMA value )* )? RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:5: functionName LPAREN ( value ( COMMA value )* )? RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:5: functionName LPAREN ( value ( COMMA value )* )? RPAREN
             {
             dbg.location(127,5);
             pushFollow(FOLLOW_functionName_in_function567);
@@ -1882,7 +1881,7 @@ public class GenericSQLParser extends DebugParser {
             dbg.location(127,18);
             match(input,LPAREN,FOLLOW_LPAREN_in_function569); if (state.failed) return ;
             dbg.location(127,25);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:25: ( value ( COMMA value )* )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:25: ( value ( COMMA value )* )?
             int alt29=2;
             try { dbg.enterSubRule(29);
             try { dbg.enterDecision(29);
@@ -1898,7 +1897,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:27: value ( COMMA value )*
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:27: value ( COMMA value )*
                     {
                     dbg.location(127,27);
                     pushFollow(FOLLOW_value_in_function573);
@@ -1907,7 +1906,7 @@ public class GenericSQLParser extends DebugParser {
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(127,33);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:33: ( COMMA value )*
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:33: ( COMMA value )*
                     try { dbg.enterSubRule(28);
 
                     loop28:
@@ -1928,7 +1927,7 @@ public class GenericSQLParser extends DebugParser {
                     	case 1 :
                     	    dbg.enterAlt(1);
 
-                    	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:127:35: COMMA value
+                    	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:35: COMMA value
                     	    {
                     	    dbg.location(127,35);
                     	    match(input,COMMA,FOLLOW_COMMA_in_function577); if (state.failed) return ;
@@ -1982,7 +1981,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "functionName"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:130:1: functionName : ( COUNT | MIN | MAX );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:130:1: functionName : ( COUNT | MIN | MAX );
     public final void functionName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "functionName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1990,10 +1989,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(130, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:131:3: ( COUNT | MIN | MAX )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:131:3: ( COUNT | MIN | MAX )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(131,3);
             if ( (input.LA(1)>=COUNT && input.LA(1)<=MAX) ) {
@@ -2032,7 +2031,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "from"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:136:1: from : FROM fromItem ( COMMA fromItem )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:136:1: from : FROM fromItem ( COMMA fromItem )* ;
     public final void from() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "from");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2040,10 +2039,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(136, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:137:3: ( FROM fromItem ( COMMA fromItem )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:3: ( FROM fromItem ( COMMA fromItem )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:137:5: FROM fromItem ( COMMA fromItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:5: FROM fromItem ( COMMA fromItem )*
             {
             dbg.location(137,5);
             match(input,FROM,FOLLOW_FROM_in_from629); if (state.failed) return ;
@@ -2054,7 +2053,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(137,19);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:137:19: ( COMMA fromItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:19: ( COMMA fromItem )*
             try { dbg.enterSubRule(30);
 
             loop30:
@@ -2075,7 +2074,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:137:21: COMMA fromItem
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:21: COMMA fromItem
             	    {
             	    dbg.location(137,21);
             	    match(input,COMMA,FOLLOW_COMMA_in_from635); if (state.failed) return ;
@@ -2120,7 +2119,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "fromItem"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:140:1: fromItem : ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:140:1: fromItem : ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? ;
     public final void fromItem() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "fromItem");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2128,13 +2127,13 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(140, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:3: ( ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:3: ( ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )?
             {
             dbg.location(141,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef )
             int alt31=2;
             try { dbg.enterSubRule(31);
             try { dbg.enterDecision(31);
@@ -2161,13 +2160,13 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
                     {
                     dbg.location(141,7);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:141:9: LPAREN subSelect RPAREN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:9: LPAREN subSelect RPAREN
                     {
                     dbg.location(141,9);
                     match(input,LPAREN,FOLLOW_LPAREN_in_fromItem659); if (state.failed) return ;
@@ -2188,7 +2187,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:142:7: tableRef
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:7: tableRef
                     {
                     dbg.location(142,7);
                     pushFollow(FOLLOW_tableRef_in_fromItem674);
@@ -2204,7 +2203,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(31);}
 
             dbg.location(144,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:144:5: ( ( AS )? alias )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:5: ( ( AS )? alias )?
             int alt33=2;
             try { dbg.enterSubRule(33);
             try { dbg.enterDecision(33);
@@ -2227,10 +2226,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )? alias
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )? alias
                     {
                     dbg.location(144,7);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )?
                     int alt32=2;
                     try { dbg.enterSubRule(32);
                     try { dbg.enterDecision(32);
@@ -2246,7 +2245,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:144:9: AS
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:9: AS
                             {
                             dbg.location(144,9);
                             match(input,AS,FOLLOW_AS_in_fromItem691); if (state.failed) return ;
@@ -2295,7 +2294,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "joinList"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:147:1: joinList : ( join )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:147:1: joinList : ( join )* ;
     public final void joinList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "joinList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2303,13 +2302,13 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(147, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:148:3: ( ( join )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:3: ( ( join )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
             {
             dbg.location(148,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
             try { dbg.enterSubRule(34);
 
             loop34:
@@ -2330,7 +2329,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:148:7: join
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:7: join
             	    {
             	    dbg.location(148,7);
             	    pushFollow(FOLLOW_join_in_joinList714);
@@ -2373,7 +2372,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "join"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:151:1: join : ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:151:1: join : ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList ;
     public final void join() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "join");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2381,13 +2380,13 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(151, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:152:3: ( ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:152:3: ( ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList
             {
             dbg.location(153,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )
             int alt35=8;
             try { dbg.enterSubRule(35);
             try { dbg.enterDecision(35);
@@ -2406,7 +2405,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:153:7: JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:7: JOIN
                     {
                     dbg.location(153,7);
                     match(input,JOIN,FOLLOW_JOIN_in_join739); if (state.failed) return ;
@@ -2416,7 +2415,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:154:7: INNER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:154:7: INNER JOIN
                     {
                     dbg.location(154,7);
                     match(input,INNER,FOLLOW_INNER_in_join747); if (state.failed) return ;
@@ -2428,7 +2427,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:155:7: LEFT JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:155:7: LEFT JOIN
                     {
                     dbg.location(155,7);
                     match(input,LEFT,FOLLOW_LEFT_in_join757); if (state.failed) return ;
@@ -2440,7 +2439,7 @@ public class GenericSQLParser extends DebugParser {
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:156:7: LEFT OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:156:7: LEFT OUTER JOIN
                     {
                     dbg.location(156,7);
                     match(input,LEFT,FOLLOW_LEFT_in_join767); if (state.failed) return ;
@@ -2454,7 +2453,7 @@ public class GenericSQLParser extends DebugParser {
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:157:7: RIGHT JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:157:7: RIGHT JOIN
                     {
                     dbg.location(157,7);
                     match(input,RIGHT,FOLLOW_RIGHT_in_join779); if (state.failed) return ;
@@ -2466,7 +2465,7 @@ public class GenericSQLParser extends DebugParser {
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:158:7: RIGHT OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:158:7: RIGHT OUTER JOIN
                     {
                     dbg.location(158,7);
                     match(input,RIGHT,FOLLOW_RIGHT_in_join790); if (state.failed) return ;
@@ -2480,7 +2479,7 @@ public class GenericSQLParser extends DebugParser {
                 case 7 :
                     dbg.enterAlt(7);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:159:7: OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:159:7: OUTER JOIN
                     {
                     dbg.location(159,7);
                     match(input,OUTER,FOLLOW_OUTER_in_join802); if (state.failed) return ;
@@ -2492,7 +2491,7 @@ public class GenericSQLParser extends DebugParser {
                 case 8 :
                     dbg.enterAlt(8);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:160:7: NATURAL JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:160:7: NATURAL JOIN
                     {
                     dbg.location(160,7);
                     match(input,NATURAL,FOLLOW_NATURAL_in_join813); if (state.failed) return ;
@@ -2550,7 +2549,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "where"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:177:1: where : WHERE conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:177:1: where : WHERE conditionList ;
     public final void where() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "where");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2558,10 +2557,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(177, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:178:3: ( WHERE conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:178:3: ( WHERE conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:178:5: WHERE conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:178:5: WHERE conditionList
             {
             dbg.location(178,5);
             match(input,WHERE,FOLLOW_WHERE_in_where859); if (state.failed) return ;
@@ -2596,7 +2595,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "groupBy"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:181:1: groupBy : GROUP BY columnRef ( COMMA columnRef )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:181:1: groupBy : GROUP BY columnRef ( COMMA columnRef )* ;
     public final void groupBy() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "groupBy");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2604,10 +2603,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(181, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:182:3: ( GROUP BY columnRef ( COMMA columnRef )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:3: ( GROUP BY columnRef ( COMMA columnRef )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:182:5: GROUP BY columnRef ( COMMA columnRef )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:5: GROUP BY columnRef ( COMMA columnRef )*
             {
             dbg.location(182,5);
             match(input,GROUP,FOLLOW_GROUP_in_groupBy876); if (state.failed) return ;
@@ -2620,7 +2619,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(182,24);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:182:24: ( COMMA columnRef )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:24: ( COMMA columnRef )*
             try { dbg.enterSubRule(36);
 
             loop36:
@@ -2641,7 +2640,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:182:26: COMMA columnRef
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:26: COMMA columnRef
             	    {
             	    dbg.location(182,26);
             	    match(input,COMMA,FOLLOW_COMMA_in_groupBy884); if (state.failed) return ;
@@ -2686,7 +2685,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "having"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:185:1: having : HAVING conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:185:1: having : HAVING conditionList ;
     public final void having() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "having");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2694,10 +2693,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(185, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:186:3: ( HAVING conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:186:3: ( HAVING conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:186:5: HAVING conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:186:5: HAVING conditionList
             {
             dbg.location(186,5);
             match(input,HAVING,FOLLOW_HAVING_in_having904); if (state.failed) return ;
@@ -2732,7 +2731,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "orderBy"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:189:1: orderBy : ORDER BY orderByItem ( COMMA orderByItem )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:189:1: orderBy : ORDER BY orderByItem ( COMMA orderByItem )* ;
     public final void orderBy() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "orderBy");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2740,10 +2739,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(189, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:190:3: ( ORDER BY orderByItem ( COMMA orderByItem )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:3: ( ORDER BY orderByItem ( COMMA orderByItem )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:190:5: ORDER BY orderByItem ( COMMA orderByItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:5: ORDER BY orderByItem ( COMMA orderByItem )*
             {
             dbg.location(190,5);
             match(input,ORDER,FOLLOW_ORDER_in_orderBy921); if (state.failed) return ;
@@ -2756,7 +2755,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(190,26);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:190:26: ( COMMA orderByItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:26: ( COMMA orderByItem )*
             try { dbg.enterSubRule(37);
 
             loop37:
@@ -2777,7 +2776,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:190:28: COMMA orderByItem
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:28: COMMA orderByItem
             	    {
             	    dbg.location(190,28);
             	    match(input,COMMA,FOLLOW_COMMA_in_orderBy929); if (state.failed) return ;
@@ -2822,7 +2821,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "orderByItem"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:193:1: orderByItem : columnRef ( ASC | DESC )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:193:1: orderByItem : columnRef ( ASC | DESC )? ;
     public final void orderByItem() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "orderByItem");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2830,10 +2829,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(193, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:194:3: ( columnRef ( ASC | DESC )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:3: ( columnRef ( ASC | DESC )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:194:5: columnRef ( ASC | DESC )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:5: columnRef ( ASC | DESC )?
             {
             dbg.location(194,5);
             pushFollow(FOLLOW_columnRef_in_orderByItem949);
@@ -2842,7 +2841,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(194,15);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:194:15: ( ASC | DESC )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:15: ( ASC | DESC )?
             int alt38=2;
             try { dbg.enterSubRule(38);
             try { dbg.enterDecision(38);
@@ -2858,7 +2857,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
                     {
                     dbg.location(194,15);
                     if ( (input.LA(1)>=ASC && input.LA(1)<=DESC) ) {
@@ -2904,7 +2903,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "nestedCondition"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:197:1: nestedCondition : LPAREN conditionList RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:197:1: nestedCondition : LPAREN conditionList RPAREN ;
     public final void nestedCondition() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "nestedCondition");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2912,10 +2911,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(197, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:198:3: ( LPAREN conditionList RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:198:3: ( LPAREN conditionList RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:198:5: LPAREN conditionList RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:198:5: LPAREN conditionList RPAREN
             {
             dbg.location(198,5);
             match(input,LPAREN,FOLLOW_LPAREN_in_nestedCondition975); if (state.failed) return ;
@@ -2952,7 +2951,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "conditionList"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:201:1: conditionList : condition ( ( OR | AND ) condition )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:201:1: conditionList : condition ( ( OR | AND ) condition )* ;
     public final void conditionList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "conditionList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -2960,10 +2959,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(201, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:202:3: ( condition ( ( OR | AND ) condition )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:3: ( condition ( ( OR | AND ) condition )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:202:5: condition ( ( OR | AND ) condition )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:5: condition ( ( OR | AND ) condition )*
             {
             dbg.location(202,5);
             pushFollow(FOLLOW_condition_in_conditionList994);
@@ -2972,7 +2971,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(202,15);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:202:15: ( ( OR | AND ) condition )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:15: ( ( OR | AND ) condition )*
             try { dbg.enterSubRule(39);
 
             loop39:
@@ -2993,7 +2992,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:202:17: ( OR | AND ) condition
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:17: ( OR | AND ) condition
             	    {
             	    dbg.location(202,17);
             	    if ( (input.LA(1)>=OR && input.LA(1)<=AND) ) {
@@ -3048,7 +3047,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "condition"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:205:1: condition : ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:205:1: condition : ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) ;
     public final void condition() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "condition");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3056,13 +3055,13 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(205, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:206:3: ( ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:3: ( ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
             {
             dbg.location(206,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )?
             int alt40=2;
             try { dbg.enterSubRule(40);
             try { dbg.enterDecision(40);
@@ -3078,7 +3077,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:206:7: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:7: NOT
                     {
                     dbg.location(206,7);
                     match(input,NOT,FOLLOW_NOT_in_condition1028); if (state.failed) return ;
@@ -3090,7 +3089,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(40);}
 
             dbg.location(207,5);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:207:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
             int alt41=8;
             try { dbg.enterSubRule(41);
             try { dbg.enterDecision(41);
@@ -3109,7 +3108,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
                     {
                     dbg.location(207,7);
                     pushFollow(FOLLOW_nestedCondition_in_condition1039);
@@ -3123,7 +3122,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:208:7: in
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: in
                     {
                     dbg.location(208,7);
                     pushFollow(FOLLOW_in_in_condition1047);
@@ -3137,7 +3136,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:209:7: between
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: between
                     {
                     dbg.location(209,7);
                     pushFollow(FOLLOW_between_in_condition1055);
@@ -3151,7 +3150,7 @@ public class GenericSQLParser extends DebugParser {
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:210:7: isNull
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: isNull
                     {
                     dbg.location(210,7);
                     pushFollow(FOLLOW_isNull_in_condition1063);
@@ -3165,7 +3164,7 @@ public class GenericSQLParser extends DebugParser {
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:211:7: exists
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:211:7: exists
                     {
                     dbg.location(211,7);
                     pushFollow(FOLLOW_exists_in_condition1071);
@@ -3179,7 +3178,7 @@ public class GenericSQLParser extends DebugParser {
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:212:7: like
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: like
                     {
                     dbg.location(212,7);
                     pushFollow(FOLLOW_like_in_condition1079);
@@ -3193,7 +3192,7 @@ public class GenericSQLParser extends DebugParser {
                 case 7 :
                     dbg.enterAlt(7);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
                     {
                     dbg.location(213,7);
                     pushFollow(FOLLOW_quantifier_in_condition1087);
@@ -3207,7 +3206,7 @@ public class GenericSQLParser extends DebugParser {
                 case 8 :
                     dbg.enterAlt(8);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:214:6: comparison
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:214:6: comparison
                     {
                     dbg.location(214,6);
                     pushFollow(FOLLOW_comparison_in_condition1094);
@@ -3247,7 +3246,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "in"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:218:1: in : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:218:1: in : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN ;
     public final void in() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "in");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3255,10 +3254,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(218, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:3: ( expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:3: ( expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:5: expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:5: expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
             {
             dbg.location(219,5);
             pushFollow(FOLLOW_expression_in_in1113);
@@ -3267,7 +3266,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(219,16);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:16: ( NOT )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:16: ( NOT )?
             int alt42=2;
             try { dbg.enterSubRule(42);
             try { dbg.enterDecision(42);
@@ -3283,7 +3282,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:18: NOT
                     {
                     dbg.location(219,18);
                     match(input,NOT,FOLLOW_NOT_in_in1117); if (state.failed) return ;
@@ -3299,7 +3298,7 @@ public class GenericSQLParser extends DebugParser {
             dbg.location(219,28);
             match(input,LPAREN,FOLLOW_LPAREN_in_in1124); if (state.failed) return ;
             dbg.location(219,35);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:35: ( subSelect | expressionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:35: ( subSelect | expressionList )
             int alt43=2;
             try { dbg.enterSubRule(43);
             try { dbg.enterDecision(43);
@@ -3361,7 +3360,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:37: subSelect
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:37: subSelect
                     {
                     dbg.location(219,37);
                     pushFollow(FOLLOW_subSelect_in_in1128);
@@ -3375,7 +3374,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:219:49: expressionList
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:49: expressionList
                     {
                     dbg.location(219,49);
                     pushFollow(FOLLOW_expressionList_in_in1132);
@@ -3417,7 +3416,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "between"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:222:1: between : expression ( NOT )? BETWEEN expression AND expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:222:1: between : expression ( NOT )? BETWEEN expression AND expression ;
     public final void between() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "between");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3425,10 +3424,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(222, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:223:3: ( expression ( NOT )? BETWEEN expression AND expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:3: ( expression ( NOT )? BETWEEN expression AND expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:223:5: expression ( NOT )? BETWEEN expression AND expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:5: expression ( NOT )? BETWEEN expression AND expression
             {
             dbg.location(223,5);
             pushFollow(FOLLOW_expression_in_between1151);
@@ -3437,7 +3436,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(223,16);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:223:16: ( NOT )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:16: ( NOT )?
             int alt44=2;
             try { dbg.enterSubRule(44);
             try { dbg.enterDecision(44);
@@ -3453,7 +3452,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:223:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:18: NOT
                     {
                     dbg.location(223,18);
                     match(input,NOT,FOLLOW_NOT_in_between1155); if (state.failed) return ;
@@ -3505,7 +3504,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "isNull"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:226:1: isNull : expression IS ( NOT )? NULL ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:226:1: isNull : expression IS ( NOT )? NULL ;
     public final void isNull() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "isNull");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3513,10 +3512,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(226, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:227:3: ( expression IS ( NOT )? NULL )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:3: ( expression IS ( NOT )? NULL )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:227:5: expression IS ( NOT )? NULL
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:5: expression IS ( NOT )? NULL
             {
             dbg.location(227,5);
             pushFollow(FOLLOW_expression_in_isNull1181);
@@ -3527,7 +3526,7 @@ public class GenericSQLParser extends DebugParser {
             dbg.location(227,16);
             match(input,IS,FOLLOW_IS_in_isNull1183); if (state.failed) return ;
             dbg.location(227,19);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:227:19: ( NOT )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:19: ( NOT )?
             int alt45=2;
             try { dbg.enterSubRule(45);
             try { dbg.enterDecision(45);
@@ -3543,7 +3542,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:227:21: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:21: NOT
                     {
                     dbg.location(227,21);
                     match(input,NOT,FOLLOW_NOT_in_isNull1187); if (state.failed) return ;
@@ -3581,7 +3580,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "exists"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:230:1: exists : EXISTS expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:230:1: exists : EXISTS expression ;
     public final void exists() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "exists");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3589,10 +3588,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(230, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:231:3: ( EXISTS expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:231:3: ( EXISTS expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:231:5: EXISTS expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:231:5: EXISTS expression
             {
             dbg.location(231,5);
             match(input,EXISTS,FOLLOW_EXISTS_in_exists1207); if (state.failed) return ;
@@ -3627,7 +3626,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "like"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:234:1: like : expression ( NOT )? LIKE expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:234:1: like : expression ( NOT )? LIKE expression ;
     public final void like() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "like");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3635,10 +3634,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(234, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:237:3: ( expression ( NOT )? LIKE expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:3: ( expression ( NOT )? LIKE expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:237:5: expression ( NOT )? LIKE expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:5: expression ( NOT )? LIKE expression
             {
             dbg.location(237,5);
             pushFollow(FOLLOW_expression_in_like1228);
@@ -3647,7 +3646,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(237,16);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:237:16: ( NOT )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:16: ( NOT )?
             int alt46=2;
             try { dbg.enterSubRule(46);
             try { dbg.enterDecision(46);
@@ -3663,7 +3662,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:237:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:18: NOT
                     {
                     dbg.location(237,18);
                     match(input,NOT,FOLLOW_NOT_in_like1232); if (state.failed) return ;
@@ -3707,7 +3706,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "comparison"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:241:1: comparison : expression comparator expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:241:1: comparison : expression comparator expression ;
     public final void comparison() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "comparison");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3715,10 +3714,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(241, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:242:3: ( expression comparator expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:242:3: ( expression comparator expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:242:5: expression comparator expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:242:5: expression comparator expression
             {
             dbg.location(242,5);
             pushFollow(FOLLOW_expression_in_comparison1257);
@@ -3763,7 +3762,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "comparator"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:245:1: comparator : ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:245:1: comparator : ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT );
     public final void comparator() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "comparator");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3771,10 +3770,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(245, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:246:3: ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:246:3: ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(246,3);
             if ( input.LA(1)==EQ||(input.LA(1)>=NEQ1 && input.LA(1)<=GT) ) {
@@ -3813,7 +3812,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "quantifier"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:255:1: quantifier : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:255:1: quantifier : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN ;
     public final void quantifier() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "quantifier");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3821,10 +3820,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(255, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:256:3: ( expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:256:3: ( expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:256:5: expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:256:5: expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
             {
             dbg.location(256,5);
             pushFollow(FOLLOW_expression_in_quantifier1326);
@@ -3879,7 +3878,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "expressionList"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:259:1: expressionList : expression ( COMMA expression )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:259:1: expressionList : expression ( COMMA expression )* ;
     public final void expressionList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "expressionList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3887,10 +3886,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(259, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:260:3: ( expression ( COMMA expression )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:3: ( expression ( COMMA expression )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:260:5: expression ( COMMA expression )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:5: expression ( COMMA expression )*
             {
             dbg.location(260,5);
             pushFollow(FOLLOW_expression_in_expressionList1361);
@@ -3899,7 +3898,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(260,16);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:260:16: ( COMMA expression )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:16: ( COMMA expression )*
             try { dbg.enterSubRule(47);
 
             loop47:
@@ -3920,7 +3919,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:260:18: COMMA expression
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:18: COMMA expression
             	    {
             	    dbg.location(260,18);
             	    match(input,COMMA,FOLLOW_COMMA_in_expressionList1365); if (state.failed) return ;
@@ -3965,7 +3964,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "nestedExpression"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:263:1: nestedExpression : LPAREN expression RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:263:1: nestedExpression : LPAREN expression RPAREN ;
     public final void nestedExpression() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "nestedExpression");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -3973,10 +3972,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(263, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:264:3: ( LPAREN expression RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:264:3: ( LPAREN expression RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:264:5: LPAREN expression RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:264:5: LPAREN expression RPAREN
             {
             dbg.location(264,5);
             match(input,LPAREN,FOLLOW_LPAREN_in_nestedExpression1383); if (state.failed) return ;
@@ -4013,7 +4012,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "expression"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:267:1: expression : multiply ( ( PLUS | MINUS ) multiply )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:267:1: expression : multiply ( ( PLUS | MINUS ) multiply )* ;
     public final void expression() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "expression");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4021,10 +4020,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(267, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:268:3: ( multiply ( ( PLUS | MINUS ) multiply )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:3: ( multiply ( ( PLUS | MINUS ) multiply )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:268:5: multiply ( ( PLUS | MINUS ) multiply )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:5: multiply ( ( PLUS | MINUS ) multiply )*
             {
             dbg.location(268,5);
             pushFollow(FOLLOW_multiply_in_expression1402);
@@ -4033,7 +4032,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(268,14);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:268:14: ( ( PLUS | MINUS ) multiply )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:14: ( ( PLUS | MINUS ) multiply )*
             try { dbg.enterSubRule(48);
 
             loop48:
@@ -4054,7 +4053,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:268:16: ( PLUS | MINUS ) multiply
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:16: ( PLUS | MINUS ) multiply
             	    {
             	    dbg.location(268,16);
             	    if ( (input.LA(1)>=PLUS && input.LA(1)<=MINUS) ) {
@@ -4109,7 +4108,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "multiply"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:271:1: multiply : value ( ( STAR | DIVIDE ) value )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:271:1: multiply : value ( ( STAR | DIVIDE ) value )* ;
     public final void multiply() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "multiply");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4117,10 +4116,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(271, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:272:3: ( value ( ( STAR | DIVIDE ) value )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:3: ( value ( ( STAR | DIVIDE ) value )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:272:5: value ( ( STAR | DIVIDE ) value )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:5: value ( ( STAR | DIVIDE ) value )*
             {
             dbg.location(272,5);
             pushFollow(FOLLOW_value_in_multiply1433);
@@ -4129,7 +4128,7 @@ public class GenericSQLParser extends DebugParser {
             state._fsp--;
             if (state.failed) return ;
             dbg.location(272,11);
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:272:11: ( ( STAR | DIVIDE ) value )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:11: ( ( STAR | DIVIDE ) value )*
             try { dbg.enterSubRule(49);
 
             loop49:
@@ -4150,7 +4149,7 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:272:13: ( STAR | DIVIDE ) value
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:13: ( STAR | DIVIDE ) value
             	    {
             	    dbg.location(272,13);
             	    if ( input.LA(1)==STAR||input.LA(1)==DIVIDE ) {
@@ -4205,7 +4204,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "value"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:290:1: value : ( literal | ( unary )? ( columnRef | nestedExpression ) );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:290:1: value : ( literal | ( unary )? ( columnRef | nestedExpression ) );
     public final void value() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "value");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4213,7 +4212,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(290, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:291:3: ( literal | ( unary )? ( columnRef | nestedExpression ) )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:291:3: ( literal | ( unary )? ( columnRef | nestedExpression ) )
             int alt52=2;
             try { dbg.enterDecision(52);
 
@@ -4273,7 +4272,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:291:5: literal
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:291:5: literal
                     {
                     dbg.location(291,5);
                     pushFollow(FOLLOW_literal_in_value1486);
@@ -4287,10 +4286,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )? ( columnRef | nestedExpression )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )? ( columnRef | nestedExpression )
                     {
                     dbg.location(293,5);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )?
                     int alt50=2;
                     try { dbg.enterSubRule(50);
                     try { dbg.enterDecision(50);
@@ -4306,7 +4305,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:293:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:7: unary
                             {
                             dbg.location(293,7);
                             pushFollow(FOLLOW_unary_in_value1496);
@@ -4322,7 +4321,7 @@ public class GenericSQLParser extends DebugParser {
                     } finally {dbg.exitSubRule(50);}
 
                     dbg.location(294,5);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:294:5: ( columnRef | nestedExpression )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:5: ( columnRef | nestedExpression )
                     int alt51=2;
                     try { dbg.enterSubRule(51);
                     try { dbg.enterDecision(51);
@@ -4349,7 +4348,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:294:7: columnRef
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:7: columnRef
                             {
                             dbg.location(294,7);
                             pushFollow(FOLLOW_columnRef_in_value1507);
@@ -4363,7 +4362,7 @@ public class GenericSQLParser extends DebugParser {
                         case 2 :
                             dbg.enterAlt(2);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:295:7: nestedExpression
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:295:7: nestedExpression
                             {
                             dbg.location(295,7);
                             pushFollow(FOLLOW_nestedExpression_in_value1515);
@@ -4405,7 +4404,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "literal"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:300:1: literal : ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:300:1: literal : ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date );
     public final void literal() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "literal");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4413,7 +4412,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(300, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:301:3: ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:3: ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date )
             int alt55=6;
             try { dbg.enterDecision(55);
 
@@ -4486,10 +4485,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )? Float
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )? Float
                     {
                     dbg.location(301,5);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )?
                     int alt53=2;
                     try { dbg.enterSubRule(53);
                     try { dbg.enterDecision(53);
@@ -4505,7 +4504,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:301:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:7: unary
                             {
                             dbg.location(301,7);
                             pushFollow(FOLLOW_unary_in_literal1539);
@@ -4528,10 +4527,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )? Integer
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )? Integer
                     {
                     dbg.location(302,5);
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )?
                     int alt54=2;
                     try { dbg.enterSubRule(54);
                     try { dbg.enterDecision(54);
@@ -4547,7 +4546,7 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:302:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:7: unary
                             {
                             dbg.location(302,7);
                             pushFollow(FOLLOW_unary_in_literal1552);
@@ -4570,7 +4569,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:303:5: String
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:303:5: String
                     {
                     dbg.location(303,5);
                     match(input,String,FOLLOW_String_in_literal1563); if (state.failed) return ;
@@ -4580,7 +4579,7 @@ public class GenericSQLParser extends DebugParser {
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:304:5: TRUE
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:304:5: TRUE
                     {
                     dbg.location(304,5);
                     match(input,TRUE,FOLLOW_TRUE_in_literal1569); if (state.failed) return ;
@@ -4590,7 +4589,7 @@ public class GenericSQLParser extends DebugParser {
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:305:5: FALSE
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:305:5: FALSE
                     {
                     dbg.location(305,5);
                     match(input,FALSE,FOLLOW_FALSE_in_literal1575); if (state.failed) return ;
@@ -4600,7 +4599,7 @@ public class GenericSQLParser extends DebugParser {
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:306:5: date
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:306:5: date
                     {
                     dbg.location(306,5);
                     pushFollow(FOLLOW_date_in_literal1581);
@@ -4635,7 +4634,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "date"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:309:1: date : ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:309:1: date : ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' );
     public final void date() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "date");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4643,7 +4642,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(309, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:310:3: ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:310:3: ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' )
             int alt56=3;
             try { dbg.enterDecision(56);
 
@@ -4678,7 +4677,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:310:5: '{d' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:310:5: '{d' Timestamp '}'
                     {
                     dbg.location(310,5);
                     match(input,114,FOLLOW_114_in_date1594); if (state.failed) return ;
@@ -4692,7 +4691,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:311:5: '{t' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:311:5: '{t' Timestamp '}'
                     {
                     dbg.location(311,5);
                     match(input,115,FOLLOW_115_in_date1605); if (state.failed) return ;
@@ -4706,7 +4705,7 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:312:5: '{ts' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:312:5: '{ts' Timestamp '}'
                     {
                     dbg.location(312,5);
                     match(input,116,FOLLOW_116_in_date1616); if (state.failed) return ;
@@ -4741,7 +4740,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "unary"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:315:1: unary : ( MINUS | PLUS );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:315:1: unary : ( MINUS | PLUS );
     public final void unary() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "unary");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4749,10 +4748,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(315, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:316:3: ( MINUS | PLUS )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:316:3: ( MINUS | PLUS )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(316,3);
             if ( (input.LA(1)>=PLUS && input.LA(1)<=MINUS) ) {
@@ -4791,7 +4790,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableRef"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:337:1: tableRef : ( tableName | databaseName DOT tableName );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:337:1: tableRef : ( tableName | databaseName DOT tableName );
     public final void tableRef() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableRef");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4799,7 +4798,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(337, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:338:3: ( tableName | databaseName DOT tableName )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:338:3: ( tableName | databaseName DOT tableName )
             int alt57=2;
             try { dbg.enterDecision(57);
 
@@ -4837,7 +4836,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:338:5: tableName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:338:5: tableName
                     {
                     dbg.location(338,5);
                     pushFollow(FOLLOW_tableName_in_tableRef1675);
@@ -4851,7 +4850,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:339:5: databaseName DOT tableName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:339:5: databaseName DOT tableName
                     {
                     dbg.location(339,5);
                     pushFollow(FOLLOW_databaseName_in_tableRef1681);
@@ -4894,7 +4893,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "columnRef"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:342:1: columnRef : ( columnName | tableAlias DOT columnName );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:342:1: columnRef : ( columnName | tableAlias DOT columnName );
     public final void columnRef() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "columnRef");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -4902,7 +4901,7 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(342, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:343:3: ( columnName | tableAlias DOT columnName )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:343:3: ( columnName | tableAlias DOT columnName )
             int alt58=2;
             try { dbg.enterDecision(58);
 
@@ -4943,7 +4942,7 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:343:5: columnName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:343:5: columnName
                     {
                     dbg.location(343,5);
                     pushFollow(FOLLOW_columnName_in_columnRef1700);
@@ -4957,7 +4956,7 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:344:5: tableAlias DOT columnName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:344:5: tableAlias DOT columnName
                     {
                     dbg.location(344,5);
                     pushFollow(FOLLOW_tableAlias_in_columnRef1707);
@@ -5000,7 +4999,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "databaseName"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:347:1: databaseName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:347:1: databaseName : ( Identifier | QuotedIdentifier );
     public final void databaseName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "databaseName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -5008,10 +5007,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(347, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:348:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:348:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(348,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
@@ -5050,7 +5049,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableName"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:352:1: tableName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:352:1: tableName : ( Identifier | QuotedIdentifier );
     public final void tableName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -5058,10 +5057,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(352, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:353:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:353:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(353,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
@@ -5100,7 +5099,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableAlias"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:357:1: tableAlias : Identifier ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:357:1: tableAlias : Identifier ;
     public final void tableAlias() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableAlias");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -5108,10 +5107,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(357, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:358:3: ( Identifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:358:3: ( Identifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:358:5: Identifier
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:358:5: Identifier
             {
             dbg.location(358,5);
             match(input,Identifier,FOLLOW_Identifier_in_tableAlias1766); if (state.failed) return ;
@@ -5140,7 +5139,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "columnName"
-    // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:361:1: columnName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:361:1: columnName : ( Identifier | QuotedIdentifier );
     public final void columnName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "columnName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -5148,10 +5147,10 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(361, 1);
 
         try {
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:362:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:362:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
             dbg.location(362,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
@@ -5190,10 +5189,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred13_GenericSQL
     public final void synpred13_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:72:7: ( joinList )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:7: ( joinList )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:72:7: joinList
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:7: joinList
         {
         dbg.location(72,7);
         pushFollow(FOLLOW_joinList_in_synpred13_GenericSQL216);
@@ -5208,10 +5207,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred55_GenericSQL
     public final void synpred55_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:207:7: ( nestedCondition )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: ( nestedCondition )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
         {
         dbg.location(207,7);
         pushFollow(FOLLOW_nestedCondition_in_synpred55_GenericSQL1039);
@@ -5226,10 +5225,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred56_GenericSQL
     public final void synpred56_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:208:7: ( in )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: ( in )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:208:7: in
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: in
         {
         dbg.location(208,7);
         pushFollow(FOLLOW_in_in_synpred56_GenericSQL1047);
@@ -5244,10 +5243,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred57_GenericSQL
     public final void synpred57_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:209:7: ( between )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: ( between )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:209:7: between
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: between
         {
         dbg.location(209,7);
         pushFollow(FOLLOW_between_in_synpred57_GenericSQL1055);
@@ -5262,10 +5261,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred58_GenericSQL
     public final void synpred58_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:210:7: ( isNull )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: ( isNull )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:210:7: isNull
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: isNull
         {
         dbg.location(210,7);
         pushFollow(FOLLOW_isNull_in_synpred58_GenericSQL1063);
@@ -5280,10 +5279,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred60_GenericSQL
     public final void synpred60_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:212:7: ( like )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: ( like )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:212:7: like
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: like
         {
         dbg.location(212,7);
         pushFollow(FOLLOW_like_in_synpred60_GenericSQL1079);
@@ -5298,10 +5297,10 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred61_GenericSQL
     public final void synpred61_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:213:7: ( quantifier )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: ( quantifier )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/Camper/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
         {
         dbg.location(213,7);
         pushFollow(FOLLOW_quantifier_in_synpred61_GenericSQL1087);

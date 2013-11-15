@@ -67,6 +67,13 @@ public class
 
 	boolean _onlyParse = false;
 	
+	public void init( Properties props )
+		throws Exception
+	{
+ 		FadoOptions options = new FadoOptions( props );
+		init( options );
+	}
+	
 	public void init( FadoOptions options ) 
 		throws Exception
 	{
@@ -243,12 +250,14 @@ public class
 
 	public boolean displayParseTree = false;
 
-	public void process( String pkg, String name, File sourceFile, File targetRoot ) 
+	public List<File> process( String pkg, String name, File sourceFile, File targetRoot ) 
 		throws Exception
 	{
 		ParseTreeBuilder builder = null;
 		try 
 		{
+			List<File> created = new ArrayList<File>();
+			
 			FileReader reader = new FileReader( sourceFile );
 	
 			builder = new ParseTreeBuilder();
@@ -286,8 +295,8 @@ public class
 				
 				inspectDatabaseForSelect( _conn, statement );
 	
-				generateSelect( statement, targetRoot, name );
-				generateResultSet( statement, targetRoot, name );
+				generateSelect( statement, targetRoot, name, created );
+				generateResultSet( statement, targetRoot, name, created );
 			}
 	
 			ParseNode insertNode = source.findFirstNode( "statement/insert" );
@@ -304,7 +313,7 @@ public class
 				statement.setRetooledSQL( chopper( retooledSQL ));
 
 				inspectDatabaseForInsert( _conn, statement );
-				generateInsert( statement, targetRoot, name );
+				generateInsert( statement, targetRoot, name, created );
 			}
 	
 			ParseNode updateNode = source.findFirstNode( "statement/update" );
@@ -322,8 +331,9 @@ public class
 				
 				inspectDatabaseForUpdate( _conn, statement );
 				
-				generateUpdate( statement, targetRoot, name );
+				generateUpdate( statement, targetRoot, name, created );
 			}
+			return created;
 		}
 		catch( Exception e )
 		{
@@ -927,7 +937,7 @@ public class
 		}
 	}
 
-	public void generateSelect( SelectStatement statement, File targetRoot, String name ) 
+	public void generateSelect( SelectStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -946,6 +956,8 @@ public class
 		_selectTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
+		
+		created.add( targetFile );
 	}
 
 	public void generateSelect( SelectStatement statement, Writer writer ) 
@@ -963,7 +975,7 @@ public class
 		_selectTemplate.merge( context, writer );
 	}
 
-	public void generateResultSet( SelectStatement statement, File targetRoot, String name ) 
+	public void generateResultSet( SelectStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -982,9 +994,11 @@ public class
 		_resultSetTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
+		
+		created.add( targetFile );
 	}
 
-	public void generateInsert( InsertStatement statement, File targetRoot, String name ) 
+	public void generateInsert( InsertStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -1003,9 +1017,11 @@ public class
 		_insertTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
+		
+		created.add( targetFile );
 	}
 
-	public void generateUpdate( UpdateStatement statement, File targetRoot, String name ) 
+	public void generateUpdate( UpdateStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -1025,6 +1041,8 @@ public class
 		_updateTemplate.merge( context, writer );
 		writer.flush();
 		writer.close();
+		
+		created.add( targetFile );
 	}
 
 	public String trimQuotes( String text )
