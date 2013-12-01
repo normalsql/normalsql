@@ -53,8 +53,8 @@ package fado.parse;
 statement
   : select ( SEMI )? EOF
   | insert ( SEMI )? EOF
-	| update ( SEMI )? EOF
-//	| delete ( SEMI )? EOF
+  | update ( SEMI )? EOF
+//  | delete ( SEMI )? EOF
   ;
   
 subSelect
@@ -110,9 +110,9 @@ itemList
   ;
   
 item
-  : value ( ( AS )? alias )?
+  : function ( AS? alias )? 
+  | expression ( ( AS )? alias )?
   | allColumns
-  | function ( AS? alias )? 
   ;
 
 allColumns
@@ -124,14 +124,15 @@ alias
   ;
   
 function
-  : functionName LPAREN ( value ( COMMA value )* )? RPAREN
+  : Identifier LPAREN ( expression ( COMMA expression )* )? RPAREN
   ;  
 
-functionName
-  : COUNT
-  | MIN
-  | MAX
-  ;
+//functionName
+//  : Identifier
+////  : COUNT
+////  | MIN
+////  | MAX
+//  ;
   
 from
   : FROM fromItem ( COMMA fromItem )*

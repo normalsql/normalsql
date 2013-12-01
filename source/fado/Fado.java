@@ -248,7 +248,7 @@ public class
 		return name;
 	}
 
-	public boolean displayParseTree = false;
+	public boolean displayParseTree = true;
 
 	public List<File> process( String pkg, String name, File sourceFile, File targetRoot ) 
 		throws Exception
@@ -270,6 +270,11 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
+			boolean displayTree = true;
+			if( displayTree )
+			{
+				System.out.println( builder.getTree().toParseTree() );
+			}
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();

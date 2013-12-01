@@ -1,4 +1,4 @@
-// $ANTLR 3.2 Sep 23, 2009 12:02:23 /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g 2013-11-14 17:12:40
+// $ANTLR 3.2 Sep 23, 2009 12:02:23 /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g 2013-11-30 19:27:46
  
 package fado.parse;
 
@@ -13,166 +13,166 @@ import org.antlr.runtime.debug.*;
 import java.io.IOException;
 public class GenericSQLParser extends DebugParser {
     public static final String[] tokenNames = new String[] {
-        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "SEMI", "LPAREN", "RPAREN", "SELECT", "ALL", "DISTINCT", "UNIQUE", "TOP", "Integer", "PERCENT", "INSERT", "UPDATE", "SET", "COMMA", "EQ", "INTO", "VALUES", "STAR", "AS", "DOT", "Identifier", "COUNT", "MIN", "MAX", "FROM", "JOIN", "INNER", "LEFT", "OUTER", "RIGHT", "NATURAL", "ON", "WHERE", "GROUP", "BY", "HAVING", "ORDER", "ASC", "DESC", "OR", "AND", "NOT", "IN", "BETWEEN", "IS", "NULL", "EXISTS", "LIKE", "NEQ1", "NEQ2", "LTE", "LT", "GTE", "GT", "ANY", "SOME", "PLUS", "MINUS", "DIVIDE", "Float", "String", "TRUE", "FALSE", "Timestamp", "QuotedIdentifier", "A", "L", "N", "D", "Y", "S", "C", "B", "E", "T", "W", "CASE", "DELETE", "I", "ELSE", "END", "X", "F", "R", "O", "M", "U", "FULL", "G", "P", "H", "V", "J", "K", "THEN", "UNION", "Q", "USING", "WHEN", "Z", "LCURLY", "RCURLY", "STRCAT", "QUESTION", "COLON", "MOD", "Digit", "Exponent", "Comment", "Whitespace", "'{d'", "'{t'", "'{ts'"
+        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "SEMI", "LPAREN", "RPAREN", "SELECT", "ALL", "DISTINCT", "UNIQUE", "TOP", "Integer", "PERCENT", "INSERT", "UPDATE", "SET", "COMMA", "EQ", "INTO", "VALUES", "STAR", "AS", "DOT", "Identifier", "FROM", "JOIN", "INNER", "LEFT", "OUTER", "RIGHT", "NATURAL", "ON", "WHERE", "GROUP", "BY", "HAVING", "ORDER", "ASC", "DESC", "OR", "AND", "NOT", "IN", "BETWEEN", "IS", "NULL", "EXISTS", "LIKE", "NEQ1", "NEQ2", "LTE", "LT", "GTE", "GT", "ANY", "SOME", "PLUS", "MINUS", "DIVIDE", "Float", "String", "TRUE", "FALSE", "Timestamp", "QuotedIdentifier", "A", "L", "N", "D", "Y", "S", "C", "B", "E", "T", "W", "CASE", "DELETE", "I", "ELSE", "END", "X", "F", "R", "O", "M", "U", "FULL", "G", "P", "H", "V", "J", "K", "THEN", "UNION", "Q", "USING", "WHEN", "MAX", "MIN", "COUNT", "Z", "LCURLY", "RCURLY", "STRCAT", "QUESTION", "COLON", "MOD", "Digit", "Exponent", "Comment", "Whitespace", "'{d'", "'{t'", "'{ts'"
     };
-    public static final int LT=55;
+    public static final int LT=52;
     public static final int STAR=21;
     public static final int MOD=109;
-    public static final int CASE=80;
-    public static final int COUNT=25;
-    public static final int NOT=45;
+    public static final int CASE=77;
+    public static final int COUNT=102;
+    public static final int NOT=42;
     public static final int EOF=-1;
     public static final int Identifier=24;
     public static final int RPAREN=6;
-    public static final int FULL=91;
+    public static final int FULL=88;
     public static final int INSERT=14;
-    public static final int USING=101;
+    public static final int USING=98;
     public static final int Comment=112;
     public static final int EQ=18;
     public static final int SELECT=7;
     public static final int INTO=19;
-    public static final int DIVIDE=62;
-    public static final int D=72;
-    public static final int E=77;
+    public static final int DIVIDE=59;
+    public static final int D=69;
+    public static final int E=74;
     public static final int UNIQUE=10;
-    public static final int F=86;
-    public static final int G=92;
-    public static final int A=69;
-    public static final int B=76;
-    public static final int ASC=41;
-    public static final int C=75;
-    public static final int L=70;
-    public static final int M=89;
-    public static final int N=71;
-    public static final int O=88;
-    public static final int H=94;
-    public static final int NULL=49;
-    public static final int I=82;
-    public static final int J=96;
-    public static final int ELSE=83;
-    public static final int K=97;
-    public static final int U=90;
-    public static final int ON=35;
-    public static final int T=78;
-    public static final int W=79;
+    public static final int F=83;
+    public static final int G=89;
+    public static final int A=66;
+    public static final int B=73;
+    public static final int ASC=38;
+    public static final int C=72;
+    public static final int L=67;
+    public static final int M=86;
+    public static final int N=68;
+    public static final int O=85;
+    public static final int H=91;
+    public static final int NULL=46;
+    public static final int I=79;
+    public static final int J=93;
+    public static final int ELSE=80;
+    public static final int K=94;
+    public static final int U=87;
+    public static final int ON=32;
+    public static final int T=75;
+    public static final int W=76;
     public static final int LCURLY=104;
-    public static final int V=95;
-    public static final int Q=100;
-    public static final int P=93;
-    public static final int DELETE=81;
-    public static final int S=74;
-    public static final int R=87;
-    public static final int Y=73;
-    public static final int X=85;
+    public static final int V=92;
+    public static final int Q=97;
+    public static final int P=90;
+    public static final int DELETE=78;
+    public static final int S=71;
+    public static final int R=84;
+    public static final int Y=70;
+    public static final int X=82;
     public static final int Z=103;
-    public static final int Float=63;
-    public static final int GROUP=37;
-    public static final int OR=43;
-    public static final int Timestamp=67;
-    public static final int GT=57;
-    public static final int FROM=28;
-    public static final int END=84;
-    public static final int FALSE=66;
+    public static final int Float=60;
+    public static final int GROUP=34;
+    public static final int OR=40;
+    public static final int Timestamp=64;
+    public static final int GT=54;
+    public static final int FROM=25;
+    public static final int END=81;
+    public static final int FALSE=63;
     public static final int DISTINCT=9;
-    public static final int NEQ1=52;
-    public static final int WHERE=36;
-    public static final int INNER=30;
-    public static final int ORDER=40;
+    public static final int NEQ1=49;
+    public static final int WHERE=33;
+    public static final int INNER=27;
+    public static final int ORDER=37;
     public static final int T__116=116;
     public static final int T__114=114;
-    public static final int NEQ2=53;
-    public static final int GTE=56;
+    public static final int NEQ2=50;
+    public static final int GTE=53;
     public static final int T__115=115;
-    public static final int MAX=27;
+    public static final int MAX=100;
     public static final int UPDATE=15;
     public static final int Exponent=111;
-    public static final int AND=44;
-    public static final int LTE=54;
+    public static final int AND=41;
+    public static final int LTE=51;
     public static final int LPAREN=5;
     public static final int AS=22;
-    public static final int THEN=98;
-    public static final int IN=46;
+    public static final int THEN=95;
+    public static final int IN=43;
     public static final int COMMA=17;
-    public static final int IS=48;
-    public static final int LEFT=31;
-    public static final int SOME=59;
+    public static final int IS=45;
+    public static final int LEFT=28;
+    public static final int SOME=56;
     public static final int ALL=8;
-    public static final int PLUS=60;
-    public static final int EXISTS=50;
-    public static final int String=64;
+    public static final int PLUS=57;
+    public static final int EXISTS=47;
+    public static final int String=61;
     public static final int DOT=23;
     public static final int Whitespace=113;
     public static final int STRCAT=106;
-    public static final int LIKE=51;
-    public static final int OUTER=32;
-    public static final int BY=38;
+    public static final int LIKE=48;
+    public static final int OUTER=29;
+    public static final int BY=35;
     public static final int PERCENT=13;
     public static final int VALUES=20;
-    public static final int RIGHT=33;
+    public static final int RIGHT=30;
     public static final int SET=16;
-    public static final int HAVING=39;
-    public static final int MIN=26;
-    public static final int MINUS=61;
+    public static final int HAVING=36;
+    public static final int MIN=101;
+    public static final int MINUS=58;
     public static final int Digit=110;
-    public static final int QuotedIdentifier=68;
+    public static final int QuotedIdentifier=65;
     public static final int SEMI=4;
-    public static final int TRUE=65;
-    public static final int JOIN=29;
-    public static final int UNION=99;
+    public static final int TRUE=62;
+    public static final int JOIN=26;
+    public static final int UNION=96;
     public static final int COLON=108;
-    public static final int ANY=58;
+    public static final int ANY=55;
     public static final int QUESTION=107;
-    public static final int WHEN=102;
+    public static final int WHEN=99;
     public static final int RCURLY=105;
-    public static final int NATURAL=34;
-    public static final int DESC=42;
+    public static final int NATURAL=31;
+    public static final int DESC=39;
     public static final int TOP=11;
-    public static final int BETWEEN=47;
+    public static final int BETWEEN=44;
     public static final int Integer=12;
 
     // delegates
     // delegators
 
     public static final String[] ruleNames = new String[] {
-        "invalidRule", "expressionList", "synpred76_GenericSQL", "synpred14_GenericSQL", 
-        "synpred37_GenericSQL", "synpred42_GenericSQL", "columnRef", "tableAlias", 
-        "synpred67_GenericSQL", "synpred96_GenericSQL", "synpred65_GenericSQL", 
-        "synpred60_GenericSQL", "into", "synpred35_GenericSQL", "synpred87_GenericSQL", 
-        "tableName", "synpred78_GenericSQL", "synpred20_GenericSQL", "synpred2_GenericSQL", 
-        "expression", "orderBy", "synpred43_GenericSQL", "synpred89_GenericSQL", 
-        "value", "synpred64_GenericSQL", "synpred27_GenericSQL", "synpred56_GenericSQL", 
-        "comparison", "having", "join", "synpred5_GenericSQL", "synpred32_GenericSQL", 
-        "synpred70_GenericSQL", "synpred19_GenericSQL", "synpred12_GenericSQL", 
-        "update", "statement", "synpred7_GenericSQL", "synpred15_GenericSQL", 
-        "synpred25_GenericSQL", "synpred75_GenericSQL", "synpred92_GenericSQL", 
-        "synpred82_GenericSQL", "synpred94_GenericSQL", "synpred31_GenericSQL", 
-        "synpred80_GenericSQL", "synpred10_GenericSQL", "synpred91_GenericSQL", 
-        "from", "groupBy", "synpred9_GenericSQL", "synpred49_GenericSQL", 
-        "unary", "synpred57_GenericSQL", "synpred55_GenericSQL", "synpred97_GenericSQL", 
-        "itemList", "exists", "synpred72_GenericSQL", "synpred24_GenericSQL", 
-        "synpred59_GenericSQL", "synpred22_GenericSQL", "synpred29_GenericSQL", 
-        "synpred73_GenericSQL", "synpred33_GenericSQL", "synpred47_GenericSQL", 
-        "joinList", "synpred90_GenericSQL", "synpred51_GenericSQL", "synpred48_GenericSQL", 
-        "literal", "synpred38_GenericSQL", "synpred85_GenericSQL", "alias", 
-        "conditionList", "between", "isNull", "synpred83_GenericSQL", "date", 
-        "nestedCondition", "setter", "synpred58_GenericSQL", "in", "like", 
-        "comparator", "insert", "synpred1_GenericSQL", "synpred68_GenericSQL", 
-        "synpred84_GenericSQL", "synpred95_GenericSQL", "synpred53_GenericSQL", 
-        "synpred81_GenericSQL", "condition", "synpred13_GenericSQL", "synpred39_GenericSQL", 
-        "synpred3_GenericSQL", "synpred17_GenericSQL", "quantifier", "subSelect", 
-        "synpred23_GenericSQL", "select", "synpred34_GenericSQL", "synpred50_GenericSQL", 
-        "orderByItem", "synpred93_GenericSQL", "synpred41_GenericSQL", "columnName", 
-        "synpred11_GenericSQL", "synpred30_GenericSQL", "synpred18_GenericSQL", 
-        "synpred88_GenericSQL", "synpred46_GenericSQL", "synpred86_GenericSQL", 
-        "synpred26_GenericSQL", "synpred79_GenericSQL", "multiply", "synpred4_GenericSQL", 
-        "allColumns", "synpred21_GenericSQL", "synpred69_GenericSQL", "synpred63_GenericSQL", 
-        "columnList", "item", "synpred77_GenericSQL", "tableRef", "synpred36_GenericSQL", 
-        "synpred62_GenericSQL", "databaseName", "functionName", "synpred71_GenericSQL", 
-        "nestedExpression", "synpred6_GenericSQL", "synpred45_GenericSQL", 
-        "synpred66_GenericSQL", "synpred28_GenericSQL", "synpred16_GenericSQL", 
-        "function", "synpred61_GenericSQL", "fromItem", "synpred52_GenericSQL", 
-        "synpred44_GenericSQL", "synpred8_GenericSQL", "values", "synpred40_GenericSQL", 
-        "where", "synpred74_GenericSQL", "synpred54_GenericSQL"
+        "invalidRule", "synpred73_GenericSQL", "synpred5_GenericSQL", "item", 
+        "itemList", "synpred80_GenericSQL", "between", "synpred60_GenericSQL", 
+        "comparator", "synpred23_GenericSQL", "expressionList", "conditionList", 
+        "tableAlias", "synpred9_GenericSQL", "synpred95_GenericSQL", "subSelect", 
+        "synpred8_GenericSQL", "synpred14_GenericSQL", "synpred42_GenericSQL", 
+        "from", "orderByItem", "tableRef", "synpred34_GenericSQL", "synpred76_GenericSQL", 
+        "synpred84_GenericSQL", "synpred25_GenericSQL", "synpred79_GenericSQL", 
+        "into", "update", "insert", "synpred36_GenericSQL", "exists", "synpred65_GenericSQL", 
+        "synpred49_GenericSQL", "synpred56_GenericSQL", "synpred46_GenericSQL", 
+        "literal", "synpred90_GenericSQL", "synpred33_GenericSQL", "groupBy", 
+        "synpred17_GenericSQL", "expression", "synpred63_GenericSQL", "synpred59_GenericSQL", 
+        "synpred64_GenericSQL", "function", "synpred22_GenericSQL", "statement", 
+        "synpred28_GenericSQL", "synpred38_GenericSQL", "like", "synpred40_GenericSQL", 
+        "synpred83_GenericSQL", "synpred45_GenericSQL", "synpred77_GenericSQL", 
+        "synpred94_GenericSQL", "unary", "synpred27_GenericSQL", "synpred93_GenericSQL", 
+        "synpred67_GenericSQL", "where", "synpred75_GenericSQL", "synpred6_GenericSQL", 
+        "databaseName", "synpred43_GenericSQL", "synpred58_GenericSQL", 
+        "synpred13_GenericSQL", "synpred19_GenericSQL", "synpred20_GenericSQL", 
+        "having", "synpred2_GenericSQL", "synpred7_GenericSQL", "synpred57_GenericSQL", 
+        "synpred37_GenericSQL", "synpred87_GenericSQL", "condition", "synpred71_GenericSQL", 
+        "synpred31_GenericSQL", "synpred89_GenericSQL", "synpred66_GenericSQL", 
+        "synpred11_GenericSQL", "synpred29_GenericSQL", "columnName", "synpred86_GenericSQL", 
+        "joinList", "synpred48_GenericSQL", "synpred53_GenericSQL", "quantifier", 
+        "multiply", "synpred55_GenericSQL", "synpred4_GenericSQL", "setter", 
+        "synpred51_GenericSQL", "synpred91_GenericSQL", "synpred15_GenericSQL", 
+        "synpred30_GenericSQL", "synpred78_GenericSQL", "synpred41_GenericSQL", 
+        "in", "comparison", "synpred69_GenericSQL", "synpred1_GenericSQL", 
+        "value", "orderBy", "synpred10_GenericSQL", "synpred82_GenericSQL", 
+        "synpred74_GenericSQL", "synpred39_GenericSQL", "values", "synpred62_GenericSQL", 
+        "synpred92_GenericSQL", "synpred44_GenericSQL", "synpred35_GenericSQL", 
+        "allColumns", "synpred52_GenericSQL", "synpred32_GenericSQL", "join", 
+        "columnList", "synpred26_GenericSQL", "synpred81_GenericSQL", "synpred61_GenericSQL", 
+        "synpred88_GenericSQL", "synpred16_GenericSQL", "synpred70_GenericSQL", 
+        "synpred3_GenericSQL", "nestedCondition", "synpred24_GenericSQL", 
+        "select", "synpred18_GenericSQL", "tableName", "columnRef", "date", 
+        "synpred85_GenericSQL", "alias", "synpred50_GenericSQL", "synpred68_GenericSQL", 
+        "isNull", "synpred54_GenericSQL", "synpred21_GenericSQL", "synpred72_GenericSQL", 
+        "synpred12_GenericSQL", "synpred47_GenericSQL", "nestedExpression", 
+        "fromItem"
     };
      
         public int ruleLevel = 0;
@@ -343,16 +343,16 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:4: update ( SEMI )? EOF
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:5: update ( SEMI )? EOF
                     {
-                    dbg.location(56,4);
-                    pushFollow(FOLLOW_update_in_statement96);
+                    dbg.location(56,5);
+                    pushFollow(FOLLOW_update_in_statement97);
                     update();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(56,11);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:11: ( SEMI )?
+                    dbg.location(56,12);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:12: ( SEMI )?
                     int alt3=2;
                     try { dbg.enterSubRule(3);
                     try { dbg.enterDecision(3);
@@ -368,10 +368,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:13: SEMI
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:56:14: SEMI
                             {
-                            dbg.location(56,13);
-                            match(input,SEMI,FOLLOW_SEMI_in_statement100); if (state.failed) return ;
+                            dbg.location(56,14);
+                            match(input,SEMI,FOLLOW_SEMI_in_statement101); if (state.failed) return ;
 
                             }
                             break;
@@ -379,8 +379,8 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(3);}
 
-                    dbg.location(56,21);
-                    match(input,EOF,FOLLOW_EOF_in_statement105); if (state.failed) return ;
+                    dbg.location(56,22);
+                    match(input,EOF,FOLLOW_EOF_in_statement106); if (state.failed) return ;
 
                     }
                     break;
@@ -445,7 +445,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:61:5: select
                     {
                     dbg.location(61,5);
-                    pushFollow(FOLLOW_select_in_subSelect121);
+                    pushFollow(FOLLOW_select_in_subSelect122);
                     select();
 
                     state._fsp--;
@@ -459,15 +459,15 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:62:5: LPAREN select RPAREN
                     {
                     dbg.location(62,5);
-                    match(input,LPAREN,FOLLOW_LPAREN_in_subSelect127); if (state.failed) return ;
+                    match(input,LPAREN,FOLLOW_LPAREN_in_subSelect128); if (state.failed) return ;
                     dbg.location(62,12);
-                    pushFollow(FOLLOW_select_in_subSelect129);
+                    pushFollow(FOLLOW_select_in_subSelect130);
                     select();
 
                     state._fsp--;
                     if (state.failed) return ;
                     dbg.location(62,19);
-                    match(input,RPAREN,FOLLOW_RPAREN_in_subSelect131); if (state.failed) return ;
+                    match(input,RPAREN,FOLLOW_RPAREN_in_subSelect132); if (state.failed) return ;
 
                     }
                     break;
@@ -509,7 +509,7 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:66:5: SELECT ( ALL | DISTINCT | UNIQUE )? ( TOP Integer ( PERCENT )? )? itemList ( into )? from ( joinList )? ( where )? ( groupBy )? ( having )? ( orderBy )?
             {
             dbg.location(66,5);
-            match(input,SELECT,FOLLOW_SELECT_in_select146); if (state.failed) return ;
+            match(input,SELECT,FOLLOW_SELECT_in_select147); if (state.failed) return ;
             dbg.location(67,5);
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:67:5: ( ALL | DISTINCT | UNIQUE )?
             int alt6=2;
@@ -568,9 +568,9 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:7: TOP Integer ( PERCENT )?
                     {
                     dbg.location(68,7);
-                    match(input,TOP,FOLLOW_TOP_in_select173); if (state.failed) return ;
+                    match(input,TOP,FOLLOW_TOP_in_select174); if (state.failed) return ;
                     dbg.location(68,11);
-                    match(input,Integer,FOLLOW_Integer_in_select175); if (state.failed) return ;
+                    match(input,Integer,FOLLOW_Integer_in_select176); if (state.failed) return ;
                     dbg.location(68,19);
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:19: ( PERCENT )?
                     int alt7=2;
@@ -591,7 +591,7 @@ public class GenericSQLParser extends DebugParser {
                             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:68:21: PERCENT
                             {
                             dbg.location(68,21);
-                            match(input,PERCENT,FOLLOW_PERCENT_in_select179); if (state.failed) return ;
+                            match(input,PERCENT,FOLLOW_PERCENT_in_select180); if (state.failed) return ;
 
                             }
                             break;
@@ -607,7 +607,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(8);}
 
             dbg.location(69,5);
-            pushFollow(FOLLOW_itemList_in_select191);
+            pushFollow(FOLLOW_itemList_in_select192);
             itemList();
 
             state._fsp--;
@@ -632,7 +632,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:70:7: into
                     {
                     dbg.location(70,7);
-                    pushFollow(FOLLOW_into_in_select199);
+                    pushFollow(FOLLOW_into_in_select200);
                     into();
 
                     state._fsp--;
@@ -645,7 +645,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(9);}
 
             dbg.location(71,5);
-            pushFollow(FOLLOW_from_in_select208);
+            pushFollow(FOLLOW_from_in_select209);
             from();
 
             state._fsp--;
@@ -673,7 +673,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:7: joinList
                     {
                     dbg.location(72,7);
-                    pushFollow(FOLLOW_joinList_in_select216);
+                    pushFollow(FOLLOW_joinList_in_select217);
                     joinList();
 
                     state._fsp--;
@@ -705,7 +705,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:73:7: where
                     {
                     dbg.location(73,7);
-                    pushFollow(FOLLOW_where_in_select227);
+                    pushFollow(FOLLOW_where_in_select228);
                     where();
 
                     state._fsp--;
@@ -737,7 +737,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:74:7: groupBy
                     {
                     dbg.location(74,7);
-                    pushFollow(FOLLOW_groupBy_in_select238);
+                    pushFollow(FOLLOW_groupBy_in_select239);
                     groupBy();
 
                     state._fsp--;
@@ -769,7 +769,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:75:7: having
                     {
                     dbg.location(75,7);
-                    pushFollow(FOLLOW_having_in_select249);
+                    pushFollow(FOLLOW_having_in_select250);
                     having();
 
                     state._fsp--;
@@ -801,7 +801,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:76:7: orderBy
                     {
                     dbg.location(76,7);
-                    pushFollow(FOLLOW_orderBy_in_select260);
+                    pushFollow(FOLLOW_orderBy_in_select261);
                     orderBy();
 
                     state._fsp--;
@@ -852,9 +852,9 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:5: INSERT into ( columnList )? ( values )
             {
             dbg.location(80,5);
-            match(input,INSERT,FOLLOW_INSERT_in_insert278); if (state.failed) return ;
+            match(input,INSERT,FOLLOW_INSERT_in_insert279); if (state.failed) return ;
             dbg.location(80,12);
-            pushFollow(FOLLOW_into_in_insert280);
+            pushFollow(FOLLOW_into_in_insert281);
             into();
 
             state._fsp--;
@@ -879,7 +879,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:80:19: columnList
                     {
                     dbg.location(80,19);
-                    pushFollow(FOLLOW_columnList_in_insert284);
+                    pushFollow(FOLLOW_columnList_in_insert285);
                     columnList();
 
                     state._fsp--;
@@ -898,7 +898,7 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:81:5: values
             {
             dbg.location(81,5);
-            pushFollow(FOLLOW_values_in_insert293);
+            pushFollow(FOLLOW_values_in_insert294);
             values();
 
             state._fsp--;
@@ -945,17 +945,17 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:5: UPDATE tableRef SET setter ( COMMA setter )* ( where )?
             {
             dbg.location(87,5);
-            match(input,UPDATE,FOLLOW_UPDATE_in_update313); if (state.failed) return ;
+            match(input,UPDATE,FOLLOW_UPDATE_in_update314); if (state.failed) return ;
             dbg.location(87,12);
-            pushFollow(FOLLOW_tableRef_in_update315);
+            pushFollow(FOLLOW_tableRef_in_update316);
             tableRef();
 
             state._fsp--;
             if (state.failed) return ;
             dbg.location(87,21);
-            match(input,SET,FOLLOW_SET_in_update317); if (state.failed) return ;
+            match(input,SET,FOLLOW_SET_in_update318); if (state.failed) return ;
             dbg.location(87,25);
-            pushFollow(FOLLOW_setter_in_update319);
+            pushFollow(FOLLOW_setter_in_update320);
             setter();
 
             state._fsp--;
@@ -985,9 +985,9 @@ public class GenericSQLParser extends DebugParser {
             	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:87:34: COMMA setter
             	    {
             	    dbg.location(87,34);
-            	    match(input,COMMA,FOLLOW_COMMA_in_update323); if (state.failed) return ;
+            	    match(input,COMMA,FOLLOW_COMMA_in_update324); if (state.failed) return ;
             	    dbg.location(87,40);
-            	    pushFollow(FOLLOW_setter_in_update325);
+            	    pushFollow(FOLLOW_setter_in_update326);
             	    setter();
 
             	    state._fsp--;
@@ -1022,7 +1022,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:88:7: where
                     {
                     dbg.location(88,7);
-                    pushFollow(FOLLOW_where_in_update336);
+                    pushFollow(FOLLOW_where_in_update337);
                     where();
 
                     state._fsp--;
@@ -1073,15 +1073,15 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:92:5: columnName EQ literal
             {
             dbg.location(92,5);
-            pushFollow(FOLLOW_columnName_in_setter354);
+            pushFollow(FOLLOW_columnName_in_setter355);
             columnName();
 
             state._fsp--;
             if (state.failed) return ;
             dbg.location(92,16);
-            match(input,EQ,FOLLOW_EQ_in_setter356); if (state.failed) return ;
+            match(input,EQ,FOLLOW_EQ_in_setter357); if (state.failed) return ;
             dbg.location(92,19);
-            pushFollow(FOLLOW_literal_in_setter358);
+            pushFollow(FOLLOW_literal_in_setter359);
             literal();
 
             state._fsp--;
@@ -1125,9 +1125,9 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:5: INTO tableRef ( COMMA tableRef )*
             {
             dbg.location(96,5);
-            match(input,INTO,FOLLOW_INTO_in_into373); if (state.failed) return ;
+            match(input,INTO,FOLLOW_INTO_in_into374); if (state.failed) return ;
             dbg.location(96,10);
-            pushFollow(FOLLOW_tableRef_in_into375);
+            pushFollow(FOLLOW_tableRef_in_into376);
             tableRef();
 
             state._fsp--;
@@ -1157,9 +1157,9 @@ public class GenericSQLParser extends DebugParser {
             	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:96:21: COMMA tableRef
             	    {
             	    dbg.location(96,21);
-            	    match(input,COMMA,FOLLOW_COMMA_in_into379); if (state.failed) return ;
+            	    match(input,COMMA,FOLLOW_COMMA_in_into380); if (state.failed) return ;
             	    dbg.location(96,27);
-            	    pushFollow(FOLLOW_tableRef_in_into381);
+            	    pushFollow(FOLLOW_tableRef_in_into382);
             	    tableRef();
 
             	    state._fsp--;
@@ -1213,9 +1213,9 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:5: LPAREN columnName ( COMMA columnName )* RPAREN
             {
             dbg.location(100,5);
-            match(input,LPAREN,FOLLOW_LPAREN_in_columnList397); if (state.failed) return ;
+            match(input,LPAREN,FOLLOW_LPAREN_in_columnList398); if (state.failed) return ;
             dbg.location(100,12);
-            pushFollow(FOLLOW_columnName_in_columnList399);
+            pushFollow(FOLLOW_columnName_in_columnList400);
             columnName();
 
             state._fsp--;
@@ -1245,9 +1245,9 @@ public class GenericSQLParser extends DebugParser {
             	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:100:25: COMMA columnName
             	    {
             	    dbg.location(100,25);
-            	    match(input,COMMA,FOLLOW_COMMA_in_columnList403); if (state.failed) return ;
+            	    match(input,COMMA,FOLLOW_COMMA_in_columnList404); if (state.failed) return ;
             	    dbg.location(100,31);
-            	    pushFollow(FOLLOW_columnName_in_columnList405);
+            	    pushFollow(FOLLOW_columnName_in_columnList406);
             	    columnName();
 
             	    state._fsp--;
@@ -1263,7 +1263,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(19);}
 
             dbg.location(100,45);
-            match(input,RPAREN,FOLLOW_RPAREN_in_columnList410); if (state.failed) return ;
+            match(input,RPAREN,FOLLOW_RPAREN_in_columnList411); if (state.failed) return ;
 
             }
 
@@ -1303,11 +1303,11 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:5: VALUES LPAREN literal ( COMMA literal )* RPAREN
             {
             dbg.location(104,5);
-            match(input,VALUES,FOLLOW_VALUES_in_values425); if (state.failed) return ;
+            match(input,VALUES,FOLLOW_VALUES_in_values426); if (state.failed) return ;
             dbg.location(104,12);
-            match(input,LPAREN,FOLLOW_LPAREN_in_values427); if (state.failed) return ;
+            match(input,LPAREN,FOLLOW_LPAREN_in_values428); if (state.failed) return ;
             dbg.location(104,19);
-            pushFollow(FOLLOW_literal_in_values429);
+            pushFollow(FOLLOW_literal_in_values430);
             literal();
 
             state._fsp--;
@@ -1337,9 +1337,9 @@ public class GenericSQLParser extends DebugParser {
             	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:104:29: COMMA literal
             	    {
             	    dbg.location(104,29);
-            	    match(input,COMMA,FOLLOW_COMMA_in_values433); if (state.failed) return ;
+            	    match(input,COMMA,FOLLOW_COMMA_in_values434); if (state.failed) return ;
             	    dbg.location(104,35);
-            	    pushFollow(FOLLOW_literal_in_values435);
+            	    pushFollow(FOLLOW_literal_in_values436);
             	    literal();
 
             	    state._fsp--;
@@ -1355,7 +1355,7 @@ public class GenericSQLParser extends DebugParser {
             } finally {dbg.exitSubRule(20);}
 
             dbg.location(104,46);
-            match(input,RPAREN,FOLLOW_RPAREN_in_values440); if (state.failed) return ;
+            match(input,RPAREN,FOLLOW_RPAREN_in_values441); if (state.failed) return ;
 
             }
 
@@ -1398,7 +1398,7 @@ public class GenericSQLParser extends DebugParser {
             if ( (LA22_0==STAR) ) {
                 alt22=1;
             }
-            else if ( (LA22_0==LPAREN||LA22_0==Integer||(LA22_0>=Identifier && LA22_0<=MAX)||(LA22_0>=PLUS && LA22_0<=MINUS)||(LA22_0>=Float && LA22_0<=FALSE)||LA22_0==QuotedIdentifier||(LA22_0>=114 && LA22_0<=116)) ) {
+            else if ( (LA22_0==LPAREN||LA22_0==Integer||LA22_0==Identifier||(LA22_0>=PLUS && LA22_0<=MINUS)||(LA22_0>=Float && LA22_0<=FALSE)||LA22_0==QuotedIdentifier||(LA22_0>=114 && LA22_0<=116)) ) {
                 alt22=2;
             }
             else {
@@ -1418,7 +1418,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:108:5: STAR
                     {
                     dbg.location(108,5);
-                    match(input,STAR,FOLLOW_STAR_in_itemList455); if (state.failed) return ;
+                    match(input,STAR,FOLLOW_STAR_in_itemList456); if (state.failed) return ;
 
                     }
                     break;
@@ -1428,7 +1428,7 @@ public class GenericSQLParser extends DebugParser {
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:109:5: item ( COMMA item )*
                     {
                     dbg.location(109,5);
-                    pushFollow(FOLLOW_item_in_itemList461);
+                    pushFollow(FOLLOW_item_in_itemList462);
                     item();
 
                     state._fsp--;
@@ -1458,9 +1458,9 @@ public class GenericSQLParser extends DebugParser {
                     	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:109:12: COMMA item
                     	    {
                     	    dbg.location(109,12);
-                    	    match(input,COMMA,FOLLOW_COMMA_in_itemList465); if (state.failed) return ;
+                    	    match(input,COMMA,FOLLOW_COMMA_in_itemList466); if (state.failed) return ;
                     	    dbg.location(109,18);
-                    	    pushFollow(FOLLOW_item_in_itemList467);
+                    	    pushFollow(FOLLOW_item_in_itemList468);
                     	    item();
 
                     	    state._fsp--;
@@ -1502,7 +1502,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "item"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:112:1: item : ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:112:1: item : ( function ( ( AS )? alias )? | expression ( ( AS )? alias )? | allColumns );
     public final void item() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "item");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1510,42 +1510,42 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(112, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:3: ( value ( ( AS )? alias )? | allColumns | function ( ( AS )? alias )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:3: ( function ( ( AS )? alias )? | expression ( ( AS )? alias )? | allColumns )
             int alt27=3;
             try { dbg.enterDecision(27);
 
-            switch ( input.LA(1) ) {
-            case LPAREN:
-            case Integer:
-            case PLUS:
-            case MINUS:
-            case Float:
-            case String:
-            case TRUE:
-            case FALSE:
-            case QuotedIdentifier:
-            case 114:
-            case 115:
-            case 116:
-                {
-                alt27=1;
-                }
-                break;
-            case Identifier:
-                {
-                int LA27_2 = input.LA(2);
+            int LA27_0 = input.LA(1);
 
-                if ( (LA27_2==EOF||LA27_2==COMMA||LA27_2==INTO||LA27_2==AS||LA27_2==Identifier||LA27_2==FROM) ) {
+            if ( (LA27_0==Identifier) ) {
+                switch ( input.LA(2) ) {
+                case LPAREN:
+                    {
                     alt27=1;
-                }
-                else if ( (LA27_2==DOT) ) {
+                    }
+                    break;
+                case EOF:
+                case COMMA:
+                case INTO:
+                case STAR:
+                case AS:
+                case Identifier:
+                case FROM:
+                case PLUS:
+                case MINUS:
+                case DIVIDE:
+                    {
+                    alt27=2;
+                    }
+                    break;
+                case DOT:
+                    {
                     int LA27_4 = input.LA(3);
 
                     if ( (LA27_4==STAR) ) {
-                        alt27=2;
+                        alt27=3;
                     }
                     else if ( (LA27_4==Identifier||LA27_4==QuotedIdentifier) ) {
-                        alt27=1;
+                        alt27=2;
                     }
                     else {
                         if (state.backtracking>0) {state.failed=true; return ;}
@@ -1555,25 +1555,22 @@ public class GenericSQLParser extends DebugParser {
                         dbg.recognitionException(nvae);
                         throw nvae;
                     }
-                }
-                else {
+                    }
+                    break;
+                default:
                     if (state.backtracking>0) {state.failed=true; return ;}
                     NoViableAltException nvae =
-                        new NoViableAltException("", 27, 2, input);
+                        new NoViableAltException("", 27, 1, input);
 
                     dbg.recognitionException(nvae);
                     throw nvae;
                 }
-                }
-                break;
-            case COUNT:
-            case MIN:
-            case MAX:
-                {
-                alt27=3;
-                }
-                break;
-            default:
+
+            }
+            else if ( (LA27_0==LPAREN||LA27_0==Integer||(LA27_0>=PLUS && LA27_0<=MINUS)||(LA27_0>=Float && LA27_0<=FALSE)||LA27_0==QuotedIdentifier||(LA27_0>=114 && LA27_0<=116)) ) {
+                alt27=2;
+            }
+            else {
                 if (state.backtracking>0) {state.failed=true; return ;}
                 NoViableAltException nvae =
                     new NoViableAltException("", 27, 0, input);
@@ -1581,23 +1578,22 @@ public class GenericSQLParser extends DebugParser {
                 dbg.recognitionException(nvae);
                 throw nvae;
             }
-
             } finally {dbg.exitDecision(27);}
 
             switch (alt27) {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:5: value ( ( AS )? alias )?
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:5: function ( ( AS )? alias )?
                     {
                     dbg.location(113,5);
-                    pushFollow(FOLLOW_value_in_item485);
-                    value();
+                    pushFollow(FOLLOW_function_in_item486);
+                    function();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(113,11);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:11: ( ( AS )? alias )?
+                    dbg.location(113,14);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:14: ( ( AS )? alias )?
                     int alt24=2;
                     try { dbg.enterSubRule(24);
                     try { dbg.enterDecision(24);
@@ -1613,10 +1609,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )? alias
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:16: ( AS )? alias
                             {
-                            dbg.location(113,13);
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:13: ( AS )?
+                            dbg.location(113,16);
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:16: ( AS )?
                             int alt23=2;
                             try { dbg.enterSubRule(23);
                             try { dbg.enterDecision(23);
@@ -1632,10 +1628,10 @@ public class GenericSQLParser extends DebugParser {
                                 case 1 :
                                     dbg.enterAlt(1);
 
-                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:113:15: AS
+                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:0:0: AS
                                     {
-                                    dbg.location(113,15);
-                                    match(input,AS,FOLLOW_AS_in_item491); if (state.failed) return ;
+                                    dbg.location(113,16);
+                                    match(input,AS,FOLLOW_AS_in_item490); if (state.failed) return ;
 
                                     }
                                     break;
@@ -1643,8 +1639,8 @@ public class GenericSQLParser extends DebugParser {
                             }
                             } finally {dbg.exitSubRule(23);}
 
-                            dbg.location(113,21);
-                            pushFollow(FOLLOW_alias_in_item496);
+                            dbg.location(113,20);
+                            pushFollow(FOLLOW_alias_in_item493);
                             alias();
 
                             state._fsp--;
@@ -1662,30 +1658,16 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:5: allColumns
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:5: expression ( ( AS )? alias )?
                     {
                     dbg.location(114,5);
-                    pushFollow(FOLLOW_allColumns_in_item505);
-                    allColumns();
+                    pushFollow(FOLLOW_expression_in_item503);
+                    expression();
 
                     state._fsp--;
                     if (state.failed) return ;
-
-                    }
-                    break;
-                case 3 :
-                    dbg.enterAlt(3);
-
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:5: function ( ( AS )? alias )?
-                    {
-                    dbg.location(115,5);
-                    pushFollow(FOLLOW_function_in_item511);
-                    function();
-
-                    state._fsp--;
-                    if (state.failed) return ;
-                    dbg.location(115,14);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:14: ( ( AS )? alias )?
+                    dbg.location(114,16);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:16: ( ( AS )? alias )?
                     int alt26=2;
                     try { dbg.enterSubRule(26);
                     try { dbg.enterDecision(26);
@@ -1701,10 +1683,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )? alias
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:18: ( AS )? alias
                             {
-                            dbg.location(115,16);
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:16: ( AS )?
+                            dbg.location(114,18);
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:18: ( AS )?
                             int alt25=2;
                             try { dbg.enterSubRule(25);
                             try { dbg.enterDecision(25);
@@ -1720,10 +1702,10 @@ public class GenericSQLParser extends DebugParser {
                                 case 1 :
                                     dbg.enterAlt(1);
 
-                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:0:0: AS
+                                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:114:20: AS
                                     {
-                                    dbg.location(115,16);
-                                    match(input,AS,FOLLOW_AS_in_item515); if (state.failed) return ;
+                                    dbg.location(114,20);
+                                    match(input,AS,FOLLOW_AS_in_item509); if (state.failed) return ;
 
                                     }
                                     break;
@@ -1731,8 +1713,8 @@ public class GenericSQLParser extends DebugParser {
                             }
                             } finally {dbg.exitSubRule(25);}
 
-                            dbg.location(115,20);
-                            pushFollow(FOLLOW_alias_in_item518);
+                            dbg.location(114,26);
+                            pushFollow(FOLLOW_alias_in_item514);
                             alias();
 
                             state._fsp--;
@@ -1744,6 +1726,20 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(26);}
 
+
+                    }
+                    break;
+                case 3 :
+                    dbg.enterAlt(3);
+
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:115:5: allColumns
+                    {
+                    dbg.location(115,5);
+                    pushFollow(FOLLOW_allColumns_in_item523);
+                    allColumns();
+
+                    state._fsp--;
+                    if (state.failed) return ;
 
                     }
                     break;
@@ -1785,15 +1781,15 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:119:5: tableAlias DOT STAR
             {
             dbg.location(119,5);
-            pushFollow(FOLLOW_tableAlias_in_allColumns535);
+            pushFollow(FOLLOW_tableAlias_in_allColumns536);
             tableAlias();
 
             state._fsp--;
             if (state.failed) return ;
             dbg.location(119,16);
-            match(input,DOT,FOLLOW_DOT_in_allColumns537); if (state.failed) return ;
+            match(input,DOT,FOLLOW_DOT_in_allColumns538); if (state.failed) return ;
             dbg.location(119,20);
-            match(input,STAR,FOLLOW_STAR_in_allColumns539); if (state.failed) return ;
+            match(input,STAR,FOLLOW_STAR_in_allColumns540); if (state.failed) return ;
 
             }
 
@@ -1833,7 +1829,7 @@ public class GenericSQLParser extends DebugParser {
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:123:5: Identifier
             {
             dbg.location(123,5);
-            match(input,Identifier,FOLLOW_Identifier_in_alias552); if (state.failed) return ;
+            match(input,Identifier,FOLLOW_Identifier_in_alias553); if (state.failed) return ;
 
             }
 
@@ -1859,7 +1855,7 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "function"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:126:1: function : functionName LPAREN ( value ( COMMA value )* )? RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:126:1: function : Identifier LPAREN ( expression ( COMMA expression )* )? RPAREN ;
     public final void function() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "function");
         if ( getRuleLevel()==0 ) {dbg.commence();}
@@ -1867,21 +1863,17 @@ public class GenericSQLParser extends DebugParser {
         dbg.location(126, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:3: ( functionName LPAREN ( value ( COMMA value )* )? RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:3: ( Identifier LPAREN ( expression ( COMMA expression )* )? RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:5: functionName LPAREN ( value ( COMMA value )* )? RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:5: Identifier LPAREN ( expression ( COMMA expression )* )? RPAREN
             {
             dbg.location(127,5);
-            pushFollow(FOLLOW_functionName_in_function567);
-            functionName();
-
-            state._fsp--;
-            if (state.failed) return ;
-            dbg.location(127,18);
-            match(input,LPAREN,FOLLOW_LPAREN_in_function569); if (state.failed) return ;
-            dbg.location(127,25);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:25: ( value ( COMMA value )* )?
+            match(input,Identifier,FOLLOW_Identifier_in_function568); if (state.failed) return ;
+            dbg.location(127,16);
+            match(input,LPAREN,FOLLOW_LPAREN_in_function570); if (state.failed) return ;
+            dbg.location(127,23);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:23: ( expression ( COMMA expression )* )?
             int alt29=2;
             try { dbg.enterSubRule(29);
             try { dbg.enterDecision(29);
@@ -1897,16 +1889,16 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:27: value ( COMMA value )*
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:25: expression ( COMMA expression )*
                     {
-                    dbg.location(127,27);
-                    pushFollow(FOLLOW_value_in_function573);
-                    value();
+                    dbg.location(127,25);
+                    pushFollow(FOLLOW_expression_in_function574);
+                    expression();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(127,33);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:33: ( COMMA value )*
+                    dbg.location(127,36);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:36: ( COMMA expression )*
                     try { dbg.enterSubRule(28);
 
                     loop28:
@@ -1927,13 +1919,13 @@ public class GenericSQLParser extends DebugParser {
                     	case 1 :
                     	    dbg.enterAlt(1);
 
-                    	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:35: COMMA value
+                    	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:127:38: COMMA expression
                     	    {
-                    	    dbg.location(127,35);
-                    	    match(input,COMMA,FOLLOW_COMMA_in_function577); if (state.failed) return ;
-                    	    dbg.location(127,41);
-                    	    pushFollow(FOLLOW_value_in_function579);
-                    	    value();
+                    	    dbg.location(127,38);
+                    	    match(input,COMMA,FOLLOW_COMMA_in_function578); if (state.failed) return ;
+                    	    dbg.location(127,44);
+                    	    pushFollow(FOLLOW_expression_in_function580);
+                    	    expression();
 
                     	    state._fsp--;
                     	    if (state.failed) return ;
@@ -1954,8 +1946,8 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(29);}
 
-            dbg.location(127,53);
-            match(input,RPAREN,FOLLOW_RPAREN_in_function587); if (state.failed) return ;
+            dbg.location(127,61);
+            match(input,RPAREN,FOLLOW_RPAREN_in_function588); if (state.failed) return ;
 
             }
 
@@ -1980,80 +1972,30 @@ public class GenericSQLParser extends DebugParser {
     // $ANTLR end "function"
 
 
-    // $ANTLR start "functionName"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:130:1: functionName : ( COUNT | MIN | MAX );
-    public final void functionName() throws RecognitionException {
-        try { dbg.enterRule(getGrammarFileName(), "functionName");
-        if ( getRuleLevel()==0 ) {dbg.commence();}
-        incRuleLevel();
-        dbg.location(130, 1);
-
-        try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:131:3: ( COUNT | MIN | MAX )
-            dbg.enterAlt(1);
-
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
-            {
-            dbg.location(131,3);
-            if ( (input.LA(1)>=COUNT && input.LA(1)<=MAX) ) {
-                input.consume();
-                state.errorRecovery=false;state.failed=false;
-            }
-            else {
-                if (state.backtracking>0) {state.failed=true; return ;}
-                MismatchedSetException mse = new MismatchedSetException(null,input);
-                dbg.recognitionException(mse);
-                throw mse;
-            }
-
-
-            }
-
-        }
-        catch (RecognitionException re) {
-            reportError(re);
-            recover(input,re);
-        }
-        finally {
-        }
-        dbg.location(134, 3);
-
-        }
-        finally {
-            dbg.exitRule(getGrammarFileName(), "functionName");
-            decRuleLevel();
-            if ( getRuleLevel()==0 ) {dbg.terminate();}
-        }
-
-        return ;
-    }
-    // $ANTLR end "functionName"
-
-
     // $ANTLR start "from"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:136:1: from : FROM fromItem ( COMMA fromItem )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:1: from : FROM fromItem ( COMMA fromItem )* ;
     public final void from() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "from");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(136, 1);
+        dbg.location(137, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:3: ( FROM fromItem ( COMMA fromItem )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:138:3: ( FROM fromItem ( COMMA fromItem )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:5: FROM fromItem ( COMMA fromItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:138:5: FROM fromItem ( COMMA fromItem )*
             {
-            dbg.location(137,5);
-            match(input,FROM,FOLLOW_FROM_in_from629); if (state.failed) return ;
-            dbg.location(137,10);
-            pushFollow(FOLLOW_fromItem_in_from631);
+            dbg.location(138,5);
+            match(input,FROM,FOLLOW_FROM_in_from612); if (state.failed) return ;
+            dbg.location(138,10);
+            pushFollow(FOLLOW_fromItem_in_from614);
             fromItem();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(137,19);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:19: ( COMMA fromItem )*
+            dbg.location(138,19);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:138:19: ( COMMA fromItem )*
             try { dbg.enterSubRule(30);
 
             loop30:
@@ -2074,12 +2016,12 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:137:21: COMMA fromItem
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:138:21: COMMA fromItem
             	    {
-            	    dbg.location(137,21);
-            	    match(input,COMMA,FOLLOW_COMMA_in_from635); if (state.failed) return ;
-            	    dbg.location(137,27);
-            	    pushFollow(FOLLOW_fromItem_in_from637);
+            	    dbg.location(138,21);
+            	    match(input,COMMA,FOLLOW_COMMA_in_from618); if (state.failed) return ;
+            	    dbg.location(138,27);
+            	    pushFollow(FOLLOW_fromItem_in_from620);
             	    fromItem();
 
             	    state._fsp--;
@@ -2104,7 +2046,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(138, 3);
+        dbg.location(139, 3);
 
         }
         finally {
@@ -2119,21 +2061,21 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "fromItem"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:140:1: fromItem : ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:1: fromItem : ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? ;
     public final void fromItem() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "fromItem");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(140, 1);
+        dbg.location(141, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:3: ( ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:3: ( ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:5: ( ( LPAREN subSelect RPAREN ) | tableRef ) ( ( AS )? alias )?
             {
-            dbg.location(141,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:5: ( ( LPAREN subSelect RPAREN ) | tableRef )
+            dbg.location(142,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:5: ( ( LPAREN subSelect RPAREN ) | tableRef )
             int alt31=2;
             try { dbg.enterSubRule(31);
             try { dbg.enterDecision(31);
@@ -2160,24 +2102,24 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:7: ( LPAREN subSelect RPAREN )
                     {
-                    dbg.location(141,7);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:7: ( LPAREN subSelect RPAREN )
+                    dbg.location(142,7);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:7: ( LPAREN subSelect RPAREN )
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:141:9: LPAREN subSelect RPAREN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:9: LPAREN subSelect RPAREN
                     {
-                    dbg.location(141,9);
-                    match(input,LPAREN,FOLLOW_LPAREN_in_fromItem659); if (state.failed) return ;
-                    dbg.location(141,16);
-                    pushFollow(FOLLOW_subSelect_in_fromItem661);
+                    dbg.location(142,9);
+                    match(input,LPAREN,FOLLOW_LPAREN_in_fromItem642); if (state.failed) return ;
+                    dbg.location(142,16);
+                    pushFollow(FOLLOW_subSelect_in_fromItem644);
                     subSelect();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(141,26);
-                    match(input,RPAREN,FOLLOW_RPAREN_in_fromItem663); if (state.failed) return ;
+                    dbg.location(142,26);
+                    match(input,RPAREN,FOLLOW_RPAREN_in_fromItem646); if (state.failed) return ;
 
                     }
 
@@ -2187,10 +2129,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:142:7: tableRef
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:143:7: tableRef
                     {
-                    dbg.location(142,7);
-                    pushFollow(FOLLOW_tableRef_in_fromItem674);
+                    dbg.location(143,7);
+                    pushFollow(FOLLOW_tableRef_in_fromItem657);
                     tableRef();
 
                     state._fsp--;
@@ -2202,8 +2144,8 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(31);}
 
-            dbg.location(144,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:5: ( ( AS )? alias )?
+            dbg.location(145,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:145:5: ( ( AS )? alias )?
             int alt33=2;
             try { dbg.enterSubRule(33);
             try { dbg.enterDecision(33);
@@ -2226,10 +2168,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )? alias
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:145:7: ( AS )? alias
                     {
-                    dbg.location(144,7);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:7: ( AS )?
+                    dbg.location(145,7);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:145:7: ( AS )?
                     int alt32=2;
                     try { dbg.enterSubRule(32);
                     try { dbg.enterDecision(32);
@@ -2245,10 +2187,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:144:9: AS
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:145:9: AS
                             {
-                            dbg.location(144,9);
-                            match(input,AS,FOLLOW_AS_in_fromItem691); if (state.failed) return ;
+                            dbg.location(145,9);
+                            match(input,AS,FOLLOW_AS_in_fromItem674); if (state.failed) return ;
 
                             }
                             break;
@@ -2256,8 +2198,8 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(32);}
 
-                    dbg.location(144,15);
-                    pushFollow(FOLLOW_alias_in_fromItem696);
+                    dbg.location(145,15);
+                    pushFollow(FOLLOW_alias_in_fromItem679);
                     alias();
 
                     state._fsp--;
@@ -2279,7 +2221,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(145, 3);
+        dbg.location(146, 3);
 
         }
         finally {
@@ -2294,21 +2236,21 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "joinList"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:147:1: joinList : ( join )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:1: joinList : ( join )* ;
     public final void joinList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "joinList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(147, 1);
+        dbg.location(148, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:3: ( ( join )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:149:3: ( ( join )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:149:5: ( join )*
             {
-            dbg.location(148,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:5: ( join )*
+            dbg.location(149,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:149:5: ( join )*
             try { dbg.enterSubRule(34);
 
             loop34:
@@ -2329,10 +2271,10 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:148:7: join
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:149:7: join
             	    {
-            	    dbg.location(148,7);
-            	    pushFollow(FOLLOW_join_in_joinList714);
+            	    dbg.location(149,7);
+            	    pushFollow(FOLLOW_join_in_joinList697);
             	    join();
 
             	    state._fsp--;
@@ -2357,7 +2299,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(149, 3);
+        dbg.location(150, 3);
 
         }
         finally {
@@ -2372,21 +2314,21 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "join"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:151:1: join : ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:152:1: join : ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList ;
     public final void join() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "join");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(151, 1);
+        dbg.location(152, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:152:3: ( ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:3: ( ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:154:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN ) fromItem alias ON conditionList
             {
-            dbg.location(153,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )
+            dbg.location(154,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:154:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )
             int alt35=8;
             try { dbg.enterSubRule(35);
             try { dbg.enterDecision(35);
@@ -2405,98 +2347,98 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:153:7: JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:154:7: JOIN
                     {
-                    dbg.location(153,7);
-                    match(input,JOIN,FOLLOW_JOIN_in_join739); if (state.failed) return ;
+                    dbg.location(154,7);
+                    match(input,JOIN,FOLLOW_JOIN_in_join722); if (state.failed) return ;
 
                     }
                     break;
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:154:7: INNER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:155:7: INNER JOIN
                     {
-                    dbg.location(154,7);
-                    match(input,INNER,FOLLOW_INNER_in_join747); if (state.failed) return ;
-                    dbg.location(154,13);
-                    match(input,JOIN,FOLLOW_JOIN_in_join749); if (state.failed) return ;
+                    dbg.location(155,7);
+                    match(input,INNER,FOLLOW_INNER_in_join730); if (state.failed) return ;
+                    dbg.location(155,13);
+                    match(input,JOIN,FOLLOW_JOIN_in_join732); if (state.failed) return ;
 
                     }
                     break;
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:155:7: LEFT JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:156:7: LEFT JOIN
                     {
-                    dbg.location(155,7);
-                    match(input,LEFT,FOLLOW_LEFT_in_join757); if (state.failed) return ;
-                    dbg.location(155,12);
-                    match(input,JOIN,FOLLOW_JOIN_in_join759); if (state.failed) return ;
+                    dbg.location(156,7);
+                    match(input,LEFT,FOLLOW_LEFT_in_join740); if (state.failed) return ;
+                    dbg.location(156,12);
+                    match(input,JOIN,FOLLOW_JOIN_in_join742); if (state.failed) return ;
 
                     }
                     break;
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:156:7: LEFT OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:157:7: LEFT OUTER JOIN
                     {
-                    dbg.location(156,7);
-                    match(input,LEFT,FOLLOW_LEFT_in_join767); if (state.failed) return ;
-                    dbg.location(156,12);
-                    match(input,OUTER,FOLLOW_OUTER_in_join769); if (state.failed) return ;
-                    dbg.location(156,18);
-                    match(input,JOIN,FOLLOW_JOIN_in_join771); if (state.failed) return ;
+                    dbg.location(157,7);
+                    match(input,LEFT,FOLLOW_LEFT_in_join750); if (state.failed) return ;
+                    dbg.location(157,12);
+                    match(input,OUTER,FOLLOW_OUTER_in_join752); if (state.failed) return ;
+                    dbg.location(157,18);
+                    match(input,JOIN,FOLLOW_JOIN_in_join754); if (state.failed) return ;
 
                     }
                     break;
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:157:7: RIGHT JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:158:7: RIGHT JOIN
                     {
-                    dbg.location(157,7);
-                    match(input,RIGHT,FOLLOW_RIGHT_in_join779); if (state.failed) return ;
-                    dbg.location(157,13);
-                    match(input,JOIN,FOLLOW_JOIN_in_join781); if (state.failed) return ;
+                    dbg.location(158,7);
+                    match(input,RIGHT,FOLLOW_RIGHT_in_join762); if (state.failed) return ;
+                    dbg.location(158,13);
+                    match(input,JOIN,FOLLOW_JOIN_in_join764); if (state.failed) return ;
 
                     }
                     break;
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:158:7: RIGHT OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:159:7: RIGHT OUTER JOIN
                     {
-                    dbg.location(158,7);
-                    match(input,RIGHT,FOLLOW_RIGHT_in_join790); if (state.failed) return ;
-                    dbg.location(158,13);
-                    match(input,OUTER,FOLLOW_OUTER_in_join792); if (state.failed) return ;
-                    dbg.location(158,19);
-                    match(input,JOIN,FOLLOW_JOIN_in_join794); if (state.failed) return ;
+                    dbg.location(159,7);
+                    match(input,RIGHT,FOLLOW_RIGHT_in_join773); if (state.failed) return ;
+                    dbg.location(159,13);
+                    match(input,OUTER,FOLLOW_OUTER_in_join775); if (state.failed) return ;
+                    dbg.location(159,19);
+                    match(input,JOIN,FOLLOW_JOIN_in_join777); if (state.failed) return ;
 
                     }
                     break;
                 case 7 :
                     dbg.enterAlt(7);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:159:7: OUTER JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:160:7: OUTER JOIN
                     {
-                    dbg.location(159,7);
-                    match(input,OUTER,FOLLOW_OUTER_in_join802); if (state.failed) return ;
-                    dbg.location(159,13);
-                    match(input,JOIN,FOLLOW_JOIN_in_join804); if (state.failed) return ;
+                    dbg.location(160,7);
+                    match(input,OUTER,FOLLOW_OUTER_in_join785); if (state.failed) return ;
+                    dbg.location(160,13);
+                    match(input,JOIN,FOLLOW_JOIN_in_join787); if (state.failed) return ;
 
                     }
                     break;
                 case 8 :
                     dbg.enterAlt(8);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:160:7: NATURAL JOIN
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:161:7: NATURAL JOIN
                     {
-                    dbg.location(160,7);
-                    match(input,NATURAL,FOLLOW_NATURAL_in_join813); if (state.failed) return ;
-                    dbg.location(160,15);
-                    match(input,JOIN,FOLLOW_JOIN_in_join815); if (state.failed) return ;
+                    dbg.location(161,7);
+                    match(input,NATURAL,FOLLOW_NATURAL_in_join796); if (state.failed) return ;
+                    dbg.location(161,15);
+                    match(input,JOIN,FOLLOW_JOIN_in_join798); if (state.failed) return ;
 
                     }
                     break;
@@ -2504,22 +2446,22 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(35);}
 
-            dbg.location(162,3);
-            pushFollow(FOLLOW_fromItem_in_join826);
+            dbg.location(163,3);
+            pushFollow(FOLLOW_fromItem_in_join809);
             fromItem();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(162,12);
-            pushFollow(FOLLOW_alias_in_join828);
+            dbg.location(163,12);
+            pushFollow(FOLLOW_alias_in_join811);
             alias();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(168,3);
-            match(input,ON,FOLLOW_ON_in_join836); if (state.failed) return ;
-            dbg.location(168,6);
-            pushFollow(FOLLOW_conditionList_in_join838);
+            dbg.location(169,3);
+            match(input,ON,FOLLOW_ON_in_join819); if (state.failed) return ;
+            dbg.location(169,6);
+            pushFollow(FOLLOW_conditionList_in_join821);
             conditionList();
 
             state._fsp--;
@@ -2534,7 +2476,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(169, 3);
+        dbg.location(170, 3);
 
         }
         finally {
@@ -2549,23 +2491,23 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "where"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:177:1: where : WHERE conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:178:1: where : WHERE conditionList ;
     public final void where() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "where");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(177, 1);
+        dbg.location(178, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:178:3: ( WHERE conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:179:3: ( WHERE conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:178:5: WHERE conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:179:5: WHERE conditionList
             {
-            dbg.location(178,5);
-            match(input,WHERE,FOLLOW_WHERE_in_where859); if (state.failed) return ;
-            dbg.location(178,11);
-            pushFollow(FOLLOW_conditionList_in_where861);
+            dbg.location(179,5);
+            match(input,WHERE,FOLLOW_WHERE_in_where842); if (state.failed) return ;
+            dbg.location(179,11);
+            pushFollow(FOLLOW_conditionList_in_where844);
             conditionList();
 
             state._fsp--;
@@ -2580,7 +2522,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(179, 3);
+        dbg.location(180, 3);
 
         }
         finally {
@@ -2595,31 +2537,31 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "groupBy"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:181:1: groupBy : GROUP BY columnRef ( COMMA columnRef )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:1: groupBy : GROUP BY columnRef ( COMMA columnRef )* ;
     public final void groupBy() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "groupBy");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(181, 1);
+        dbg.location(182, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:3: ( GROUP BY columnRef ( COMMA columnRef )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:183:3: ( GROUP BY columnRef ( COMMA columnRef )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:5: GROUP BY columnRef ( COMMA columnRef )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:183:5: GROUP BY columnRef ( COMMA columnRef )*
             {
-            dbg.location(182,5);
-            match(input,GROUP,FOLLOW_GROUP_in_groupBy876); if (state.failed) return ;
-            dbg.location(182,11);
-            match(input,BY,FOLLOW_BY_in_groupBy878); if (state.failed) return ;
-            dbg.location(182,14);
-            pushFollow(FOLLOW_columnRef_in_groupBy880);
+            dbg.location(183,5);
+            match(input,GROUP,FOLLOW_GROUP_in_groupBy859); if (state.failed) return ;
+            dbg.location(183,11);
+            match(input,BY,FOLLOW_BY_in_groupBy861); if (state.failed) return ;
+            dbg.location(183,14);
+            pushFollow(FOLLOW_columnRef_in_groupBy863);
             columnRef();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(182,24);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:24: ( COMMA columnRef )*
+            dbg.location(183,24);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:183:24: ( COMMA columnRef )*
             try { dbg.enterSubRule(36);
 
             loop36:
@@ -2640,12 +2582,12 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:182:26: COMMA columnRef
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:183:26: COMMA columnRef
             	    {
-            	    dbg.location(182,26);
-            	    match(input,COMMA,FOLLOW_COMMA_in_groupBy884); if (state.failed) return ;
-            	    dbg.location(182,32);
-            	    pushFollow(FOLLOW_columnRef_in_groupBy886);
+            	    dbg.location(183,26);
+            	    match(input,COMMA,FOLLOW_COMMA_in_groupBy867); if (state.failed) return ;
+            	    dbg.location(183,32);
+            	    pushFollow(FOLLOW_columnRef_in_groupBy869);
             	    columnRef();
 
             	    state._fsp--;
@@ -2670,7 +2612,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(183, 3);
+        dbg.location(184, 3);
 
         }
         finally {
@@ -2685,23 +2627,23 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "having"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:185:1: having : HAVING conditionList ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:186:1: having : HAVING conditionList ;
     public final void having() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "having");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(185, 1);
+        dbg.location(186, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:186:3: ( HAVING conditionList )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:187:3: ( HAVING conditionList )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:186:5: HAVING conditionList
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:187:5: HAVING conditionList
             {
-            dbg.location(186,5);
-            match(input,HAVING,FOLLOW_HAVING_in_having904); if (state.failed) return ;
-            dbg.location(186,12);
-            pushFollow(FOLLOW_conditionList_in_having906);
+            dbg.location(187,5);
+            match(input,HAVING,FOLLOW_HAVING_in_having887); if (state.failed) return ;
+            dbg.location(187,12);
+            pushFollow(FOLLOW_conditionList_in_having889);
             conditionList();
 
             state._fsp--;
@@ -2716,7 +2658,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(187, 3);
+        dbg.location(188, 3);
 
         }
         finally {
@@ -2731,31 +2673,31 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "orderBy"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:189:1: orderBy : ORDER BY orderByItem ( COMMA orderByItem )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:1: orderBy : ORDER BY orderByItem ( COMMA orderByItem )* ;
     public final void orderBy() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "orderBy");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(189, 1);
+        dbg.location(190, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:3: ( ORDER BY orderByItem ( COMMA orderByItem )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:191:3: ( ORDER BY orderByItem ( COMMA orderByItem )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:5: ORDER BY orderByItem ( COMMA orderByItem )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:191:5: ORDER BY orderByItem ( COMMA orderByItem )*
             {
-            dbg.location(190,5);
-            match(input,ORDER,FOLLOW_ORDER_in_orderBy921); if (state.failed) return ;
-            dbg.location(190,11);
-            match(input,BY,FOLLOW_BY_in_orderBy923); if (state.failed) return ;
-            dbg.location(190,14);
-            pushFollow(FOLLOW_orderByItem_in_orderBy925);
+            dbg.location(191,5);
+            match(input,ORDER,FOLLOW_ORDER_in_orderBy904); if (state.failed) return ;
+            dbg.location(191,11);
+            match(input,BY,FOLLOW_BY_in_orderBy906); if (state.failed) return ;
+            dbg.location(191,14);
+            pushFollow(FOLLOW_orderByItem_in_orderBy908);
             orderByItem();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(190,26);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:26: ( COMMA orderByItem )*
+            dbg.location(191,26);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:191:26: ( COMMA orderByItem )*
             try { dbg.enterSubRule(37);
 
             loop37:
@@ -2776,12 +2718,12 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:190:28: COMMA orderByItem
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:191:28: COMMA orderByItem
             	    {
-            	    dbg.location(190,28);
-            	    match(input,COMMA,FOLLOW_COMMA_in_orderBy929); if (state.failed) return ;
-            	    dbg.location(190,34);
-            	    pushFollow(FOLLOW_orderByItem_in_orderBy931);
+            	    dbg.location(191,28);
+            	    match(input,COMMA,FOLLOW_COMMA_in_orderBy912); if (state.failed) return ;
+            	    dbg.location(191,34);
+            	    pushFollow(FOLLOW_orderByItem_in_orderBy914);
             	    orderByItem();
 
             	    state._fsp--;
@@ -2806,7 +2748,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(191, 3);
+        dbg.location(192, 3);
 
         }
         finally {
@@ -2821,27 +2763,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "orderByItem"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:193:1: orderByItem : columnRef ( ASC | DESC )? ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:1: orderByItem : columnRef ( ASC | DESC )? ;
     public final void orderByItem() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "orderByItem");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(193, 1);
+        dbg.location(194, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:3: ( columnRef ( ASC | DESC )? )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:195:3: ( columnRef ( ASC | DESC )? )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:5: columnRef ( ASC | DESC )?
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:195:5: columnRef ( ASC | DESC )?
             {
-            dbg.location(194,5);
-            pushFollow(FOLLOW_columnRef_in_orderByItem949);
+            dbg.location(195,5);
+            pushFollow(FOLLOW_columnRef_in_orderByItem932);
             columnRef();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(194,15);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:194:15: ( ASC | DESC )?
+            dbg.location(195,15);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:195:15: ( ASC | DESC )?
             int alt38=2;
             try { dbg.enterSubRule(38);
             try { dbg.enterDecision(38);
@@ -2859,7 +2801,7 @@ public class GenericSQLParser extends DebugParser {
 
                     // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
                     {
-                    dbg.location(194,15);
+                    dbg.location(195,15);
                     if ( (input.LA(1)>=ASC && input.LA(1)<=DESC) ) {
                         input.consume();
                         state.errorRecovery=false;state.failed=false;
@@ -2888,7 +2830,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(195, 3);
+        dbg.location(196, 3);
 
         }
         finally {
@@ -2903,29 +2845,29 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "nestedCondition"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:197:1: nestedCondition : LPAREN conditionList RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:198:1: nestedCondition : LPAREN conditionList RPAREN ;
     public final void nestedCondition() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "nestedCondition");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(197, 1);
+        dbg.location(198, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:198:3: ( LPAREN conditionList RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:199:3: ( LPAREN conditionList RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:198:5: LPAREN conditionList RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:199:5: LPAREN conditionList RPAREN
             {
-            dbg.location(198,5);
-            match(input,LPAREN,FOLLOW_LPAREN_in_nestedCondition975); if (state.failed) return ;
-            dbg.location(198,12);
-            pushFollow(FOLLOW_conditionList_in_nestedCondition977);
+            dbg.location(199,5);
+            match(input,LPAREN,FOLLOW_LPAREN_in_nestedCondition958); if (state.failed) return ;
+            dbg.location(199,12);
+            pushFollow(FOLLOW_conditionList_in_nestedCondition960);
             conditionList();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(198,26);
-            match(input,RPAREN,FOLLOW_RPAREN_in_nestedCondition979); if (state.failed) return ;
+            dbg.location(199,26);
+            match(input,RPAREN,FOLLOW_RPAREN_in_nestedCondition962); if (state.failed) return ;
 
             }
 
@@ -2936,7 +2878,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(199, 3);
+        dbg.location(200, 3);
 
         }
         finally {
@@ -2951,27 +2893,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "conditionList"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:201:1: conditionList : condition ( ( OR | AND ) condition )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:1: conditionList : condition ( ( OR | AND ) condition )* ;
     public final void conditionList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "conditionList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(201, 1);
+        dbg.location(202, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:3: ( condition ( ( OR | AND ) condition )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:203:3: ( condition ( ( OR | AND ) condition )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:5: condition ( ( OR | AND ) condition )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:203:5: condition ( ( OR | AND ) condition )*
             {
-            dbg.location(202,5);
-            pushFollow(FOLLOW_condition_in_conditionList994);
+            dbg.location(203,5);
+            pushFollow(FOLLOW_condition_in_conditionList977);
             condition();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(202,15);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:15: ( ( OR | AND ) condition )*
+            dbg.location(203,15);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:203:15: ( ( OR | AND ) condition )*
             try { dbg.enterSubRule(39);
 
             loop39:
@@ -2992,9 +2934,9 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:202:17: ( OR | AND ) condition
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:203:17: ( OR | AND ) condition
             	    {
-            	    dbg.location(202,17);
+            	    dbg.location(203,17);
             	    if ( (input.LA(1)>=OR && input.LA(1)<=AND) ) {
             	        input.consume();
             	        state.errorRecovery=false;state.failed=false;
@@ -3006,8 +2948,8 @@ public class GenericSQLParser extends DebugParser {
             	        throw mse;
             	    }
 
-            	    dbg.location(202,30);
-            	    pushFollow(FOLLOW_condition_in_conditionList1008);
+            	    dbg.location(203,30);
+            	    pushFollow(FOLLOW_condition_in_conditionList991);
             	    condition();
 
             	    state._fsp--;
@@ -3032,7 +2974,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(203, 3);
+        dbg.location(204, 3);
 
         }
         finally {
@@ -3047,21 +2989,21 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "condition"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:205:1: condition : ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:1: condition : ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) ;
     public final void condition() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "condition");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(205, 1);
+        dbg.location(206, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:3: ( ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:3: ( ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison ) )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:5: ( NOT )? ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
             {
-            dbg.location(206,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:5: ( NOT )?
+            dbg.location(207,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:5: ( NOT )?
             int alt40=2;
             try { dbg.enterSubRule(40);
             try { dbg.enterDecision(40);
@@ -3077,10 +3019,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:206:7: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: NOT
                     {
-                    dbg.location(206,7);
-                    match(input,NOT,FOLLOW_NOT_in_condition1028); if (state.failed) return ;
+                    dbg.location(207,7);
+                    match(input,NOT,FOLLOW_NOT_in_condition1011); if (state.failed) return ;
 
                     }
                     break;
@@ -3088,8 +3030,8 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(40);}
 
-            dbg.location(207,5);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
+            dbg.location(208,5);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )
             int alt41=8;
             try { dbg.enterSubRule(41);
             try { dbg.enterDecision(41);
@@ -3108,10 +3050,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: nestedCondition
                     {
-                    dbg.location(207,7);
-                    pushFollow(FOLLOW_nestedCondition_in_condition1039);
+                    dbg.location(208,7);
+                    pushFollow(FOLLOW_nestedCondition_in_condition1022);
                     nestedCondition();
 
                     state._fsp--;
@@ -3122,10 +3064,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: in
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: in
                     {
-                    dbg.location(208,7);
-                    pushFollow(FOLLOW_in_in_condition1047);
+                    dbg.location(209,7);
+                    pushFollow(FOLLOW_in_in_condition1030);
                     in();
 
                     state._fsp--;
@@ -3136,10 +3078,10 @@ public class GenericSQLParser extends DebugParser {
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: between
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: between
                     {
-                    dbg.location(209,7);
-                    pushFollow(FOLLOW_between_in_condition1055);
+                    dbg.location(210,7);
+                    pushFollow(FOLLOW_between_in_condition1038);
                     between();
 
                     state._fsp--;
@@ -3150,10 +3092,10 @@ public class GenericSQLParser extends DebugParser {
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: isNull
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:211:7: isNull
                     {
-                    dbg.location(210,7);
-                    pushFollow(FOLLOW_isNull_in_condition1063);
+                    dbg.location(211,7);
+                    pushFollow(FOLLOW_isNull_in_condition1046);
                     isNull();
 
                     state._fsp--;
@@ -3164,10 +3106,10 @@ public class GenericSQLParser extends DebugParser {
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:211:7: exists
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: exists
                     {
-                    dbg.location(211,7);
-                    pushFollow(FOLLOW_exists_in_condition1071);
+                    dbg.location(212,7);
+                    pushFollow(FOLLOW_exists_in_condition1054);
                     exists();
 
                     state._fsp--;
@@ -3178,10 +3120,10 @@ public class GenericSQLParser extends DebugParser {
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: like
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: like
                     {
-                    dbg.location(212,7);
-                    pushFollow(FOLLOW_like_in_condition1079);
+                    dbg.location(213,7);
+                    pushFollow(FOLLOW_like_in_condition1062);
                     like();
 
                     state._fsp--;
@@ -3192,10 +3134,10 @@ public class GenericSQLParser extends DebugParser {
                 case 7 :
                     dbg.enterAlt(7);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:214:7: quantifier
                     {
-                    dbg.location(213,7);
-                    pushFollow(FOLLOW_quantifier_in_condition1087);
+                    dbg.location(214,7);
+                    pushFollow(FOLLOW_quantifier_in_condition1070);
                     quantifier();
 
                     state._fsp--;
@@ -3206,10 +3148,10 @@ public class GenericSQLParser extends DebugParser {
                 case 8 :
                     dbg.enterAlt(8);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:214:6: comparison
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:215:6: comparison
                     {
-                    dbg.location(214,6);
-                    pushFollow(FOLLOW_comparison_in_condition1094);
+                    dbg.location(215,6);
+                    pushFollow(FOLLOW_comparison_in_condition1077);
                     comparison();
 
                     state._fsp--;
@@ -3231,7 +3173,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(216, 3);
+        dbg.location(217, 3);
 
         }
         finally {
@@ -3246,27 +3188,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "in"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:218:1: in : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:1: in : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN ;
     public final void in() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "in");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(218, 1);
+        dbg.location(219, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:3: ( expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:3: ( expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:5: expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:5: expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
             {
-            dbg.location(219,5);
-            pushFollow(FOLLOW_expression_in_in1113);
+            dbg.location(220,5);
+            pushFollow(FOLLOW_expression_in_in1096);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(219,16);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:16: ( NOT )?
+            dbg.location(220,16);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:16: ( NOT )?
             int alt42=2;
             try { dbg.enterSubRule(42);
             try { dbg.enterDecision(42);
@@ -3282,10 +3224,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:18: NOT
                     {
-                    dbg.location(219,18);
-                    match(input,NOT,FOLLOW_NOT_in_in1117); if (state.failed) return ;
+                    dbg.location(220,18);
+                    match(input,NOT,FOLLOW_NOT_in_in1100); if (state.failed) return ;
 
                     }
                     break;
@@ -3293,12 +3235,12 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(42);}
 
-            dbg.location(219,25);
-            match(input,IN,FOLLOW_IN_in_in1122); if (state.failed) return ;
-            dbg.location(219,28);
-            match(input,LPAREN,FOLLOW_LPAREN_in_in1124); if (state.failed) return ;
-            dbg.location(219,35);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:35: ( subSelect | expressionList )
+            dbg.location(220,25);
+            match(input,IN,FOLLOW_IN_in_in1105); if (state.failed) return ;
+            dbg.location(220,28);
+            match(input,LPAREN,FOLLOW_LPAREN_in_in1107); if (state.failed) return ;
+            dbg.location(220,35);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:35: ( subSelect | expressionList )
             int alt43=2;
             try { dbg.enterSubRule(43);
             try { dbg.enterDecision(43);
@@ -3360,10 +3302,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:37: subSelect
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:37: subSelect
                     {
-                    dbg.location(219,37);
-                    pushFollow(FOLLOW_subSelect_in_in1128);
+                    dbg.location(220,37);
+                    pushFollow(FOLLOW_subSelect_in_in1111);
                     subSelect();
 
                     state._fsp--;
@@ -3374,10 +3316,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:219:49: expressionList
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:220:49: expressionList
                     {
-                    dbg.location(219,49);
-                    pushFollow(FOLLOW_expressionList_in_in1132);
+                    dbg.location(220,49);
+                    pushFollow(FOLLOW_expressionList_in_in1115);
                     expressionList();
 
                     state._fsp--;
@@ -3389,8 +3331,8 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(43);}
 
-            dbg.location(219,66);
-            match(input,RPAREN,FOLLOW_RPAREN_in_in1136); if (state.failed) return ;
+            dbg.location(220,66);
+            match(input,RPAREN,FOLLOW_RPAREN_in_in1119); if (state.failed) return ;
 
             }
 
@@ -3401,7 +3343,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(220, 3);
+        dbg.location(221, 3);
 
         }
         finally {
@@ -3416,27 +3358,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "between"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:222:1: between : expression ( NOT )? BETWEEN expression AND expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:1: between : expression ( NOT )? BETWEEN expression AND expression ;
     public final void between() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "between");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(222, 1);
+        dbg.location(223, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:3: ( expression ( NOT )? BETWEEN expression AND expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:224:3: ( expression ( NOT )? BETWEEN expression AND expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:5: expression ( NOT )? BETWEEN expression AND expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:224:5: expression ( NOT )? BETWEEN expression AND expression
             {
-            dbg.location(223,5);
-            pushFollow(FOLLOW_expression_in_between1151);
+            dbg.location(224,5);
+            pushFollow(FOLLOW_expression_in_between1134);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(223,16);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:16: ( NOT )?
+            dbg.location(224,16);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:224:16: ( NOT )?
             int alt44=2;
             try { dbg.enterSubRule(44);
             try { dbg.enterDecision(44);
@@ -3452,10 +3394,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:223:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:224:18: NOT
                     {
-                    dbg.location(223,18);
-                    match(input,NOT,FOLLOW_NOT_in_between1155); if (state.failed) return ;
+                    dbg.location(224,18);
+                    match(input,NOT,FOLLOW_NOT_in_between1138); if (state.failed) return ;
 
                     }
                     break;
@@ -3463,18 +3405,18 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(44);}
 
-            dbg.location(223,25);
-            match(input,BETWEEN,FOLLOW_BETWEEN_in_between1160); if (state.failed) return ;
-            dbg.location(223,33);
-            pushFollow(FOLLOW_expression_in_between1162);
+            dbg.location(224,25);
+            match(input,BETWEEN,FOLLOW_BETWEEN_in_between1143); if (state.failed) return ;
+            dbg.location(224,33);
+            pushFollow(FOLLOW_expression_in_between1145);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(223,44);
-            match(input,AND,FOLLOW_AND_in_between1164); if (state.failed) return ;
-            dbg.location(223,48);
-            pushFollow(FOLLOW_expression_in_between1166);
+            dbg.location(224,44);
+            match(input,AND,FOLLOW_AND_in_between1147); if (state.failed) return ;
+            dbg.location(224,48);
+            pushFollow(FOLLOW_expression_in_between1149);
             expression();
 
             state._fsp--;
@@ -3489,7 +3431,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(224, 3);
+        dbg.location(225, 3);
 
         }
         finally {
@@ -3504,29 +3446,29 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "isNull"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:226:1: isNull : expression IS ( NOT )? NULL ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:1: isNull : expression IS ( NOT )? NULL ;
     public final void isNull() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "isNull");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(226, 1);
+        dbg.location(227, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:3: ( expression IS ( NOT )? NULL )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:228:3: ( expression IS ( NOT )? NULL )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:5: expression IS ( NOT )? NULL
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:228:5: expression IS ( NOT )? NULL
             {
-            dbg.location(227,5);
-            pushFollow(FOLLOW_expression_in_isNull1181);
+            dbg.location(228,5);
+            pushFollow(FOLLOW_expression_in_isNull1164);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(227,16);
-            match(input,IS,FOLLOW_IS_in_isNull1183); if (state.failed) return ;
-            dbg.location(227,19);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:19: ( NOT )?
+            dbg.location(228,16);
+            match(input,IS,FOLLOW_IS_in_isNull1166); if (state.failed) return ;
+            dbg.location(228,19);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:228:19: ( NOT )?
             int alt45=2;
             try { dbg.enterSubRule(45);
             try { dbg.enterDecision(45);
@@ -3542,10 +3484,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:227:21: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:228:21: NOT
                     {
-                    dbg.location(227,21);
-                    match(input,NOT,FOLLOW_NOT_in_isNull1187); if (state.failed) return ;
+                    dbg.location(228,21);
+                    match(input,NOT,FOLLOW_NOT_in_isNull1170); if (state.failed) return ;
 
                     }
                     break;
@@ -3553,8 +3495,8 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(45);}
 
-            dbg.location(227,28);
-            match(input,NULL,FOLLOW_NULL_in_isNull1192); if (state.failed) return ;
+            dbg.location(228,28);
+            match(input,NULL,FOLLOW_NULL_in_isNull1175); if (state.failed) return ;
 
             }
 
@@ -3565,7 +3507,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(228, 3);
+        dbg.location(229, 3);
 
         }
         finally {
@@ -3580,23 +3522,23 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "exists"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:230:1: exists : EXISTS expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:231:1: exists : EXISTS expression ;
     public final void exists() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "exists");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(230, 1);
+        dbg.location(231, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:231:3: ( EXISTS expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:232:3: ( EXISTS expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:231:5: EXISTS expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:232:5: EXISTS expression
             {
-            dbg.location(231,5);
-            match(input,EXISTS,FOLLOW_EXISTS_in_exists1207); if (state.failed) return ;
-            dbg.location(231,12);
-            pushFollow(FOLLOW_expression_in_exists1209);
+            dbg.location(232,5);
+            match(input,EXISTS,FOLLOW_EXISTS_in_exists1190); if (state.failed) return ;
+            dbg.location(232,12);
+            pushFollow(FOLLOW_expression_in_exists1192);
             expression();
 
             state._fsp--;
@@ -3611,7 +3553,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(232, 3);
+        dbg.location(233, 3);
 
         }
         finally {
@@ -3626,27 +3568,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "like"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:234:1: like : expression ( NOT )? LIKE expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:235:1: like : expression ( NOT )? LIKE expression ;
     public final void like() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "like");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(234, 1);
+        dbg.location(235, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:3: ( expression ( NOT )? LIKE expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:238:3: ( expression ( NOT )? LIKE expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:5: expression ( NOT )? LIKE expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:238:5: expression ( NOT )? LIKE expression
             {
-            dbg.location(237,5);
-            pushFollow(FOLLOW_expression_in_like1228);
+            dbg.location(238,5);
+            pushFollow(FOLLOW_expression_in_like1211);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(237,16);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:16: ( NOT )?
+            dbg.location(238,16);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:238:16: ( NOT )?
             int alt46=2;
             try { dbg.enterSubRule(46);
             try { dbg.enterDecision(46);
@@ -3662,10 +3604,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:237:18: NOT
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:238:18: NOT
                     {
-                    dbg.location(237,18);
-                    match(input,NOT,FOLLOW_NOT_in_like1232); if (state.failed) return ;
+                    dbg.location(238,18);
+                    match(input,NOT,FOLLOW_NOT_in_like1215); if (state.failed) return ;
 
                     }
                     break;
@@ -3673,10 +3615,10 @@ public class GenericSQLParser extends DebugParser {
             }
             } finally {dbg.exitSubRule(46);}
 
-            dbg.location(237,25);
-            match(input,LIKE,FOLLOW_LIKE_in_like1237); if (state.failed) return ;
-            dbg.location(237,30);
-            pushFollow(FOLLOW_expression_in_like1239);
+            dbg.location(238,25);
+            match(input,LIKE,FOLLOW_LIKE_in_like1220); if (state.failed) return ;
+            dbg.location(238,30);
+            pushFollow(FOLLOW_expression_in_like1222);
             expression();
 
             state._fsp--;
@@ -3691,7 +3633,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(239, 3);
+        dbg.location(240, 3);
 
         }
         finally {
@@ -3706,33 +3648,33 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "comparison"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:241:1: comparison : expression comparator expression ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:242:1: comparison : expression comparator expression ;
     public final void comparison() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "comparison");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(241, 1);
+        dbg.location(242, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:242:3: ( expression comparator expression )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:243:3: ( expression comparator expression )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:242:5: expression comparator expression
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:243:5: expression comparator expression
             {
-            dbg.location(242,5);
-            pushFollow(FOLLOW_expression_in_comparison1257);
+            dbg.location(243,5);
+            pushFollow(FOLLOW_expression_in_comparison1240);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(242,16);
-            pushFollow(FOLLOW_comparator_in_comparison1259);
+            dbg.location(243,16);
+            pushFollow(FOLLOW_comparator_in_comparison1242);
             comparator();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(242,27);
-            pushFollow(FOLLOW_expression_in_comparison1261);
+            dbg.location(243,27);
+            pushFollow(FOLLOW_expression_in_comparison1244);
             expression();
 
             state._fsp--;
@@ -3747,7 +3689,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(243, 3);
+        dbg.location(244, 3);
 
         }
         finally {
@@ -3762,20 +3704,20 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "comparator"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:245:1: comparator : ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:246:1: comparator : ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT );
     public final void comparator() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "comparator");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(245, 1);
+        dbg.location(246, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:246:3: ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:247:3: ( EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT )
             dbg.enterAlt(1);
 
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
-            dbg.location(246,3);
+            dbg.location(247,3);
             if ( input.LA(1)==EQ||(input.LA(1)>=NEQ1 && input.LA(1)<=GT) ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -3797,7 +3739,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(253, 3);
+        dbg.location(254, 3);
 
         }
         finally {
@@ -3812,26 +3754,26 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "quantifier"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:255:1: quantifier : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:256:1: quantifier : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN ;
     public final void quantifier() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "quantifier");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(255, 1);
+        dbg.location(256, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:256:3: ( expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:257:3: ( expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:256:5: expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:257:5: expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
             {
-            dbg.location(256,5);
-            pushFollow(FOLLOW_expression_in_quantifier1326);
+            dbg.location(257,5);
+            pushFollow(FOLLOW_expression_in_quantifier1309);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(256,16);
+            dbg.location(257,16);
             if ( input.LA(1)==ALL||(input.LA(1)>=ANY && input.LA(1)<=SOME) ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -3843,16 +3785,16 @@ public class GenericSQLParser extends DebugParser {
                 throw mse;
             }
 
-            dbg.location(256,37);
-            match(input,LPAREN,FOLLOW_LPAREN_in_quantifier1342); if (state.failed) return ;
-            dbg.location(256,44);
-            pushFollow(FOLLOW_subSelect_in_quantifier1344);
+            dbg.location(257,37);
+            match(input,LPAREN,FOLLOW_LPAREN_in_quantifier1325); if (state.failed) return ;
+            dbg.location(257,44);
+            pushFollow(FOLLOW_subSelect_in_quantifier1327);
             subSelect();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(256,54);
-            match(input,RPAREN,FOLLOW_RPAREN_in_quantifier1346); if (state.failed) return ;
+            dbg.location(257,54);
+            match(input,RPAREN,FOLLOW_RPAREN_in_quantifier1329); if (state.failed) return ;
 
             }
 
@@ -3863,7 +3805,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(257, 3);
+        dbg.location(258, 3);
 
         }
         finally {
@@ -3878,27 +3820,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "expressionList"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:259:1: expressionList : expression ( COMMA expression )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:1: expressionList : expression ( COMMA expression )* ;
     public final void expressionList() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "expressionList");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(259, 1);
+        dbg.location(260, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:3: ( expression ( COMMA expression )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:261:3: ( expression ( COMMA expression )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:5: expression ( COMMA expression )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:261:5: expression ( COMMA expression )*
             {
-            dbg.location(260,5);
-            pushFollow(FOLLOW_expression_in_expressionList1361);
+            dbg.location(261,5);
+            pushFollow(FOLLOW_expression_in_expressionList1344);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(260,16);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:16: ( COMMA expression )*
+            dbg.location(261,16);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:261:16: ( COMMA expression )*
             try { dbg.enterSubRule(47);
 
             loop47:
@@ -3919,12 +3861,12 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:260:18: COMMA expression
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:261:18: COMMA expression
             	    {
-            	    dbg.location(260,18);
-            	    match(input,COMMA,FOLLOW_COMMA_in_expressionList1365); if (state.failed) return ;
-            	    dbg.location(260,24);
-            	    pushFollow(FOLLOW_expression_in_expressionList1367);
+            	    dbg.location(261,18);
+            	    match(input,COMMA,FOLLOW_COMMA_in_expressionList1348); if (state.failed) return ;
+            	    dbg.location(261,24);
+            	    pushFollow(FOLLOW_expression_in_expressionList1350);
             	    expression();
 
             	    state._fsp--;
@@ -3949,7 +3891,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(261, 3);
+        dbg.location(262, 3);
 
         }
         finally {
@@ -3964,29 +3906,29 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "nestedExpression"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:263:1: nestedExpression : LPAREN expression RPAREN ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:264:1: nestedExpression : LPAREN expression RPAREN ;
     public final void nestedExpression() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "nestedExpression");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(263, 1);
+        dbg.location(264, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:264:3: ( LPAREN expression RPAREN )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:265:3: ( LPAREN expression RPAREN )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:264:5: LPAREN expression RPAREN
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:265:5: LPAREN expression RPAREN
             {
-            dbg.location(264,5);
-            match(input,LPAREN,FOLLOW_LPAREN_in_nestedExpression1383); if (state.failed) return ;
-            dbg.location(264,12);
-            pushFollow(FOLLOW_expression_in_nestedExpression1385);
+            dbg.location(265,5);
+            match(input,LPAREN,FOLLOW_LPAREN_in_nestedExpression1366); if (state.failed) return ;
+            dbg.location(265,12);
+            pushFollow(FOLLOW_expression_in_nestedExpression1368);
             expression();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(264,23);
-            match(input,RPAREN,FOLLOW_RPAREN_in_nestedExpression1387); if (state.failed) return ;
+            dbg.location(265,23);
+            match(input,RPAREN,FOLLOW_RPAREN_in_nestedExpression1370); if (state.failed) return ;
 
             }
 
@@ -3997,7 +3939,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(265, 3);
+        dbg.location(266, 3);
 
         }
         finally {
@@ -4012,27 +3954,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "expression"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:267:1: expression : multiply ( ( PLUS | MINUS ) multiply )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:1: expression : multiply ( ( PLUS | MINUS ) multiply )* ;
     public final void expression() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "expression");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(267, 1);
+        dbg.location(268, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:3: ( multiply ( ( PLUS | MINUS ) multiply )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:269:3: ( multiply ( ( PLUS | MINUS ) multiply )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:5: multiply ( ( PLUS | MINUS ) multiply )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:269:5: multiply ( ( PLUS | MINUS ) multiply )*
             {
-            dbg.location(268,5);
-            pushFollow(FOLLOW_multiply_in_expression1402);
+            dbg.location(269,5);
+            pushFollow(FOLLOW_multiply_in_expression1385);
             multiply();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(268,14);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:14: ( ( PLUS | MINUS ) multiply )*
+            dbg.location(269,14);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:269:14: ( ( PLUS | MINUS ) multiply )*
             try { dbg.enterSubRule(48);
 
             loop48:
@@ -4053,9 +3995,9 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:268:16: ( PLUS | MINUS ) multiply
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:269:16: ( PLUS | MINUS ) multiply
             	    {
-            	    dbg.location(268,16);
+            	    dbg.location(269,16);
             	    if ( (input.LA(1)>=PLUS && input.LA(1)<=MINUS) ) {
             	        input.consume();
             	        state.errorRecovery=false;state.failed=false;
@@ -4067,8 +4009,8 @@ public class GenericSQLParser extends DebugParser {
             	        throw mse;
             	    }
 
-            	    dbg.location(268,33);
-            	    pushFollow(FOLLOW_multiply_in_expression1416);
+            	    dbg.location(269,33);
+            	    pushFollow(FOLLOW_multiply_in_expression1399);
             	    multiply();
 
             	    state._fsp--;
@@ -4093,7 +4035,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(269, 3);
+        dbg.location(270, 3);
 
         }
         finally {
@@ -4108,27 +4050,27 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "multiply"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:271:1: multiply : value ( ( STAR | DIVIDE ) value )* ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:1: multiply : value ( ( STAR | DIVIDE ) value )* ;
     public final void multiply() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "multiply");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(271, 1);
+        dbg.location(272, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:3: ( value ( ( STAR | DIVIDE ) value )* )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:273:3: ( value ( ( STAR | DIVIDE ) value )* )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:5: value ( ( STAR | DIVIDE ) value )*
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:273:5: value ( ( STAR | DIVIDE ) value )*
             {
-            dbg.location(272,5);
-            pushFollow(FOLLOW_value_in_multiply1433);
+            dbg.location(273,5);
+            pushFollow(FOLLOW_value_in_multiply1416);
             value();
 
             state._fsp--;
             if (state.failed) return ;
-            dbg.location(272,11);
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:11: ( ( STAR | DIVIDE ) value )*
+            dbg.location(273,11);
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:273:11: ( ( STAR | DIVIDE ) value )*
             try { dbg.enterSubRule(49);
 
             loop49:
@@ -4149,9 +4091,9 @@ public class GenericSQLParser extends DebugParser {
             	case 1 :
             	    dbg.enterAlt(1);
 
-            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:272:13: ( STAR | DIVIDE ) value
+            	    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:273:13: ( STAR | DIVIDE ) value
             	    {
-            	    dbg.location(272,13);
+            	    dbg.location(273,13);
             	    if ( input.LA(1)==STAR||input.LA(1)==DIVIDE ) {
             	        input.consume();
             	        state.errorRecovery=false;state.failed=false;
@@ -4163,8 +4105,8 @@ public class GenericSQLParser extends DebugParser {
             	        throw mse;
             	    }
 
-            	    dbg.location(272,31);
-            	    pushFollow(FOLLOW_value_in_multiply1447);
+            	    dbg.location(273,31);
+            	    pushFollow(FOLLOW_value_in_multiply1430);
             	    value();
 
             	    state._fsp--;
@@ -4189,7 +4131,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(273, 3);
+        dbg.location(274, 3);
 
         }
         finally {
@@ -4204,15 +4146,15 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "value"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:290:1: value : ( literal | ( unary )? ( columnRef | nestedExpression ) );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:291:1: value : ( literal | ( unary )? ( columnRef | nestedExpression ) );
     public final void value() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "value");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(290, 1);
+        dbg.location(291, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:291:3: ( literal | ( unary )? ( columnRef | nestedExpression ) )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:292:3: ( literal | ( unary )? ( columnRef | nestedExpression ) )
             int alt52=2;
             try { dbg.enterDecision(52);
 
@@ -4272,10 +4214,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:291:5: literal
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:292:5: literal
                     {
-                    dbg.location(291,5);
-                    pushFollow(FOLLOW_literal_in_value1486);
+                    dbg.location(292,5);
+                    pushFollow(FOLLOW_literal_in_value1469);
                     literal();
 
                     state._fsp--;
@@ -4286,10 +4228,10 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )? ( columnRef | nestedExpression )
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:5: ( unary )? ( columnRef | nestedExpression )
                     {
-                    dbg.location(293,5);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:5: ( unary )?
+                    dbg.location(294,5);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:5: ( unary )?
                     int alt50=2;
                     try { dbg.enterSubRule(50);
                     try { dbg.enterDecision(50);
@@ -4305,10 +4247,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:293:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:7: unary
                             {
-                            dbg.location(293,7);
-                            pushFollow(FOLLOW_unary_in_value1496);
+                            dbg.location(294,7);
+                            pushFollow(FOLLOW_unary_in_value1479);
                             unary();
 
                             state._fsp--;
@@ -4320,8 +4262,8 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(50);}
 
-                    dbg.location(294,5);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:5: ( columnRef | nestedExpression )
+                    dbg.location(295,5);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:295:5: ( columnRef | nestedExpression )
                     int alt51=2;
                     try { dbg.enterSubRule(51);
                     try { dbg.enterDecision(51);
@@ -4348,10 +4290,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:294:7: columnRef
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:295:7: columnRef
                             {
-                            dbg.location(294,7);
-                            pushFollow(FOLLOW_columnRef_in_value1507);
+                            dbg.location(295,7);
+                            pushFollow(FOLLOW_columnRef_in_value1490);
                             columnRef();
 
                             state._fsp--;
@@ -4362,10 +4304,10 @@ public class GenericSQLParser extends DebugParser {
                         case 2 :
                             dbg.enterAlt(2);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:295:7: nestedExpression
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:296:7: nestedExpression
                             {
-                            dbg.location(295,7);
-                            pushFollow(FOLLOW_nestedExpression_in_value1515);
+                            dbg.location(296,7);
+                            pushFollow(FOLLOW_nestedExpression_in_value1498);
                             nestedExpression();
 
                             state._fsp--;
@@ -4389,7 +4331,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(298, 3);
+        dbg.location(299, 3);
 
         }
         finally {
@@ -4404,15 +4346,15 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "literal"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:300:1: literal : ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:1: literal : ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date );
     public final void literal() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "literal");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(300, 1);
+        dbg.location(301, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:3: ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:3: ( ( unary )? Float | ( unary )? Integer | String | TRUE | FALSE | date )
             int alt55=6;
             try { dbg.enterDecision(55);
 
@@ -4422,11 +4364,11 @@ public class GenericSQLParser extends DebugParser {
                 {
                 int LA55_1 = input.LA(2);
 
-                if ( (LA55_1==Integer) ) {
-                    alt55=2;
-                }
-                else if ( (LA55_1==Float) ) {
+                if ( (LA55_1==Float) ) {
                     alt55=1;
+                }
+                else if ( (LA55_1==Integer) ) {
+                    alt55=2;
                 }
                 else {
                     if (state.backtracking>0) {state.failed=true; return ;}
@@ -4485,10 +4427,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )? Float
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )? Float
                     {
-                    dbg.location(301,5);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:5: ( unary )?
+                    dbg.location(302,5);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )?
                     int alt53=2;
                     try { dbg.enterSubRule(53);
                     try { dbg.enterDecision(53);
@@ -4504,10 +4446,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:301:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:7: unary
                             {
-                            dbg.location(301,7);
-                            pushFollow(FOLLOW_unary_in_literal1539);
+                            dbg.location(302,7);
+                            pushFollow(FOLLOW_unary_in_literal1522);
                             unary();
 
                             state._fsp--;
@@ -4519,18 +4461,18 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(53);}
 
-                    dbg.location(301,16);
-                    match(input,Float,FOLLOW_Float_in_literal1544); if (state.failed) return ;
+                    dbg.location(302,16);
+                    match(input,Float,FOLLOW_Float_in_literal1527); if (state.failed) return ;
 
                     }
                     break;
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )? Integer
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:303:5: ( unary )? Integer
                     {
-                    dbg.location(302,5);
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:5: ( unary )?
+                    dbg.location(303,5);
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:303:5: ( unary )?
                     int alt54=2;
                     try { dbg.enterSubRule(54);
                     try { dbg.enterDecision(54);
@@ -4546,10 +4488,10 @@ public class GenericSQLParser extends DebugParser {
                         case 1 :
                             dbg.enterAlt(1);
 
-                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:302:7: unary
+                            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:303:7: unary
                             {
-                            dbg.location(302,7);
-                            pushFollow(FOLLOW_unary_in_literal1552);
+                            dbg.location(303,7);
+                            pushFollow(FOLLOW_unary_in_literal1535);
                             unary();
 
                             state._fsp--;
@@ -4561,48 +4503,48 @@ public class GenericSQLParser extends DebugParser {
                     }
                     } finally {dbg.exitSubRule(54);}
 
-                    dbg.location(302,16);
-                    match(input,Integer,FOLLOW_Integer_in_literal1557); if (state.failed) return ;
+                    dbg.location(303,16);
+                    match(input,Integer,FOLLOW_Integer_in_literal1540); if (state.failed) return ;
 
                     }
                     break;
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:303:5: String
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:304:5: String
                     {
-                    dbg.location(303,5);
-                    match(input,String,FOLLOW_String_in_literal1563); if (state.failed) return ;
+                    dbg.location(304,5);
+                    match(input,String,FOLLOW_String_in_literal1546); if (state.failed) return ;
 
                     }
                     break;
                 case 4 :
                     dbg.enterAlt(4);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:304:5: TRUE
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:305:5: TRUE
                     {
-                    dbg.location(304,5);
-                    match(input,TRUE,FOLLOW_TRUE_in_literal1569); if (state.failed) return ;
+                    dbg.location(305,5);
+                    match(input,TRUE,FOLLOW_TRUE_in_literal1552); if (state.failed) return ;
 
                     }
                     break;
                 case 5 :
                     dbg.enterAlt(5);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:305:5: FALSE
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:306:5: FALSE
                     {
-                    dbg.location(305,5);
-                    match(input,FALSE,FOLLOW_FALSE_in_literal1575); if (state.failed) return ;
+                    dbg.location(306,5);
+                    match(input,FALSE,FOLLOW_FALSE_in_literal1558); if (state.failed) return ;
 
                     }
                     break;
                 case 6 :
                     dbg.enterAlt(6);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:306:5: date
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:307:5: date
                     {
-                    dbg.location(306,5);
-                    pushFollow(FOLLOW_date_in_literal1581);
+                    dbg.location(307,5);
+                    pushFollow(FOLLOW_date_in_literal1564);
                     date();
 
                     state._fsp--;
@@ -4619,7 +4561,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(307, 3);
+        dbg.location(308, 3);
 
         }
         finally {
@@ -4634,15 +4576,15 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "date"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:309:1: date : ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:310:1: date : ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' );
     public final void date() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "date");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(309, 1);
+        dbg.location(310, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:310:3: ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:311:3: ( '{d' Timestamp '}' | '{t' Timestamp '}' | '{ts' Timestamp '}' )
             int alt56=3;
             try { dbg.enterDecision(56);
 
@@ -4677,42 +4619,42 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:310:5: '{d' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:311:5: '{d' Timestamp '}'
                     {
-                    dbg.location(310,5);
-                    match(input,114,FOLLOW_114_in_date1594); if (state.failed) return ;
-                    dbg.location(310,10);
-                    match(input,Timestamp,FOLLOW_Timestamp_in_date1596); if (state.failed) return ;
-                    dbg.location(310,20);
-                    match(input,RCURLY,FOLLOW_RCURLY_in_date1598); if (state.failed) return ;
+                    dbg.location(311,5);
+                    match(input,114,FOLLOW_114_in_date1577); if (state.failed) return ;
+                    dbg.location(311,10);
+                    match(input,Timestamp,FOLLOW_Timestamp_in_date1579); if (state.failed) return ;
+                    dbg.location(311,20);
+                    match(input,RCURLY,FOLLOW_RCURLY_in_date1581); if (state.failed) return ;
 
                     }
                     break;
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:311:5: '{t' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:312:5: '{t' Timestamp '}'
                     {
-                    dbg.location(311,5);
-                    match(input,115,FOLLOW_115_in_date1605); if (state.failed) return ;
-                    dbg.location(311,10);
-                    match(input,Timestamp,FOLLOW_Timestamp_in_date1607); if (state.failed) return ;
-                    dbg.location(311,20);
-                    match(input,RCURLY,FOLLOW_RCURLY_in_date1609); if (state.failed) return ;
+                    dbg.location(312,5);
+                    match(input,115,FOLLOW_115_in_date1588); if (state.failed) return ;
+                    dbg.location(312,10);
+                    match(input,Timestamp,FOLLOW_Timestamp_in_date1590); if (state.failed) return ;
+                    dbg.location(312,20);
+                    match(input,RCURLY,FOLLOW_RCURLY_in_date1592); if (state.failed) return ;
 
                     }
                     break;
                 case 3 :
                     dbg.enterAlt(3);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:312:5: '{ts' Timestamp '}'
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:313:5: '{ts' Timestamp '}'
                     {
-                    dbg.location(312,5);
-                    match(input,116,FOLLOW_116_in_date1616); if (state.failed) return ;
-                    dbg.location(312,11);
-                    match(input,Timestamp,FOLLOW_Timestamp_in_date1618); if (state.failed) return ;
-                    dbg.location(312,21);
-                    match(input,RCURLY,FOLLOW_RCURLY_in_date1620); if (state.failed) return ;
+                    dbg.location(313,5);
+                    match(input,116,FOLLOW_116_in_date1599); if (state.failed) return ;
+                    dbg.location(313,11);
+                    match(input,Timestamp,FOLLOW_Timestamp_in_date1601); if (state.failed) return ;
+                    dbg.location(313,21);
+                    match(input,RCURLY,FOLLOW_RCURLY_in_date1603); if (state.failed) return ;
 
                     }
                     break;
@@ -4725,7 +4667,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(313, 3);
+        dbg.location(314, 3);
 
         }
         finally {
@@ -4740,20 +4682,20 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "unary"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:315:1: unary : ( MINUS | PLUS );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:316:1: unary : ( MINUS | PLUS );
     public final void unary() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "unary");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(315, 1);
+        dbg.location(316, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:316:3: ( MINUS | PLUS )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:317:3: ( MINUS | PLUS )
             dbg.enterAlt(1);
 
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
-            dbg.location(316,3);
+            dbg.location(317,3);
             if ( (input.LA(1)>=PLUS && input.LA(1)<=MINUS) ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -4775,7 +4717,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(318, 3);
+        dbg.location(319, 3);
 
         }
         finally {
@@ -4790,15 +4732,15 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableRef"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:337:1: tableRef : ( tableName | databaseName DOT tableName );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:338:1: tableRef : ( tableName | databaseName DOT tableName );
     public final void tableRef() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableRef");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(337, 1);
+        dbg.location(338, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:338:3: ( tableName | databaseName DOT tableName )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:339:3: ( tableName | databaseName DOT tableName )
             int alt57=2;
             try { dbg.enterDecision(57);
 
@@ -4807,7 +4749,7 @@ public class GenericSQLParser extends DebugParser {
             if ( (LA57_0==Identifier||LA57_0==QuotedIdentifier) ) {
                 int LA57_1 = input.LA(2);
 
-                if ( (LA57_1==EOF||(LA57_1>=SEMI && LA57_1<=RPAREN)||(LA57_1>=SET && LA57_1<=COMMA)||LA57_1==VALUES||LA57_1==AS||LA57_1==Identifier||(LA57_1>=FROM && LA57_1<=NATURAL)||(LA57_1>=WHERE && LA57_1<=GROUP)||(LA57_1>=HAVING && LA57_1<=ORDER)) ) {
+                if ( (LA57_1==EOF||(LA57_1>=SEMI && LA57_1<=RPAREN)||(LA57_1>=SET && LA57_1<=COMMA)||LA57_1==VALUES||LA57_1==AS||(LA57_1>=Identifier && LA57_1<=NATURAL)||(LA57_1>=WHERE && LA57_1<=GROUP)||(LA57_1>=HAVING && LA57_1<=ORDER)) ) {
                     alt57=1;
                 }
                 else if ( (LA57_1==DOT) ) {
@@ -4836,10 +4778,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:338:5: tableName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:339:5: tableName
                     {
-                    dbg.location(338,5);
-                    pushFollow(FOLLOW_tableName_in_tableRef1675);
+                    dbg.location(339,5);
+                    pushFollow(FOLLOW_tableName_in_tableRef1658);
                     tableName();
 
                     state._fsp--;
@@ -4850,18 +4792,18 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:339:5: databaseName DOT tableName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:340:5: databaseName DOT tableName
                     {
-                    dbg.location(339,5);
-                    pushFollow(FOLLOW_databaseName_in_tableRef1681);
+                    dbg.location(340,5);
+                    pushFollow(FOLLOW_databaseName_in_tableRef1664);
                     databaseName();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(339,18);
-                    match(input,DOT,FOLLOW_DOT_in_tableRef1683); if (state.failed) return ;
-                    dbg.location(339,22);
-                    pushFollow(FOLLOW_tableName_in_tableRef1685);
+                    dbg.location(340,18);
+                    match(input,DOT,FOLLOW_DOT_in_tableRef1666); if (state.failed) return ;
+                    dbg.location(340,22);
+                    pushFollow(FOLLOW_tableName_in_tableRef1668);
                     tableName();
 
                     state._fsp--;
@@ -4878,7 +4820,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(340, 3);
+        dbg.location(341, 3);
 
         }
         finally {
@@ -4893,15 +4835,15 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "columnRef"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:342:1: columnRef : ( columnName | tableAlias DOT columnName );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:343:1: columnRef : ( columnName | tableAlias DOT columnName );
     public final void columnRef() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "columnRef");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(342, 1);
+        dbg.location(343, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:343:3: ( columnName | tableAlias DOT columnName )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:344:3: ( columnName | tableAlias DOT columnName )
             int alt58=2;
             try { dbg.enterDecision(58);
 
@@ -4910,11 +4852,11 @@ public class GenericSQLParser extends DebugParser {
             if ( (LA58_0==Identifier) ) {
                 int LA58_1 = input.LA(2);
 
-                if ( (LA58_1==DOT) ) {
-                    alt58=2;
-                }
-                else if ( (LA58_1==EOF||LA58_1==SEMI||LA58_1==RPAREN||LA58_1==ALL||(LA58_1>=COMMA && LA58_1<=INTO)||(LA58_1>=STAR && LA58_1<=AS)||LA58_1==Identifier||(LA58_1>=FROM && LA58_1<=NATURAL)||(LA58_1>=WHERE && LA58_1<=GROUP)||(LA58_1>=HAVING && LA58_1<=IS)||(LA58_1>=LIKE && LA58_1<=DIVIDE)) ) {
+                if ( (LA58_1==EOF||LA58_1==SEMI||LA58_1==RPAREN||LA58_1==ALL||(LA58_1>=COMMA && LA58_1<=INTO)||(LA58_1>=STAR && LA58_1<=AS)||(LA58_1>=Identifier && LA58_1<=NATURAL)||(LA58_1>=WHERE && LA58_1<=GROUP)||(LA58_1>=HAVING && LA58_1<=IS)||(LA58_1>=LIKE && LA58_1<=DIVIDE)) ) {
                     alt58=1;
+                }
+                else if ( (LA58_1==DOT) ) {
+                    alt58=2;
                 }
                 else {
                     if (state.backtracking>0) {state.failed=true; return ;}
@@ -4942,10 +4884,10 @@ public class GenericSQLParser extends DebugParser {
                 case 1 :
                     dbg.enterAlt(1);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:343:5: columnName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:344:5: columnName
                     {
-                    dbg.location(343,5);
-                    pushFollow(FOLLOW_columnName_in_columnRef1700);
+                    dbg.location(344,5);
+                    pushFollow(FOLLOW_columnName_in_columnRef1683);
                     columnName();
 
                     state._fsp--;
@@ -4956,18 +4898,18 @@ public class GenericSQLParser extends DebugParser {
                 case 2 :
                     dbg.enterAlt(2);
 
-                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:344:5: tableAlias DOT columnName
+                    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:345:5: tableAlias DOT columnName
                     {
-                    dbg.location(344,5);
-                    pushFollow(FOLLOW_tableAlias_in_columnRef1707);
+                    dbg.location(345,5);
+                    pushFollow(FOLLOW_tableAlias_in_columnRef1690);
                     tableAlias();
 
                     state._fsp--;
                     if (state.failed) return ;
-                    dbg.location(344,16);
-                    match(input,DOT,FOLLOW_DOT_in_columnRef1709); if (state.failed) return ;
-                    dbg.location(344,20);
-                    pushFollow(FOLLOW_columnName_in_columnRef1711);
+                    dbg.location(345,16);
+                    match(input,DOT,FOLLOW_DOT_in_columnRef1692); if (state.failed) return ;
+                    dbg.location(345,20);
+                    pushFollow(FOLLOW_columnName_in_columnRef1694);
                     columnName();
 
                     state._fsp--;
@@ -4984,7 +4926,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(345, 3);
+        dbg.location(346, 3);
 
         }
         finally {
@@ -4999,20 +4941,20 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "databaseName"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:347:1: databaseName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:348:1: databaseName : ( Identifier | QuotedIdentifier );
     public final void databaseName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "databaseName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(347, 1);
+        dbg.location(348, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:348:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:349:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
-            dbg.location(348,3);
+            dbg.location(349,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -5034,7 +4976,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(350, 3);
+        dbg.location(351, 3);
 
         }
         finally {
@@ -5049,20 +4991,20 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableName"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:352:1: tableName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:353:1: tableName : ( Identifier | QuotedIdentifier );
     public final void tableName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(352, 1);
+        dbg.location(353, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:353:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:354:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
-            dbg.location(353,3);
+            dbg.location(354,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -5084,7 +5026,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(355, 3);
+        dbg.location(356, 3);
 
         }
         finally {
@@ -5099,21 +5041,21 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "tableAlias"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:357:1: tableAlias : Identifier ;
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:358:1: tableAlias : Identifier ;
     public final void tableAlias() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "tableAlias");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(357, 1);
+        dbg.location(358, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:358:3: ( Identifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:359:3: ( Identifier )
             dbg.enterAlt(1);
 
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:358:5: Identifier
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:359:5: Identifier
             {
-            dbg.location(358,5);
-            match(input,Identifier,FOLLOW_Identifier_in_tableAlias1766); if (state.failed) return ;
+            dbg.location(359,5);
+            match(input,Identifier,FOLLOW_Identifier_in_tableAlias1749); if (state.failed) return ;
 
             }
 
@@ -5124,7 +5066,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(359, 3);
+        dbg.location(360, 3);
 
         }
         finally {
@@ -5139,20 +5081,20 @@ public class GenericSQLParser extends DebugParser {
 
 
     // $ANTLR start "columnName"
-    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:361:1: columnName : ( Identifier | QuotedIdentifier );
+    // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:362:1: columnName : ( Identifier | QuotedIdentifier );
     public final void columnName() throws RecognitionException {
         try { dbg.enterRule(getGrammarFileName(), "columnName");
         if ( getRuleLevel()==0 ) {dbg.commence();}
         incRuleLevel();
-        dbg.location(361, 1);
+        dbg.location(362, 1);
 
         try {
-            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:362:3: ( Identifier | QuotedIdentifier )
+            // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:363:3: ( Identifier | QuotedIdentifier )
             dbg.enterAlt(1);
 
             // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:
             {
-            dbg.location(362,3);
+            dbg.location(363,3);
             if ( input.LA(1)==Identifier||input.LA(1)==QuotedIdentifier ) {
                 input.consume();
                 state.errorRecovery=false;state.failed=false;
@@ -5174,7 +5116,7 @@ public class GenericSQLParser extends DebugParser {
         }
         finally {
         }
-        dbg.location(364, 3);
+        dbg.location(365, 3);
 
         }
         finally {
@@ -5195,7 +5137,7 @@ public class GenericSQLParser extends DebugParser {
         // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:72:7: joinList
         {
         dbg.location(72,7);
-        pushFollow(FOLLOW_joinList_in_synpred13_GenericSQL216);
+        pushFollow(FOLLOW_joinList_in_synpred13_GenericSQL217);
         joinList();
 
         state._fsp--;
@@ -5205,16 +5147,52 @@ public class GenericSQLParser extends DebugParser {
     }
     // $ANTLR end synpred13_GenericSQL
 
-    // $ANTLR start synpred55_GenericSQL
-    public final void synpred55_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: ( nestedCondition )
+    // $ANTLR start synpred53_GenericSQL
+    public final void synpred53_GenericSQL_fragment() throws RecognitionException {   
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: ( nestedCondition )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:207:7: nestedCondition
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: nestedCondition
         {
-        dbg.location(207,7);
-        pushFollow(FOLLOW_nestedCondition_in_synpred55_GenericSQL1039);
+        dbg.location(208,7);
+        pushFollow(FOLLOW_nestedCondition_in_synpred53_GenericSQL1022);
         nestedCondition();
+
+        state._fsp--;
+        if (state.failed) return ;
+
+        }
+    }
+    // $ANTLR end synpred53_GenericSQL
+
+    // $ANTLR start synpred54_GenericSQL
+    public final void synpred54_GenericSQL_fragment() throws RecognitionException {   
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: ( in )
+        dbg.enterAlt(1);
+
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: in
+        {
+        dbg.location(209,7);
+        pushFollow(FOLLOW_in_in_synpred54_GenericSQL1030);
+        in();
+
+        state._fsp--;
+        if (state.failed) return ;
+
+        }
+    }
+    // $ANTLR end synpred54_GenericSQL
+
+    // $ANTLR start synpred55_GenericSQL
+    public final void synpred55_GenericSQL_fragment() throws RecognitionException {   
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: ( between )
+        dbg.enterAlt(1);
+
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: between
+        {
+        dbg.location(210,7);
+        pushFollow(FOLLOW_between_in_synpred55_GenericSQL1038);
+        between();
 
         state._fsp--;
         if (state.failed) return ;
@@ -5225,14 +5203,14 @@ public class GenericSQLParser extends DebugParser {
 
     // $ANTLR start synpred56_GenericSQL
     public final void synpred56_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: ( in )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:211:7: ( isNull )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:208:7: in
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:211:7: isNull
         {
-        dbg.location(208,7);
-        pushFollow(FOLLOW_in_in_synpred56_GenericSQL1047);
-        in();
+        dbg.location(211,7);
+        pushFollow(FOLLOW_isNull_in_synpred56_GenericSQL1046);
+        isNull();
 
         state._fsp--;
         if (state.failed) return ;
@@ -5241,34 +5219,16 @@ public class GenericSQLParser extends DebugParser {
     }
     // $ANTLR end synpred56_GenericSQL
 
-    // $ANTLR start synpred57_GenericSQL
-    public final void synpred57_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: ( between )
-        dbg.enterAlt(1);
-
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:209:7: between
-        {
-        dbg.location(209,7);
-        pushFollow(FOLLOW_between_in_synpred57_GenericSQL1055);
-        between();
-
-        state._fsp--;
-        if (state.failed) return ;
-
-        }
-    }
-    // $ANTLR end synpred57_GenericSQL
-
     // $ANTLR start synpred58_GenericSQL
     public final void synpred58_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: ( isNull )
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: ( like )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:210:7: isNull
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: like
         {
-        dbg.location(210,7);
-        pushFollow(FOLLOW_isNull_in_synpred58_GenericSQL1063);
-        isNull();
+        dbg.location(213,7);
+        pushFollow(FOLLOW_like_in_synpred58_GenericSQL1062);
+        like();
 
         state._fsp--;
         if (state.failed) return ;
@@ -5277,33 +5237,15 @@ public class GenericSQLParser extends DebugParser {
     }
     // $ANTLR end synpred58_GenericSQL
 
-    // $ANTLR start synpred60_GenericSQL
-    public final void synpred60_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: ( like )
+    // $ANTLR start synpred59_GenericSQL
+    public final void synpred59_GenericSQL_fragment() throws RecognitionException {   
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:214:7: ( quantifier )
         dbg.enterAlt(1);
 
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:212:7: like
+        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:214:7: quantifier
         {
-        dbg.location(212,7);
-        pushFollow(FOLLOW_like_in_synpred60_GenericSQL1079);
-        like();
-
-        state._fsp--;
-        if (state.failed) return ;
-
-        }
-    }
-    // $ANTLR end synpred60_GenericSQL
-
-    // $ANTLR start synpred61_GenericSQL
-    public final void synpred61_GenericSQL_fragment() throws RecognitionException {   
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: ( quantifier )
-        dbg.enterAlt(1);
-
-        // /Users/jasonosgood/Projects/workspace/fado/source/fado/parse/GenericSQL.g:213:7: quantifier
-        {
-        dbg.location(213,7);
-        pushFollow(FOLLOW_quantifier_in_synpred61_GenericSQL1087);
+        dbg.location(214,7);
+        pushFollow(FOLLOW_quantifier_in_synpred59_GenericSQL1070);
         quantifier();
 
         state._fsp--;
@@ -5311,7 +5253,7 @@ public class GenericSQLParser extends DebugParser {
 
         }
     }
-    // $ANTLR end synpred61_GenericSQL
+    // $ANTLR end synpred59_GenericSQL
 
     // Delegated rules
 
@@ -5347,38 +5289,6 @@ public class GenericSQLParser extends DebugParser {
         state.failed=false;
         return success;
     }
-    public final boolean synpred61_GenericSQL() {
-        state.backtracking++;
-        dbg.beginBacktrack(state.backtracking);
-        int start = input.mark();
-        try {
-            synpred61_GenericSQL_fragment(); // can never throw exception
-        } catch (RecognitionException re) {
-            System.err.println("impossible: "+re);
-        }
-        boolean success = !state.failed;
-        input.rewind(start);
-        dbg.endBacktrack(state.backtracking, success);
-        state.backtracking--;
-        state.failed=false;
-        return success;
-    }
-    public final boolean synpred60_GenericSQL() {
-        state.backtracking++;
-        dbg.beginBacktrack(state.backtracking);
-        int start = input.mark();
-        try {
-            synpred60_GenericSQL_fragment(); // can never throw exception
-        } catch (RecognitionException re) {
-            System.err.println("impossible: "+re);
-        }
-        boolean success = !state.failed;
-        input.rewind(start);
-        dbg.endBacktrack(state.backtracking, success);
-        state.backtracking--;
-        state.failed=false;
-        return success;
-    }
     public final boolean synpred56_GenericSQL() {
         state.backtracking++;
         dbg.beginBacktrack(state.backtracking);
@@ -5395,12 +5305,44 @@ public class GenericSQLParser extends DebugParser {
         state.failed=false;
         return success;
     }
-    public final boolean synpred57_GenericSQL() {
+    public final boolean synpred53_GenericSQL() {
         state.backtracking++;
         dbg.beginBacktrack(state.backtracking);
         int start = input.mark();
         try {
-            synpred57_GenericSQL_fragment(); // can never throw exception
+            synpred53_GenericSQL_fragment(); // can never throw exception
+        } catch (RecognitionException re) {
+            System.err.println("impossible: "+re);
+        }
+        boolean success = !state.failed;
+        input.rewind(start);
+        dbg.endBacktrack(state.backtracking, success);
+        state.backtracking--;
+        state.failed=false;
+        return success;
+    }
+    public final boolean synpred54_GenericSQL() {
+        state.backtracking++;
+        dbg.beginBacktrack(state.backtracking);
+        int start = input.mark();
+        try {
+            synpred54_GenericSQL_fragment(); // can never throw exception
+        } catch (RecognitionException re) {
+            System.err.println("impossible: "+re);
+        }
+        boolean success = !state.failed;
+        input.rewind(start);
+        dbg.endBacktrack(state.backtracking, success);
+        state.backtracking--;
+        state.failed=false;
+        return success;
+    }
+    public final boolean synpred59_GenericSQL() {
+        state.backtracking++;
+        dbg.beginBacktrack(state.backtracking);
+        int start = input.mark();
+        try {
+            synpred59_GenericSQL_fragment(); // can never throw exception
         } catch (RecognitionException re) {
             System.err.println("impossible: "+re);
         }
@@ -5439,13 +5381,13 @@ public class GenericSQLParser extends DebugParser {
     static final String DFA10_minS =
         "\1\4\1\uffff\7\0\1\uffff";
     static final String DFA10_maxS =
-        "\1\50\1\uffff\7\0\1\uffff";
+        "\1\45\1\uffff\7\0\1\uffff";
     static final String DFA10_acceptS =
         "\1\uffff\1\1\7\uffff\1\2";
     static final String DFA10_specialS =
-        "\2\uffff\1\3\1\1\1\4\1\6\1\0\1\2\1\5\1\uffff}>";
+        "\2\uffff\1\4\1\5\1\2\1\1\1\0\1\6\1\3\1\uffff}>";
     static final String[] DFA10_transitionS = {
-            "\1\6\1\uffff\1\10\26\uffff\6\1\1\uffff\1\2\1\3\1\uffff\1\4\1"+
+            "\1\6\1\uffff\1\10\23\uffff\6\1\1\uffff\1\2\1\3\1\uffff\1\4\1"+
             "\5",
             "",
             "\1\uffff",
@@ -5513,10 +5455,10 @@ public class GenericSQLParser extends DebugParser {
                         if ( s>=0 ) return s;
                         break;
                     case 1 : 
-                        int LA10_3 = input.LA(1);
+                        int LA10_5 = input.LA(1);
 
                          
-                        int index10_3 = input.index();
+                        int index10_5 = input.index();
                         input.rewind();
                         s = -1;
                         if ( (synpred13_GenericSQL()) ) {s = 1;}
@@ -5524,40 +5466,10 @@ public class GenericSQLParser extends DebugParser {
                         else if ( (true) ) {s = 9;}
 
                          
-                        input.seek(index10_3);
+                        input.seek(index10_5);
                         if ( s>=0 ) return s;
                         break;
                     case 2 : 
-                        int LA10_7 = input.LA(1);
-
-                         
-                        int index10_7 = input.index();
-                        input.rewind();
-                        s = -1;
-                        if ( (synpred13_GenericSQL()) ) {s = 1;}
-
-                        else if ( (true) ) {s = 9;}
-
-                         
-                        input.seek(index10_7);
-                        if ( s>=0 ) return s;
-                        break;
-                    case 3 : 
-                        int LA10_2 = input.LA(1);
-
-                         
-                        int index10_2 = input.index();
-                        input.rewind();
-                        s = -1;
-                        if ( (synpred13_GenericSQL()) ) {s = 1;}
-
-                        else if ( (true) ) {s = 9;}
-
-                         
-                        input.seek(index10_2);
-                        if ( s>=0 ) return s;
-                        break;
-                    case 4 : 
                         int LA10_4 = input.LA(1);
 
                          
@@ -5572,7 +5484,7 @@ public class GenericSQLParser extends DebugParser {
                         input.seek(index10_4);
                         if ( s>=0 ) return s;
                         break;
-                    case 5 : 
+                    case 3 : 
                         int LA10_8 = input.LA(1);
 
                          
@@ -5587,11 +5499,11 @@ public class GenericSQLParser extends DebugParser {
                         input.seek(index10_8);
                         if ( s>=0 ) return s;
                         break;
-                    case 6 : 
-                        int LA10_5 = input.LA(1);
+                    case 4 : 
+                        int LA10_2 = input.LA(1);
 
                          
-                        int index10_5 = input.index();
+                        int index10_2 = input.index();
                         input.rewind();
                         s = -1;
                         if ( (synpred13_GenericSQL()) ) {s = 1;}
@@ -5599,7 +5511,37 @@ public class GenericSQLParser extends DebugParser {
                         else if ( (true) ) {s = 9;}
 
                          
-                        input.seek(index10_5);
+                        input.seek(index10_2);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 5 : 
+                        int LA10_3 = input.LA(1);
+
+                         
+                        int index10_3 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (synpred13_GenericSQL()) ) {s = 1;}
+
+                        else if ( (true) ) {s = 9;}
+
+                         
+                        input.seek(index10_3);
+                        if ( s>=0 ) return s;
+                        break;
+                    case 6 : 
+                        int LA10_7 = input.LA(1);
+
+                         
+                        int index10_7 = input.index();
+                        input.rewind();
+                        s = -1;
+                        if ( (synpred13_GenericSQL()) ) {s = 1;}
+
+                        else if ( (true) ) {s = 9;}
+
+                         
+                        input.seek(index10_7);
                         if ( s>=0 ) return s;
                         break;
             }
@@ -5615,9 +5557,9 @@ public class GenericSQLParser extends DebugParser {
     static final String DFA35_eofS =
         "\13\uffff";
     static final String DFA35_minS =
-        "\1\35\2\uffff\2\35\6\uffff";
+        "\1\32\2\uffff\2\32\6\uffff";
     static final String DFA35_maxS =
-        "\1\42\2\uffff\2\40\6\uffff";
+        "\1\37\2\uffff\2\35\6\uffff";
     static final String DFA35_acceptS =
         "\1\uffff\1\1\1\2\2\uffff\1\7\1\10\1\3\1\4\1\5\1\6";
     static final String DFA35_specialS =
@@ -5666,7 +5608,7 @@ public class GenericSQLParser extends DebugParser {
             this.transition = DFA35_transition;
         }
         public String getDescription() {
-            return "153:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )";
+            return "154:5: ( JOIN | INNER JOIN | LEFT JOIN | LEFT OUTER JOIN | RIGHT JOIN | RIGHT OUTER JOIN | OUTER JOIN | NATURAL JOIN )";
         }
         public void error(NoViableAltException nvae) {
             dbg.recognitionException(nvae);
@@ -5686,8 +5628,8 @@ public class GenericSQLParser extends DebugParser {
         "\1\uffff\1\0\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\10\1\11\1\12\1\13\10"+
         "\uffff}>";
     static final String[] DFA41_transitionS = {
-            "\1\1\6\uffff\1\4\13\uffff\1\13\31\uffff\1\15\11\uffff\2\2\1"+
-            "\uffff\1\3\1\5\1\6\1\7\1\uffff\1\14\55\uffff\1\10\1\11\1\12",
+            "\1\1\6\uffff\1\4\13\uffff\1\13\26\uffff\1\15\11\uffff\2\2\1"+
+            "\uffff\1\3\1\5\1\6\1\7\1\uffff\1\14\60\uffff\1\10\1\11\1\12",
             "\1\uffff",
             "\1\uffff",
             "\1\uffff",
@@ -5740,7 +5682,7 @@ public class GenericSQLParser extends DebugParser {
             this.transition = DFA41_transition;
         }
         public String getDescription() {
-            return "207:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )";
+            return "208:5: ( nestedCondition | in | between | isNull | exists | like | quantifier | comparison )";
         }
         public void error(NoViableAltException nvae) {
             dbg.recognitionException(nvae);
@@ -5756,17 +5698,17 @@ public class GenericSQLParser extends DebugParser {
                         int index41_1 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred55_GenericSQL()) ) {s = 14;}
+                        if ( (synpred53_GenericSQL()) ) {s = 14;}
 
-                        else if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        else if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5781,15 +5723,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_2 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5804,15 +5746,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_3 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5827,15 +5769,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_4 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5850,15 +5792,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_5 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5873,15 +5815,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_6 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5896,15 +5838,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_7 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5919,15 +5861,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_8 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5942,15 +5884,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_9 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5965,15 +5907,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_10 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -5988,15 +5930,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_11 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -6011,15 +5953,15 @@ public class GenericSQLParser extends DebugParser {
                         int index41_12 = input.index();
                         input.rewind();
                         s = -1;
-                        if ( (synpred56_GenericSQL()) ) {s = 15;}
+                        if ( (synpred54_GenericSQL()) ) {s = 15;}
 
-                        else if ( (synpred57_GenericSQL()) ) {s = 16;}
+                        else if ( (synpred55_GenericSQL()) ) {s = 16;}
 
-                        else if ( (synpred58_GenericSQL()) ) {s = 17;}
+                        else if ( (synpred56_GenericSQL()) ) {s = 17;}
 
-                        else if ( (synpred60_GenericSQL()) ) {s = 18;}
+                        else if ( (synpred58_GenericSQL()) ) {s = 18;}
 
-                        else if ( (synpred61_GenericSQL()) ) {s = 19;}
+                        else if ( (synpred59_GenericSQL()) ) {s = 19;}
 
                         else if ( (true) ) {s = 20;}
 
@@ -6043,224 +5985,223 @@ public class GenericSQLParser extends DebugParser {
     public static final BitSet FOLLOW_insert_in_statement82 = new BitSet(new long[]{0x0000000000000010L});
     public static final BitSet FOLLOW_SEMI_in_statement86 = new BitSet(new long[]{0x0000000000000000L});
     public static final BitSet FOLLOW_EOF_in_statement91 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_update_in_statement96 = new BitSet(new long[]{0x0000000000000010L});
-    public static final BitSet FOLLOW_SEMI_in_statement100 = new BitSet(new long[]{0x0000000000000000L});
-    public static final BitSet FOLLOW_EOF_in_statement105 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_select_in_subSelect121 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_subSelect127 = new BitSet(new long[]{0x0000000000000080L});
-    public static final BitSet FOLLOW_select_in_subSelect129 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_subSelect131 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_SELECT_in_select146 = new BitSet(new long[]{0xB00000000F201F20L,0x001C000000000017L});
-    public static final BitSet FOLLOW_set_in_select152 = new BitSet(new long[]{0xB00000000F201F20L,0x001C000000000017L});
-    public static final BitSet FOLLOW_TOP_in_select173 = new BitSet(new long[]{0x0000000000001000L});
-    public static final BitSet FOLLOW_Integer_in_select175 = new BitSet(new long[]{0xB00000000F203F20L,0x001C000000000017L});
-    public static final BitSet FOLLOW_PERCENT_in_select179 = new BitSet(new long[]{0xB00000000F201F20L,0x001C000000000017L});
-    public static final BitSet FOLLOW_itemList_in_select191 = new BitSet(new long[]{0x0000000010080000L});
-    public static final BitSet FOLLOW_into_in_select199 = new BitSet(new long[]{0x0000000010080000L});
-    public static final BitSet FOLLOW_from_in_select208 = new BitSet(new long[]{0x000001B7E0000000L});
-    public static final BitSet FOLLOW_joinList_in_select216 = new BitSet(new long[]{0x000001B000000002L});
-    public static final BitSet FOLLOW_where_in_select227 = new BitSet(new long[]{0x000001A000000002L});
-    public static final BitSet FOLLOW_groupBy_in_select238 = new BitSet(new long[]{0x0000018000000002L});
-    public static final BitSet FOLLOW_having_in_select249 = new BitSet(new long[]{0x0000010000000002L});
-    public static final BitSet FOLLOW_orderBy_in_select260 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_INSERT_in_insert278 = new BitSet(new long[]{0x0000000000080000L});
-    public static final BitSet FOLLOW_into_in_insert280 = new BitSet(new long[]{0x0000000000100020L});
-    public static final BitSet FOLLOW_columnList_in_insert284 = new BitSet(new long[]{0x0000000000100020L});
-    public static final BitSet FOLLOW_values_in_insert293 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_UPDATE_in_update313 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_tableRef_in_update315 = new BitSet(new long[]{0x0000000000010000L});
-    public static final BitSet FOLLOW_SET_in_update317 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_setter_in_update319 = new BitSet(new long[]{0x0000001000020002L});
-    public static final BitSet FOLLOW_COMMA_in_update323 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_setter_in_update325 = new BitSet(new long[]{0x0000001000020002L});
-    public static final BitSet FOLLOW_where_in_update336 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_columnName_in_setter354 = new BitSet(new long[]{0x0000000000040000L});
-    public static final BitSet FOLLOW_EQ_in_setter356 = new BitSet(new long[]{0xB000000000001000L,0x001C000000000007L});
-    public static final BitSet FOLLOW_literal_in_setter358 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_INTO_in_into373 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_tableRef_in_into375 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_into379 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_tableRef_in_into381 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_LPAREN_in_columnList397 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_columnName_in_columnList399 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_COMMA_in_columnList403 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_columnName_in_columnList405 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_RPAREN_in_columnList410 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_VALUES_in_values425 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_LPAREN_in_values427 = new BitSet(new long[]{0xB000000000001000L,0x001C000000000007L});
-    public static final BitSet FOLLOW_literal_in_values429 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_COMMA_in_values433 = new BitSet(new long[]{0xB000000000001000L,0x001C000000000007L});
-    public static final BitSet FOLLOW_literal_in_values435 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_RPAREN_in_values440 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_STAR_in_itemList455 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_item_in_itemList461 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_itemList465 = new BitSet(new long[]{0xB00000000F201F20L,0x001C000000000017L});
-    public static final BitSet FOLLOW_item_in_itemList467 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_value_in_item485 = new BitSet(new long[]{0x0000000001400002L});
-    public static final BitSet FOLLOW_AS_in_item491 = new BitSet(new long[]{0x0000000001400000L});
-    public static final BitSet FOLLOW_alias_in_item496 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_allColumns_in_item505 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_function_in_item511 = new BitSet(new long[]{0x0000000001400002L});
-    public static final BitSet FOLLOW_AS_in_item515 = new BitSet(new long[]{0x0000000001400000L});
-    public static final BitSet FOLLOW_alias_in_item518 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_tableAlias_in_allColumns535 = new BitSet(new long[]{0x0000000000800000L});
-    public static final BitSet FOLLOW_DOT_in_allColumns537 = new BitSet(new long[]{0x0000000000200000L});
-    public static final BitSet FOLLOW_STAR_in_allColumns539 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_Identifier_in_alias552 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_functionName_in_function567 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_LPAREN_in_function569 = new BitSet(new long[]{0xB000000001001060L,0x001C000000000017L});
-    public static final BitSet FOLLOW_value_in_function573 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_COMMA_in_function577 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_value_in_function579 = new BitSet(new long[]{0x0000000000020040L});
-    public static final BitSet FOLLOW_RPAREN_in_function587 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_set_in_functionName0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_FROM_in_from629 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_fromItem_in_from631 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_from635 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_fromItem_in_from637 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_LPAREN_in_fromItem659 = new BitSet(new long[]{0x00000000000000A0L});
-    public static final BitSet FOLLOW_subSelect_in_fromItem661 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_fromItem663 = new BitSet(new long[]{0x0000000001400002L});
-    public static final BitSet FOLLOW_tableRef_in_fromItem674 = new BitSet(new long[]{0x0000000001400002L});
-    public static final BitSet FOLLOW_AS_in_fromItem691 = new BitSet(new long[]{0x0000000001400000L});
-    public static final BitSet FOLLOW_alias_in_fromItem696 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_join_in_joinList714 = new BitSet(new long[]{0x00000007E0000002L});
-    public static final BitSet FOLLOW_JOIN_in_join739 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_INNER_in_join747 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join749 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_LEFT_in_join757 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join759 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_LEFT_in_join767 = new BitSet(new long[]{0x0000000100000000L});
-    public static final BitSet FOLLOW_OUTER_in_join769 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join771 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_RIGHT_in_join779 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join781 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_RIGHT_in_join790 = new BitSet(new long[]{0x0000000100000000L});
-    public static final BitSet FOLLOW_OUTER_in_join792 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join794 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_OUTER_in_join802 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join804 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_NATURAL_in_join813 = new BitSet(new long[]{0x0000000020000000L});
-    public static final BitSet FOLLOW_JOIN_in_join815 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000010L});
-    public static final BitSet FOLLOW_fromItem_in_join826 = new BitSet(new long[]{0x0000000001400000L});
-    public static final BitSet FOLLOW_alias_in_join828 = new BitSet(new long[]{0x0000000800000000L});
-    public static final BitSet FOLLOW_ON_in_join836 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_conditionList_in_join838 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_WHERE_in_where859 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_conditionList_in_where861 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_GROUP_in_groupBy876 = new BitSet(new long[]{0x0000004000000000L});
-    public static final BitSet FOLLOW_BY_in_groupBy878 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_columnRef_in_groupBy880 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_groupBy884 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_columnRef_in_groupBy886 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_HAVING_in_having904 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_conditionList_in_having906 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_ORDER_in_orderBy921 = new BitSet(new long[]{0x0000004000000000L});
-    public static final BitSet FOLLOW_BY_in_orderBy923 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_orderByItem_in_orderBy925 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_orderBy929 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_orderByItem_in_orderBy931 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_columnRef_in_orderByItem949 = new BitSet(new long[]{0x0000060000000002L});
-    public static final BitSet FOLLOW_set_in_orderByItem951 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAREN_in_nestedCondition975 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_conditionList_in_nestedCondition977 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_nestedCondition979 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_condition_in_conditionList994 = new BitSet(new long[]{0x0000180000000002L});
-    public static final BitSet FOLLOW_set_in_conditionList998 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_condition_in_conditionList1008 = new BitSet(new long[]{0x0000180000000002L});
-    public static final BitSet FOLLOW_NOT_in_condition1028 = new BitSet(new long[]{0xB004200001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_nestedCondition_in_condition1039 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_in_in_condition1047 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_between_in_condition1055 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_isNull_in_condition1063 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_exists_in_condition1071 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_like_in_condition1079 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_quantifier_in_condition1087 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_comparison_in_condition1094 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_in1113 = new BitSet(new long[]{0x0000600000000000L});
-    public static final BitSet FOLLOW_NOT_in_in1117 = new BitSet(new long[]{0x0000400000000000L});
-    public static final BitSet FOLLOW_IN_in_in1122 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_LPAREN_in_in1124 = new BitSet(new long[]{0xB0000000010010A0L,0x001C000000000017L});
-    public static final BitSet FOLLOW_subSelect_in_in1128 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_expressionList_in_in1132 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_in1136 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_between1151 = new BitSet(new long[]{0x0000A00000000000L});
-    public static final BitSet FOLLOW_NOT_in_between1155 = new BitSet(new long[]{0x0000800000000000L});
-    public static final BitSet FOLLOW_BETWEEN_in_between1160 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_between1162 = new BitSet(new long[]{0x0000100000000000L});
-    public static final BitSet FOLLOW_AND_in_between1164 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_between1166 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_isNull1181 = new BitSet(new long[]{0x0001000000000000L});
-    public static final BitSet FOLLOW_IS_in_isNull1183 = new BitSet(new long[]{0x0002200000000000L});
-    public static final BitSet FOLLOW_NOT_in_isNull1187 = new BitSet(new long[]{0x0002000000000000L});
-    public static final BitSet FOLLOW_NULL_in_isNull1192 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_EXISTS_in_exists1207 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_exists1209 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_like1228 = new BitSet(new long[]{0x0008200000000000L});
-    public static final BitSet FOLLOW_NOT_in_like1232 = new BitSet(new long[]{0x0008000000000000L});
-    public static final BitSet FOLLOW_LIKE_in_like1237 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_like1239 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_comparison1257 = new BitSet(new long[]{0x03F0000000040000L});
-    public static final BitSet FOLLOW_comparator_in_comparison1259 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_comparison1261 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_update_in_statement97 = new BitSet(new long[]{0x0000000000000010L});
+    public static final BitSet FOLLOW_SEMI_in_statement101 = new BitSet(new long[]{0x0000000000000000L});
+    public static final BitSet FOLLOW_EOF_in_statement106 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_select_in_subSelect122 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAREN_in_subSelect128 = new BitSet(new long[]{0x0000000000000080L});
+    public static final BitSet FOLLOW_select_in_subSelect130 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_subSelect132 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_SELECT_in_select147 = new BitSet(new long[]{0xF600000001201F20L,0x001C000000000002L});
+    public static final BitSet FOLLOW_set_in_select153 = new BitSet(new long[]{0xF600000001201F20L,0x001C000000000002L});
+    public static final BitSet FOLLOW_TOP_in_select174 = new BitSet(new long[]{0x0000000000001000L});
+    public static final BitSet FOLLOW_Integer_in_select176 = new BitSet(new long[]{0xF600000001203F20L,0x001C000000000002L});
+    public static final BitSet FOLLOW_PERCENT_in_select180 = new BitSet(new long[]{0xF600000001201F20L,0x001C000000000002L});
+    public static final BitSet FOLLOW_itemList_in_select192 = new BitSet(new long[]{0x0000000002080000L});
+    public static final BitSet FOLLOW_into_in_select200 = new BitSet(new long[]{0x0000000002080000L});
+    public static final BitSet FOLLOW_from_in_select209 = new BitSet(new long[]{0x00000036FC000000L});
+    public static final BitSet FOLLOW_joinList_in_select217 = new BitSet(new long[]{0x0000003600000002L});
+    public static final BitSet FOLLOW_where_in_select228 = new BitSet(new long[]{0x0000003400000002L});
+    public static final BitSet FOLLOW_groupBy_in_select239 = new BitSet(new long[]{0x0000003000000002L});
+    public static final BitSet FOLLOW_having_in_select250 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_orderBy_in_select261 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_INSERT_in_insert279 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_into_in_insert281 = new BitSet(new long[]{0x0000000000100020L});
+    public static final BitSet FOLLOW_columnList_in_insert285 = new BitSet(new long[]{0x0000000000100020L});
+    public static final BitSet FOLLOW_values_in_insert294 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_UPDATE_in_update314 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_tableRef_in_update316 = new BitSet(new long[]{0x0000000000010000L});
+    public static final BitSet FOLLOW_SET_in_update318 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_setter_in_update320 = new BitSet(new long[]{0x0000000200020002L});
+    public static final BitSet FOLLOW_COMMA_in_update324 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_setter_in_update326 = new BitSet(new long[]{0x0000000200020002L});
+    public static final BitSet FOLLOW_where_in_update337 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_columnName_in_setter355 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_EQ_in_setter357 = new BitSet(new long[]{0xF600000000001000L,0x001C000000000000L});
+    public static final BitSet FOLLOW_literal_in_setter359 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_INTO_in_into374 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_tableRef_in_into376 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_into380 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_tableRef_in_into382 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_LPAREN_in_columnList398 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_columnName_in_columnList400 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_COMMA_in_columnList404 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_columnName_in_columnList406 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_RPAREN_in_columnList411 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_VALUES_in_values426 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_LPAREN_in_values428 = new BitSet(new long[]{0xF600000000001000L,0x001C000000000000L});
+    public static final BitSet FOLLOW_literal_in_values430 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_COMMA_in_values434 = new BitSet(new long[]{0xF600000000001000L,0x001C000000000000L});
+    public static final BitSet FOLLOW_literal_in_values436 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_RPAREN_in_values441 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_STAR_in_itemList456 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_item_in_itemList462 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_itemList466 = new BitSet(new long[]{0xF600000001201F20L,0x001C000000000002L});
+    public static final BitSet FOLLOW_item_in_itemList468 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_function_in_item486 = new BitSet(new long[]{0x0000000001400002L});
+    public static final BitSet FOLLOW_AS_in_item490 = new BitSet(new long[]{0x0000000001400000L});
+    public static final BitSet FOLLOW_alias_in_item493 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_item503 = new BitSet(new long[]{0x0000000001400002L});
+    public static final BitSet FOLLOW_AS_in_item509 = new BitSet(new long[]{0x0000000001400000L});
+    public static final BitSet FOLLOW_alias_in_item514 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_allColumns_in_item523 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_tableAlias_in_allColumns536 = new BitSet(new long[]{0x0000000000800000L});
+    public static final BitSet FOLLOW_DOT_in_allColumns538 = new BitSet(new long[]{0x0000000000200000L});
+    public static final BitSet FOLLOW_STAR_in_allColumns540 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Identifier_in_alias553 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Identifier_in_function568 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_LPAREN_in_function570 = new BitSet(new long[]{0xF600000001001060L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_function574 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_COMMA_in_function578 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_function580 = new BitSet(new long[]{0x0000000000020040L});
+    public static final BitSet FOLLOW_RPAREN_in_function588 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_FROM_in_from612 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_fromItem_in_from614 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_from618 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_fromItem_in_from620 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_LPAREN_in_fromItem642 = new BitSet(new long[]{0x00000000000000A0L});
+    public static final BitSet FOLLOW_subSelect_in_fromItem644 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_fromItem646 = new BitSet(new long[]{0x0000000001400002L});
+    public static final BitSet FOLLOW_tableRef_in_fromItem657 = new BitSet(new long[]{0x0000000001400002L});
+    public static final BitSet FOLLOW_AS_in_fromItem674 = new BitSet(new long[]{0x0000000001400000L});
+    public static final BitSet FOLLOW_alias_in_fromItem679 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_join_in_joinList697 = new BitSet(new long[]{0x00000000FC000002L});
+    public static final BitSet FOLLOW_JOIN_in_join722 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_INNER_in_join730 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join732 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_LEFT_in_join740 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join742 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_LEFT_in_join750 = new BitSet(new long[]{0x0000000020000000L});
+    public static final BitSet FOLLOW_OUTER_in_join752 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join754 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_RIGHT_in_join762 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join764 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_RIGHT_in_join773 = new BitSet(new long[]{0x0000000020000000L});
+    public static final BitSet FOLLOW_OUTER_in_join775 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join777 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_OUTER_in_join785 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join787 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_NATURAL_in_join796 = new BitSet(new long[]{0x0000000004000000L});
+    public static final BitSet FOLLOW_JOIN_in_join798 = new BitSet(new long[]{0x0000000001000020L,0x0000000000000002L});
+    public static final BitSet FOLLOW_fromItem_in_join809 = new BitSet(new long[]{0x0000000001400000L});
+    public static final BitSet FOLLOW_alias_in_join811 = new BitSet(new long[]{0x0000000100000000L});
+    public static final BitSet FOLLOW_ON_in_join819 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_conditionList_in_join821 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_WHERE_in_where842 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_conditionList_in_where844 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_GROUP_in_groupBy859 = new BitSet(new long[]{0x0000000800000000L});
+    public static final BitSet FOLLOW_BY_in_groupBy861 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_columnRef_in_groupBy863 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_groupBy867 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_columnRef_in_groupBy869 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_HAVING_in_having887 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_conditionList_in_having889 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_ORDER_in_orderBy904 = new BitSet(new long[]{0x0000000800000000L});
+    public static final BitSet FOLLOW_BY_in_orderBy906 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_orderByItem_in_orderBy908 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_orderBy912 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_orderByItem_in_orderBy914 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_columnRef_in_orderByItem932 = new BitSet(new long[]{0x000000C000000002L});
+    public static final BitSet FOLLOW_set_in_orderByItem934 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAREN_in_nestedCondition958 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_conditionList_in_nestedCondition960 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_nestedCondition962 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_condition_in_conditionList977 = new BitSet(new long[]{0x0000030000000002L});
+    public static final BitSet FOLLOW_set_in_conditionList981 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_condition_in_conditionList991 = new BitSet(new long[]{0x0000030000000002L});
+    public static final BitSet FOLLOW_NOT_in_condition1011 = new BitSet(new long[]{0xF600840001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_nestedCondition_in_condition1022 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_in_in_condition1030 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_between_in_condition1038 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_isNull_in_condition1046 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_exists_in_condition1054 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_like_in_condition1062 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_quantifier_in_condition1070 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_comparison_in_condition1077 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_in1096 = new BitSet(new long[]{0x00000C0000000000L});
+    public static final BitSet FOLLOW_NOT_in_in1100 = new BitSet(new long[]{0x0000080000000000L});
+    public static final BitSet FOLLOW_IN_in_in1105 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_LPAREN_in_in1107 = new BitSet(new long[]{0xF6000000010010A0L,0x001C000000000002L});
+    public static final BitSet FOLLOW_subSelect_in_in1111 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_expressionList_in_in1115 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_in1119 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_between1134 = new BitSet(new long[]{0x0000140000000000L});
+    public static final BitSet FOLLOW_NOT_in_between1138 = new BitSet(new long[]{0x0000100000000000L});
+    public static final BitSet FOLLOW_BETWEEN_in_between1143 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_between1145 = new BitSet(new long[]{0x0000020000000000L});
+    public static final BitSet FOLLOW_AND_in_between1147 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_between1149 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_isNull1164 = new BitSet(new long[]{0x0000200000000000L});
+    public static final BitSet FOLLOW_IS_in_isNull1166 = new BitSet(new long[]{0x0000440000000000L});
+    public static final BitSet FOLLOW_NOT_in_isNull1170 = new BitSet(new long[]{0x0000400000000000L});
+    public static final BitSet FOLLOW_NULL_in_isNull1175 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_EXISTS_in_exists1190 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_exists1192 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_like1211 = new BitSet(new long[]{0x0001040000000000L});
+    public static final BitSet FOLLOW_NOT_in_like1215 = new BitSet(new long[]{0x0001000000000000L});
+    public static final BitSet FOLLOW_LIKE_in_like1220 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_like1222 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_comparison1240 = new BitSet(new long[]{0x007E000000040000L});
+    public static final BitSet FOLLOW_comparator_in_comparison1242 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_comparison1244 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_comparator0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_quantifier1326 = new BitSet(new long[]{0x0C00000000000100L});
-    public static final BitSet FOLLOW_set_in_quantifier1328 = new BitSet(new long[]{0x0000000000000020L});
-    public static final BitSet FOLLOW_LPAREN_in_quantifier1342 = new BitSet(new long[]{0x00000000000000A0L});
-    public static final BitSet FOLLOW_subSelect_in_quantifier1344 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_quantifier1346 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_expression_in_expressionList1361 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_COMMA_in_expressionList1365 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_expressionList1367 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_LPAREN_in_nestedExpression1383 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_expression_in_nestedExpression1385 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_RPAREN_in_nestedExpression1387 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_multiply_in_expression1402 = new BitSet(new long[]{0x3000000000000002L});
-    public static final BitSet FOLLOW_set_in_expression1406 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_multiply_in_expression1416 = new BitSet(new long[]{0x3000000000000002L});
-    public static final BitSet FOLLOW_value_in_multiply1433 = new BitSet(new long[]{0x4000000000200002L});
-    public static final BitSet FOLLOW_set_in_multiply1437 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_value_in_multiply1447 = new BitSet(new long[]{0x4000000000200002L});
-    public static final BitSet FOLLOW_literal_in_value1486 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_unary_in_value1496 = new BitSet(new long[]{0xB000000001001020L,0x001C000000000017L});
-    public static final BitSet FOLLOW_columnRef_in_value1507 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_nestedExpression_in_value1515 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_unary_in_literal1539 = new BitSet(new long[]{0x8000000000000000L});
-    public static final BitSet FOLLOW_Float_in_literal1544 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_unary_in_literal1552 = new BitSet(new long[]{0x0000000000001000L});
-    public static final BitSet FOLLOW_Integer_in_literal1557 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_String_in_literal1563 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_TRUE_in_literal1569 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_FALSE_in_literal1575 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_date_in_literal1581 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_114_in_date1594 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000008L});
-    public static final BitSet FOLLOW_Timestamp_in_date1596 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
-    public static final BitSet FOLLOW_RCURLY_in_date1598 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_115_in_date1605 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000008L});
-    public static final BitSet FOLLOW_Timestamp_in_date1607 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
-    public static final BitSet FOLLOW_RCURLY_in_date1609 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_116_in_date1616 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000008L});
-    public static final BitSet FOLLOW_Timestamp_in_date1618 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
-    public static final BitSet FOLLOW_RCURLY_in_date1620 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_quantifier1309 = new BitSet(new long[]{0x0180000000000100L});
+    public static final BitSet FOLLOW_set_in_quantifier1311 = new BitSet(new long[]{0x0000000000000020L});
+    public static final BitSet FOLLOW_LPAREN_in_quantifier1325 = new BitSet(new long[]{0x00000000000000A0L});
+    public static final BitSet FOLLOW_subSelect_in_quantifier1327 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_quantifier1329 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_expression_in_expressionList1344 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_COMMA_in_expressionList1348 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_expressionList1350 = new BitSet(new long[]{0x0000000000020002L});
+    public static final BitSet FOLLOW_LPAREN_in_nestedExpression1366 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_expression_in_nestedExpression1368 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_RPAREN_in_nestedExpression1370 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_multiply_in_expression1385 = new BitSet(new long[]{0x0600000000000002L});
+    public static final BitSet FOLLOW_set_in_expression1389 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_multiply_in_expression1399 = new BitSet(new long[]{0x0600000000000002L});
+    public static final BitSet FOLLOW_value_in_multiply1416 = new BitSet(new long[]{0x0800000000200002L});
+    public static final BitSet FOLLOW_set_in_multiply1420 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_value_in_multiply1430 = new BitSet(new long[]{0x0800000000200002L});
+    public static final BitSet FOLLOW_literal_in_value1469 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_unary_in_value1479 = new BitSet(new long[]{0xF600000001001020L,0x001C000000000002L});
+    public static final BitSet FOLLOW_columnRef_in_value1490 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_nestedExpression_in_value1498 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_unary_in_literal1522 = new BitSet(new long[]{0x1000000000000000L});
+    public static final BitSet FOLLOW_Float_in_literal1527 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_unary_in_literal1535 = new BitSet(new long[]{0x0000000000001000L});
+    public static final BitSet FOLLOW_Integer_in_literal1540 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_String_in_literal1546 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_TRUE_in_literal1552 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_FALSE_in_literal1558 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_date_in_literal1564 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_114_in_date1577 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
+    public static final BitSet FOLLOW_Timestamp_in_date1579 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
+    public static final BitSet FOLLOW_RCURLY_in_date1581 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_115_in_date1588 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
+    public static final BitSet FOLLOW_Timestamp_in_date1590 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
+    public static final BitSet FOLLOW_RCURLY_in_date1592 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_116_in_date1599 = new BitSet(new long[]{0x0000000000000000L,0x0000000000000001L});
+    public static final BitSet FOLLOW_Timestamp_in_date1601 = new BitSet(new long[]{0x0000000000000000L,0x0000020000000000L});
+    public static final BitSet FOLLOW_RCURLY_in_date1603 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_unary0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_tableName_in_tableRef1675 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_databaseName_in_tableRef1681 = new BitSet(new long[]{0x0000000000800000L});
-    public static final BitSet FOLLOW_DOT_in_tableRef1683 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_tableName_in_tableRef1685 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_columnName_in_columnRef1700 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_tableAlias_in_columnRef1707 = new BitSet(new long[]{0x0000000000800000L});
-    public static final BitSet FOLLOW_DOT_in_columnRef1709 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000010L});
-    public static final BitSet FOLLOW_columnName_in_columnRef1711 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_tableName_in_tableRef1658 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_databaseName_in_tableRef1664 = new BitSet(new long[]{0x0000000000800000L});
+    public static final BitSet FOLLOW_DOT_in_tableRef1666 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_tableName_in_tableRef1668 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_columnName_in_columnRef1683 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_tableAlias_in_columnRef1690 = new BitSet(new long[]{0x0000000000800000L});
+    public static final BitSet FOLLOW_DOT_in_columnRef1692 = new BitSet(new long[]{0x0000000001000000L,0x0000000000000002L});
+    public static final BitSet FOLLOW_columnName_in_columnRef1694 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_databaseName0 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_tableName0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_Identifier_in_tableAlias1766 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_Identifier_in_tableAlias1749 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_columnName0 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_joinList_in_synpred13_GenericSQL216 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_nestedCondition_in_synpred55_GenericSQL1039 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_in_in_synpred56_GenericSQL1047 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_between_in_synpred57_GenericSQL1055 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_isNull_in_synpred58_GenericSQL1063 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_like_in_synpred60_GenericSQL1079 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_quantifier_in_synpred61_GenericSQL1087 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_joinList_in_synpred13_GenericSQL217 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_nestedCondition_in_synpred53_GenericSQL1022 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_in_in_synpred54_GenericSQL1030 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_between_in_synpred55_GenericSQL1038 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_isNull_in_synpred56_GenericSQL1046 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_like_in_synpred58_GenericSQL1062 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_quantifier_in_synpred59_GenericSQL1070 = new BitSet(new long[]{0x0000000000000002L});
 
 }
