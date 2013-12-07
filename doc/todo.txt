@@ -78,3 +78,7 @@ BUGS
 grammar accepts 'SELECT id, FROM Legislation', should barf on tailing comma
 misses incorrect table name and reports column not found
 grammar for dates are not to spec eg 'yyyy-MM-dd hh:mm:ss' 
+
+boolean expressions in SELECT columns (eg 'this || that') don't parse correctly
+
+unary negative conditions don't capture the leading minus (eg "WHERE ID = -1" -> "WHERE ID = -?" )

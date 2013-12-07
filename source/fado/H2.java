@@ -1,11 +1,15 @@
 package fado;
 
+import java.io.File;
+
 import org.h2.tools.Server;
 
 public class H2
 {
 	public static void main( String[] args ) throws Exception
 	{
+		File file = new File( "." );
+		System.out.println( file.getCanonicalPath() );
 		start();
 		// stop();
 		// Server server = Server.createTcpServer( args );
@@ -25,7 +29,7 @@ public class H2
 		{
 			try
 			{
-				server = Server.createTcpServer( new String[]{ "-tcp", "-tcpAllowOthers", "true" } );
+				server = Server.createTcpServer( new String[]{ "-tcp", "-tcpAllowOthers" } );
 				server.start();
 				System.out.println( "Started H2 TCP Server: " + server.getURL() );
 

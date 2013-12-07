@@ -7,9 +7,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -57,6 +60,7 @@ public class
 		System.out.println( options );
 		Fado fado = new Fado();
 		fado.init( options );
+		System.out.println( "done" );
 	}
 
 	Template _selectTemplate = null;
@@ -256,6 +260,7 @@ public class
 		ParseTreeBuilder builder = null;
 		try 
 		{
+
 			List<File> created = new ArrayList<File>();
 			
 			FileReader reader = new FileReader( sourceFile );
@@ -270,7 +275,7 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
-			boolean displayTree = true;
+			boolean displayTree = false;
 			if( displayTree )
 			{
 				System.out.println( builder.getTree().toParseTree() );
@@ -281,10 +286,12 @@ public class
 			// Replace Java style comments in generated code, so /* */ becomes /@ @/.
 			temp = temp.replace( "/*", "/@" ); 
 			temp = temp.replace( "*/", "@/" ); 
-			List<String> originalSQL = chopper( temp.trim() );
+			List<String> originalLines = chopper( temp.trim() );
 			
 			
 	
+			String originalText = source.toOriginalString();
+			
 			ParseNode selectNode = source.findFirstNode( "statement/select" );
 			if( selectNode != null )
 			{
@@ -292,7 +299,8 @@ public class
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalSQL( originalSQL );
+				statement.setOriginalText( originalText );
+				statement.setOriginalLines( originalLines );
 				
 				extractSelect( selectNode, statement );
 				String retooledSQL = builder.getTree().toOriginalString().trim();
@@ -311,7 +319,8 @@ public class
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalSQL( originalSQL );
+				statement.setOriginalText( originalText );
+				statement.setOriginalLines( originalLines );
 				
 				extractInsert( insertNode, statement );
 				String retooledSQL = builder.getTree().toOriginalString().trim();
@@ -328,7 +337,8 @@ public class
 				statement.setName( name );
 				statement.setPackage( pkg );
 				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalSQL( originalSQL );
+				statement.setOriginalText( originalText );
+				statement.setOriginalLines( originalLines );
 				
 				extractUpdate( updateNode, statement );
 				String retooledSQL = builder.getTree().toOriginalString().trim();
@@ -414,11 +424,11 @@ public class
 				}
 
 				// Single column reference, eg alias.FamilyName
-				String columnName = item.findFirstString( "value/columnRef/columnName" );
+				String columnName = item.findFirstString( "**/value/columnRef/columnName" );
 				if( columnName != null )
 				{
 					columnName = trimQuotes( columnName );
-					tableAlias = item.findFirstString( "value/columnRef/tableAlias" );
+					tableAlias = item.findFirstString( "**/value/columnRef/tableAlias" );
 					String columnAlias = item.findFirstString( "alias" );
 					Table table = statement.getTable( tableAlias );
 					Column column = new Column( table, columnName, columnAlias );
@@ -691,113 +701,157 @@ public class
 		}
 	}
 
-	public void inspectDatabaseForSelect( Connection conn, SelectStatement extract ) 
+	public void inspectDatabaseForSelect( Connection conn, SelectStatement select ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
+		
+		{
+			String sql = select.getOriginalText();
+			
+			PreparedStatement query = _conn.prepareStatement( sql );
+			query.setMaxRows( 1 );
+			if( query.execute() )
+			{
+				ResultSet rs = query.getResultSet();
+				ResultSetMetaData ugh = rs.getMetaData();
+				
+				List<Column> tempList = select.getTempColumns();
+				
+				ResultSetMetaData meta = rs.getMetaData();
+				int count = meta.getColumnCount();
+				
+				for( int i = 1; i <= count; i++ )
+				{
+//					String cls = meta.getColumnClassName( i );
+					String name = meta.getColumnName( i );
+					int sqlType = meta.getColumnType( i );
+					String sqlTypeName = meta.getColumnTypeName( i );
+					int nullable = meta.isNullable( i );
+					for( Column temp : tempList )
+					{
+						if( name.equalsIgnoreCase( temp.getAlias() ))
+						{
+							name = temp.getAlias();
+							tempList.remove( temp );
+							break;
+						}
+//						{
+//							name = temp.getName();
+//							tempList.remove( temp );
+//							break;
+//						}
+					}
+					Column column = new Column( name, sqlType, sqlTypeName );
+					column.setNullable( nullable == DatabaseMetaData.columnNullable );
+					select.addFinalColumn( column );
+				}
+			}
+		}
+
 
 		String catalog = conn.getCatalog();
 		DatabaseMetaData meta = conn.getMetaData();
 		
-		for( Column tempColumn : extract.getTempColumns() )
-		{
-			switch( tempColumn.getStyle() )
-			{
-				case WholeTable:
-				{
-					String tableName = tempColumn.getTable().getName().toUpperCase();
-					ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
-					if( tableRS.next() )
-					{
-						String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
-						ResultSet columnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
-//						dumpResultSet( columnsRS );
-						while( columnsRS.next() )
-						{
-							String name = columnsRS.getString( "COLUMN_NAME" );
-							int sqlType = columnsRS.getInt( "DATA_TYPE" );
-							String sqlTypeName = columnsRS.getString( "TYPE_NAME" );
-	
-							Column column = new Column( name, sqlType, sqlTypeName );
-							int nullable = columnsRS.getInt( "NULLABLE" );
-							column.setNullable( nullable == DatabaseMetaData.columnNullable );
+//		for( Column tempColumn : select.getTempColumns() )
+//		{
+//			switch( tempColumn.getStyle() )
+//			{
+//				case WholeTable:
+//				{
+//					String tableName = tempColumn.getTable().getName().toUpperCase();
+//					ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
+//					if( tableRS.next() )
+//					{
+//						String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
+//						ResultSet columnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
+////						dumpResultSet( columnsRS );
+//						while( columnsRS.next() )
+//						{
+//							String name = columnsRS.getString( "COLUMN_NAME" );
+//							int sqlType = columnsRS.getInt( "DATA_TYPE" );
+//							String sqlTypeName = columnsRS.getString( "TYPE_NAME" );
+//	
+//							Column column = new Column( name, sqlType, sqlTypeName );
+//							int nullable = columnsRS.getInt( "NULLABLE" );
+//							column.setNullable( nullable == DatabaseMetaData.columnNullable );
+//
+//							select.addFinalColumn( column );
+//						}
+//						columnsRS.close();
+//					}
+//					else
+//					{
+//						throw new Exception( "table not found: " + tableName );						
+//					}
+//					tableRS.close();
+//
+//					break;
+//				}
+//
+//				case Column:
+//				case Alias:
+//				{
+//					List<Table> tables = null;
+//					if( tempColumn.hasTable() )
+//					{
+//						tables = new ArrayList<Table>();
+//						Table table = tempColumn.getTable();
+//						tables.add( table );
+//					}
+//					else
+//					{
+//						tables = select.getTables();
+//					}
+//
+//					boolean found = false;
+//					for( Table table : tables )
+//					{
+//						String tableName = table.getName().toUpperCase();
+//						ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
+//						if( tableRS.next() )
+//						{
+//							String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
+//							String columnName = tempColumn.getName().toUpperCase();
+//							ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
+//							if( columnRS.next() )
+//							{
+//								int sqlType = columnRS.getInt( "DATA_TYPE" );
+//								tempColumn.setSQLType( sqlType );
+//								String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+//								tempColumn.setSQLTypeName( sqlTypeName );
+//								int nullable = columnRS.getInt( "NULLABLE" );
+//								tempColumn.setNullable( nullable == DatabaseMetaData.columnNullable );
+//
+//								select.addFinalColumn( tempColumn );
+//								found = true;
+//							}
+//							columnRS.close();
+//						}
+//						tableRS.close();
+//
+//						if( found ) break;
+//					}
+//
+//					if( !found )
+//					{
+//						String columnName = tempColumn.getName();
+////						columnName = columnName.toUpperCase();
+////						String file = extract.getSourceFile().getName();
+////						String msg = "table & column not found: " + tempColumn.getTable().getName() + "." + columnName;
+//						String msg = "table & column not found: " + columnName;
+//						throw new Exception( msg );
+//					}
+//					break;
+//				}
+//
+//				case Equals:
+//				default:
+//					break;
+//			}
+//		}
 
-							extract.addFinalColumn( column );
-						}
-						columnsRS.close();
-					}
-					else
-					{
-						throw new Exception( "table not found: " + tableName );						
-					}
-					tableRS.close();
-
-					break;
-				}
-
-				case Column:
-				case Alias:
-				{
-					List<Table> tables = null;
-					if( tempColumn.hasTable() )
-					{
-						tables = new ArrayList<Table>();
-						Table table = tempColumn.getTable();
-						tables.add( table );
-					}
-					else
-					{
-						tables = extract.getTables();
-					}
-
-					boolean found = false;
-					for( Table table : tables )
-					{
-						String tableName = table.getName().toUpperCase();
-						ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
-						if( tableRS.next() )
-						{
-							String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
-							String columnName = tempColumn.getName().toUpperCase();
-							ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
-							if( columnRS.next() )
-							{
-								int sqlType = columnRS.getInt( "DATA_TYPE" );
-								tempColumn.setSQLType( sqlType );
-								String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-								tempColumn.setSQLTypeName( sqlTypeName );
-								int nullable = columnRS.getInt( "NULLABLE" );
-								tempColumn.setNullable( nullable == DatabaseMetaData.columnNullable );
-
-								extract.addFinalColumn( tempColumn );
-								found = true;
-							}
-							columnRS.close();
-						}
-						tableRS.close();
-
-						if( found ) break;
-					}
-
-					if( !found )
-					{
-						String columnName = tempColumn.getName();
-//						columnName = columnName.toUpperCase();
-//						String file = extract.getSourceFile().getName();
-//						String msg = "table & column not found: " + tempColumn.getTable().getName() + "." + columnName;
-						String msg = "table & column not found: " + columnName;
-						throw new Exception( msg );
-					}
-					break;
-				}
-
-				case Equals:
-				default:
-					break;
-			}
-		}
-
-		for( Condition condition : extract.getConditions() )
+		for( Condition condition : select.getConditions() )
 		{
 			String columnName = condition.getColumn().toUpperCase();
 			
@@ -810,7 +864,7 @@ public class
 			}
 			else
 			{
-				tables = extract.getTables();
+				tables = select.getTables();
 			}
 
 			boolean found = false;
@@ -954,7 +1008,7 @@ public class
 		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originalsql", statement.getOriginalSQL() );
+		context.put( "originallines", statement.getOriginalLines() );
 
 		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
@@ -975,7 +1029,7 @@ public class
 		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originalsql", statement.getOriginalSQL() );
+		context.put( "originallines", statement.getOriginalLines() );
 
 		_selectTemplate.merge( context, writer );
 	}
@@ -992,7 +1046,7 @@ public class
 		context.put( "columns", statement.getFinalColumns() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originalsql", statement.getOriginalSQL() );
+		context.put( "originallines", statement.getOriginalLines() );
 
 		File targetFile = new File( targetRoot, name + "ResultSet.java" );
 		FileWriter writer = new FileWriter( targetFile );
@@ -1015,7 +1069,7 @@ public class
 		context.put( "columns", statement.getColumns() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originalsql", statement.getOriginalSQL() );
+		context.put( "originallines", statement.getOriginalLines() );
 
 		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
@@ -1039,7 +1093,7 @@ public class
 		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originalsql", statement.getOriginalSQL() );
+		context.put( "originallines", statement.getOriginalLines() );
 
 		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
@@ -1070,11 +1124,11 @@ public class
 		return result;
 	}
 
-	public static void dumpResultSet( ResultSet set ) 
+	public static void dumpResultSet( ResultSet rs ) 
 		throws SQLException
 	{
 		System.out.println();
-		ResultSetMetaData meta = set.getMetaData();
+		ResultSetMetaData meta = rs.getMetaData();
 		int count = meta.getColumnCount();
 		for( int i = 0; i < count; i++ )
 		{
@@ -1083,11 +1137,11 @@ public class
 		}
 		System.out.print( "\n--\n" );
 //		set.first();
-		while( set.next() )
+		while( rs.next() )
 		{
 			for( int i = 0; i < count; i++ )
 			{
-				Object temp = set.getObject( i + 1 );
+				Object temp = rs.getObject( i + 1 );
 				System.out.print( temp + "\t" );
 			}
 			System.out.print( "\n" );

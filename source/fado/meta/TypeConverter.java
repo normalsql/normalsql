@@ -44,7 +44,8 @@ public class
 			result = "java.sql.Array";
 			break;
 		case BIGINT:
-			result = "java.math.BigInteger";
+//			result = "java.math.BigInteger";
+			result = "long";
 			break;
 		case BINARY:
 			result = "byte[]";
@@ -144,8 +145,8 @@ public class
 				result = "null";
 				break;
 			case BIGINT:
-	//			result = "0L";
-				result = "null";
+				result = "0L";
+//				result = "null";
 				break;
 			case BINARY:
 				result = "null";
@@ -257,7 +258,8 @@ public class
 				result = "\"" + literal + "\"";
 				break;
 			case BIGINT:
-				result = "new java.math.BigInteger( " + literal + " );";
+//				result = "new java.math.BigInteger( " + literal + " );";
+				result = literal + "L";
 				break;
 			case BIT:
 			case BOOLEAN:
@@ -347,7 +349,8 @@ public class
 				result = "Array";
 				break;
 			case BIGINT:
-				result = "BigInteger";
+//				result = "BigInteger";
+				result = "Long";
 				break;
 			case BINARY:
 				result = "byte[]";

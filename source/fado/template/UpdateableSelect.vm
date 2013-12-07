@@ -14,7 +14,7 @@ ${className}.java   ${date}
   
 Generated using Fado's Select template. Original SQL:
     
-#foreach( $line in $originalsql )
+#foreach( $line in $originallines )
 $line
 #end
 

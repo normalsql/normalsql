@@ -13,7 +13,7 @@ ${className}ResultSet.java   ${date}
   
 Generated using Fado's ResultSet.vm template. Original SQL:
     
-#foreach( $line in $originalsql )
+#foreach( $line in $originallines )
 $line
 #end
 

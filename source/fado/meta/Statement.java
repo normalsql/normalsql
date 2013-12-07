@@ -47,7 +47,6 @@ public abstract class
 		return _rewrite;
 	}
 	
-	
 	private String _originalFileName = null;
 	
 	public void setOriginalFileName( String originalFileName )
@@ -60,16 +59,28 @@ public abstract class
 		return _originalFileName;
 	}
 	
-	private List<String> _originalSQL = null;
+	private String _originalText = null;
 	
-	public void setOriginalSQL( List<String> originalSQL )
+	public void setOriginalText( String originalText )
 	{
-		_originalSQL = originalSQL;
+		_originalText = originalText;
 	}
 	
-	public List<String> getOriginalSQL()
+	public String getOriginalText()
 	{
-		return _originalSQL;
+		return _originalText;
+	}
+	
+	private List<String> _originalLines = null;
+	
+	public void setOriginalLines( List<String> originalLines )
+	{
+		_originalLines = originalLines;
+	}
+	
+	public List<String> getOriginalLines()
+	{
+		return _originalLines;
 	}
 	
 	private List<String> _retooledSQL = null;

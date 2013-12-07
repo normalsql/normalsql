@@ -15,7 +15,7 @@ ${className}.java   ${date}
   
 Generated using Fado's Update.vm template. Original SQL:
     
-#foreach( $line in $originalsql )
+#foreach( $line in $originallines )
 $line
 #end
 
