@@ -189,7 +189,7 @@ public class
 	}
 
 	// TODO: Create command line option for this? eg. for a clean build operation
-	private boolean _alwaysOverwrite = true;
+	private boolean _alwaysOverwrite = false;
 
 	public void crawl( File sourceRoot, File targetRoot, Stack<String> path )
 	{
