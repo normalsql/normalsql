@@ -113,6 +113,7 @@ item
   : function ( AS? alias )? 
   | expression ( ( AS )? alias )?
   | allColumns
+  | caseExpression ( ( AS )? alias )?
   ;
 
 allColumns
@@ -204,16 +205,17 @@ conditionList
   ;
   
 condition
-  : ( NOT )?
-    ( nestedCondition
+   // ( NOT )?
+//    ( 
+    : comparison
+    | nestedCondition
     | in
     | between
     | isNull
     | exists
     | like
     | quantifier
-	  | comparison
-    )
+//    )
   ;
 
 in
@@ -275,7 +277,7 @@ multiply
    
 //value
 //  : NULL 
-////  | caseWhenExpression
+//  | caseWhenExpression
 //  | ( unary )?
 //    ( Float
 //    | Integer
@@ -290,7 +292,7 @@ multiply
     
 value
   : literal 
-//  | caseWhenExpression
+  | caseExpression
   | ( unary )?
     ( columnRef
     | nestedExpression
@@ -318,22 +320,10 @@ unary
   | PLUS
   ;
  
-//caseWhenExpression
-//  : CASE
-//    ( ( whenThenSearchCondition )+ ELSE 
-//    | value ( whenThenValue )* 
-//    )
-//    END
-//  ;
-//  
-//whenThenSearchCondition
-//  : WHEN condition THEN value
-//  ;
-//  
-//whenThenValue
-//  : WHEN value THEN value
-//  ;
-//  
+caseExpression
+  : CASE ( WHEN condition THEN value )+ ( ELSE value )? END
+  | CASE value ( WHEN value THEN value )+ ( ELSE value )? END
+  ;
 
 tableRef
   : tableName
