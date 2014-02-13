@@ -32,54 +32,56 @@ import java.math.BigDecimal;
 public class 
 	${className}
 {
-	private int __resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
-	
-	public void setResultSetType( int resultSetType )
-	{
-		__resultSetType = resultSetType;
-	}
-	
-	public int getResultSetType()
-	{
-		return __resultSetType;
-	}
-	
-	private int __resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
-
-	public void setResultSetConcurrency( int resultSetConcurrency )
-	{
-		__resultSetConcurrency = resultSetConcurrency;
-	}
-	
-	public int getResultSetConcurrency()
-	{
-		return __resultSetConcurrency;
-	}
-	
+	PreparedStatement __ps = null;
 
 	/**
-		Pass a Connection instance, you are responsible for closing it, method ${className}ResultSet.close()
-		WILL NOT call that instance's Connection.close() method. 
-		 
+		Pass a Connection. You are responsible for closing that Connection. 
+		${className} is a wrapper for a PreparedStatement, not a Connection.
 	**/
-	public final ${className}ResultSet execute( Connection connection )
+	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
 		String sql = getSQL();
-		PreparedStatement ps = connection.prepareStatement( sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-			
+		__ps = connection.prepareStatement( sql, resultSetType, resultSetConcurrency );
+	}
+
+	public ${className}( Connection connection )
+		throws SQLException
+	{
+		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
+	
+	/**
+		Pass a DataSource. You are responsible for closing that DataSource. 
+		${className} is a wrapper for a PreparedStatement, not a Connection.
+	**/
+	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+		throws SQLException
+	{
+		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
+	}
+
+	public ${className}( DataSource dataSource )
+		throws SQLException
+	{
+		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
+		
+	public final ${className}ResultSet execute()
+		throws SQLException
+	{
 #set( $nth = 0 )
 #foreach( $condition in $conditions )
 ##
 #if( $condition.isComparison() )
 ##
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
+		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
 ##
 #elseif( $condition.isLIKE() )
 ##
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
+		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
 ##
 #elseif( $condition.isIN() )
 ##
@@ -87,41 +89,27 @@ public class
 ##
 #foreach( $abc in [0..$size] )
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}( ${abc} ));
+		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}( ${abc} ));
 #end
 ##
 #elseif( $condition.isBETWEEN() )
 ##
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Left() );
+		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Left() );
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Right() );
+		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Right() );
 ##
 #end
 #end
 			
 		ResultSet rs = null;
-		if( ps.execute() )
+		if( __ps.execute() )
 		{
-			rs = ps.getResultSet();
+			rs = __ps.getResultSet();
 		}
 		${className}ResultSet result = new ${className}ResultSet( rs );
 		return result;
 	}
-
-	/**
-		Pass a DataSource, a Connection instance is created, method ${className}ResultSet.close() WILL 
-		also call that instance's Connection.close() method. 
-	**/
-	public final ${className}ResultSet execute( DataSource dataSource )
-		throws SQLException
-	{
-		Connection connection = dataSource.getConnection();
-		${className}ResultSet result = execute( connection );
-		result.setConnection( connection );
-		return result;
-	}
-
 
 #foreach( $condition in $conditions )
 ##
