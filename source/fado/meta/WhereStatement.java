@@ -8,7 +8,16 @@ public class
 extends
 	Statement
 {
-	private ArrayList<Condition> _conditions = new ArrayList<Condition>();
+	private List<Condition> _conditions = new ArrayList<Condition>();
+	
+	public final void setConditions( List<Condition> conditions )
+	{
+		if( conditions == null )
+		{
+			throw new NullPointerException( "conditions" );
+		}
+		_conditions = conditions;
+	}
 	
 	public final void addCondition( Condition condition )
 	{

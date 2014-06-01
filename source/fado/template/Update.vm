@@ -5,7 +5,7 @@
 ## packageName - target Java package name as String
 ## className - target Java class name as String
 ## sql - lines of retooled SQL statement as List<String>
-## columns - columns found in source SQL as List<fado.meta.Column>
+## fields - fields found in source SQL as List<fado.meta.Field>
 ## conditions - conditions found in source SQL as List<fado.meta.Condition>
 ## date - Fado's timestamp
 
@@ -53,11 +53,11 @@ public class
 		
 		
 #set( $nth = 0 )
-#foreach( $column in $columns )
+#foreach( $field in $fields )
 ##
-#set( $method = $column.getTypedMethod() )
+#set( $method = $field.getTypedMethod() )
 #set( $nth = $nth + 1 )
-		ps.set${method}( ${nth}, get${column.NameAsMethod}() );
+		ps.set${method}( ${nth}, get${field.NameAsMethod}() );
 ##
 #end
 #foreach( $condition in $conditions )
@@ -96,19 +96,19 @@ public class
 	
 	
 	
-#foreach( $column in $columns )
-	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+#foreach( $field in $fields )
+	private ${field.JavaType} _${field.NameAsVariable} = ${field.InitializerValue};
 #end
 
-#foreach( $column in $columns )
-	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
+#foreach( $field in $fields )
+	public void set${field.NameAsMethod}( ${field.JavaType} ${field.NameAsVariable} )
 	{
-		_${column.NameAsVariable} = ${column.NameAsVariable};
+		_${field.NameAsVariable} = ${field.NameAsVariable};
 	}
 	
-	public ${column.JavaType} get${column.NameAsMethod}()
+	public ${field.JavaType} get${field.NameAsMethod}()
 	{
-		return _${column.NameAsVariable};
+		return _${field.NameAsVariable};
 	}	
 
 #end
@@ -214,8 +214,8 @@ public class
 	public String toString()
 	{
 		String result = getSQL();
-#foreach( $column in $columns )
-		result = result.replaceFirst( "\\?", quotifyString( get${column.NameAsMethod}() ));
+#foreach( $field in $fields )
+		result = result.replaceFirst( "\\?", quotifyString( get${field.NameAsMethod}() ));
 #end
 #foreach( $condition in $conditions )
 ##

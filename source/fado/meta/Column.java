@@ -1,5 +1,11 @@
 package fado.meta;
 
+/**
+ * Class Column represents columns within a ResultSet, created by a SELECT query.
+ * 
+ * @author jasonosgood
+ *
+ */
 
 public class 
 	Column
@@ -119,9 +125,7 @@ public class
 	@Override
 	public String toString()
 	{
-		return "Column [style=" + _style + ", table=" + _table + ", name=" + _name + ", alias=" + _alias
+		return "Column [style=" + _style + ", table=" + _table + ", field=" + _name + ", alias=" + _alias
 				+ ", sqlType=" + _sqlType + ", sqlTypeName=" + _sqlTypeName + "]";
 	}
-	
-	
 }

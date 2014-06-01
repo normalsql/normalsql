@@ -1,6 +1,5 @@
 package fado.meta;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class 
@@ -8,15 +7,19 @@ public class
 extends
 	WhereStatement
 {
-	private ArrayList<UpdateColumn> _columns = null;
+	private List<Field> _fields = null;
 	
-	public void setColumns( ArrayList<UpdateColumn> columns )
+	public void setFields( List<Field> fields )
 	{
-		_columns = columns;
+		if( fields == null )
+		{
+			throw new NullPointerException( "fields" );
+		}
+		_fields = fields;
 	}
 	
-	public List<UpdateColumn> getColumns()
+	public List<Field> getFields()
 	{
-		return _columns;
+		return _fields;
 	}
 }

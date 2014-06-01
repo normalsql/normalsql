@@ -18,9 +18,33 @@ import java.sql.SQLException;
  *
  */
 
-public class Dumper {
+public class 
+	Dumper 
+{
 
-	public static void dumpResultSet( ResultSet set, OutputStream out ) 
+	public static void dumpResultSet( ResultSet rs ) 
+		throws SQLException
+	{
+		dumpResultSet( rs, System.out, false ); 
+	}	
+	
+	public static void dumpResultSet( ResultSet rs, PrintStream out ) 
+			throws SQLException
+		{
+			dumpResultSet( rs, out, false ); 
+		}	
+		
+	/**
+	 * Dumps ResultSet to OutpuStream. If reset = true and ResultSet type != TYPE_FORWARD_ONLY, 
+	 * dump will start with first row and iterator will be reset to first row.
+	 * 
+	 * @param rs
+	 * @param out
+	 * @param reset
+	 * @throws SQLException
+	 */
+	
+	public static void dumpResultSet( ResultSet rs, OutputStream out, boolean reset ) 
 		throws SQLException
 	{
 		PrintStream ps = null;
@@ -32,7 +56,7 @@ public class Dumper {
 		{
 			ps = new PrintStream( out );
 		}
-		ResultSetMetaData meta = set.getMetaData();
+		ResultSetMetaData meta = rs.getMetaData();
 		int count = meta.getColumnCount();
 		for( int i = 0; i < count; i++ )
 		{
@@ -41,13 +65,16 @@ public class Dumper {
 		}
 		ps.println();
 
-//		set.beforeFirst();
-		while( set.next() )
+		if( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
+		{
+			rs.beforeFirst();
+		}
+		while( rs.next() )
 		{
 			for( int i = 0; i < count; i++ )
 			{
 				String s = null;
-				Object o = set.getObject( i + 1 );
+				Object o = rs.getObject( i + 1 );
 				if( o != null ) 
 				{
 					s = o.toString();
@@ -57,6 +84,10 @@ public class Dumper {
 				ps.print( s + "\t" );
 			}
 			ps.println();
+		}
+		if( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
+		{
+			rs.beforeFirst();
 		}
 	}
 

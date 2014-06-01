@@ -7,8 +7,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -18,6 +16,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -34,14 +33,13 @@ import fado.meta.BETWEEN;
 import fado.meta.Column;
 import fado.meta.Condition;
 import fado.meta.IN;
-import fado.meta.InsertColumn;
 import fado.meta.InsertStatement;
 import fado.meta.LIKE;
 import fado.meta.SelectStatement;
 import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
-import fado.meta.UpdateColumn;
+import fado.meta.Field;
 import fado.meta.UpdateStatement;
 import fado.meta.WhereStatement;
 import fado.parse.ParseNode;
@@ -115,7 +113,6 @@ public class
 			{
 				path.push( item );
 				targetDir = new File( targetDir, item );
-				
 			}
 		}
 		
@@ -133,7 +130,6 @@ public class
 		{
 			_conn.close();
 		}
-
 	}
 
 	FileFilter sqlFilter = new FileFilter()
@@ -189,7 +185,7 @@ public class
 	}
 
 	// TODO: Create command line option for this? eg. for a clean build operation
-	private boolean _alwaysOverwrite = false;
+	private boolean _alwaysOverwrite = true;
 
 	public void crawl( File sourceRoot, File targetRoot, Stack<String> path )
 	{
@@ -252,7 +248,8 @@ public class
 		return name;
 	}
 
-	public boolean displayParseTree = true;
+//	public boolean displayParseTree = true;
+	public boolean displayParseTree = false;
 
 	public List<File> process( String pkg, String name, File sourceFile, File targetRoot ) 
 		throws Exception
@@ -275,11 +272,11 @@ public class
 			reader.close();
 	
 			ParseNode source = builder.getTree();
-			boolean displayTree = false;
-			if( displayTree )
-			{
-				System.out.println( builder.getTree().toParseTree() );
-			}
+//			boolean displayTree = true;
+//			if( displayTree )
+//			{
+//				System.out.println( source.toParseTree() );
+//			}
 			source.addLexType( "String", GenericSQLParser.String );
 			
 			String temp = source.toOriginalString();
@@ -400,35 +397,35 @@ public class
 	public void extractSelectColumns( ParseNode selectNode, SelectStatement statement ) 
 		throws Exception
 	{
-		String allStar = selectNode.findFirstString( "itemList" );
-		if( "*".equals( allStar ) )
-		{
-			for( Table table : statement.getTables() )
-			{
-				statement.tempColumn( new Column( table ) );
-			}
-		}
-		else
+//		String allStar = selectNode.findFirstString( "itemList" );
+//		if( "*".equals( allStar ) )
+//		{
+//			for( Table table : statement.getTables() )
+//			{
+//				statement.tempColumn( new Column( table ) );
+//			}
+//		}
+//		else
 		{
 			List<ParseNode> list = selectNode.findNodes( "itemList/item" );
 			for( ParseNode item : list )
 			{
-				// All columns from a table, eg alias.*
-				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
-				if( tableAlias != null )
-				{
-					Table table = statement.getTable( tableAlias );
-					Column column = new Column( table );
-					statement.tempColumn( column );
-					continue;
-				}
+//				// All columns from a table, eg alias.*
+//				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
+//				if( tableAlias != null )
+//				{
+//					Table table = statement.getTable( tableAlias );
+//					Column column = new Column( table );
+//					statement.tempColumn( column );
+//					continue;
+//				}
 
 				// Single column reference, eg alias.FamilyName
 				String columnName = item.findFirstString( "**/value/columnRef/columnName" );
 				if( columnName != null )
 				{
 					columnName = trimQuotes( columnName );
-					tableAlias = item.findFirstString( "**/value/columnRef/tableAlias" );
+					String tableAlias = item.findFirstString( "**/value/columnRef/tableAlias" );
 					String columnAlias = item.findFirstString( "alias" );
 					Table table = statement.getTable( tableAlias );
 					Column column = new Column( table, columnName, columnAlias );
@@ -436,8 +433,8 @@ public class
 					continue;
 				}
 
-				// Expression returned as column
-				// TODO: expression columns
+//				// Expression returned as column
+//				// TODO: expression columns
 
 			}
 		}
@@ -491,19 +488,19 @@ public class
 		Table table = new Table( databaseName, tableName, alias );
 		statement.addTable( table );
 
-		ArrayList<InsertColumn> columns = new ArrayList<InsertColumn>();
+		ArrayList<Field> fields = new ArrayList<Field>();
 		List<ParseNode> list = insertNode.findNodes( "columnList/columnName" );
 		for( ParseNode item : list )
 		{
 			String name = item.toParsedString();
-			columns.add( new InsertColumn( name ) );
+			fields.add( new Field( name ) );
 		}
 
 		List<ParseNode> literals = insertNode.findNodes( "values/literal" );
 
-		if( columns.size() != literals.size() )
+		if( fields.size() != literals.size() )
 		{
-			throw new Exception( "mismatch, columns: " + columns.size() + ", literals: " + literals.size() );
+			throw new Exception( "mismatch, fields: " + fields.size() + ", literals: " + literals.size() );
 		}
 
 		int nth = 0;
@@ -514,11 +511,11 @@ public class
 
 			node.convertToJDBCParam();
 
-			InsertColumn col = columns.get( nth );
-			col.setLiteral( literal );
+			Field field = fields.get( nth );
+			field.setLiteral( literal );
 			nth++;
 		}
-		statement.setColumns( columns );
+		statement.setFields( fields );
 	}
 
 	// TODO support unary literals (done?)
@@ -533,7 +530,7 @@ public class
 		Table table = new Table( databaseName, tableName, alias );
 		statement.addTable( table );
 
-		ArrayList<UpdateColumn> columns = new ArrayList<UpdateColumn>();
+		ArrayList<Field> fields = new ArrayList<Field>();
 		List<ParseNode> setters = updateNode.findNodes( "setter" );
 		for( ParseNode node : setters )
 		{
@@ -544,9 +541,9 @@ public class
 			
 			literalNode.convertToJDBCParam();
 
-			columns.add( new UpdateColumn( name, literal ) );
+			fields.add( new Field( name, literal ));
 		}
-		statement.setColumns( columns );
+		statement.setFields( fields );
 
 		for( ParseNode where : updateNode.findNodes( "where" ))
 		{
@@ -714,8 +711,6 @@ public class
 			if( query.execute() )
 			{
 				ResultSet rs = query.getResultSet();
-				ResultSetMetaData ugh = rs.getMetaData();
-				
 				List<Column> tempList = select.getTempColumns();
 				
 				ResultSetMetaData meta = rs.getMetaData();
@@ -749,111 +744,12 @@ public class
 			}
 		}
 
-
 		String catalog = conn.getCatalog();
 		DatabaseMetaData meta = conn.getMetaData();
 		
-//		for( Column tempColumn : select.getTempColumns() )
-//		{
-//			switch( tempColumn.getStyle() )
-//			{
-//				case WholeTable:
-//				{
-//					String tableName = tempColumn.getTable().getName().toUpperCase();
-//					ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
-//					if( tableRS.next() )
-//					{
-//						String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
-//						ResultSet columnsRS  = meta.getColumns( catalog, schemaPattern, tableName, null );
-////						dumpResultSet( columnsRS );
-//						while( columnsRS.next() )
-//						{
-//							String name = columnsRS.getString( "COLUMN_NAME" );
-//							int sqlType = columnsRS.getInt( "DATA_TYPE" );
-//							String sqlTypeName = columnsRS.getString( "TYPE_NAME" );
-//	
-//							Column column = new Column( name, sqlType, sqlTypeName );
-//							int nullable = columnsRS.getInt( "NULLABLE" );
-//							column.setNullable( nullable == DatabaseMetaData.columnNullable );
-//
-//							select.addFinalColumn( column );
-//						}
-//						columnsRS.close();
-//					}
-//					else
-//					{
-//						throw new Exception( "table not found: " + tableName );						
-//					}
-//					tableRS.close();
-//
-//					break;
-//				}
-//
-//				case Column:
-//				case Alias:
-//				{
-//					List<Table> tables = null;
-//					if( tempColumn.hasTable() )
-//					{
-//						tables = new ArrayList<Table>();
-//						Table table = tempColumn.getTable();
-//						tables.add( table );
-//					}
-//					else
-//					{
-//						tables = select.getTables();
-//					}
-//
-//					boolean found = false;
-//					for( Table table : tables )
-//					{
-//						String tableName = table.getName().toUpperCase();
-//						ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
-//						if( tableRS.next() )
-//						{
-//							String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
-//							String columnName = tempColumn.getName().toUpperCase();
-//							ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
-//							if( columnRS.next() )
-//							{
-//								int sqlType = columnRS.getInt( "DATA_TYPE" );
-//								tempColumn.setSQLType( sqlType );
-//								String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-//								tempColumn.setSQLTypeName( sqlTypeName );
-//								int nullable = columnRS.getInt( "NULLABLE" );
-//								tempColumn.setNullable( nullable == DatabaseMetaData.columnNullable );
-//
-//								select.addFinalColumn( tempColumn );
-//								found = true;
-//							}
-//							columnRS.close();
-//						}
-//						tableRS.close();
-//
-//						if( found ) break;
-//					}
-//
-//					if( !found )
-//					{
-//						String columnName = tempColumn.getName();
-////						columnName = columnName.toUpperCase();
-////						String file = extract.getSourceFile().getName();
-////						String msg = "table & column not found: " + tempColumn.getTable().getName() + "." + columnName;
-//						String msg = "table & column not found: " + columnName;
-//						throw new Exception( msg );
-//					}
-//					break;
-//				}
-//
-//				case Equals:
-//				default:
-//					break;
-//			}
-//		}
-
 		for( Condition condition : select.getConditions() )
 		{
-			String columnName = condition.getColumn().toUpperCase();
+			String columnName = condition.getName();
 			
 			List<Table> tables = null;
 			if( condition.hasTable() )
@@ -867,37 +763,53 @@ public class
 				tables = select.getTables();
 			}
 
-			boolean found = false;
+			boolean foundColumn = false;
+			boolean foundTable = false;
 
 			for( Table table : tables )
 			{
-				String tableName = table.getName().toUpperCase();
-				ResultSet tableRS = meta.getTables( catalog, null, tableName, null );
-				if( tableRS.next() )
+				String tableName = table.getName();
+				ResultSet tableRS = meta.getTables( null, null, null, null );
+//				Dumper.dumpResultSet( tableRS );
+//				tableRS.beforeFirst();
+				while( tableRS.next() && !foundColumn )
 				{
-					String schemaPattern = tableRS.getString( "TABLE_SCHEM" );
-					ResultSet columnRS  = meta.getColumns( catalog, schemaPattern, tableName, columnName );
-					if( columnRS.next() )
-					{
-						int sqlType = columnRS.getInt( "DATA_TYPE" );
-						condition.setSQLType( sqlType );
-						int nullable = columnRS.getInt( "NULLABLE" );
-						condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+					String tempTableName =  tableRS.getString( "TABLE_NAME" );
+					boolean tableMatch = tableName.equalsIgnoreCase( tempTableName );
+					if( tableMatch ) foundTable = true;
 
-						found = true;
+					String tempTableSchema = tableRS.getString( "TABLE_SCHEM" );
+					boolean schemaMatch = "PUBLIC".equalsIgnoreCase( tempTableSchema );
+					String tempTableCatalog = tableRS.getString( "TABLE_CAT" );
+					boolean catalogMatch = catalog.equalsIgnoreCase( tempTableCatalog );
+					if( tableMatch && schemaMatch && catalogMatch )
+					{
+						ResultSet columnRS  = meta.getColumns( tempTableCatalog, tempTableSchema, tempTableName, null );
+						while( columnRS.next() && !foundColumn )
+						{
+							String tempColumnName = columnRS.getString(  "COLUMN_NAME" );
+							boolean columnMatch = columnName.equalsIgnoreCase( tempColumnName );
+							if( columnMatch )
+							{
+								int sqlType = columnRS.getInt( "DATA_TYPE" );
+								condition.setSQLType( sqlType );
+								int nullable = columnRS.getInt( "NULLABLE" );
+								condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+								System.out.printf( "searched for column: %s  found: %s\n", columnName, tempColumnName );
+								foundColumn = true;
+							}
+						}
+						columnRS.close();
 					}
-					columnRS.close();
-				}
-				else
-				{
-					throw new Exception( "table not found: " + tableName );						
 				}
 				tableRS.close();
-
-				if( found ) break;
 			}
 
-			if( !found )
+			if( !foundTable  && condition.hasTable() )
+			{
+				throw new Exception( "condition's table ref not found: " + condition.getTable().getName() );
+			}
+			if( !foundColumn )
 			{
 				throw new Exception( "condition's column ref not found: " + columnName );
 			}
@@ -909,91 +821,156 @@ public class
 	{
 		if( _onlyParse ) return;
 
-		String catalog = null;
-		String schema = null;
 		DatabaseMetaData meta = conn.getMetaData();
 
+		String catalog = null;
+		String schema = null;
 		Table table = extract.getTables().get( 0 );
-		String tableName = table.getName().toUpperCase();
-		for( InsertColumn column : extract.getColumns() )
+//		String tableName = table.getName().toUpperCase();
+		String tableName = table.getName();
+		
+		// Move declared fields to found list as able
+		List<Field> declaredFields = extract.getFields();
+		List<Field> foundFields = new ArrayList<Field>();
+		
+		// TODO first verify table exists
+		// TODO Table name may also need case insensitive handling
+		ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, null );
+//		dumpResultSet( columnRS );
+//		columnRS.beforeFirst();
+		while( columnRS.next() )
 		{
-	
-			String columnName = column.getName().toUpperCase();
-			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
-			if( columnRS.next() )
+			String columnName = columnRS.getString( "COLUMN_NAME" );
+			Iterator<Field> fieldIterator = declaredFields.iterator();
+			while( fieldIterator.hasNext()  )
 			{
-				int sqlType = columnRS.getInt( "DATA_TYPE" );
-				column.setSQLType( sqlType );
-				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-				column.setSQLTypeName( sqlTypeName );
-				int nullable = columnRS.getInt( "NULLABLE" );
-				column.setNullable( nullable == DatabaseMetaData.columnNullable );
+				Field field = fieldIterator.next();
+				if( field.getName().equalsIgnoreCase( columnName ) )
+				{
+					int sqlType = columnRS.getInt( "DATA_TYPE" );
+					field.setSQLType( sqlType );
+					String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+					field.setSQLTypeName( sqlTypeName );
+					int nullable = columnRS.getInt( "NULLABLE" );
+					field.setNullable( nullable == DatabaseMetaData.columnNullable );
+
+					fieldIterator.remove();
+					foundFields.add( field );
+					
+					break;
+				}
 			}
-			else
-			{
-				// TODO Don't die on first error
-				throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
-			}
-			columnRS.close();
 		}
-
-//				throw new Exception( "table not found: " + tableName );
-
+		columnRS.close();
+		
+		// Found all the declared fields, copy them back into place
+		if( declaredFields.isEmpty() )
+		{
+			extract.setFields( foundFields );
+		}
+		else
+		{
+			// TODO Don't die on first error
+			Field field = declaredFields.get( 0 );
+			String name = field.getName();
+			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
+		}
 	}
 
 	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement extract ) 
 		throws Exception
 	{
 		if( _onlyParse ) return;
-		String catalog = null;
-		String schema = null;
+
 		DatabaseMetaData meta = conn.getMetaData();
 
+		String catalog = null;
+		String schema = null;
 		Table table = extract.getTables().get( 0 );
-		String tableName = table.getName().toUpperCase();
+//		String tableName = table.getName().toUpperCase();
+		String tableName = table.getName();
 		
-		for( UpdateColumn column : extract.getColumns() )
+		// Move declared fields to found list as able
+		List<Field> declaredFields = extract.getFields();
+		List<Field> foundFields = new ArrayList<Field>();
+		
+		// Move declared conditions to found list as able
+		List<Condition> declaredConditions = extract.getConditions();
+		List<Condition> foundConditions = new ArrayList<Condition>();
+		
+		// TODO Table name may also need case insensitive handling
+		ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, null );
+//		dumpResultSet( columnRS );
+//		columnRS.beforeFirst();
+		while( columnRS.next() )
 		{
-
-			String columnName = column.getName().toUpperCase();
-			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
-			if( columnRS.next() )
+			String columnName = columnRS.getString( "COLUMN_NAME" );
+			int sqlType = columnRS.getInt( "DATA_TYPE" );
+			String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+			int nullable = columnRS.getInt( "NULLABLE" );
+			
+			Iterator<Field> fieldIterator = declaredFields.iterator();
+			while( fieldIterator.hasNext()  )
 			{
-				int sqlType = columnRS.getInt( "DATA_TYPE" );
-				column.setSQLType( sqlType );
-				String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-				column.setSQLTypeName( sqlTypeName );
-				int nullable = columnRS.getInt( "NULLABLE" );
-				column.setNullable( nullable == DatabaseMetaData.columnNullable );
+				Field field = fieldIterator.next();
+				if( field.getName().equalsIgnoreCase( columnName ) )
+				{
+					field.setSQLType( sqlType );
+					field.setSQLTypeName( sqlTypeName );
+					field.setNullable( nullable == DatabaseMetaData.columnNullable );
 
+					fieldIterator.remove();
+					foundFields.add( field );
+					
+					break;
+				}
 			}
-			else
+			
+			Iterator<Condition> conditionIterator = declaredConditions.iterator();
+			while( conditionIterator.hasNext()  )
 			{
-				// TODO Don't die on first error
-				throw new Exception( "column '" + columnName + "' not found in table '" + tableName + "'" );
+				Condition condition = conditionIterator.next();
+				if( condition.getName().equalsIgnoreCase( columnName ) )
+				{
+					condition.setSQLType( sqlType );
+					condition.setSQLTypeName( sqlTypeName );
+					condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+
+					conditionIterator.remove();
+					foundConditions.add( condition );
+					
+					break;
+				}
 			}
-			columnRS.close();
 		}
-//				throw new Exception( "table not found: " + tableName );
-
-		for( Condition condition : extract.getConditions() )
+		columnRS.close();
+		
+		// Found all the declared fields, copy them back into place
+		if( declaredFields.isEmpty() )
 		{
-			String columnName = condition.getColumn().toUpperCase();
-			ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, columnName );
-			if( columnRS.next() )
-			{
-				int sqlType = columnRS.getInt( "DATA_TYPE" );
-				condition.setSQLType( sqlType );
-				int nullable = columnRS.getInt( "NULLABLE" );
-				condition.setNullable( nullable == DatabaseMetaData.columnNullable );
-
-			}
-			else
-			{
-				throw new Exception( "column not found: " + columnName );
-			}
-			columnRS.close();
+			extract.setFields( foundFields );
 		}
+		else
+		{
+			// TODO Don't die on first error
+			Field field = declaredFields.get( 0 );
+			String name = field.getName();
+			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
+		}		
+		
+		// Found all the declared fields, copy them back into place
+		if( declaredConditions.isEmpty() )
+		{
+			extract.setConditions( foundConditions );
+		}
+		else
+		{
+			// TODO Don't die on first error
+			Condition condition = declaredConditions.get( 0 );
+			String name = condition.getName();
+			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
+		}		
+		
 	}
 
 	public void generateSelect( SelectStatement statement, File targetRoot, String name, List<File> created ) 
@@ -1066,7 +1043,7 @@ public class
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
 		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "columns", statement.getColumns() );
+		context.put( "fields", statement.getFields() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );
 		context.put( "originallines", statement.getOriginalLines() );
@@ -1089,7 +1066,7 @@ public class
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
 		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "columns", statement.getColumns() );
+		context.put( "fields", statement.getFields() );
 		context.put( "conditions", statement.getConditions() );
 		context.put( "date", new Date() );
 		context.put( "originalfile", statement.getOriginalFileName() );

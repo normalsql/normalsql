@@ -9,8 +9,13 @@ public class
 extends
 	WhereStatement
 {
-	/** Temporary columns are what's found in the parsed SQL command. When found,
-	 * they're moved to the final columns list.
+//	/** Temporary columns are what's found in the parsed SQL command. When found,
+//	 * they're moved to the final columns list.
+//	 */
+	
+	/**
+	 * Temp columns capture query specified case sensitive alias for columns.
+	 * 
 	 */
 	private ArrayList<Column> _tempColumns = new ArrayList<Column>();
 	
