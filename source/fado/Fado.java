@@ -51,13 +51,20 @@ public class
 	Fado
 {
 	public static void main( String[] args ) 
-		throws Exception
+//		throws Exception
 	{
-		FadoOptions options = new FadoOptions();
-		options.parse( args );
-		System.out.println( options );
-		Fado fado = new Fado();
-		fado.init( options );
+		try
+		{
+			FadoOptions options = new FadoOptions();
+			options.parse( args );
+			System.out.println( options );
+			Fado fado = new Fado();
+			fado.init( options );
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace( System.out );
+		}
 		System.out.println( "done" );
 	}
 
@@ -715,31 +722,32 @@ public class
 				
 				ResultSetMetaData meta = rs.getMetaData();
 				int count = meta.getColumnCount();
-				
-				for( int i = 1; i <= count; i++ )
+
+				for( Column temp : tempList )
 				{
-//					String cls = meta.getColumnClassName( i );
-					String name = meta.getColumnName( i );
-					int sqlType = meta.getColumnType( i );
-					String sqlTypeName = meta.getColumnTypeName( i );
-					int nullable = meta.isNullable( i );
-					for( Column temp : tempList )
+					boolean found = false;
+					for( int i = 1; i <= count; i++ )
 					{
+						String name = meta.getColumnName( i );
+						int sqlType = meta.getColumnType( i );
+						String sqlTypeName = meta.getColumnTypeName( i );
+						int nullable = meta.isNullable( i );
 						if( name.equalsIgnoreCase( temp.getAlias() ))
 						{
+							found = true;
+							// choose user's capitalization of the column name or alias
 							name = temp.getAlias();
-							tempList.remove( temp );
+							Column column = new Column( name, sqlType, sqlTypeName );
+							column.setNullable( nullable == DatabaseMetaData.columnNullable );
+							select.addFinalColumn( column );
 							break;
 						}
-//						{
-//							name = temp.getName();
-//							tempList.remove( temp );
-//							break;
-//						}
 					}
-					Column column = new Column( name, sqlType, sqlTypeName );
-					column.setNullable( nullable == DatabaseMetaData.columnNullable );
-					select.addFinalColumn( column );
+					if( !found )
+					{
+						String msg = String.format( "SELECT's resultset column metadata does not contain '%s'", temp.getAlias() );
+						throw new fado.FadoException( msg );
+					}
 				}
 			}
 		}
@@ -816,161 +824,150 @@ public class
 		}
 	}
 
-	public void inspectDatabaseForInsert( Connection conn, InsertStatement extract ) 
+	public void inspectDatabaseForInsert( Connection conn, InsertStatement statement )
 		throws Exception
 	{
 		if( _onlyParse ) return;
-
-		DatabaseMetaData meta = conn.getMetaData();
-
-		String catalog = null;
-		String schema = null;
-		Table table = extract.getTables().get( 0 );
-//		String tableName = table.getName().toUpperCase();
-		String tableName = table.getName();
-		
-		// Move declared fields to found list as able
-		List<Field> declaredFields = extract.getFields();
-		List<Field> foundFields = new ArrayList<Field>();
-		
-		// TODO first verify table exists
-		// TODO Table name may also need case insensitive handling
-		ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, null );
-//		dumpResultSet( columnRS );
-//		columnRS.beforeFirst();
-		while( columnRS.next() )
+		ResultSet tableRS = null;
+		try
 		{
-			String columnName = columnRS.getString( "COLUMN_NAME" );
-			Iterator<Field> fieldIterator = declaredFields.iterator();
-			while( fieldIterator.hasNext()  )
-			{
-				Field field = fieldIterator.next();
-				if( field.getName().equalsIgnoreCase( columnName ) )
-				{
-					int sqlType = columnRS.getInt( "DATA_TYPE" );
-					field.setSQLType( sqlType );
-					String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-					field.setSQLTypeName( sqlTypeName );
-					int nullable = columnRS.getInt( "NULLABLE" );
-					field.setNullable( nullable == DatabaseMetaData.columnNullable );
+			String catalog = null;
+			String schema = "PUBLIC";
+			Table table = statement.getTables().iterator().next();
+			String tableName = table.getName();
 
-					fieldIterator.remove();
-					foundFields.add( field );
-					
-					break;
+			DatabaseMetaData meta = conn.getMetaData();
+			tableRS = meta.getTables( catalog, schema, null, null );
+
+			while( tableRS.next() )
+			{
+				String tempTableName = tableRS.getString( "TABLE_NAME" );
+				if( !tableName.equalsIgnoreCase( tempTableName ) ) continue;
+
+				catalog = tableRS.getString( "TABLE_CAT" );
+				schema = tableRS.getString( "TABLE_SCHEM" );
+
+				for( Field field : statement.getFields() )
+				{
+					boolean found = false;
+
+					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
+
+					while( columnRS.next() )
+					{
+						String columnName = columnRS.getString( "COLUMN_NAME" );
+						if( field.getName().equalsIgnoreCase( columnName ) )
+						{
+							int sqlType = columnRS.getInt( "DATA_TYPE" );
+							field.setSQLType( sqlType );
+							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+							field.setSQLTypeName( sqlTypeName );
+							int nullable = columnRS.getInt( "NULLABLE" );
+							field.setNullable( nullable == DatabaseMetaData.columnNullable );
+							found = true;
+							break;
+						}
+					}
+					columnRS.close();
+					if( !found )
+					{
+						String msg = String.format( "INSERT's table '%s' does not contain field '%s'", tableName, "ugh" );
+						throw new fado.FadoException( msg );
+					}
 				}
 			}
 		}
-		columnRS.close();
-		
-		// Found all the declared fields, copy them back into place
-		if( declaredFields.isEmpty() )
+		finally
 		{
-			extract.setFields( foundFields );
-		}
-		else
-		{
-			// TODO Don't die on first error
-			Field field = declaredFields.get( 0 );
-			String name = field.getName();
-			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
+			safeClose( tableRS );
 		}
 	}
 
-	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement extract ) 
+	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement statement )
 		throws Exception
 	{
 		if( _onlyParse ) return;
-
-		DatabaseMetaData meta = conn.getMetaData();
-
-		String catalog = null;
-		String schema = null;
-		Table table = extract.getTables().get( 0 );
-//		String tableName = table.getName().toUpperCase();
-		String tableName = table.getName();
-		
-		// Move declared fields to found list as able
-		List<Field> declaredFields = extract.getFields();
-		List<Field> foundFields = new ArrayList<Field>();
-		
-		// Move declared conditions to found list as able
-		List<Condition> declaredConditions = extract.getConditions();
-		List<Condition> foundConditions = new ArrayList<Condition>();
-		
-		// TODO Table name may also need case insensitive handling
-		ResultSet columnRS  = meta.getColumns( catalog, schema, tableName, null );
-//		dumpResultSet( columnRS );
-//		columnRS.beforeFirst();
-		while( columnRS.next() )
+		ResultSet tableRS = null;
+		try
 		{
-			String columnName = columnRS.getString( "COLUMN_NAME" );
-			int sqlType = columnRS.getInt( "DATA_TYPE" );
-			String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-			int nullable = columnRS.getInt( "NULLABLE" );
-			
-			Iterator<Field> fieldIterator = declaredFields.iterator();
-			while( fieldIterator.hasNext()  )
-			{
-				Field field = fieldIterator.next();
-				if( field.getName().equalsIgnoreCase( columnName ) )
-				{
-					field.setSQLType( sqlType );
-					field.setSQLTypeName( sqlTypeName );
-					field.setNullable( nullable == DatabaseMetaData.columnNullable );
+			String catalog = null;
+			String schema = "PUBLIC";
+			Table table = statement.getTables().iterator().next();
+			String tableName = table.getName();
 
-					fieldIterator.remove();
-					foundFields.add( field );
-					
-					break;
+			DatabaseMetaData meta = conn.getMetaData();
+			tableRS = meta.getTables( catalog, schema, null, null );
+
+			while( tableRS.next() )
+			{
+				String tempTableName = tableRS.getString( "TABLE_NAME" );
+				if( !tableName.equalsIgnoreCase( tempTableName ) ) continue;
+
+				catalog = tableRS.getString( "TABLE_CAT" );
+				schema = tableRS.getString( "TABLE_SCHEM" );
+
+				for( Field field : statement.getFields() )
+				{
+					boolean found = false;
+
+					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
+
+					while( columnRS.next() )
+					{
+						String columnName = columnRS.getString( "COLUMN_NAME" );
+						if( field.getName().equalsIgnoreCase( columnName ) )
+						{
+							int sqlType = columnRS.getInt( "DATA_TYPE" );
+							field.setSQLType( sqlType );
+							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+							field.setSQLTypeName( sqlTypeName );
+							int nullable = columnRS.getInt( "NULLABLE" );
+							field.setNullable( nullable == DatabaseMetaData.columnNullable );
+							found = true;
+							break;
+						}
+					}
+					columnRS.close();
+					if( !found )
+					{
+						String msg = String.format( "UPDATE's table '%s' does not contain field '%s'", tableName, "ugh" );
+						throw new fado.FadoException( msg );
+					}
+				}
+				for( Condition condition : statement.getConditions() )
+				{
+					boolean found = false;
+
+					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
+
+					while( columnRS.next() )
+					{
+						String columnName = columnRS.getString( "COLUMN_NAME" );
+						if( condition.getName().equalsIgnoreCase( columnName ) )
+						{
+							int sqlType = columnRS.getInt( "DATA_TYPE" );
+							condition.setSQLType( sqlType );
+							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+							condition.setSQLTypeName( sqlTypeName );
+							int nullable = columnRS.getInt( "NULLABLE" );
+							condition.setNullable( nullable == DatabaseMetaData.columnNullable );
+							found = true;
+							break;
+						}
+					}
+					columnRS.close();
+					if( !found )
+					{
+						String msg = String.format( "UPDATE's table '%s' does not contain field '%s'", tableName, "ugh" );
+						throw new fado.FadoException( msg );
+					}
 				}
 			}
-			
-			Iterator<Condition> conditionIterator = declaredConditions.iterator();
-			while( conditionIterator.hasNext()  )
-			{
-				Condition condition = conditionIterator.next();
-				if( condition.getName().equalsIgnoreCase( columnName ) )
-				{
-					condition.setSQLType( sqlType );
-					condition.setSQLTypeName( sqlTypeName );
-					condition.setNullable( nullable == DatabaseMetaData.columnNullable );
-
-					conditionIterator.remove();
-					foundConditions.add( condition );
-					
-					break;
-				}
-			}
 		}
-		columnRS.close();
-		
-		// Found all the declared fields, copy them back into place
-		if( declaredFields.isEmpty() )
+		finally
 		{
-			extract.setFields( foundFields );
+			safeClose( tableRS );
 		}
-		else
-		{
-			// TODO Don't die on first error
-			Field field = declaredFields.get( 0 );
-			String name = field.getName();
-			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
-		}		
-		
-		// Found all the declared fields, copy them back into place
-		if( declaredConditions.isEmpty() )
-		{
-			extract.setConditions( foundConditions );
-		}
-		else
-		{
-			// TODO Don't die on first error
-			Condition condition = declaredConditions.get( 0 );
-			String name = condition.getName();
-			throw new Exception( "field '" + name + "' not found in table '" + tableName + "'" );
-		}		
-		
 	}
 
 	public void generateSelect( SelectStatement statement, File targetRoot, String name, List<File> created ) 
@@ -1099,6 +1096,19 @@ public class
 		LineReader lr = new LineReader( sr );
 		List<String> result = lr.toArray();
 		return result;
+	}
+
+	public void safeClose( ResultSet rs )
+	{
+		if( rs == null ) return;
+		try
+		{
+			rs.close();
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+		}
 	}
 
 	public static void dumpResultSet( ResultSet rs ) 
