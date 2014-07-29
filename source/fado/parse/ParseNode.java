@@ -238,7 +238,11 @@ public class
 		}
 		for( Object child : parent._children )
 		{
-			if( child instanceof Token && Character.isUpperCase( spot.charAt( 0 )) )
+			boolean wildcard = "*".equals( spot );
+			boolean tokenQuery = Character.isUpperCase( spot.charAt( 0 ));
+			boolean nodeQuery = Character.isLowerCase( spot.charAt( 0 ));
+
+			if( child instanceof Token && ( wildcard || tokenQuery ) )
 			{
 				Token token = (Token) child;
 				int type = getLexType( spot );
@@ -247,10 +251,10 @@ public class
 					result.add( token );
 				}
 			}
-			else if( child instanceof ParseNode && Character.isLowerCase( spot.charAt( 0 )) )
+			else if( child instanceof ParseNode && ( wildcard || nodeQuery ) )
 			{
 				ParseNode childNode = (ParseNode) child;
-				if( "*".equals( spot ) || childNode.getRule().equals( spot ))
+				if( wildcard || childNode.getRule().equals( spot ))
 				{
 					if( nth + 1 < query.size() )
 					{
