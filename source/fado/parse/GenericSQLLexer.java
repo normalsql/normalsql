@@ -135,15 +135,15 @@ public class GenericSQLLexer extends Lexer {
         super(input,state);
 
     }
-    public String getGrammarFileName() { return "/Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g"; }
+    public String getGrammarFileName() { return "/Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4"; }
 
     // $ANTLR start "T__114"
     public final void mT__114() throws RecognitionException {
         try {
             int _type = T__114;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:11:8: ( '{d' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:11:10: '{d'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:11:8: ( '{d' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:11:10: '{d'
             {
             match("{d"); 
 
@@ -163,8 +163,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = T__115;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:12:8: ( '{t' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:12:10: '{t'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:12:8: ( '{t' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:12:10: '{t'
             {
             match("{t"); 
 
@@ -184,8 +184,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = T__116;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:13:8: ( '{ts' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:13:10: '{ts'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:13:8: ( '{ts' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:13:10: '{ts'
             {
             match("{ts"); 
 
@@ -205,8 +205,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ALL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:357:11: ( A L L )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:357:13: A L L
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:357:11: ( A L L )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:357:13: A L L
             {
             mA(); 
             mL(); 
@@ -227,8 +227,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = AND;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:358:11: ( A N D )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:358:13: A N D
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:358:11: ( A N D )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:358:13: A N D
             {
             mA(); 
             mN(); 
@@ -249,8 +249,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ANY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:359:11: ( A N Y )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:359:13: A N Y
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:359:11: ( A N Y )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:359:13: A N Y
             {
             mA(); 
             mN(); 
@@ -271,8 +271,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = AS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:360:11: ( A S )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:360:13: A S
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:360:11: ( A S )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:360:13: A S
             {
             mA(); 
             mS(); 
@@ -292,8 +292,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ASC;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:361:11: ( A S C )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:361:13: A S C
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:361:11: ( A S C )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:361:13: A S C
             {
             mA(); 
             mS(); 
@@ -314,8 +314,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = BETWEEN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:362:11: ( B E T W E E N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:362:13: B E T W E E N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:362:11: ( B E T W E E N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:362:13: B E T W E E N
             {
             mB(); 
             mE(); 
@@ -340,8 +340,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = BY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:363:11: ( B Y )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:363:13: B Y
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:363:11: ( B Y )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:363:13: B Y
             {
             mB(); 
             mY(); 
@@ -361,8 +361,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = CASE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:364:11: ( C A S E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:364:13: C A S E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:364:11: ( C A S E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:364:13: C A S E
             {
             mC(); 
             mA(); 
@@ -384,8 +384,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = DELETE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:370:11: ( D E L E T E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:370:13: D E L E T E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:370:11: ( D E L E T E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:370:13: D E L E T E
             {
             mD(); 
             mE(); 
@@ -409,8 +409,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = DESC;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:371:11: ( D E S C )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:371:13: D E S C
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:371:11: ( D E S C )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:371:13: D E S C
             {
             mD(); 
             mE(); 
@@ -432,8 +432,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = DISTINCT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:372:11: ( D I S T I N C T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:372:13: D I S T I N C T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:372:11: ( D I S T I N C T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:372:13: D I S T I N C T
             {
             mD(); 
             mI(); 
@@ -459,8 +459,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ELSE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:373:11: ( E L S E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:373:13: E L S E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:373:11: ( E L S E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:373:13: E L S E
             {
             mE(); 
             mL(); 
@@ -482,8 +482,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = END;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:374:11: ( E N D )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:374:13: E N D
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:374:11: ( E N D )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:374:13: E N D
             {
             mE(); 
             mN(); 
@@ -504,8 +504,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = EXISTS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:376:11: ( E X I S T S )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:376:13: E X I S T S
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:376:11: ( E X I S T S )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:376:13: E X I S T S
             {
             mE(); 
             mX(); 
@@ -529,8 +529,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = FALSE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:378:11: ( F A L S E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:378:13: F A L S E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:378:11: ( F A L S E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:378:13: F A L S E
             {
             mF(); 
             mA(); 
@@ -553,8 +553,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = FROM;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:381:11: ( F R O M )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:381:13: F R O M
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:381:11: ( F R O M )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:381:13: F R O M
             {
             mF(); 
             mR(); 
@@ -576,8 +576,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = FULL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:382:11: ( F U L L )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:382:13: F U L L
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:382:11: ( F U L L )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:382:13: F U L L
             {
             mF(); 
             mU(); 
@@ -599,8 +599,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = GROUP;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:383:11: ( G R O U P )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:383:13: G R O U P
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:383:11: ( G R O U P )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:383:13: G R O U P
             {
             mG(); 
             mR(); 
@@ -623,8 +623,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = HAVING;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:384:11: ( H A V I N G )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:384:13: H A V I N G
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:384:11: ( H A V I N G )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:384:13: H A V I N G
             {
             mH(); 
             mA(); 
@@ -648,8 +648,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = IN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:386:11: ( I N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:386:13: I N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:386:11: ( I N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:386:13: I N
             {
             mI(); 
             mN(); 
@@ -669,8 +669,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = INNER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:387:11: ( I N N E R )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:387:13: I N N E R
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:387:11: ( I N N E R )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:387:13: I N N E R
             {
             mI(); 
             mN(); 
@@ -693,8 +693,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = INSERT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:388:11: ( I N S E R T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:388:13: I N S E R T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:388:11: ( I N S E R T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:388:13: I N S E R T
             {
             mI(); 
             mN(); 
@@ -718,8 +718,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = INTO;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:390:11: ( I N T O )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:390:13: I N T O
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:390:11: ( I N T O )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:390:13: I N T O
             {
             mI(); 
             mN(); 
@@ -741,8 +741,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = IS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:391:11: ( I S )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:391:13: I S
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:391:11: ( I S )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:391:13: I S
             {
             mI(); 
             mS(); 
@@ -762,8 +762,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = JOIN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:392:11: ( J O I N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:392:13: J O I N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:392:11: ( J O I N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:392:13: J O I N
             {
             mJ(); 
             mO(); 
@@ -785,8 +785,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LEFT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:393:11: ( L E F T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:393:13: L E F T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:393:11: ( L E F T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:393:13: L E F T
             {
             mL(); 
             mE(); 
@@ -808,8 +808,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LIKE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:394:11: ( L I K E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:394:13: L I K E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:394:11: ( L I K E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:394:13: L I K E
             {
             mL(); 
             mI(); 
@@ -831,8 +831,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = NATURAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:397:11: ( N A T U R A L )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:397:13: N A T U R A L
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:397:11: ( N A T U R A L )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:397:13: N A T U R A L
             {
             mN(); 
             mA(); 
@@ -857,8 +857,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = NOT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:398:11: ( N O T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:398:13: N O T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:398:11: ( N O T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:398:13: N O T
             {
             mN(); 
             mO(); 
@@ -879,8 +879,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = NULL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:399:11: ( N U L L )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:399:13: N U L L
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:399:11: ( N U L L )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:399:13: N U L L
             {
             mN(); 
             mU(); 
@@ -902,8 +902,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ON;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:400:11: ( O N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:400:13: O N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:400:11: ( O N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:400:13: O N
             {
             mO(); 
             mN(); 
@@ -923,8 +923,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = OR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:401:11: ( O R )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:401:13: O R
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:401:11: ( O R )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:401:13: O R
             {
             mO(); 
             mR(); 
@@ -944,8 +944,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = ORDER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:402:11: ( O R D E R )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:402:13: O R D E R
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:402:11: ( O R D E R )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:402:13: O R D E R
             {
             mO(); 
             mR(); 
@@ -968,8 +968,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = OUTER;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:403:11: ( O U T E R )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:403:13: O U T E R
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:403:11: ( O U T E R )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:403:13: O U T E R
             {
             mO(); 
             mU(); 
@@ -992,8 +992,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = PERCENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:404:11: ( P E R C E N T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:404:13: P E R C E N T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:404:11: ( P E R C E N T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:404:13: P E R C E N T
             {
             mP(); 
             mE(); 
@@ -1018,8 +1018,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = RIGHT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:405:11: ( R I G H T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:405:13: R I G H T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:405:11: ( R I G H T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:405:13: R I G H T
             {
             mR(); 
             mI(); 
@@ -1042,8 +1042,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = SELECT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:407:11: ( S E L E C T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:407:13: S E L E C T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:407:11: ( S E L E C T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:407:13: S E L E C T
             {
             mS(); 
             mE(); 
@@ -1067,8 +1067,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = SET;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:408:11: ( S E T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:408:13: S E T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:408:11: ( S E T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:408:13: S E T
             {
             mS(); 
             mE(); 
@@ -1089,8 +1089,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = SOME;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:409:11: ( S O M E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:409:13: S O M E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:409:11: ( S O M E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:409:13: S O M E
             {
             mS(); 
             mO(); 
@@ -1112,8 +1112,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = THEN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:411:11: ( T H E N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:411:13: T H E N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:411:11: ( T H E N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:411:13: T H E N
             {
             mT(); 
             mH(); 
@@ -1135,8 +1135,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = TRUE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:412:11: ( T R U E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:412:13: T R U E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:412:11: ( T R U E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:412:13: T R U E
             {
             mT(); 
             mR(); 
@@ -1158,8 +1158,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = TOP;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:414:11: ( T O P )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:414:13: T O P
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:414:11: ( T O P )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:414:13: T O P
             {
             mT(); 
             mO(); 
@@ -1180,8 +1180,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = UNION;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:415:11: ( U N I O N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:415:13: U N I O N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:415:11: ( U N I O N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:415:13: U N I O N
             {
             mU(); 
             mN(); 
@@ -1204,8 +1204,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = UNIQUE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:416:11: ( U N I Q U E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:416:13: U N I Q U E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:416:11: ( U N I Q U E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:416:13: U N I Q U E
             {
             mU(); 
             mN(); 
@@ -1229,8 +1229,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = UPDATE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:417:11: ( U P D A T E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:417:13: U P D A T E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:417:11: ( U P D A T E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:417:13: U P D A T E
             {
             mU(); 
             mP(); 
@@ -1254,8 +1254,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = USING;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:418:11: ( U S I N G )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:418:13: U S I N G
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:418:11: ( U S I N G )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:418:13: U S I N G
             {
             mU(); 
             mS(); 
@@ -1278,8 +1278,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = VALUES;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:419:11: ( V A L U E S )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:419:13: V A L U E S
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:419:11: ( V A L U E S )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:419:13: V A L U E S
             {
             mV(); 
             mA(); 
@@ -1303,8 +1303,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = WHEN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:420:11: ( W H E N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:420:13: W H E N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:420:11: ( W H E N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:420:13: W H E N
             {
             mW(); 
             mH(); 
@@ -1326,8 +1326,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = WHERE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:421:11: ( W H E R E )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:421:13: W H E R E
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:421:11: ( W H E R E )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:421:13: W H E R E
             {
             mW(); 
             mH(); 
@@ -1350,8 +1350,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = MAX;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:424:11: ( M A X )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:424:13: M A X
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:424:11: ( M A X )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:424:13: M A X
             {
             mM(); 
             mA(); 
@@ -1372,8 +1372,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = MIN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:425:11: ( M I N )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:425:13: M I N
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:425:11: ( M I N )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:425:13: M I N
             {
             mM(); 
             mI(); 
@@ -1394,8 +1394,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = COUNT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:426:11: ( C O U N T )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:426:13: C O U N T
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:426:11: ( C O U N T )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:426:13: C O U N T
             {
             mC(); 
             mO(); 
@@ -1416,8 +1416,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "A"
     public final void mA() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:428:11: ( ( 'a' | 'A' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:428:12: ( 'a' | 'A' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:428:11: ( ( 'a' | 'A' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:428:12: ( 'a' | 'A' )
             {
             if ( input.LA(1)=='A'||input.LA(1)=='a' ) {
                 input.consume();
@@ -1440,8 +1440,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "B"
     public final void mB() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:429:11: ( ( 'b' | 'B' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:429:12: ( 'b' | 'B' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:429:11: ( ( 'b' | 'B' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:429:12: ( 'b' | 'B' )
             {
             if ( input.LA(1)=='B'||input.LA(1)=='b' ) {
                 input.consume();
@@ -1464,8 +1464,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "C"
     public final void mC() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:430:11: ( ( 'c' | 'C' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:430:12: ( 'c' | 'C' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:430:11: ( ( 'c' | 'C' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:430:12: ( 'c' | 'C' )
             {
             if ( input.LA(1)=='C'||input.LA(1)=='c' ) {
                 input.consume();
@@ -1488,8 +1488,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "D"
     public final void mD() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:431:11: ( ( 'd' | 'D' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:431:12: ( 'd' | 'D' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:431:11: ( ( 'd' | 'D' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:431:12: ( 'd' | 'D' )
             {
             if ( input.LA(1)=='D'||input.LA(1)=='d' ) {
                 input.consume();
@@ -1512,8 +1512,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "E"
     public final void mE() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:432:11: ( ( 'e' | 'E' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:432:12: ( 'e' | 'E' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:432:11: ( ( 'e' | 'E' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:432:12: ( 'e' | 'E' )
             {
             if ( input.LA(1)=='E'||input.LA(1)=='e' ) {
                 input.consume();
@@ -1536,8 +1536,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "F"
     public final void mF() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:433:11: ( ( 'f' | 'F' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:433:12: ( 'f' | 'F' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:433:11: ( ( 'f' | 'F' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:433:12: ( 'f' | 'F' )
             {
             if ( input.LA(1)=='F'||input.LA(1)=='f' ) {
                 input.consume();
@@ -1560,8 +1560,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "G"
     public final void mG() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:434:11: ( ( 'g' | 'G' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:434:12: ( 'g' | 'G' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:434:11: ( ( 'g' | 'G' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:434:12: ( 'g' | 'G' )
             {
             if ( input.LA(1)=='G'||input.LA(1)=='g' ) {
                 input.consume();
@@ -1584,8 +1584,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "H"
     public final void mH() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:435:11: ( ( 'h' | 'H' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:435:12: ( 'h' | 'H' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:435:11: ( ( 'h' | 'H' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:435:12: ( 'h' | 'H' )
             {
             if ( input.LA(1)=='H'||input.LA(1)=='h' ) {
                 input.consume();
@@ -1608,8 +1608,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "I"
     public final void mI() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:436:11: ( ( 'i' | 'I' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:436:12: ( 'i' | 'I' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:436:11: ( ( 'i' | 'I' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:436:12: ( 'i' | 'I' )
             {
             if ( input.LA(1)=='I'||input.LA(1)=='i' ) {
                 input.consume();
@@ -1632,8 +1632,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "J"
     public final void mJ() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:437:11: ( ( 'j' | 'J' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:437:12: ( 'j' | 'J' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:437:11: ( ( 'j' | 'J' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:437:12: ( 'j' | 'J' )
             {
             if ( input.LA(1)=='J'||input.LA(1)=='j' ) {
                 input.consume();
@@ -1656,8 +1656,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "K"
     public final void mK() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:438:11: ( ( 'k' | 'K' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:438:12: ( 'k' | 'K' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:438:11: ( ( 'k' | 'K' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:438:12: ( 'k' | 'K' )
             {
             if ( input.LA(1)=='K'||input.LA(1)=='k' ) {
                 input.consume();
@@ -1680,8 +1680,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "L"
     public final void mL() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:439:11: ( ( 'l' | 'L' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:439:12: ( 'l' | 'L' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:439:11: ( ( 'l' | 'L' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:439:12: ( 'l' | 'L' )
             {
             if ( input.LA(1)=='L'||input.LA(1)=='l' ) {
                 input.consume();
@@ -1704,8 +1704,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "M"
     public final void mM() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:440:11: ( ( 'm' | 'M' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:440:12: ( 'm' | 'M' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:440:11: ( ( 'm' | 'M' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:440:12: ( 'm' | 'M' )
             {
             if ( input.LA(1)=='M'||input.LA(1)=='m' ) {
                 input.consume();
@@ -1728,8 +1728,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "N"
     public final void mN() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:441:11: ( ( 'n' | 'N' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:441:12: ( 'n' | 'N' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:441:11: ( ( 'n' | 'N' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:441:12: ( 'n' | 'N' )
             {
             if ( input.LA(1)=='N'||input.LA(1)=='n' ) {
                 input.consume();
@@ -1752,8 +1752,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "O"
     public final void mO() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:442:11: ( ( 'o' | 'O' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:442:12: ( 'o' | 'O' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:442:11: ( ( 'o' | 'O' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:442:12: ( 'o' | 'O' )
             {
             if ( input.LA(1)=='O'||input.LA(1)=='o' ) {
                 input.consume();
@@ -1776,8 +1776,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "P"
     public final void mP() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:443:11: ( ( 'p' | 'P' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:443:12: ( 'p' | 'P' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:443:11: ( ( 'p' | 'P' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:443:12: ( 'p' | 'P' )
             {
             if ( input.LA(1)=='P'||input.LA(1)=='p' ) {
                 input.consume();
@@ -1800,8 +1800,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "Q"
     public final void mQ() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:444:11: ( ( 'q' | 'Q' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:444:12: ( 'q' | 'Q' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:444:11: ( ( 'q' | 'Q' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:444:12: ( 'q' | 'Q' )
             {
             if ( input.LA(1)=='Q'||input.LA(1)=='q' ) {
                 input.consume();
@@ -1824,8 +1824,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "R"
     public final void mR() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:445:11: ( ( 'r' | 'R' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:445:12: ( 'r' | 'R' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:445:11: ( ( 'r' | 'R' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:445:12: ( 'r' | 'R' )
             {
             if ( input.LA(1)=='R'||input.LA(1)=='r' ) {
                 input.consume();
@@ -1848,8 +1848,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "S"
     public final void mS() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:446:11: ( ( 's' | 'S' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:446:12: ( 's' | 'S' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:446:11: ( ( 's' | 'S' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:446:12: ( 's' | 'S' )
             {
             if ( input.LA(1)=='S'||input.LA(1)=='s' ) {
                 input.consume();
@@ -1872,8 +1872,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "T"
     public final void mT() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:447:11: ( ( 't' | 'T' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:447:12: ( 't' | 'T' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:447:11: ( ( 't' | 'T' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:447:12: ( 't' | 'T' )
             {
             if ( input.LA(1)=='T'||input.LA(1)=='t' ) {
                 input.consume();
@@ -1896,8 +1896,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "U"
     public final void mU() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:448:11: ( ( 'u' | 'U' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:448:12: ( 'u' | 'U' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:448:11: ( ( 'u' | 'U' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:448:12: ( 'u' | 'U' )
             {
             if ( input.LA(1)=='U'||input.LA(1)=='u' ) {
                 input.consume();
@@ -1920,8 +1920,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "V"
     public final void mV() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:449:11: ( ( 'v' | 'V' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:449:12: ( 'v' | 'V' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:449:11: ( ( 'v' | 'V' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:449:12: ( 'v' | 'V' )
             {
             if ( input.LA(1)=='V'||input.LA(1)=='v' ) {
                 input.consume();
@@ -1944,8 +1944,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "W"
     public final void mW() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:450:11: ( ( 'w' | 'W' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:450:12: ( 'w' | 'W' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:450:11: ( ( 'w' | 'W' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:450:12: ( 'w' | 'W' )
             {
             if ( input.LA(1)=='W'||input.LA(1)=='w' ) {
                 input.consume();
@@ -1968,8 +1968,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "X"
     public final void mX() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:451:11: ( ( 'x' | 'X' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:451:12: ( 'x' | 'X' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:451:11: ( ( 'x' | 'X' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:451:12: ( 'x' | 'X' )
             {
             if ( input.LA(1)=='X'||input.LA(1)=='x' ) {
                 input.consume();
@@ -1992,8 +1992,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "Y"
     public final void mY() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:452:11: ( ( 'y' | 'Y' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:452:12: ( 'y' | 'Y' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:452:11: ( ( 'y' | 'Y' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:452:12: ( 'y' | 'Y' )
             {
             if ( input.LA(1)=='Y'||input.LA(1)=='y' ) {
                 input.consume();
@@ -2016,8 +2016,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "Z"
     public final void mZ() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:453:11: ( ( 'z' | 'Z' ) )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:453:12: ( 'z' | 'Z' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:453:11: ( ( 'z' | 'Z' ) )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:453:12: ( 'z' | 'Z' )
             {
             if ( input.LA(1)=='Z'||input.LA(1)=='z' ) {
                 input.consume();
@@ -2042,8 +2042,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = DOT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:455:10: ( '.' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:455:12: '.'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:455:10: ( '.' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:455:12: '.'
             {
             match('.'); 
 
@@ -2062,8 +2062,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = COMMA;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:456:10: ( ',' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:456:12: ','
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:456:10: ( ',' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:456:12: ','
             {
             match(','); 
 
@@ -2082,8 +2082,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LPAREN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:457:10: ( '(' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:457:12: '('
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:457:10: ( '(' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:457:12: '('
             {
             match('('); 
 
@@ -2102,8 +2102,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = RPAREN;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:458:10: ( ')' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:458:12: ')'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:458:10: ( ')' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:458:12: ')'
             {
             match(')'); 
 
@@ -2122,8 +2122,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LCURLY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:459:10: ( '{' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:459:12: '{'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:459:10: ( '{' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:459:12: '{'
             {
             match('{'); 
 
@@ -2142,8 +2142,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = RCURLY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:460:10: ( '}' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:460:12: '}'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:460:10: ( '}' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:460:12: '}'
             {
             match('}'); 
 
@@ -2162,8 +2162,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = STRCAT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:461:10: ( '||' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:461:12: '||'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:461:10: ( '||' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:461:12: '||'
             {
             match("||"); 
 
@@ -2183,8 +2183,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = QUESTION;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:462:10: ( '?' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:462:12: '?'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:462:10: ( '?' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:462:12: '?'
             {
             match('?'); 
 
@@ -2203,8 +2203,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = COLON;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:463:10: ( ':' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:463:12: ':'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:463:10: ( ':' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:463:12: ':'
             {
             match(':'); 
 
@@ -2223,8 +2223,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = SEMI;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:464:10: ( ';' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:464:12: ';'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:464:10: ( ';' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:464:12: ';'
             {
             match(';'); 
 
@@ -2243,8 +2243,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = EQ;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:466:10: ( '=' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:466:12: '='
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:466:10: ( '=' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:466:12: '='
             {
             match('='); 
 
@@ -2263,8 +2263,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = NEQ1;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:467:10: ( '<>' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:467:12: '<>'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:467:10: ( '<>' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:467:12: '<>'
             {
             match("<>"); 
 
@@ -2284,8 +2284,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = NEQ2;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:468:10: ( '!=' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:468:12: '!='
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:468:10: ( '!=' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:468:12: '!='
             {
             match("!="); 
 
@@ -2305,8 +2305,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LTE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:469:10: ( '<=' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:469:12: '<='
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:469:10: ( '<=' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:469:12: '<='
             {
             match("<="); 
 
@@ -2326,8 +2326,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = LT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:470:10: ( '<' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:470:12: '<'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:470:10: ( '<' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:470:12: '<'
             {
             match('<'); 
 
@@ -2346,8 +2346,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = GTE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:471:10: ( '>=' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:471:12: '>='
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:471:10: ( '>=' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:471:12: '>='
             {
             match(">="); 
 
@@ -2367,8 +2367,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = GT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:472:10: ( '>' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:472:12: '>'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:472:10: ( '>' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:472:12: '>'
             {
             match('>'); 
 
@@ -2387,8 +2387,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = PLUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:474:10: ( '+' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:474:12: '+'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:474:10: ( '+' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:474:12: '+'
             {
             match('+'); 
 
@@ -2407,8 +2407,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = MINUS;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:475:10: ( '-' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:475:12: '-'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:475:10: ( '-' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:475:12: '-'
             {
             match('-'); 
 
@@ -2427,8 +2427,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = DIVIDE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:476:10: ( '/' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:476:12: '/'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:476:10: ( '/' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:476:12: '/'
             {
             match('/'); 
 
@@ -2447,8 +2447,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = STAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:477:10: ( '*' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:477:12: '*'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:477:10: ( '*' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:477:12: '*'
             {
             match('*'); 
 
@@ -2467,8 +2467,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = MOD;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:478:10: ( '%' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:478:12: '%'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:478:10: ( '%' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:478:12: '%'
             {
             match('%'); 
 
@@ -2485,8 +2485,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "Digit"
     public final void mDigit() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:481:7: ( '0' .. '9' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:481:9: '0' .. '9'
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:481:7: ( '0' .. '9' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:481:9: '0' .. '9'
             {
             matchRange('0','9'); 
 
@@ -2503,10 +2503,10 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Integer;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:484:3: ( ( Digit )+ )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:484:5: ( Digit )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:484:3: ( ( Digit )+ )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:484:5: ( Digit )+
             {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:484:5: ( Digit )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:484:5: ( Digit )+
             int cnt1=0;
             loop1:
             do {
@@ -2520,7 +2520,7 @@ public class GenericSQLLexer extends Lexer {
 
                 switch (alt1) {
             	case 1 :
-            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:484:7: Digit
+            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:484:7: Digit
             	    {
             	    mDigit(); 
 
@@ -2552,14 +2552,14 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Float;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:3: ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? | '.' ( '0' .. '9' )+ ( Exponent )? | ( '0' .. '9' )+ Exponent )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:3: ( ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )? | '.' ( '0' .. '9' )+ ( Exponent )? | ( '0' .. '9' )+ Exponent )
             int alt8=3;
             alt8 = dfa8.predict(input);
             switch (alt8) {
                 case 1 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:5: ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:5: ( '0' .. '9' )+ '.' ( '0' .. '9' )* ( Exponent )?
                     {
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:5: ( '0' .. '9' )+
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:5: ( '0' .. '9' )+
                     int cnt2=0;
                     loop2:
                     do {
@@ -2573,7 +2573,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt2) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:6: '0' .. '9'
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:6: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -2590,7 +2590,7 @@ public class GenericSQLLexer extends Lexer {
                     } while (true);
 
                     match('.'); 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:21: ( '0' .. '9' )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:21: ( '0' .. '9' )*
                     loop3:
                     do {
                         int alt3=2;
@@ -2603,7 +2603,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt3) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:22: '0' .. '9'
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:22: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -2615,7 +2615,7 @@ public class GenericSQLLexer extends Lexer {
                         }
                     } while (true);
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:33: ( Exponent )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:33: ( Exponent )?
                     int alt4=2;
                     int LA4_0 = input.LA(1);
 
@@ -2624,7 +2624,7 @@ public class GenericSQLLexer extends Lexer {
                     }
                     switch (alt4) {
                         case 1 :
-                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:488:33: Exponent
+                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:488:33: Exponent
                             {
                             mExponent(); 
 
@@ -2637,10 +2637,10 @@ public class GenericSQLLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:489:5: '.' ( '0' .. '9' )+ ( Exponent )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:489:5: '.' ( '0' .. '9' )+ ( Exponent )?
                     {
                     match('.'); 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:489:9: ( '0' .. '9' )+
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:489:9: ( '0' .. '9' )+
                     int cnt5=0;
                     loop5:
                     do {
@@ -2654,7 +2654,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt5) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:489:10: '0' .. '9'
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:489:10: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -2670,7 +2670,7 @@ public class GenericSQLLexer extends Lexer {
                         cnt5++;
                     } while (true);
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:489:21: ( Exponent )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:489:21: ( Exponent )?
                     int alt6=2;
                     int LA6_0 = input.LA(1);
 
@@ -2679,7 +2679,7 @@ public class GenericSQLLexer extends Lexer {
                     }
                     switch (alt6) {
                         case 1 :
-                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:489:21: Exponent
+                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:489:21: Exponent
                             {
                             mExponent(); 
 
@@ -2692,9 +2692,9 @@ public class GenericSQLLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:490:5: ( '0' .. '9' )+ Exponent
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:490:5: ( '0' .. '9' )+ Exponent
                     {
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:490:5: ( '0' .. '9' )+
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:490:5: ( '0' .. '9' )+
                     int cnt7=0;
                     loop7:
                     do {
@@ -2708,7 +2708,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt7) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:490:6: '0' .. '9'
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:490:6: '0' .. '9'
                     	    {
                     	    matchRange('0','9'); 
 
@@ -2741,8 +2741,8 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR start "Exponent"
     public final void mExponent() throws RecognitionException {
         try {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:495:3: ( ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+ )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:495:5: ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:495:3: ( ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+ )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:495:5: ( 'e' | 'E' ) ( '+' | '-' )? ( '0' .. '9' )+
             {
             if ( input.LA(1)=='E'||input.LA(1)=='e' ) {
                 input.consume();
@@ -2753,7 +2753,7 @@ public class GenericSQLLexer extends Lexer {
                 recover(mse);
                 throw mse;}
 
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:495:15: ( '+' | '-' )?
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:495:15: ( '+' | '-' )?
             int alt9=2;
             int LA9_0 = input.LA(1);
 
@@ -2762,7 +2762,7 @@ public class GenericSQLLexer extends Lexer {
             }
             switch (alt9) {
                 case 1 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:
                     {
                     if ( input.LA(1)=='+'||input.LA(1)=='-' ) {
                         input.consume();
@@ -2779,7 +2779,7 @@ public class GenericSQLLexer extends Lexer {
 
             }
 
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:495:26: ( '0' .. '9' )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:495:26: ( '0' .. '9' )+
             int cnt10=0;
             loop10:
             do {
@@ -2793,7 +2793,7 @@ public class GenericSQLLexer extends Lexer {
 
                 switch (alt10) {
             	case 1 :
-            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:495:27: '0' .. '9'
+            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:495:27: '0' .. '9'
             	    {
             	    matchRange('0','9'); 
 
@@ -2823,11 +2823,11 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = String;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:499:3: ( '\\'' ( options {greedy=false; } : . )* '\\'' )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:499:5: '\\'' ( options {greedy=false; } : . )* '\\''
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:499:3: ( '\\'' ( options {greedy=false; } : . )* '\\'' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:499:5: '\\'' ( options {greedy=false; } : . )* '\\''
             {
             match('\''); 
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:499:10: ( options {greedy=false; } : . )*
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:499:10: ( options {greedy=false; } : . )*
             loop11:
             do {
                 int alt11=2;
@@ -2843,7 +2843,7 @@ public class GenericSQLLexer extends Lexer {
 
                 switch (alt11) {
             	case 1 :
-            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:499:38: .
+            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:499:38: .
             	    {
             	    matchAny(); 
 
@@ -2872,8 +2872,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Timestamp;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:503:3: ( Digit Digit Digit Digit '-' Digit Digit '-' Digit Digit ( 't' | ' ' ) Digit Digit ':' Digit Digit ':' Digit Digit )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:503:5: Digit Digit Digit Digit '-' Digit Digit '-' Digit Digit ( 't' | ' ' ) Digit Digit ':' Digit Digit ':' Digit Digit
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:503:3: ( Digit Digit Digit Digit '-' Digit Digit '-' Digit Digit ( 't' | ' ' ) Digit Digit ':' Digit Digit ':' Digit Digit )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:503:5: Digit Digit Digit Digit '-' Digit Digit '-' Digit Digit ( 't' | ' ' ) Digit Digit ':' Digit Digit ':' Digit Digit
             {
             mDigit(); 
             mDigit(); 
@@ -2918,8 +2918,8 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Identifier;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:510:3: ( ( 'a' .. 'z' | 'A' .. 'Z' ) ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )* )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:510:5: ( 'a' .. 'z' | 'A' .. 'Z' ) ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )*
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:510:3: ( ( 'a' .. 'z' | 'A' .. 'Z' ) ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )* )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:510:5: ( 'a' .. 'z' | 'A' .. 'Z' ) ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )*
             {
             if ( (input.LA(1)>='A' && input.LA(1)<='Z')||(input.LA(1)>='a' && input.LA(1)<='z') ) {
                 input.consume();
@@ -2930,7 +2930,7 @@ public class GenericSQLLexer extends Lexer {
                 recover(mse);
                 throw mse;}
 
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:510:25: ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )*
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:510:25: ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '$' )*
             loop12:
             do {
                 int alt12=2;
@@ -2943,7 +2943,7 @@ public class GenericSQLLexer extends Lexer {
 
                 switch (alt12) {
             	case 1 :
-            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:
+            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:
             	    {
             	    if ( input.LA(1)=='$'||(input.LA(1)>='0' && input.LA(1)<='9')||(input.LA(1)>='A' && input.LA(1)<='Z')||input.LA(1)=='_'||(input.LA(1)>='a' && input.LA(1)<='z') ) {
             	        input.consume();
@@ -2979,7 +2979,7 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = QuotedIdentifier;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:514:3: ( '[' ( options {greedy=false; } : . )* ']' | '\"' ( options {greedy=false; } : . )* '\"' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:514:3: ( '[' ( options {greedy=false; } : . )* ']' | '\"' ( options {greedy=false; } : . )* '\"' )
             int alt15=2;
             int LA15_0 = input.LA(1);
 
@@ -2997,10 +2997,10 @@ public class GenericSQLLexer extends Lexer {
             }
             switch (alt15) {
                 case 1 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:514:5: '[' ( options {greedy=false; } : . )* ']'
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:514:5: '[' ( options {greedy=false; } : . )* ']'
                     {
                     match('['); 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:514:9: ( options {greedy=false; } : . )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:514:9: ( options {greedy=false; } : . )*
                     loop13:
                     do {
                         int alt13=2;
@@ -3016,7 +3016,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt13) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:514:37: .
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:514:37: .
                     	    {
                     	    matchAny(); 
 
@@ -3033,10 +3033,10 @@ public class GenericSQLLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:515:5: '\"' ( options {greedy=false; } : . )* '\"'
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:515:5: '\"' ( options {greedy=false; } : . )* '\"'
                     {
                     match('\"'); 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:515:9: ( options {greedy=false; } : . )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:515:9: ( options {greedy=false; } : . )*
                     loop14:
                     do {
                         int alt14=2;
@@ -3052,7 +3052,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt14) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:515:37: .
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:515:37: .
                     	    {
                     	    matchAny(); 
 
@@ -3083,7 +3083,7 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Comment;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:3: ( '--' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' | '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' | '/*' ( options {greedy=false; } : . )* '*/' )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:3: ( '--' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' | '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n' | '/*' ( options {greedy=false; } : . )* '*/' )
             int alt21=3;
             int LA21_0 = input.LA(1);
 
@@ -3114,11 +3114,11 @@ public class GenericSQLLexer extends Lexer {
             }
             switch (alt21) {
                 case 1 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:5: '--' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:5: '--' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
                     {
                     match("--"); 
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:10: (~ ( '\\n' | '\\r' ) )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:10: (~ ( '\\n' | '\\r' ) )*
                     loop16:
                     do {
                         int alt16=2;
@@ -3131,7 +3131,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt16) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:10: ~ ( '\\n' | '\\r' )
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:10: ~ ( '\\n' | '\\r' )
                     	    {
                     	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
                     	        input.consume();
@@ -3151,7 +3151,7 @@ public class GenericSQLLexer extends Lexer {
                         }
                     } while (true);
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:24: ( '\\r' )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:24: ( '\\r' )?
                     int alt17=2;
                     int LA17_0 = input.LA(1);
 
@@ -3160,7 +3160,7 @@ public class GenericSQLLexer extends Lexer {
                     }
                     switch (alt17) {
                         case 1 :
-                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:519:24: '\\r'
+                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:519:24: '\\r'
                             {
                             match('\r'); 
 
@@ -3175,11 +3175,11 @@ public class GenericSQLLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:520:5: '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:520:5: '//' (~ ( '\\n' | '\\r' ) )* ( '\\r' )? '\\n'
                     {
                     match("//"); 
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:520:10: (~ ( '\\n' | '\\r' ) )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:520:10: (~ ( '\\n' | '\\r' ) )*
                     loop18:
                     do {
                         int alt18=2;
@@ -3192,7 +3192,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt18) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:520:10: ~ ( '\\n' | '\\r' )
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:520:10: ~ ( '\\n' | '\\r' )
                     	    {
                     	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
                     	        input.consume();
@@ -3212,7 +3212,7 @@ public class GenericSQLLexer extends Lexer {
                         }
                     } while (true);
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:520:24: ( '\\r' )?
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:520:24: ( '\\r' )?
                     int alt19=2;
                     int LA19_0 = input.LA(1);
 
@@ -3221,7 +3221,7 @@ public class GenericSQLLexer extends Lexer {
                     }
                     switch (alt19) {
                         case 1 :
-                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:520:24: '\\r'
+                            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:520:24: '\\r'
                             {
                             match('\r'); 
 
@@ -3236,11 +3236,11 @@ public class GenericSQLLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:521:5: '/*' ( options {greedy=false; } : . )* '*/'
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:521:5: '/*' ( options {greedy=false; } : . )* '*/'
                     {
                     match("/*"); 
 
-                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:521:10: ( options {greedy=false; } : . )*
+                    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:521:10: ( options {greedy=false; } : . )*
                     loop20:
                     do {
                         int alt20=2;
@@ -3265,7 +3265,7 @@ public class GenericSQLLexer extends Lexer {
 
                         switch (alt20) {
                     	case 1 :
-                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:521:38: .
+                    	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:521:38: .
                     	    {
                     	    matchAny(); 
 
@@ -3298,10 +3298,10 @@ public class GenericSQLLexer extends Lexer {
         try {
             int _type = Whitespace;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:525:3: ( ( '\\t' | ' ' | '\\r' | '\\n' )+ )
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:525:5: ( '\\t' | ' ' | '\\r' | '\\n' )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:525:3: ( ( '\\t' | ' ' | '\\r' | '\\n' )+ )
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:525:5: ( '\\t' | ' ' | '\\r' | '\\n' )+
             {
-            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:525:5: ( '\\t' | ' ' | '\\r' | '\\n' )+
+            // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:525:5: ( '\\t' | ' ' | '\\r' | '\\n' )+
             int cnt22=0;
             loop22:
             do {
@@ -3315,7 +3315,7 @@ public class GenericSQLLexer extends Lexer {
 
                 switch (alt22) {
             	case 1 :
-            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:
+            	    // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:
             	    {
             	    if ( (input.LA(1)>='\t' && input.LA(1)<='\n')||input.LA(1)=='\r'||input.LA(1)==' ' ) {
             	        input.consume();
@@ -3352,600 +3352,600 @@ public class GenericSQLLexer extends Lexer {
     // $ANTLR end "Whitespace"
 
     public void mTokens() throws RecognitionException {
-        // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:8: ( T__114 | T__115 | T__116 | ALL | AND | ANY | AS | ASC | BETWEEN | BY | CASE | DELETE | DESC | DISTINCT | ELSE | END | EXISTS | FALSE | FROM | FULL | GROUP | HAVING | IN | INNER | INSERT | INTO | IS | JOIN | LEFT | LIKE | NATURAL | NOT | NULL | ON | OR | ORDER | OUTER | PERCENT | RIGHT | SELECT | SET | SOME | THEN | TRUE | TOP | UNION | UNIQUE | UPDATE | USING | VALUES | WHEN | WHERE | MAX | MIN | COUNT | DOT | COMMA | LPAREN | RPAREN | LCURLY | RCURLY | STRCAT | QUESTION | COLON | SEMI | EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT | PLUS | MINUS | DIVIDE | STAR | MOD | Integer | Float | String | Timestamp | Identifier | QuotedIdentifier | Comment | Whitespace )
+        // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:8: ( T__114 | T__115 | T__116 | ALL | AND | ANY | AS | ASC | BETWEEN | BY | CASE | DELETE | DESC | DISTINCT | ELSE | END | EXISTS | FALSE | FROM | FULL | GROUP | HAVING | IN | INNER | INSERT | INTO | IS | JOIN | LEFT | LIKE | NATURAL | NOT | NULL | ON | OR | ORDER | OUTER | PERCENT | RIGHT | SELECT | SET | SOME | THEN | TRUE | TOP | UNION | UNIQUE | UPDATE | USING | VALUES | WHEN | WHERE | MAX | MIN | COUNT | DOT | COMMA | LPAREN | RPAREN | LCURLY | RCURLY | STRCAT | QUESTION | COLON | SEMI | EQ | NEQ1 | NEQ2 | LTE | LT | GTE | GT | PLUS | MINUS | DIVIDE | STAR | MOD | Integer | Float | String | Timestamp | Identifier | QuotedIdentifier | Comment | Whitespace )
         int alt23=85;
         alt23 = dfa23.predict(input);
         switch (alt23) {
             case 1 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:10: T__114
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:10: T__114
                 {
                 mT__114(); 
 
                 }
                 break;
             case 2 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:17: T__115
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:17: T__115
                 {
                 mT__115(); 
 
                 }
                 break;
             case 3 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:24: T__116
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:24: T__116
                 {
                 mT__116(); 
 
                 }
                 break;
             case 4 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:31: ALL
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:31: ALL
                 {
                 mALL(); 
 
                 }
                 break;
             case 5 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:35: AND
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:35: AND
                 {
                 mAND(); 
 
                 }
                 break;
             case 6 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:39: ANY
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:39: ANY
                 {
                 mANY(); 
 
                 }
                 break;
             case 7 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:43: AS
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:43: AS
                 {
                 mAS(); 
 
                 }
                 break;
             case 8 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:46: ASC
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:46: ASC
                 {
                 mASC(); 
 
                 }
                 break;
             case 9 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:50: BETWEEN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:50: BETWEEN
                 {
                 mBETWEEN(); 
 
                 }
                 break;
             case 10 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:58: BY
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:58: BY
                 {
                 mBY(); 
 
                 }
                 break;
             case 11 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:61: CASE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:61: CASE
                 {
                 mCASE(); 
 
                 }
                 break;
             case 12 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:66: DELETE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:66: DELETE
                 {
                 mDELETE(); 
 
                 }
                 break;
             case 13 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:73: DESC
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:73: DESC
                 {
                 mDESC(); 
 
                 }
                 break;
             case 14 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:78: DISTINCT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:78: DISTINCT
                 {
                 mDISTINCT(); 
 
                 }
                 break;
             case 15 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:87: ELSE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:87: ELSE
                 {
                 mELSE(); 
 
                 }
                 break;
             case 16 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:92: END
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:92: END
                 {
                 mEND(); 
 
                 }
                 break;
             case 17 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:96: EXISTS
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:96: EXISTS
                 {
                 mEXISTS(); 
 
                 }
                 break;
             case 18 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:103: FALSE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:103: FALSE
                 {
                 mFALSE(); 
 
                 }
                 break;
             case 19 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:109: FROM
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:109: FROM
                 {
                 mFROM(); 
 
                 }
                 break;
             case 20 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:114: FULL
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:114: FULL
                 {
                 mFULL(); 
 
                 }
                 break;
             case 21 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:119: GROUP
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:119: GROUP
                 {
                 mGROUP(); 
 
                 }
                 break;
             case 22 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:125: HAVING
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:125: HAVING
                 {
                 mHAVING(); 
 
                 }
                 break;
             case 23 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:132: IN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:132: IN
                 {
                 mIN(); 
 
                 }
                 break;
             case 24 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:135: INNER
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:135: INNER
                 {
                 mINNER(); 
 
                 }
                 break;
             case 25 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:141: INSERT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:141: INSERT
                 {
                 mINSERT(); 
 
                 }
                 break;
             case 26 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:148: INTO
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:148: INTO
                 {
                 mINTO(); 
 
                 }
                 break;
             case 27 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:153: IS
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:153: IS
                 {
                 mIS(); 
 
                 }
                 break;
             case 28 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:156: JOIN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:156: JOIN
                 {
                 mJOIN(); 
 
                 }
                 break;
             case 29 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:161: LEFT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:161: LEFT
                 {
                 mLEFT(); 
 
                 }
                 break;
             case 30 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:166: LIKE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:166: LIKE
                 {
                 mLIKE(); 
 
                 }
                 break;
             case 31 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:171: NATURAL
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:171: NATURAL
                 {
                 mNATURAL(); 
 
                 }
                 break;
             case 32 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:179: NOT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:179: NOT
                 {
                 mNOT(); 
 
                 }
                 break;
             case 33 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:183: NULL
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:183: NULL
                 {
                 mNULL(); 
 
                 }
                 break;
             case 34 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:188: ON
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:188: ON
                 {
                 mON(); 
 
                 }
                 break;
             case 35 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:191: OR
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:191: OR
                 {
                 mOR(); 
 
                 }
                 break;
             case 36 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:194: ORDER
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:194: ORDER
                 {
                 mORDER(); 
 
                 }
                 break;
             case 37 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:200: OUTER
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:200: OUTER
                 {
                 mOUTER(); 
 
                 }
                 break;
             case 38 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:206: PERCENT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:206: PERCENT
                 {
                 mPERCENT(); 
 
                 }
                 break;
             case 39 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:214: RIGHT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:214: RIGHT
                 {
                 mRIGHT(); 
 
                 }
                 break;
             case 40 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:220: SELECT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:220: SELECT
                 {
                 mSELECT(); 
 
                 }
                 break;
             case 41 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:227: SET
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:227: SET
                 {
                 mSET(); 
 
                 }
                 break;
             case 42 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:231: SOME
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:231: SOME
                 {
                 mSOME(); 
 
                 }
                 break;
             case 43 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:236: THEN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:236: THEN
                 {
                 mTHEN(); 
 
                 }
                 break;
             case 44 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:241: TRUE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:241: TRUE
                 {
                 mTRUE(); 
 
                 }
                 break;
             case 45 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:246: TOP
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:246: TOP
                 {
                 mTOP(); 
 
                 }
                 break;
             case 46 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:250: UNION
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:250: UNION
                 {
                 mUNION(); 
 
                 }
                 break;
             case 47 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:256: UNIQUE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:256: UNIQUE
                 {
                 mUNIQUE(); 
 
                 }
                 break;
             case 48 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:263: UPDATE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:263: UPDATE
                 {
                 mUPDATE(); 
 
                 }
                 break;
             case 49 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:270: USING
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:270: USING
                 {
                 mUSING(); 
 
                 }
                 break;
             case 50 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:276: VALUES
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:276: VALUES
                 {
                 mVALUES(); 
 
                 }
                 break;
             case 51 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:283: WHEN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:283: WHEN
                 {
                 mWHEN(); 
 
                 }
                 break;
             case 52 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:288: WHERE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:288: WHERE
                 {
                 mWHERE(); 
 
                 }
                 break;
             case 53 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:294: MAX
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:294: MAX
                 {
                 mMAX(); 
 
                 }
                 break;
             case 54 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:298: MIN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:298: MIN
                 {
                 mMIN(); 
 
                 }
                 break;
             case 55 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:302: COUNT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:302: COUNT
                 {
                 mCOUNT(); 
 
                 }
                 break;
             case 56 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:308: DOT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:308: DOT
                 {
                 mDOT(); 
 
                 }
                 break;
             case 57 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:312: COMMA
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:312: COMMA
                 {
                 mCOMMA(); 
 
                 }
                 break;
             case 58 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:318: LPAREN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:318: LPAREN
                 {
                 mLPAREN(); 
 
                 }
                 break;
             case 59 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:325: RPAREN
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:325: RPAREN
                 {
                 mRPAREN(); 
 
                 }
                 break;
             case 60 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:332: LCURLY
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:332: LCURLY
                 {
                 mLCURLY(); 
 
                 }
                 break;
             case 61 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:339: RCURLY
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:339: RCURLY
                 {
                 mRCURLY(); 
 
                 }
                 break;
             case 62 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:346: STRCAT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:346: STRCAT
                 {
                 mSTRCAT(); 
 
                 }
                 break;
             case 63 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:353: QUESTION
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:353: QUESTION
                 {
                 mQUESTION(); 
 
                 }
                 break;
             case 64 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:362: COLON
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:362: COLON
                 {
                 mCOLON(); 
 
                 }
                 break;
             case 65 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:368: SEMI
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:368: SEMI
                 {
                 mSEMI(); 
 
                 }
                 break;
             case 66 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:373: EQ
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:373: EQ
                 {
                 mEQ(); 
 
                 }
                 break;
             case 67 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:376: NEQ1
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:376: NEQ1
                 {
                 mNEQ1(); 
 
                 }
                 break;
             case 68 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:381: NEQ2
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:381: NEQ2
                 {
                 mNEQ2(); 
 
                 }
                 break;
             case 69 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:386: LTE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:386: LTE
                 {
                 mLTE(); 
 
                 }
                 break;
             case 70 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:390: LT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:390: LT
                 {
                 mLT(); 
 
                 }
                 break;
             case 71 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:393: GTE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:393: GTE
                 {
                 mGTE(); 
 
                 }
                 break;
             case 72 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:397: GT
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:397: GT
                 {
                 mGT(); 
 
                 }
                 break;
             case 73 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:400: PLUS
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:400: PLUS
                 {
                 mPLUS(); 
 
                 }
                 break;
             case 74 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:405: MINUS
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:405: MINUS
                 {
                 mMINUS(); 
 
                 }
                 break;
             case 75 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:411: DIVIDE
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:411: DIVIDE
                 {
                 mDIVIDE(); 
 
                 }
                 break;
             case 76 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:418: STAR
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:418: STAR
                 {
                 mSTAR(); 
 
                 }
                 break;
             case 77 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:423: MOD
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:423: MOD
                 {
                 mMOD(); 
 
                 }
                 break;
             case 78 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:427: Integer
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:427: Integer
                 {
                 mInteger(); 
 
                 }
                 break;
             case 79 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:435: Float
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:435: Float
                 {
                 mFloat(); 
 
                 }
                 break;
             case 80 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:441: String
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:441: String
                 {
                 mString(); 
 
                 }
                 break;
             case 81 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:448: Timestamp
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:448: Timestamp
                 {
                 mTimestamp(); 
 
                 }
                 break;
             case 82 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:458: Identifier
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:458: Identifier
                 {
                 mIdentifier(); 
 
                 }
                 break;
             case 83 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:469: QuotedIdentifier
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:469: QuotedIdentifier
                 {
                 mQuotedIdentifier(); 
 
                 }
                 break;
             case 84 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:486: Comment
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:486: Comment
                 {
                 mComment(); 
 
                 }
                 break;
             case 85 :
-                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g:1:494: Whitespace
+                // /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4:1:494: Whitespace
                 {
                 mWhitespace(); 
 
