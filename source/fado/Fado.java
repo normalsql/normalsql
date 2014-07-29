@@ -40,6 +40,7 @@ import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
 import fado.meta.Field;
+import fado.meta.MetaField;
 import fado.meta.UpdateStatement;
 import fado.meta.WhereStatement;
 import fado.parse.ParseNode;
@@ -295,63 +296,74 @@ public class
 			
 	
 			String originalText = source.toOriginalString();
-			
-			ParseNode selectNode = source.findFirstNode( "statement/select" );
-			if( selectNode != null )
-			{
-				SelectStatement statement = new SelectStatement();
-				statement.setName( name );
-				statement.setPackage( pkg );
-				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalText( originalText );
-				statement.setOriginalLines( originalLines );
-				
-				extractSelect( selectNode, statement );
-				String retooledSQL = builder.getTree().toOriginalString().trim();
-				statement.setRetooledSQL( chopper( retooledSQL ));
-				
-				inspectDatabaseForSelect( _conn, statement );
-	
-				generateSelect( statement, targetRoot, name, created );
-				generateResultSet( statement, targetRoot, name, created );
-			}
-	
-			ParseNode insertNode = source.findFirstNode( "statement/insert" );
-			if( insertNode != null )
-			{
-				InsertStatement statement = new InsertStatement();
-				statement.setName( name );
-				statement.setPackage( pkg );
-				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalText( originalText );
-				statement.setOriginalLines( originalLines );
-				
-				extractInsert( insertNode, statement );
-				String retooledSQL = builder.getTree().toOriginalString().trim();
-				statement.setRetooledSQL( chopper( retooledSQL ));
 
-				inspectDatabaseForInsert( _conn, statement );
-				generateInsert( statement, targetRoot, name, created );
+			//					if( _onlyParse ) return;
+
+			ParseNode selectNode = source.findFirstNode( "statement/*" );
+			switch( selectNode.getRule() )
+			{
+				case "select":
+				{
+					SelectStatement statement = new SelectStatement();
+					statement.setName( name );
+					statement.setPackage( pkg );
+					statement.setOriginalFileName( sourceFile.toString() );
+					statement.setOriginalText( originalText );
+					statement.setOriginalLines( originalLines );
+
+					extractSelect( selectNode, statement );
+					String retooledSQL = builder.getTree().toOriginalString().trim();
+					statement.setRetooledSQL( chopper( retooledSQL ) );
+
+					inspectDatabaseForSelect( _conn, statement );
+
+					generateSelect( statement, targetRoot, name, created );
+					generateResultSet( statement, targetRoot, name, created );
+					break;
+				}
+				case "insert":
+				{
+					InsertStatement statement = new InsertStatement();
+					statement.setName( name );
+					statement.setPackage( pkg );
+					statement.setOriginalFileName( sourceFile.toString() );
+					statement.setOriginalText( originalText );
+					statement.setOriginalLines( originalLines );
+
+					extractInsert( selectNode, statement );
+					String retooledSQL = builder.getTree().toOriginalString().trim();
+					statement.setRetooledSQL( chopper( retooledSQL ) );
+
+					Table table = statement.getTables().iterator().next();
+					inspectTableAndFields( _conn, table, statement.getFields() );
+
+					generateInsert( statement, targetRoot, name, created );
+					break;
+				}
+				case "update":
+				{
+					UpdateStatement statement = new UpdateStatement();
+					statement.setName( name );
+					statement.setPackage( pkg );
+					statement.setOriginalFileName( sourceFile.toString() );
+					statement.setOriginalText( originalText );
+					statement.setOriginalLines( originalLines );
+
+					extractUpdate( selectNode, statement );
+					String retooledSQL = builder.getTree().toOriginalString().trim();
+					statement.setRetooledSQL( chopper( retooledSQL ) );
+
+					Table table = statement.getTables().iterator().next();
+					inspectTableAndFields( _conn, table, statement.getFields() );
+					inspectTableAndFields( _conn, table, statement.getConditions() );
+
+					generateUpdate( statement, targetRoot, name, created );
+					break;
+				}
+				default:
+					break;
 			}
 	
-			ParseNode updateNode = source.findFirstNode( "statement/update" );
-			if( updateNode != null )
-			{
-				UpdateStatement statement = new UpdateStatement();
-				statement.setName( name );
-				statement.setPackage( pkg );
-				statement.setOriginalFileName( sourceFile.toString() );
-				statement.setOriginalText( originalText );
-				statement.setOriginalLines( originalLines );
-				
-				extractUpdate( updateNode, statement );
-				String retooledSQL = builder.getTree().toOriginalString().trim();
-				statement.setRetooledSQL( chopper( retooledSQL ));
-				
-				inspectDatabaseForUpdate( _conn, statement );
-				
-				generateUpdate( statement, targetRoot, name, created );
-			}
 			return created;
 		}
 		catch( Exception e )
@@ -404,46 +416,25 @@ public class
 	public void extractSelectColumns( ParseNode selectNode, SelectStatement statement ) 
 		throws Exception
 	{
-//		String allStar = selectNode.findFirstString( "itemList" );
-//		if( "*".equals( allStar ) )
-//		{
-//			for( Table table : statement.getTables() )
-//			{
-//				statement.tempColumn( new Column( table ) );
-//			}
-//		}
-//		else
+		List<ParseNode> list = selectNode.findNodes( "itemList/item" );
+		for( ParseNode item : list )
 		{
-			List<ParseNode> list = selectNode.findNodes( "itemList/item" );
-			for( ParseNode item : list )
+			// Single column reference, eg alias.FamilyName
+			String columnName = item.findFirstString( "**/value/columnRef/columnName" );
+			if( columnName != null )
 			{
-//				// All columns from a table, eg alias.*
-//				String tableAlias = item.findFirstString( "allColumns/tableAlias" );
-//				if( tableAlias != null )
-//				{
-//					Table table = statement.getTable( tableAlias );
-//					Column column = new Column( table );
-//					statement.tempColumn( column );
-//					continue;
-//				}
-
-				// Single column reference, eg alias.FamilyName
-				String columnName = item.findFirstString( "**/value/columnRef/columnName" );
-				if( columnName != null )
-				{
-					columnName = trimQuotes( columnName );
-					String tableAlias = item.findFirstString( "**/value/columnRef/tableAlias" );
-					String columnAlias = item.findFirstString( "alias" );
-					Table table = statement.getTable( tableAlias );
-					Column column = new Column( table, columnName, columnAlias );
-					statement.tempColumn( column );
-					continue;
-				}
+				columnName = trimQuotes( columnName );
+				String tableAlias = item.findFirstString( "**/value/columnRef/tableAlias" );
+				String columnAlias = item.findFirstString( "alias" );
+				Table table = statement.getTable( tableAlias );
+				Column column = new Column( table, columnName, columnAlias );
+				statement.tempColumn( column );
+				continue;
+			}
 
 //				// Expression returned as column
 //				// TODO: expression columns
 
-			}
 		}
 	}
 
@@ -803,7 +794,7 @@ public class
 								condition.setSQLType( sqlType );
 								int nullable = columnRS.getInt( "NULLABLE" );
 								condition.setNullable( nullable == DatabaseMetaData.columnNullable );
-								System.out.printf( "searched for column: %s  found: %s\n", columnName, tempColumnName );
+//								System.out.printf( "searched for column: %s  found: %s\n", columnName, tempColumnName );
 								foundColumn = true;
 							}
 						}
@@ -824,16 +815,23 @@ public class
 		}
 	}
 
-	public void inspectDatabaseForInsert( Connection conn, InsertStatement statement )
+	/**
+	 * Find table name, case insensitive
+	 *
+	 * @param conn
+	 * @param table
+	 * @param fields
+	 * @throws Exception
+	 */
+
+	public void inspectTableAndFields( Connection conn, Table table, List<? extends MetaField> fields )
 		throws Exception
 	{
-		if( _onlyParse ) return;
 		ResultSet tableRS = null;
 		try
 		{
 			String catalog = null;
 			String schema = "PUBLIC";
-			Table table = statement.getTables().iterator().next();
 			String tableName = table.getName();
 
 			DatabaseMetaData meta = conn.getMetaData();
@@ -846,35 +844,7 @@ public class
 
 				catalog = tableRS.getString( "TABLE_CAT" );
 				schema = tableRS.getString( "TABLE_SCHEM" );
-
-				for( Field field : statement.getFields() )
-				{
-					boolean found = false;
-
-					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
-
-					while( columnRS.next() )
-					{
-						String columnName = columnRS.getString( "COLUMN_NAME" );
-						if( field.getName().equalsIgnoreCase( columnName ) )
-						{
-							int sqlType = columnRS.getInt( "DATA_TYPE" );
-							field.setSQLType( sqlType );
-							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-							field.setSQLTypeName( sqlTypeName );
-							int nullable = columnRS.getInt( "NULLABLE" );
-							field.setNullable( nullable == DatabaseMetaData.columnNullable );
-							found = true;
-							break;
-						}
-					}
-					columnRS.close();
-					if( !found )
-					{
-						String msg = String.format( "INSERT's table '%s' does not contain field '%s'", tableName, "ugh" );
-						throw new fado.FadoException( msg );
-					}
-				}
+				inspectFields( meta, catalog, schema, tempTableName, fields );
 			}
 		}
 		finally
@@ -883,98 +853,44 @@ public class
 		}
 	}
 
-	public void inspectDatabaseForUpdate( Connection conn, UpdateStatement statement )
-		throws Exception
+	public void inspectFields( DatabaseMetaData meta, String catalog, String schema, String table, List<? extends MetaField> fields )
+		throws FadoException, SQLException
 	{
-		if( _onlyParse ) return;
-		ResultSet tableRS = null;
-		try
+		for( MetaField field : fields )
 		{
-			String catalog = null;
-			String schema = "PUBLIC";
-			Table table = statement.getTables().iterator().next();
-			String tableName = table.getName();
+			boolean found = false;
 
-			DatabaseMetaData meta = conn.getMetaData();
-			tableRS = meta.getTables( catalog, schema, null, null );
+			ResultSet columnRS = meta.getColumns( catalog, schema, table, null );
 
-			while( tableRS.next() )
+			while( columnRS.next() )
 			{
-				String tempTableName = tableRS.getString( "TABLE_NAME" );
-				if( !tableName.equalsIgnoreCase( tempTableName ) ) continue;
-
-				catalog = tableRS.getString( "TABLE_CAT" );
-				schema = tableRS.getString( "TABLE_SCHEM" );
-
-				for( Field field : statement.getFields() )
+				String columnName = columnRS.getString( "COLUMN_NAME" );
+				if( field.getName().equalsIgnoreCase( columnName ) )
 				{
-					boolean found = false;
-
-					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
-
-					while( columnRS.next() )
-					{
-						String columnName = columnRS.getString( "COLUMN_NAME" );
-						if( field.getName().equalsIgnoreCase( columnName ) )
-						{
-							int sqlType = columnRS.getInt( "DATA_TYPE" );
-							field.setSQLType( sqlType );
-							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-							field.setSQLTypeName( sqlTypeName );
-							int nullable = columnRS.getInt( "NULLABLE" );
-							field.setNullable( nullable == DatabaseMetaData.columnNullable );
-							found = true;
-							break;
-						}
-					}
-					columnRS.close();
-					if( !found )
-					{
-						String msg = String.format( "UPDATE's table '%s' does not contain field '%s'", tableName, "ugh" );
-						throw new fado.FadoException( msg );
-					}
-				}
-				for( Condition condition : statement.getConditions() )
-				{
-					boolean found = false;
-
-					ResultSet columnRS = meta.getColumns( catalog, schema, tempTableName, null );
-
-					while( columnRS.next() )
-					{
-						String columnName = columnRS.getString( "COLUMN_NAME" );
-						if( condition.getName().equalsIgnoreCase( columnName ) )
-						{
-							int sqlType = columnRS.getInt( "DATA_TYPE" );
-							condition.setSQLType( sqlType );
-							String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-							condition.setSQLTypeName( sqlTypeName );
-							int nullable = columnRS.getInt( "NULLABLE" );
-							condition.setNullable( nullable == DatabaseMetaData.columnNullable );
-							found = true;
-							break;
-						}
-					}
-					columnRS.close();
-					if( !found )
-					{
-						String msg = String.format( "UPDATE's table '%s' does not contain field '%s'", tableName, "ugh" );
-						throw new fado.FadoException( msg );
-					}
+					int sqlType = columnRS.getInt( "DATA_TYPE" );
+					field.setSQLType( sqlType );
+					String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+					field.setSQLTypeName( sqlTypeName );
+					int nullable = columnRS.getInt( "NULLABLE" );
+					field.setNullable( nullable == DatabaseMetaData.columnNullable );
+					found = true;
+					break;
 				}
 			}
-		}
-		finally
-		{
-			safeClose( tableRS );
+			columnRS.close();
+			if( !found )
+			{
+				String msg = String.format( "table '%s' does not contain field '%s'", table, field.getName() );
+				throw new fado.FadoException( msg );
+			}
 		}
 	}
+
+
 
 	public void generateSelect( SelectStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
-		if( _onlyParse ) return;
-		
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
@@ -993,26 +909,9 @@ public class
 		created.add( targetFile );
 	}
 
-	public void generateSelect( SelectStatement statement, Writer writer ) 
+	public void generateResultSet( SelectStatement statement, File targetRoot, String name, List<File> created )
 		throws Exception
 	{
-		VelocityContext context = new VelocityContext();
-		context.put( "packageName", statement.getPackage() );
-		context.put( "className", statement.getName() );
-		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "conditions", statement.getConditions() );
-		context.put( "date", new Date() );
-		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originallines", statement.getOriginalLines() );
-
-		_selectTemplate.merge( context, writer );
-	}
-
-	public void generateResultSet( SelectStatement statement, File targetRoot, String name, List<File> created ) 
-		throws Exception
-	{
-		if( _onlyParse ) return;
-		
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
@@ -1034,8 +933,6 @@ public class
 	public void generateInsert( InsertStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
-		if( _onlyParse ) return;
-		
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
@@ -1057,8 +954,6 @@ public class
 	public void generateUpdate( UpdateStatement statement, File targetRoot, String name, List<File> created ) 
 		throws Exception
 	{
-		if( _onlyParse ) return;
-		
 		VelocityContext context = new VelocityContext();
 		context.put( "packageName", statement.getPackage() );
 		context.put( "className", statement.getName() );
