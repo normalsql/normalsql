@@ -1,11 +1,11 @@
 package fado;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
 
 // TODO: validate
 // TODO: print help
@@ -36,7 +36,7 @@ public class FadoOptions
 
 	String _filename = "fado";
 
-	Properties _props = null;
+	Properties _props = new Properties();
 
 	OptionSet _options = null;
 
@@ -146,16 +146,16 @@ public class FadoOptions
 		if( _props != null )
 		{
 			sb.append( "fado properties loaded from " ).append( _props.getURL() ).append( '\n' );
-		sb.append( '\n' );
-		sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
-		sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
-		sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
-		sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
-		sb.append( PACKAGE ).append( " = " ).append( getPackage() ).append( '\n' );
-		sb.append( SOURCE ).append( " = " ).append( getSource() ).append( '\n' );
-		sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
-		sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));
-		sb.append( '\n' );
+			sb.append( '\n' );
+			sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
+			sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
+			sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
+			sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
+			sb.append( PACKAGE ).append( " = " ).append( getPackage() ).append( '\n' );
+			sb.append( SOURCE ).append( " = " ).append( getSource() ).append( '\n' );
+			sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
+			sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));
+			sb.append( '\n' );
 		}
 		return sb.toString();
 	}

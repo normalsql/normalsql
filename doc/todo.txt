@@ -6,13 +6,13 @@ Build order:
 	test wrapper, 
 	compare source and generated resultsets
 	
-Eclipse plugin
+IntelliJ plugin
 Generated code has test method
 Generated code has verify schema method
 Add runtime "tested" flag to generated code
 
+when result column is an expression, isolate and execute expression to determine data type
 Add support for date (et al) data type condition parameters
-Add null tests to generated accessors for "not null" columns
 When column, table, etc not found, suggest alternative
 	"column 'appel' not found in table 'fruit', did you mean 'apple'?"
 Maybe not fail on first schema error, so that if multiple column, table are wrong, report all.

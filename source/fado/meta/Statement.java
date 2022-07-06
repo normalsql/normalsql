@@ -6,7 +6,7 @@ import java.util.List;
 public abstract class 
 	Statement 
 {
-	private String _name = null;
+	public String _name = null;
 	
 	public void setName( String name )
 	{
@@ -127,4 +127,13 @@ public abstract class
 		
 		throw new TableNotFoundException( "table alias not found: " + name );
 	}
+
+//	public static void main ( String arg[] )
+//	{
+//		Statement s = new Statement()
+//		{{
+//			_name = "test";
+//		}};
+//		System.out.println( s );
+//	}
 }

@@ -1,9 +1,9 @@
 /*
  GenericSQL.g4, for ANTLR 4.x
 
- Copyright 2014, 2011, 2010 Jason Osgood 
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
 
- Generic SQL grammar. Compile with ANTLR's generate parse tree command line option.
+ Generic SQL grammar.
 
  Synthesized from MacroScope.g, tsqlselect.g, the official SQL 92 BNF, etc. 
 
@@ -30,27 +30,10 @@
 
 grammar GenericSQL;
 
-//options
-//{
-//	language  = Java;
-//	backtrack = true;
-//	memoize   = true;
-//}
-/*
-@parser::header 
-{ 
-package fado.parse;
+options {
+  contextSuperClass=fado.parse.GlobbingRuleContext;
 }
 
-@parser::members
-{
-}
-
-@lexer::header 
-{ 
-package fado.parse; 
-}
-*/
 statement
   : select ( SEMI )? EOF
   | insert ( SEMI )? EOF
