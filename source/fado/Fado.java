@@ -289,7 +289,7 @@ public class
 			GenericSQLParser.StatementContext statementContext = parser.statement();
 
 			// TODO: getOriginalText() which includes all channels, eg whitespace, comments
-			String originalText = statementContext.getText();
+			String originalText = tokens.getText();
 			// Replace (escape) Java style comments in generated code, so /* */ becomes /@ @/.
 			String temp = originalText.replace( "/*", "/@" );
 			temp = temp.replace( "*/", "@/" );
@@ -309,8 +309,7 @@ public class
 						statement.setOriginalLines( originalLines );
 
 						extractSelect( child, statement );
-//						String retooledSQL = builder.getTree().toOriginalString().trim();
-						String retooledSQL = statementContext.getText().trim();
+						String retooledSQL = tokens.getText().trim();
 						statement.setRetooledSQL( chopper( retooledSQL ) );
 
 						inspectDatabaseForSelect( _conn, statement );
@@ -329,8 +328,7 @@ public class
 						statement.setOriginalLines( originalLines );
 
 						extractInsert( child, statement );
-//						String retooledSQL = builder.getTree().toOriginalString().trim();
-						String retooledSQL = statementContext.getText().trim();
+						String retooledSQL = tokens.getText().trim();
 						statement.setRetooledSQL( chopper( retooledSQL ) );
 
 						Table table = statement.getTables().iterator().next();
@@ -349,8 +347,7 @@ public class
 						statement.setOriginalLines( originalLines );
 
 						extractUpdate( child, statement );
-//						String retooledSQL = builder.getTree().toOriginalString().trim();
-						String retooledSQL = statementContext.getText().trim();
+						String retooledSQL = tokens.getText().trim();
 						statement.setRetooledSQL( chopper( retooledSQL ) );
 
 						Table table = statement.getTables().iterator().next();

@@ -18,8 +18,6 @@ extends
         super( parent, invokingStateNumber );
     }
 
-//    public GlobbingRuleContext() { }
-
     public List<Object> find(String expression )
     {
         return find( expression, false );
@@ -166,18 +164,5 @@ extends
         {
             ((WritableToken) start).setText( "?" );
         }
-
-//        for( Object o : children )
-//        {
-//            if( o instanceof CommonToken )
-//            {
-//                CommonToken token = (CommonToken) o;
-//                if( token.getChannel() != Token.HIDDEN_CHANNEL )
-//                {
-//                    token.setText( "?" );
-//                    break;
-//                }
-//            }
-//        }
     }
 }

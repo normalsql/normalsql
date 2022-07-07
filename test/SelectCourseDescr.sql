@@ -1,4 +1,4 @@
-SELECT 
+SELECT
 id, lastATP, course_title, description, revision
 FROM Course
 WHERE department_abbrev = 'ENGL' 

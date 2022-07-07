@@ -11,6 +11,9 @@ Generated code has test method
 Generated code has verify schema method
 Add runtime "tested" flag to generated code
 
+patch ANTLR 4.10.1 to add 'getRuleName' to generated context subclasses
+verify SQL comments work
+dump human readable parsetree for debugging
 when result column is an expression, isolate and execute expression to determine data type
 Add support for date (et al) data type condition parameters
 When column, table, etc not found, suggest alternative
