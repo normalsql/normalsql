@@ -8,13 +8,7 @@ import java.io.FileWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -112,6 +106,14 @@ public class
 			if( url != null )
 			{
 				_conn = DriverManager.getConnection( url, username, password );
+			}
+			// TODO: verify database, eg 'SELECT 1'
+			Statement s = _conn.createStatement();
+			if( s.execute("SELECT 1" ))
+//			if( s.execute("SELECT id, lastATP, course_title, description, revision FROM Course WHERE department_abbrev = 'ENGL' AND course_number = '100' ORDER BY lastATP desc;" ))
+			{
+				ResultSet rs = s.getResultSet();
+				System.out.println( rs );
 			}
 
 			Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
@@ -693,11 +695,9 @@ public class
 	}
 
 	public void inspectDatabaseForSelect( Connection conn, SelectStatement select )
-			throws Exception
+		throws Exception
 	{
-		if( true ) return;
 		if( _onlyParse ) return;
-
 		{
 			String sql = select.getOriginalText();
 

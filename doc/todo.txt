@@ -10,6 +10,7 @@ IntelliJ plugin
 Generated code has test method
 Generated code has verify schema method
 Add runtime "tested" flag to generated code
+read latest jdbc spec
 
 patch ANTLR 4.10.1 to add 'getRuleName' to generated context subclasses
 verify SQL comments work
@@ -23,7 +24,9 @@ Maybe not fail on first schema error, so that if multiple column, table are wron
 For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
 ID Generators
 	Detect identity columns for inserts, updates
-
+use better timestamp in generated files
+have generated files' javadoc reference each other?
+add Fado's revision to generated files
 	
 Figure out something for transactions 
 	maybe nothing, just use JDBC

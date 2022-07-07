@@ -1,6 +1,5 @@
 package fado.parse;
 
-import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.WritableToken;
@@ -8,7 +7,7 @@ import org.antlr.v4.runtime.WritableToken;
 import java.util.ArrayList;
 import java.util.List;
 
-public class //
+public class
     GlobbingRuleContext
 extends
     ParserRuleContext
