@@ -1,0 +1,1 @@
+java -jar /Users/jasonosgood/Projects/antlr4/tool/target/antlr4-4.10.2-SNAPSHOT-complete.jar -o /Users/jasonosgood/Projects/fado/gen/fado/parse -package fado.parse -no-listener -no-visitor -lib /Users/jasonosgood/Projects/fado/source/fado/parse /Users/jasonosgood/Projects/fado/source/fado/parse/GenericSQL.g4
