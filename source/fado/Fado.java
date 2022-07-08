@@ -3,15 +3,12 @@ package fado;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
-import java.io.Writer;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -20,7 +17,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -48,8 +44,6 @@ import fado.parse.GenericSQLParser;
 import static fado.parse.GenericSQLParser.RULE_select;
 import static fado.parse.GenericSQLParser.RULE_insert;
 import static fado.parse.GenericSQLParser.RULE_update;
-
-//			"/Users/jasonosgood/Projects/ambrose/sql/uwsdb/SelectCourseDetails.sql"
 
 public class
 	Fado
@@ -387,10 +381,10 @@ public class
 	public void extractSelectTables( GlobbingRuleContext selectNode, SelectStatement statement )
 	{
 		{
-			List<GlobbingRuleContext> list = selectNode.findNodes( "from/fromItem" );
+			List<GlobbingRuleContext> list = selectNode.findContexts( "from/fromItem" );
 			for( GlobbingRuleContext item : list )
 			{
-				GlobbingRuleContext tableRef = item.findFirstNode( "tableRef" );
+				GlobbingRuleContext tableRef = item.findFirst( "tableRef" );
 				String databaseName = tableRef.findFirstString( "databaseName" );
 				String tableName = tableRef.findFirstString( "**/tableName" );
 				String alias = item.findFirstString( "alias" );
@@ -399,10 +393,10 @@ public class
 			}
 		}
 		{
-			List<GlobbingRuleContext> list = selectNode.findNodes( "joinList/join" );
+			List<GlobbingRuleContext> list = selectNode.findContexts( "joinList/join" );
 			for( GlobbingRuleContext item : list )
 			{
-				GlobbingRuleContext tableRef = item.findFirstNode( "**/tableRef" );
+				GlobbingRuleContext tableRef = item.findFirst( "**/tableRef" );
 				String databaseName = tableRef.findFirstString( "databaseName" );
 				String tableName = tableRef.findFirstString( "**/tableName" );
 				String alias = item.findFirstString( "alias" );
@@ -415,7 +409,7 @@ public class
 	public void extractSelectColumns( GlobbingRuleContext selectNode, SelectStatement statement )
 			throws Exception
 	{
-		List<GlobbingRuleContext> list = selectNode.findNodes( "itemList/item" );
+		List<GlobbingRuleContext> list = selectNode.findContexts( "itemList/item" );
 		for( GlobbingRuleContext item : list )
 		{
 			// Single column reference, eg alias.FamilyName
@@ -440,30 +434,30 @@ public class
 	public void extractSelectParams( GlobbingRuleContext selectNode, SelectStatement statement )
 			throws FadoException
 	{
-		for( GlobbingRuleContext where : selectNode.findNodes( "where" ) )
+		for( GlobbingRuleContext where : selectNode.findContexts( "where" ) )
 		{
-			List<GlobbingRuleContext> clist = where.findNodes( "**/condition" );
+			List<GlobbingRuleContext> clist = where.findContexts( "**/condition" );
 			for( GlobbingRuleContext condition : clist )
 			{
-				for( GlobbingRuleContext comparison : condition.findNodes( "comparison" ) )
+				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
 				{
 					extractComparisonParams( comparison, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext in : condition.findNodes( "in" ) )
+				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
 				{
 					extractINParams( in, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext between : condition.findNodes( "between" ) )
+				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
 				{
 					extractBETWEENParams( between, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext like : condition.findNodes( "like" ) )
+				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
 				{
 					extractLIKEParams( like, statement );
 					break;
@@ -477,7 +471,7 @@ public class
 			throws Exception
 	{
 		if( _onlyParse ) return;
-		GlobbingRuleContext tableRef = insertNode.findFirstNode( "into/tableRef" );
+		GlobbingRuleContext tableRef = insertNode.findFirst( "into/tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
 		String alias = null;
@@ -485,14 +479,14 @@ public class
 		statement.addTable( table );
 
 		ArrayList<Field> fields = new ArrayList<Field>();
-		List<GlobbingRuleContext> list = insertNode.findNodes( "columnList/columnName" );
+		List<GlobbingRuleContext> list = insertNode.findContexts( "columnList/columnName" );
 		for( GlobbingRuleContext item : list )
 		{
 			String name = item.getText();
 			fields.add( new Field( name ) );
 		}
 
-		List<GlobbingRuleContext> literals = insertNode.findNodes( "values/literal" );
+		List<GlobbingRuleContext> literals = insertNode.findContexts( "values/literal" );
 
 		if( fields.size() != literals.size() )
 		{
@@ -505,7 +499,7 @@ public class
 			String literal = node.getText();
 			literal = trimQuotes( literal );
 
-			node.convertToJDBCParam();
+			node.convertToInputParam();
 
 			Field field = fields.get( nth );
 			field.setLiteral( literal );
@@ -516,10 +510,10 @@ public class
 
 	// TODO support unary literals (done?)
 	private void extractUpdate( GlobbingRuleContext updateNode, UpdateStatement statement )
-			throws Exception
+		throws Exception
 	{
 		if( _onlyParse ) return;
-		GlobbingRuleContext tableRef = updateNode.findFirstNode( "tableRef" );
+		GlobbingRuleContext tableRef = updateNode.findFirst( "tableRef" );
 		String databaseName = tableRef.findFirstString( "databaseName" );
 		String tableName = tableRef.findFirstString( "**/tableName" );
 		String alias = null;
@@ -527,44 +521,44 @@ public class
 		statement.addTable( table );
 
 		ArrayList<Field> fields = new ArrayList<Field>();
-		List<GlobbingRuleContext> setters = updateNode.findNodes( "setter" );
+		List<GlobbingRuleContext> setters = updateNode.findContexts( "setter" );
 		for( GlobbingRuleContext node : setters )
 		{
 			String name = node.findFirstString( "columnName" );
-			GlobbingRuleContext literalNode = node.findFirstNode( "literal" );
+			GlobbingRuleContext literalNode = node.findFirst( "literal" );
 			String literal = literalNode.getText();
 			literal = trimQuotes( literal );
 
-			literalNode.convertToJDBCParam();
+			literalNode.convertToInputParam();
 
 			fields.add( new Field( name, literal ) );
 		}
 		statement.setFields( fields );
 
-		for( GlobbingRuleContext where : updateNode.findNodes( "where" ) )
+		for( GlobbingRuleContext where : updateNode.findContexts( "where" ) )
 		{
-			List<GlobbingRuleContext> clist = where.findNodes( "**/condition" );
+			List<GlobbingRuleContext> clist = where.findContexts( "**/condition" );
 			for( GlobbingRuleContext condition : clist )
 			{
-				for( GlobbingRuleContext comparison : condition.findNodes( "comparison" ) )
+				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
 				{
 					extractComparisonParams( comparison, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext in : condition.findNodes( "in" ) )
+				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
 				{
 					extractINParams( in, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext between : condition.findNodes( "between" ) )
+				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
 				{
 					extractBETWEENParams( between, statement );
 					break;
 				}
 
-				for( GlobbingRuleContext like : condition.findNodes( "like" ) )
+				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
 				{
 					extractLIKEParams( like, statement );
 					break;
@@ -576,10 +570,10 @@ public class
 
 	// Comparisons, eg column = 'abc'
 	public void extractComparisonParams( GlobbingRuleContext comparisonNode, WhereStatement statement )
-			throws TableNotFoundException
+		throws TableNotFoundException
 	{
-		List<GlobbingRuleContext> columns = comparisonNode.findNodes( "**/columnRef" );
-		List<GlobbingRuleContext> literals = comparisonNode.findNodes( "**/literal" );
+		List<GlobbingRuleContext> columns = comparisonNode.findContexts( "**/columnRef" );
+		List<GlobbingRuleContext> literals = comparisonNode.findContexts( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 			// System.out.println( "found comparison: " + comparison.toInputString() );
@@ -599,17 +593,17 @@ public class
 
 			statement.addCondition( comparison );
 
-			node.convertToJDBCParam();
+			node.convertToInputParam();
 		}
 	}
 
 	// BETWEEN, eg column BETWEEN 1 AND 100
 	// TODO: BETWEEN condition
 	public void extractBETWEENParams( GlobbingRuleContext betweenNode, WhereStatement statement )
-			throws FadoException
+		throws FadoException
 	{
-		List<GlobbingRuleContext> columns = betweenNode.findNodes( "**/columnRef" );
-		List<GlobbingRuleContext> literals = betweenNode.findNodes( "**/literal" );
+		List<GlobbingRuleContext> columns = betweenNode.findContexts( "**/columnRef" );
+		List<GlobbingRuleContext> literals = betweenNode.findContexts( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 2 )
 		{
 			GlobbingRuleContext columnRef = columns.get( 0 );
@@ -622,13 +616,13 @@ public class
 			GlobbingRuleContext leftNode = literals.get( 0 );
 			String left = leftNode.getText();
 			left = trimQuotes( left );
-			leftNode.convertToJDBCParam();
+			leftNode.convertToInputParam();
 			between.setLeft( left );
 
 			GlobbingRuleContext rightNode = literals.get( 1 );
 			String right = rightNode.getText();
 			right = trimQuotes( right );
-			rightNode.convertToJDBCParam();
+			rightNode.convertToInputParam();
 			between.setRight( right );
 
 			statement.addCondition( between );
@@ -640,8 +634,8 @@ public class
 	public void extractLIKEParams( GlobbingRuleContext likeNode, WhereStatement statement )
 			throws FadoException
 	{
-		List<GlobbingRuleContext> columns = likeNode.findNodes( "**/columnRef" );
-		List<GlobbingRuleContext> literals = likeNode.findNodes( "**/literal" );
+		List<GlobbingRuleContext> columns = likeNode.findContexts( "**/columnRef" );
+		List<GlobbingRuleContext> literals = likeNode.findContexts( "**/literal" );
 		if( columns.size() == 1 && literals.size() == 1 )
 		{
 			GlobbingRuleContext columnRef = columns.get( 0 );
@@ -654,7 +648,7 @@ public class
 			GlobbingRuleContext patternNode = literals.get( 0 );
 			String pattern = patternNode.getText();
 			pattern = trimQuotes( pattern );
-			patternNode.convertToJDBCParam();
+			patternNode.convertToInputParam();
 			like.setPattern( pattern );
 
 			statement.addCondition( like );
@@ -665,10 +659,10 @@ public class
 	// IN, eg column IN ( 1, 2, 3 )
 	// Very naive pattern extraction, assumes column on left and literals on right
 	public void extractINParams( GlobbingRuleContext inNode, WhereStatement statement )
-			throws FadoException
+		throws FadoException
 	{
-		List<GlobbingRuleContext> columns = inNode.findNodes( "**/columnRef" );
-		List<GlobbingRuleContext> literals = inNode.findNodes( "**/literal" );
+		List<GlobbingRuleContext> columns = inNode.findContexts( "**/columnRef" );
+		List<GlobbingRuleContext> literals = inNode.findContexts( "**/literal" );
 		if( columns.size() == 1 && literals.size() > 0 )
 		{
 			GlobbingRuleContext columnRef = columns.get( 0 );
@@ -686,7 +680,7 @@ public class
 				String text = node.getText();
 				text = trimQuotes( text );
 
-				node.convertToJDBCParam();
+				node.convertToInputParam();
 
 				in.addValue( text );
 			}

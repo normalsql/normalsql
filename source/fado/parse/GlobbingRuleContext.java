@@ -17,16 +17,15 @@ extends
         super( parent, invokingStateNumber );
     }
 
-    public List<Object> find(String expression )
+    public List<GlobbingRuleContext> find( String expression )
     {
         return find( expression, false );
     }
 
-    // TODO: Rename 'findNodes' et al 'findContexts'
-    public List<GlobbingRuleContext> findNodes( String expression )
+    public List<GlobbingRuleContext> findContexts( String expression )
     {
-        List<Object> list = find( expression );
-        ArrayList<GlobbingRuleContext> result = new ArrayList<GlobbingRuleContext>();
+        List<GlobbingRuleContext> list = find( expression );
+        ArrayList<GlobbingRuleContext> result = new ArrayList<>();
         for( Object ugh : list )
         {
             if( ugh instanceof GlobbingRuleContext )
@@ -38,14 +37,14 @@ extends
     }
 
     // TODO: validate expression
-    protected List<Object> find( String expression, boolean first )
+    protected List<GlobbingRuleContext> find( String expression, boolean first )
     {
         if( expression == null )
         {
             throw new NullPointerException( "expression" );
         }
 
-        ArrayList<String> query = new ArrayList<String>();
+        ArrayList<String> query = new ArrayList<>();
         for( String atom : expression.split( "/" ))
         {
             atom = atom.trim();
@@ -56,51 +55,39 @@ extends
             query.add( atom );
         }
 
-        ArrayList<Object> result = new ArrayList<Object>();
+        ArrayList<GlobbingRuleContext> result = new ArrayList<>();
         find( first, this, query, 0, false, result );
         return result;
     }
 
-    private static void find( boolean first, ParserRuleContext parent, ArrayList<String> query, int nth, boolean seeking, ArrayList<Object> result  )
+    private static void find( boolean first, ParserRuleContext parent, ArrayList<String> query, int nth, boolean seeking, ArrayList<GlobbingRuleContext> result  )
     {
         String spot = query.get( nth );
         if( "**".equals( spot ))
         {
             find( first, parent, query, nth + 1, true, result );
         }
-        for( Object child : parent.children )
+        for( Object temp : parent.children )
         {
-            boolean wildcard = "*".equals( spot );
-            boolean tokenQuery = Character.isUpperCase( spot.charAt( 0 ));
-            boolean nodeQuery = Character.isLowerCase( spot.charAt( 0 ));
-
-            if( child instanceof Token && ( wildcard || tokenQuery ) )
+            if( temp instanceof GlobbingRuleContext )
             {
-                Token token = (Token) child;
-                int type = getLexType( spot );
-                if( token.getType() == type )
-                {
-                    result.add( token );
-                }
-            }
-            else if( child instanceof ParserRuleContext && ( wildcard || nodeQuery ) )
-            {
-                ParserRuleContext childNode = (ParserRuleContext) child;
-                if( wildcard || childNode.getRuleName().equals( spot ))
+                boolean wildcard = "*".equals( spot );
+                GlobbingRuleContext child = (GlobbingRuleContext) temp;
+                boolean match = child.getRuleName().equals( spot );
+                if( wildcard || match )
                 {
                     if( nth + 1 < query.size() )
                     {
-                        find( first, childNode, query, nth + 1, false, result );
+                        find( first, child, query, nth + 1, false, result );
                     }
                     else
                     {
-                        result.add( childNode );
+                        result.add( child );
                     }
                 }
-//				else
                 else if( seeking )
                 {
-                    find( first, childNode, query, nth, true, result );
+                    find( first, child, query, nth, true, result );
                 }
             }
 
@@ -108,15 +95,10 @@ extends
         }
     }
 
-    private static int getLexType( String spot )
+    public GlobbingRuleContext findFirst( String expression )
     {
-        return 0;
-    }
-
-    public Object findFirst( String expression )
-    {
-        Object result = null;
-        List<Object> found = find( expression, true );
+        GlobbingRuleContext result = null;
+        List<GlobbingRuleContext> found = find( expression, true );
         if( found.size() > 0 )
         {
             result = found.get( 0 );
@@ -124,38 +106,32 @@ extends
         return result;
     }
 
-    public GlobbingRuleContext findFirstNode( String expression )
-    {
-        GlobbingRuleContext result = null;
-        Object first = findFirst( expression );
-        if( first instanceof GlobbingRuleContext )
-        {
-            result = (GlobbingRuleContext) first;
-        }
-        return result;
-    }
+//    public GlobbingRuleContext findFirstContext( String expression )
+//    {
+//        GlobbingRuleContext result = null;
+//        Object first = findFirst( expression );
+//        if( first instanceof GlobbingRuleContext )
+//        {
+//            result = (GlobbingRuleContext) first;
+//        }
+//        return result;
+//    }
 
     public String findFirstString( String expression )
     {
         String result = null;
         Object first = findFirst( expression );
-        if( first instanceof Token)
-        {
-            String ugh = first.toString();
-            result = ((Token) first).getText();
-        }
-        else if( first instanceof GlobbingRuleContext )
+        if( first instanceof GlobbingRuleContext )
         {
             result = ((GlobbingRuleContext) first).getText();
         }
         return result;
     }
 
-    // Replace original token literal value with a JDBC input parameter '?'
+    // Replaces original value with a JDBC input parameter '?'
     // TODO: Handle unary numbers, eg -100
     // TODO: Knockout whole 'literal' rule context?
-    // TODO: Rename method to something like 'convertToInputParameter
-    public void convertToJDBCParam()
+    public void convertToInputParam()
     {
         // Replace text of first "visible" (non whitespace) token, then exit
         Token start = getStart();
