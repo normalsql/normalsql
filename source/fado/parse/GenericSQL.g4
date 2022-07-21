@@ -52,7 +52,7 @@ select
     ( TOP Integer ( PERCENT )? )?
     itemList
     ( into )?
-    from
+    ( from )?
     ( join )*
 //    ( joinList )
     ( where )?
@@ -254,13 +254,9 @@ nestedExpression
   ;
   
 expression
-  : multiply ( ( PLUS | MINUS ) multiply )*
+  : value (( PLUS | MINUS | STAR | DIVIDE ) value )*
   ;
- 
-multiply
-  : value ( ( STAR | DIVIDE ) value )* 
-  ;
-   
+
 //value
 //  : NULL 
 //  | caseWhenExpression
@@ -413,7 +409,7 @@ COUNT     : C O U N T ;
 
 
 Integer 
-  : ( DIGIT )+
+  : ( DIGIT )+ L?
   ;
   
 Float
