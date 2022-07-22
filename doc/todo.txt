@@ -12,7 +12,8 @@ Generated code has verify schema method
 Add runtime "tested" flag to generated code
 read latest jdbc spec
 
-patch ANTLR 4.10.1 to add 'getRuleName' to generated context subclasses
+
+x  patch ANTLR 4.10.1 to add 'getRuleName' to generated context subclasses
 verify SQL comments work
 dump human readable parsetree for debugging
 when result column is an expression, isolate and execute expression to determine data type
@@ -39,6 +40,15 @@ Different templates for different types of SELECT
    - single value ResultSet eg SELECT Count( * ) FROM Person, no iteration
    - single *typed* value ResultSet eg SELECT Count( * ) > 0 FROM Person, no iteration
    - updateable ResultSet, probably new interface: eg implements Iterable<Row>
+
+support MySQL aggregate functions?
+    https://www.mysqltutorial.org/mysql-aggregate-functions.aspx
+
+support H2 dynamic tables?
+    http://www.h2database.com/html/systemtables.html?highlight=SYSTEM_RANGE&search=system_range#firstFound
+    select sum(mod(x, 2) = 1) from system_range(1, 10);
+
+support 'FILTER' and 'OVER' clauses for aggregate functions?
 
 GRAMMARS
 

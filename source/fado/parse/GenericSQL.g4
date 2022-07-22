@@ -5,26 +5,6 @@
 
  Generic SQL grammar.
 
- Synthesized from MacroScope.g, tsqlselect.g, the official SQL 92 BNF, etc. 
-
- ** Header from MacroScope.g **
-
- From http://www.antlr.org/grammar/1062280680642/MS_SQL_SELECT.html ,
- simplified & extended with other SQL commands.
-
- ** Header from tsqlselect.g **
-
- Version: 0.8
- ANTLR Version: 2.7.2
- Date: 2003.08.25
-
- Description: This is a MS SQL Server 2000 SELECT statement grammar.
-
- =======================================================================================
- Author: Tomasz Jastrzebski
- Contact: tdjastrzebski@yahoo.com
- Working parser/lexer generated based on this grammar will available for some time at:
- http://jastrzebski.europe.webmatrixhosting.net/mssqlparser.aspx
 */
 
 
@@ -35,43 +15,45 @@ options {
 }
 
 statement
-  : select ( SEMI )? EOF
-  | insert ( SEMI )? EOF
-  | update ( SEMI )? EOF
-//  | delete ( SEMI )? EOF
+  : ( select
+    | insert
+    | update
+//  | delete
+    )
+    SEMI? EOF
   ;
   
-subSelect
-  : select
-  | LPAREN select RPAREN
-  ;
+//subSelect
+//  : select
+//  | LPAREN select RPAREN
+//  ;
   
 select
   : SELECT
     ( ALL | DISTINCT | UNIQUE )?
-    ( TOP Integer ( PERCENT )? )?
+    ( TOP Integer PERCENT? )?
     itemList
-    ( into )?
-    ( from )?
-    ( join )*
+    into?
+    from?
+    join*
 //    ( joinList )
-    ( where )?
-    ( groupBy )?
-    ( having )?
-    ( orderBy )?
+    where?
+    groupBy?
+    having?
+    orderBy?
   ;
 
 
 insert
-  : INSERT into ( columnList )?
+  : INSERT into columnList?
   ( values
-//| select_statement
+// | select
   )
   ;  
 
 update
   : UPDATE tableRef SET setter ( COMMA setter )*
-    ( where )?
+    where?
   ;
   
 setter
@@ -96,10 +78,10 @@ itemList
   ;
   
 item
-  : function ( AS? alias )? 
-  | expression ( ( AS )? alias )?
+  : function alias?
+  | expression alias?
   | allColumns
-  | caseExpression ( ( AS )? alias )?
+  | caseExpression alias?
   ;
 
 allColumns
@@ -107,29 +89,29 @@ allColumns
   ;
 
 alias
-  : Identifier
+  : AS? Identifier
   ;
   
 function
-  : Identifier LPAREN ( expression ( COMMA expression )* )? RPAREN
-  ;  
+  : functionName LPAREN RPAREN
+  | functionName LPAREN STAR RPAREN
+  | functionName LPAREN value RPAREN
+  | functionName LPAREN ( ALL | DISTINCT )? conditionList RPAREN
+  | functionName LPAREN expressionList RPAREN
+  ;
 
-//functionName
-//  : Identifier
-////  : COUNT
-////  | MIN
-////  | MAX
-//  ;
+functionName
+  : Identifier
+  ;
   
 from
   : FROM fromItem ( COMMA fromItem )*
   ;
   
 fromItem
-  : ( ( LPAREN subSelect RPAREN ) 
-    | tableRef 
-    )
-    ( ( AS )? alias )?
+//  : LPAREN subSelect RPAREN  ( ( AS )? alias )?
+  : LPAREN select RPAREN alias?
+  | tableRef alias?
   ;
 /*
 joinList
@@ -147,13 +129,13 @@ join
     | OUTER JOIN 
     | NATURAL JOIN
     ) 
-  fromItem alias
+  fromItem  // alias
   /*
   ( ON conditionList
   | USING LPAREN columnRef ( COMMA columnRef )* RPAREN
   )?
   */
-  ON conditionList
+  ( ON conditionList )?
   ;
   
 
@@ -193,7 +175,8 @@ conditionList
 condition
    // ( NOT )?
 //    ( 
-    : comparison
+    : literal
+    | comparison
     | nestedCondition
     | in
     | between
@@ -205,15 +188,16 @@ condition
   ;
 
 in
-  : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
+//  : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
+  : expression NOT? IN LPAREN ( select | expressionList ) RPAREN
   ;
   
 between
-  : expression ( NOT )? BETWEEN expression AND expression
+  : expression NOT? BETWEEN expression AND expression
   ;
   
 isNull
-  : expression IS ( NOT )? NULL
+  : expression IS NOT? NULL
   ;
   
 exists
@@ -223,7 +207,7 @@ exists
 like
 //  : columnRef ( NOT )? LIKE String
   
-  : expression ( NOT )? LIKE expression
+  : expression NOT? LIKE expression
 //    ESCAPE Literal
   ;
     
@@ -242,7 +226,8 @@ comparator
   ;
   
 quantifier
-  : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
+//  : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
+  : expression ( ALL | ANY | SOME ) LPAREN select RPAREN
   ;
   
 expressionList
@@ -275,7 +260,8 @@ expression
 value
   : literal 
   | caseExpression
-  | ( unary )?
+  | function
+  | unary?
     ( columnRef
     | nestedExpression
 //    | LPAREN subSelect RPAREN
@@ -283,8 +269,8 @@ value
   ;
   
 literal
-  : ( unary )? Float
-  | ( unary )? Integer
+  : unary? Float
+  | unary? Integer
   | String
   | TRUE
   | FALSE
@@ -403,13 +389,12 @@ WHEN      : W H E N ;
 WHERE     : W H E R E ;
 //YEAR      : Y E A R ;
 
-MAX       : M A X ;
-MIN       : M I N ;
-COUNT     : C O U N T ;
-
+//MAX       : M A X ;
+//MIN       : M I N ;
+//COUNT     : C O U N T ;
 
 Integer 
-  : ( DIGIT )+ L?
+  : DIGIT+ L?
   ;
   
 Float
