@@ -98,10 +98,16 @@ function
   | functionName LPAREN value RPAREN
   | functionName LPAREN ( ALL | DISTINCT )? conditionList RPAREN
   | functionName LPAREN expressionList RPAREN
+  | '{fn' odbcFunctionName LPAREN expressionList RPAREN '}'
   ;
 
 functionName
   : Identifier
+  ;
+
+odbcFunctionName
+  : LEFT | RIGHT | INSERT // also SQL reserved words
+  | Identifier
   ;
   
 from
@@ -206,7 +212,6 @@ exists
   
 like
 //  : columnRef ( NOT )? LIKE String
-  
   : expression NOT? LIKE expression
 //    ESCAPE Literal
   ;
