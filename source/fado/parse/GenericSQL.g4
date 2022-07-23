@@ -7,7 +7,6 @@
 
 */
 
-
 grammar GenericSQL;
 
 options {
@@ -98,7 +97,7 @@ function
   | functionName LPAREN value RPAREN
   | functionName LPAREN ( ALL | DISTINCT )? conditionList RPAREN
   | functionName LPAREN expressionList RPAREN
-  | '{fn' odbcFunctionName LPAREN expressionList RPAREN '}'
+  | '{fn' odbcFunctionName LPAREN expressionList? RPAREN '}'
   ;
 
 functionName
@@ -283,9 +282,9 @@ literal
   ;
 
 date
-  : '{d' Timestamp '}' // Date
-  | '{t' Timestamp '}' // Time
-  | '{ts' Timestamp '}' // Timestamp
+  : '{d' String '}' // Date
+  | '{t' String '}' // Time
+  | '{ts' String '}' // Timestamp
   ;
     
 unary
@@ -411,14 +410,7 @@ String
   : '\'' ( ~'\'' | '\'\'' )* '\''
   ;
   
-Timestamp 
-  : DIGIT DIGIT DIGIT DIGIT '-'
-		DIGIT DIGIT '-'
-		DIGIT DIGIT [t ]
-		DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT
-	;
-
-Identifier 
+Identifier
   : '"' (~'"' | '""')* '"'
 //  | '`' (~'`' | '``')* '`'
   | '[' ~']'* ']'
