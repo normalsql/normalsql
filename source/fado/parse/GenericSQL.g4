@@ -11,6 +11,7 @@ grammar GenericSQL;
 
 options {
   contextSuperClass=fado.parse.GlobbingRuleContext;
+  caseInsensitive = true;
 }
 
 statement
@@ -326,88 +327,67 @@ columnName
 //  | QuotedIdentifier
   ;
   
-ALL       : A L L ;
-AND       : A N D ;
-ANY       : A N Y ;
-AS        : A S ;
-ASC       : A S C ;
-BETWEEN   : B E T W E E N ;
-BY        : B Y ;
-CASE      : C A S E ;
-//CAST      : C A S T ;
-//CROSS     : C R O S S ;
-//CONTAINS  : C O N T A I N S ;
-//DAY       : D A Y ;
-//DEFAULT   : D E F A U L T ;
-DELETE    : D E L E T E ;
-DESC      : D E S C ;
-DISTINCT  : D I S T I N C T ;
-ELSE      : E L S E ;
-END       : E N D ;
-//ESCAPE    : E S C A P E ;
-EXISTS    : E X I S T S ;
-//EXTRACT   : E X T R A C T ;
-FALSE     : F A L S E ;
-//FOR       : F O R ;
-//FREETEXT  : F R E E T E X T ;
-FROM      : F R O M ;
-FULL      : F U L L ;
-GROUP     : G R O U P ;
-HAVING    : H A V I N G ;
-//HOUR      : H O U R ;
-IN        : I N ;
-INNER     : I N N E R ;
-INSERT    : I N S E R T ;
-//INTERVAL  : I N T E R V A L ;
-INTO      : I N T O ;
-IS        : I S ;
-JOIN      : J O I N ;
-LEFT      : L E F T ;
-LIKE      : L I K E ;
-//MINUTE    : M I N U T E ;
-//MONTH     : M O N T H ;
-NATURAL   : N A T U R A L ;
-NOT       : N O T ;
-NULL      : N U L L ;
-ON        : O N ;
-OR        : O R ;
-ORDER     : O R D E R ;
-OUTER     : O U T E R ;
-PERCENT   : P E R C E N T ;
-RIGHT     : R I G H T ;
-//SECOND    : S E C O N D ;
-SELECT    : S E L E C T ;
-SET       : S E T ;
-SOME      : S O M E ;
-//SUBSTRING : S U B S T R I N G ;
-THEN      : T H E N ;
-TRUE      : T R U E ;
-//TIMESTAMP : T I M E S T A M P ;
-TOP       : T O P ;
-UNION     : U N I O N ;
-UNIQUE    : U N I Q U E ;
-UPDATE    : U P D A T E ;
-USING     : U S I N G ;
-VALUES    : V A L U E S ;
-WHEN      : W H E N ;
-WHERE     : W H E R E ;
-//YEAR      : Y E A R ;
-
-//MAX       : M A X ;
-//MIN       : M I N ;
-//COUNT     : C O U N T ;
+ALL       : 'ALL';
+AND       : 'AND';
+ANY       : 'ANY';
+AS        : 'AS';
+ASC       : 'ASC';
+BETWEEN   : 'BETWEEN';
+BY        : 'BY';
+CASE      : 'CASE';
+DELETE    : 'DELETE';
+DESC      : 'DESC';
+DISTINCT  : 'DISTINCT';
+ELSE      : 'ELSE';
+END       : 'END';
+EXISTS    : 'EXISTS';
+FALSE     : 'FALSE';
+FROM      : 'FROM';
+FULL      : 'FULL';
+GROUP     : 'GROUP';
+HAVING    : 'HAVING';
+IN        : 'IN';
+INNER     : 'INNER';
+INSERT    : 'INSERT';
+INTO      : 'INTO';
+IS        : 'IS';
+JOIN      : 'JOIN';
+LEFT      : 'LEFT';
+LIKE      : 'LIKE';
+NATURAL   : 'NATURAL';
+NOT       : 'NOT';
+NULL      : 'NULL';
+ON        : 'ON';
+OR        : 'OR';
+ORDER     : 'ORDER';
+OUTER     : 'OUTER';
+PERCENT   : 'PERCENT';
+RIGHT     : 'RIGHT';
+SELECT    : 'SELECT';
+SET       : 'SET';
+SOME      : 'SOME';
+THEN      : 'THEN';
+TRUE      : 'TRUE';
+TOP       : 'TOP';
+UNION     : 'UNION';
+UNIQUE    : 'UNIQUE';
+UPDATE    : 'UPDATE';
+USING     : 'USING';
+VALUES    : 'VALUES';
+WHEN      : 'WHEN';
+WHERE     : 'WHERE';
 
 Integer 
-  : DIGIT+ L?
+  : DIGIT+ 'L'?
   ;
   
 Float
-  : DIGIT+ ( '.' DIGIT* )? ( E [-+]? DIGIT+ )?
-  | '.' DIGIT+ ( E [-+]? DIGIT+ )?
+  : DIGIT+ ( '.' DIGIT* )? ( 'E' [-+]? DIGIT+ )?
+  | '.' DIGIT+ ( 'E' [-+]? DIGIT+ )?
   ;
   
-String
-  : '\'' ( ~'\'' | '\'\'' )* '\''
+String options { caseInsensitive=false; }
+  : 'N'? '\'' (~'\'' | '\'\'')* '\''
   ;
   
 Identifier
@@ -459,29 +439,3 @@ MOD      : '%'  ;
 
 fragment DIGIT : [0-9];
 
-fragment A : [aA];
-fragment B : [bB];
-fragment C : [cC];
-fragment D : [dD];
-fragment E : [eE];
-fragment F : [fF];
-fragment G : [gG];
-fragment H : [hH];
-fragment I : [iI];
-fragment J : [jJ];
-fragment K : [kK];
-fragment L : [lL];
-fragment M : [mM];
-fragment N : [nN];
-fragment O : [oO];
-fragment P : [pP];
-fragment Q : [qQ];
-fragment R : [rR];
-fragment S : [sS];
-fragment T : [tT];
-fragment U : [uU];
-fragment V : [vV];
-fragment W : [wW];
-fragment X : [xX];
-fragment Y : [yY];
-fragment Z : [zZ];
