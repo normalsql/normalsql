@@ -3,7 +3,7 @@
 
  Copyright 2022, 2014, 2011, 2010 Jason Osgood
 
- Generic SQL grammar.
+ Generic SQL DML grammar.
 
 */
 
@@ -23,26 +23,25 @@ statement
     SEMI? EOF
   ;
   
-//subSelect
-//  : select
-//  | LPAREN select RPAREN
-//  ;
-  
 select
   : SELECT
     ( ALL | DISTINCT | UNIQUE )?
-    ( TOP Integer PERCENT? )?
+    ( TOP expression PERCENT? ( WITH TIES )? )?
     itemList
     into?
     from?
-    join*
-//    ( joinList )
     where?
     groupBy?
     having?
+    // window?
+    qualify?
+    union?
     orderBy?
+    limit?
+    // offset? -- different from 'limit' rule?
+    // fetch?
+    forUpdate?
   ;
-
 
 insert
   : INSERT into columnList?
@@ -55,7 +54,11 @@ update
   : UPDATE tableRef SET setter ( COMMA setter )*
     where?
   ;
-  
+
+columnList
+  : LPAREN columnName ( COMMA columnName )* RPAREN
+  ;
+
 setter
   : columnName EQ literal
   ;
@@ -64,41 +67,83 @@ into
   : INTO tableRef ( COMMA tableRef )*
   ;
 
-columnList
-  : LPAREN columnName ( COMMA columnName )* RPAREN
-  ;
-  
-values
-  : VALUES LPAREN literal ( COMMA literal )* RPAREN
-  ;  
-
 itemList
-  : STAR
-  | item ( COMMA item )*
+  : item ( COMMA item )*
   ;
   
 item
-  : function alias?
+  : STAR exceptions?
+  | tableName DOT STAR exceptions?
   | expression alias?
-  | allColumns
-  | caseExpression alias?
   ;
 
-allColumns
-  : tableAlias DOT STAR
+// http://www.h2database.com/html/grammar.html#wildcard_expression
+exceptions
+  : EXCEPT LPAREN columnRef ( COMMA columnRef )* RPAREN
+  ;
+
+expressionList
+  : expression ( COMMA expression )*
+  ;
+
+expression
+  : value
+  | Variable
+  | unary expression
+  | NOT expression
+  | function
+  | columnRef
+
+  // Best guess for precedence of binary operators
+  | expression STRCAT expression
+  | expression ( STAR | DIV | MOD ) expression
+  | expression ( PLUS | MINUS ) expression
+  | expression ( LT2 | GT2 | AMP | PIPE) expression
+  | expression ( LT | LTE | GT | GTE ) expression
+  | expression ( ASSIGN | EQ | NEQ1 | NEQ2 | IN ) expression
+  | expression ( AND | OR ) expression
+
+  | LPAREN expression RPAREN
+  | LPAREN query RPAREN
+  | expression NOT* ( LIKE | ILIKE ) expression ( ESCAPE expression )?
+  | expression NOT* ( REGEXP ) expression ( ESCAPE expression )?
+  | expression IS NOT? NULL
+  | expression NOT* IN LPAREN ( select | expressionList ) RPAREN
+// TODO additional 'IN' rules
+//          | ( schema_name DOT)? table_name
+//          | (schema_name DOT)? table_function_name LPAREN (expression (COMMA expression)*)? CLOSE_PAR
+  | expression NOT* BETWEEN expression AND expression
+
+  | EXISTS LPAREN query RPAREN
+  | UNIQUE LPAREN query RPAREN
+  // http://www.h2database.com/html/grammar.html#condition
+  | INTERSECTS LPAREN expression COMMA expression RPAREN
+  | CASE expression? ( WHEN expression THEN expression )+ ( ELSE expression )? END
+  | ( CAST | TRY_CAST ) LPAREN expression AS Identifier RPAREN
+  | expression COLLATE Identifier
+//  | raise_function
+  | ( ALL | ANY | SOME ) LPAREN query RPAREN
+  ;
+
+//  TODO: http://www.h2database.com/html/grammar.html#query
+query
+  : select
+//  | explicit table
+//  | table value
   ;
 
 alias
   : AS? Identifier
   ;
-  
+
+// TODO filter_clause? over_clause?
 function
-  : functionName LPAREN RPAREN
-  | functionName LPAREN STAR RPAREN
-  | functionName LPAREN value RPAREN
-  | functionName LPAREN ( ALL | DISTINCT )? conditionList RPAREN
-  | functionName LPAREN expressionList RPAREN
+  : functionName LPAREN STAR RPAREN
+  | functionName LPAREN ( ALL | DISTINCT )? expressionList RPAREN
+  | functionName LPAREN expressionList? RPAREN
   | '{fn' odbcFunctionName LPAREN expressionList? RPAREN '}'
+  | Identifier? FUNCTION functionName LPAREN expressionList? RPAREN // T-SQL
+  | Identifier DOT functionName LPAREN expressionList? RPAREN // T-SQL?
   ;
 
 functionName
@@ -109,21 +154,29 @@ odbcFunctionName
   : LEFT | RIGHT | INSERT // also SQL reserved words
   | Identifier
   ;
-  
+
 from
   : FROM fromItem ( COMMA fromItem )*
   ;
   
 fromItem
-//  : LPAREN subSelect RPAREN  ( ( AS )? alias )?
-  : LPAREN select RPAREN alias?
-  | tableRef alias?
+  : tableExpression useIndex?
+  | fromItem join
+  | LPAREN fromItem RPAREN
+  | function
   ;
-/*
-joinList
-  : ( join )*
+
+tableExpression
+  : ( LPAREN select RPAREN
+    | tableRef
+    )
+    alias?
   ;
-*/
+
+useIndex
+  : USE INDEX LPAREN Identifier ( COMMA Identifier )* RPAREN
+  ;
+
 join
   : 
     ( JOIN
@@ -134,32 +187,45 @@ join
     | RIGHT OUTER JOIN
     | OUTER JOIN 
     | NATURAL JOIN
-    ) 
-  fromItem  // alias
-  /*
-  ( ON conditionList
-  | USING LPAREN columnRef ( COMMA columnRef )* RPAREN
-  )?
-  */
-  ( ON conditionList )?
-  ;
-  
+    )
 
-//union
-//  : UNION // Wrong
-//  ;
-//  
+    tableExpression
+
+    ( ON expression
+    | USING LPAREN columnName ( COMMA columnName )* RPAREN
+    )?
+
+  | LPAREN join RPAREN
+  ;
+
+union
+  : ( UNION ALL?
+    | EXCEPT
+    | INTERSECT
+    )
+    ( LPAREN query RPAREN
+    | query
+    )
+
+  ;
 
 where
-  : WHERE conditionList
+  : WHERE expressionList
   ;
   
 groupBy
-  : GROUP BY columnRef ( COMMA columnRef )*
+  : GROUP BY
+    ( expressionList?
+    | LPAREN expressionList? RPAREN
+    )
   ;
   
 having
-  : HAVING conditionList
+  : HAVING expressionList
+  ;
+
+qualify
+  : QUALIFY expression
   ;
   
 orderBy
@@ -167,118 +233,33 @@ orderBy
   ;
   
 orderByItem
-  : columnRef ( ASC | DESC )?
-  ;
-  
-nestedCondition
-  : LPAREN conditionList RPAREN
-  ;
-  
-conditionList
-  : condition ( ( OR | AND ) condition )*
-  ;
-  
-condition
-   // ( NOT )?
-//    ( 
-    : literal
-    | comparison
-    | nestedCondition
-    | in
-    | between
-    | isNull
-    | exists
-    | like
-    | quantifier
-//    )
+  : expression ( ASC | DESC )?
   ;
 
-in
-//  : expression ( NOT )? IN LPAREN ( subSelect | expressionList ) RPAREN
-  : expression NOT? IN LPAREN ( select | expressionList ) RPAREN
-  ;
-  
-between
-  : expression NOT? BETWEEN expression AND expression
-  ;
-  
-isNull
-  : expression IS NOT? NULL
-  ;
-  
-exists
-  : EXISTS expression
-  ;
-  
-like
-//  : columnRef ( NOT )? LIKE String
-  : expression NOT? LIKE expression
-//    ESCAPE Literal
-  ;
-    
-comparison
-  : expression comparator expression
+limit
+  : LIMIT expression (( OFFSET | COMMA ) expression )?
   ;
 
-comparator 
-  : EQ
-  | NEQ1
-  | NEQ2
-  | LTE
-  | LT
-  | GTE
-  | GT
-  ;
-  
-quantifier
-//  : expression ( ALL | ANY | SOME ) LPAREN subSelect RPAREN
-  : expression ( ALL | ANY | SOME ) LPAREN select RPAREN
-  ;
-  
-expressionList
-  : expression ( COMMA expression )*
+forUpdate
+  : FOR UPDATE
   ;
 
-nestedExpression
-  : LPAREN expression RPAREN
-  ;
-  
-expression
-  : value (( PLUS | MINUS | STAR | DIVIDE ) value )*
+values
+  : VALUES LPAREN literal ( COMMA literal )* RPAREN
   ;
 
-//value
-//  : NULL 
-//  | caseWhenExpression
-//  | ( unary )?
-//    ( Float
-//    | Integer
-//    | column
-//    | nestedExpression
-////    | LPAREN subSelect RPAREN
-//    )
-//  | '{d' Timestamp '}' // Date
-//  | '{t' Timestamp '}' // Time
-//  | '{ts' Timestamp '}' // Timestamp
-//  ;
-    
 value
   : literal 
-  | caseExpression
-  | function
-  | unary?
-    ( columnRef
-    | nestedExpression
-//    | LPAREN subSelect RPAREN
-    )
+  | columnRef
   ;
   
 literal
-  : unary? Float
-  | unary? Integer
+  : Float
+  | Integer
   | String
   | TRUE
   | FALSE
+  | NULL
   | date
   ;
 
@@ -291,41 +272,34 @@ date
 unary
   : MINUS
   | PLUS
+  | TILDE
+  | NOT
   ;
  
-caseExpression
-  : CASE ( WHEN condition THEN value )+ ( ELSE value )? END
-  | CASE value ( WHEN value THEN value )+ ( ELSE value )? END
-  ;
-
 tableRef
   : tableName
   | databaseName DOT tableName
   ;
   
 columnRef
-  : columnName 
-  | tableAlias DOT columnName
+  : (( databaseName DOT )? tableName DOT )? columnName
   ;
 
 databaseName
   : Identifier
-//  | QuotedIdentifier
   ;
   
 tableName
-  : Identifier
-//  | QuotedIdentifier
-  ;
-  
-tableAlias
   : Identifier
   ;
   
 columnName
   : Identifier
-//  | QuotedIdentifier
   ;
+
+// Lexer
+
+// Keywords
   
 ALL       : 'ALL';
 AND       : 'AND';
@@ -335,82 +309,68 @@ ASC       : 'ASC';
 BETWEEN   : 'BETWEEN';
 BY        : 'BY';
 CASE      : 'CASE';
+CAST      : 'CAST';
+COLLATE   : 'COLLATE';
 DELETE    : 'DELETE';
 DESC      : 'DESC';
 DISTINCT  : 'DISTINCT';
+DIV       : 'DIV';
 ELSE      : 'ELSE';
 END       : 'END';
+ESCAPE    : 'ESCAPE';
+EXCEPT    : 'EXCEPT';
 EXISTS    : 'EXISTS';
 FALSE     : 'FALSE';
+FOR       : 'FOR';
 FROM      : 'FROM';
 FULL      : 'FULL';
 GROUP     : 'GROUP';
 HAVING    : 'HAVING';
+ILIKE     : 'ILIKE';
 IN        : 'IN';
+INDEX     : 'INDEX';
 INNER     : 'INNER';
 INSERT    : 'INSERT';
 INTO      : 'INTO';
+INTERSECT : 'INTERSECT';
+INTERSECTS: 'INTERSECTS';
 IS        : 'IS';
 JOIN      : 'JOIN';
 LEFT      : 'LEFT';
 LIKE      : 'LIKE';
+LIMIT     : 'LIMIT';
 NATURAL   : 'NATURAL';
 NOT       : 'NOT';
 NULL      : 'NULL';
+OFFSET    : 'OFFSET';
 ON        : 'ON';
 OR        : 'OR';
 ORDER     : 'ORDER';
 OUTER     : 'OUTER';
 PERCENT   : 'PERCENT';
+PIPE      : 'PIPE';
+QUALIFY   : 'QUALIFY';
+REGEXP    : 'REGEXP';
 RIGHT     : 'RIGHT';
 SELECT    : 'SELECT';
 SET       : 'SET';
 SOME      : 'SOME';
 THEN      : 'THEN';
+TIES      : 'TIES';
 TRUE      : 'TRUE';
+TRY_CAST  : 'TRY_CAST';
 TOP       : 'TOP';
 UNION     : 'UNION';
 UNIQUE    : 'UNIQUE';
 UPDATE    : 'UPDATE';
+USE       : 'USE';
 USING     : 'USING';
 VALUES    : 'VALUES';
+WITH      : 'WITH';
 WHEN      : 'WHEN';
 WHERE     : 'WHERE';
 
-Integer 
-  : DIGIT+ 'L'?
-  ;
-  
-Float
-  : DIGIT+ ( '.' DIGIT* )? ( 'E' [-+]? DIGIT+ )?
-  | '.' DIGIT+ ( 'E' [-+]? DIGIT+ )?
-  ;
-  
-String options { caseInsensitive=false; }
-  : 'N'? '\'' (~'\'' | '\'\'')* '\''
-  ;
-  
-Identifier
-  : '"' (~'"' | '""')* '"'
-//  | '`' (~'`' | '``')* '`'
-  | '[' ~']'* ']'
-  | [a-zA-Z_@#] [a-zA-Z0-9_@#$]*
-  ;
-
-// QuotedIdentifier
-//  : '[' ( . )* ']'
-//  | '"' ( . )* '"'
-//  ;
- 
-Comment
-  : '--' ~[\r\n]* -> channel(HIDDEN)
- // | '//' ~[\r\n]* -> channel(HIDDEN)
-//  | '/*' ( . )* '*/' -> channel(HIDDEN)
-  ;
-  
-Whitespace 
-  : [ \u000B\t\r\n] -> channel(HIDDEN)
-  ;
+// Punctuation
 
 DOT      : '.'  ;
 COMMA    : ','  ;
@@ -418,18 +378,24 @@ LPAREN   : '('  ;
 RPAREN   : ')'  ;
 LCURLY   : '{'  ;
 RCURLY   : '}'  ;
-STRCAT   : '||' ;
 QUESTION : '?'  ;
 COLON    : ':'  ;
 SEMI     : ';'  ;
 
-EQ       : '='  ;
+STRCAT   : '||' ;
+FUNCTION : '::' ;
+
+AMP      : '&' ;
+ASSIGN   : '=' ;
+EQ       : '==' ;
 NEQ1     : '<>' ;
 NEQ2     : '!=' ;
-LTE      : '<=' ;
 LT       : '<'  ;
-GTE      : '>=' ;
+LT2      : '<<'  ;
+LTE      : '<=' ;
 GT       : '>'  ;
+GT2      : '>>'  ;
+GTE      : '>=' ;
 
 PLUS     : '+'  ;
 MINUS    : '-'  ;
@@ -437,5 +403,49 @@ DIVIDE   : '/'  ;
 STAR     : '*'  ;
 MOD      : '%'  ;
 
-fragment DIGIT : [0-9];
+TILDE    : '~' ;
+
+// Token rules
+
+Integer
+  : DIGIT+ 'L'?
+  ;
+
+Float
+  // matches "0.e1" or ".0e1", but not ".e1"
+  : ( DIGIT+ ( '.' DIGIT* )?
+    | '.' DIGIT+
+    )
+    ( 'E' [-+]? DIGIT+ )?
+  ;
+
+String options { caseInsensitive=false; }
+  : [NE]? '\'' ( ~'\'' | '\'\'' )* '\''
+  ;
+
+Identifier
+  : '"' ( ~'"' | '""' )* '"'
+  | '`' ( ~'`' | '``' )* '`'
+  | '[' ~']'* ']'
+  | [A-Z_] [A-Z_0-9]*
+  ;
+
+Variable
+  : [:@$] Identifier
+  | '?' DIGIT*
+  ;
+
+Comment
+  : '--' ~[\r\n]* -> channel( HIDDEN )
+  ;
+
+BlockComment
+  : '/*' ( Comment | . )*? '*/' -> channel( HIDDEN )
+  ;
+
+Whitespace
+  : [ \u000B\t\r\n] -> channel( HIDDEN )
+  ;
+
+fragment DIGIT : [0-9] ;
 
