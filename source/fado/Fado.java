@@ -104,7 +104,6 @@ public class
 			// TODO: verify database, eg 'SELECT 1'
 			Statement s = _conn.createStatement();
 			if( s.execute("SELECT 1" ))
-//			if( s.execute("SELECT id, lastATP, course_title, description, revision FROM Course WHERE department_abbrev = 'ENGL' AND course_number = '100' ORDER BY lastATP desc;" ))
 			{
 				ResultSet rs = s.getResultSet();
 				System.out.println( rs );

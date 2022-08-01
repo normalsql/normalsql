@@ -87,45 +87,47 @@ expressionList
   ;
 
 expression
-  : value
+  : literal
   | Variable
   | unary expression
-  | NOT expression
   | function
   | columnRef
 
-  // Best guess for precedence of binary operators
-  | expression STRCAT expression
-  | expression ( STAR | DIV | MOD ) expression
-  | expression ( PLUS | MINUS ) expression
-  | expression ( LT2 | GT2 | AMP | PIPE) expression
-  | expression ( LT | LTE | GT | GTE ) expression
-  | expression ( ASSIGN | EQ | NEQ1 | NEQ2 | IN ) expression
-  | expression ( AND | OR ) expression
+  // Best guess for precedence of  operators
+  | left=expression op=STRCAT right=expression
+  | left=expression op=( STAR | DIV | MOD ) right=expression
+  | left=expression op=( PLUS | MINUS ) right=expression
+  | left=expression op=( LT2 | GT2 | AMP | PIPE ) right=expression
+  | left=expression op=( LT | LTE | GT | GTE ) right=expression
+  | left=expression op=( ASSIGN | EQ | NEQ1 | NEQ2 | IN ) right=expression
+  // TODO: This should build LL parse tree, not LR
+  | left=expression op=( AND | OR ) right=expression
+  | op=NOT right=expression
 
   | LPAREN expression RPAREN
   | LPAREN query RPAREN
-  | expression NOT* ( LIKE | ILIKE ) expression ( ESCAPE expression )?
-  | expression NOT* ( REGEXP ) expression ( ESCAPE expression )?
-  | expression IS NOT? NULL
-  | expression NOT* IN LPAREN ( select | expressionList ) RPAREN
+  | left=expression NOT* op=( LIKE | ILIKE ) right=expression ( ESCAPE expression )?
+  | left=expression NOT* op=REGEXP right=expression ( ESCAPE expression )?
+  | expression IS NOT? op=NULL
+  | left=expression NOT* op=IN LPAREN ( select | expressionList ) RPAREN
 // TODO additional 'IN' rules
-//          | ( schema_name DOT)? table_name
-//          | (schema_name DOT)? table_function_name LPAREN (expression (COMMA expression)*)? CLOSE_PAR
-  | expression NOT* BETWEEN expression AND expression
+//          | ( databaseName DOT )? table_name
+//          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
+  | left=expression NOT* op=BETWEEN right=expression AND right2=expression
 
-  | EXISTS LPAREN query RPAREN
-  | UNIQUE LPAREN query RPAREN
+  | op=EXISTS LPAREN query RPAREN
+  | op=UNIQUE LPAREN query RPAREN
   // http://www.h2database.com/html/grammar.html#condition
-  | INTERSECTS LPAREN expression COMMA expression RPAREN
-  | CASE expression? ( WHEN expression THEN expression )+ ( ELSE expression )? END
-  | ( CAST | TRY_CAST ) LPAREN expression AS Identifier RPAREN
-  | expression COLLATE Identifier
-//  | raise_function
-  | ( ALL | ANY | SOME ) LPAREN query RPAREN
+  | op=INTERSECTS LPAREN expression COMMA expression RPAREN
+  | op=CASE expression? ( WHEN expression THEN expression )+ ( ELSE expression )? END
+  | op=( CAST | TRY_CAST ) LPAREN expression AS typeName RPAREN
+  | expression op=COLLATE collateName
+//  TODO | raise_function
+  | op=( ALL | ANY | SOME ) LPAREN query RPAREN
   ;
 
-//  TODO: http://www.h2database.com/html/grammar.html#query
+// TODO: http://www.h2database.com/html/grammar.html#query
+// TODO: merge 'query' and 'table' rules?
 query
   : select
 //  | explicit table
@@ -133,7 +135,7 @@ query
   ;
 
 alias
-  : AS? Identifier
+  : AS? aliasName
   ;
 
 // TODO filter_clause? over_clause?
@@ -160,13 +162,13 @@ from
   ;
   
 fromItem
-  : tableExpression useIndex?
+  : table useIndex?
   | fromItem join
   | LPAREN fromItem RPAREN
   | function
   ;
 
-tableExpression
+table
   : ( LPAREN select RPAREN
     | tableRef
     )
@@ -189,7 +191,7 @@ join
     | NATURAL JOIN
     )
 
-    tableExpression
+    table
 
     ( ON expression
     | USING LPAREN columnName ( COMMA columnName )* RPAREN
@@ -210,7 +212,7 @@ union
   ;
 
 where
-  : WHERE expressionList
+  : WHERE expression
   ;
   
 groupBy
@@ -273,7 +275,6 @@ unary
   : MINUS
   | PLUS
   | TILDE
-  | NOT
   ;
  
 tableRef
@@ -294,6 +295,18 @@ tableName
   ;
   
 columnName
+  : Identifier
+  ;
+
+typeName
+  : Identifier
+  ;
+
+collateName
+  : Identifier
+  ;
+
+aliasName
   : Identifier
   ;
 

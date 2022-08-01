@@ -17,14 +17,15 @@ extends
         super( parent, invokingStateNumber );
     }
 
-    public List<GlobbingRuleContext> find( String expression )
+    public List<GlobbingRuleContext> find( String query )
     {
-        return find( expression, false );
+        return find( query, false );
     }
 
-    public List<GlobbingRuleContext> findContexts( String expression )
+    // TODO delete this
+    public List<GlobbingRuleContext> findContexts( String query )
     {
-        List<GlobbingRuleContext> list = find( expression );
+        List<GlobbingRuleContext> list = find( query );
         ArrayList<GlobbingRuleContext> result = new ArrayList<>();
         for( Object ugh : list )
         {
@@ -37,26 +38,26 @@ extends
     }
 
     // TODO: validate expression
-    protected List<GlobbingRuleContext> find( String expression, boolean first )
+    protected List<GlobbingRuleContext> find( String query, boolean first )
     {
-        if( expression == null )
+        if( query == null )
         {
             throw new NullPointerException( "expression" );
         }
 
-        ArrayList<String> query = new ArrayList<>();
-        for( String atom : expression.split( "/" ))
+        ArrayList<String> split = new ArrayList<>();
+        for( String atom : query.split( "/" ))
         {
             atom = atom.trim();
             if( atom.length() == 0 )
             {
                 throw new IllegalArgumentException( query + " contains empty match string" );
             }
-            query.add( atom );
+            split.add( atom );
         }
 
         ArrayList<GlobbingRuleContext> result = new ArrayList<>();
-        find( first, this, query, 0, false, result );
+        find( first, this, split, 0, false, result );
         return result;
     }
 
