@@ -1,6 +1,5 @@
 package fado;
 
-import fado.meta.Comparison;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import static fado.parse.GenericSQLParser.*;
@@ -17,35 +16,62 @@ class SelectList extends ArrayList<SelectList>
 {
 	public GlobbingRuleContext context;
 	public ArrayList<Table> tableList = new ArrayList<>();
-	public ArrayList<Condition> conditionList = new ArrayList<>();
+	public ArrayList<Object> conditionList = new ArrayList<>();
 }
 
 class Table
 {
-	public String database;
-	public String name;
-	public String alias;
+	public final String database;
+	public final String name;
+	public final String alias;
 
-	public Table( String d, String n, String a )
+	public Table( String database, String name, String alias )
 	{
-		database = d;
-		name = n;
-		alias = a;
+		this.database = database;
+		this.name = name;
+		this.alias = alias;
 	}
 }
 
 class Condition
 {
-	public ColumnRefContext columnRef;
-	public LiteralContext literal;
-	public Token op;
-	public Condition( ColumnRefContext c, LiteralContext l, Token o )
+	public final ColumnRefContext columnRef;
+	public final LiteralContext literal;
+	public final Token op;
+	public Condition( ColumnRefContext columnRef, LiteralContext literal, Token op )
 	{
-		columnRef = c;
-		literal = l;
-		op = o;
+		this.columnRef = columnRef;
+		this.literal = literal;
+		this.op = op;
 	}
 }
+
+class Between
+{
+	public ColumnRefContext columnRef;
+	public LiteralContext lower;
+	public LiteralContext upper;
+
+	public Between( ColumnRefContext columnRef, LiteralContext lower, LiteralContext upper )
+	{
+		this.columnRef = columnRef;
+		this.lower = lower;
+		this.upper = upper;
+	}
+}
+
+class IN
+{
+	public ColumnRefContext columnRef;
+	public List<LiteralContext> literals;
+
+	public IN( ColumnRefContext columnRef, List<LiteralContext> literals )
+	{
+		this.columnRef = columnRef;
+		this.literals = literals;
+	}
+}
+
 
 public class FadoNested
 {
@@ -53,7 +79,8 @@ public class FadoNested
 		throws Exception
 	{
 //		CharStream chars = CharStreams.fromPath( Paths.get( sourceFile.getPath() ) );
-		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/NestedSelect.sql" );
+//		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/NestedSelect.sql" );
+		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
@@ -81,7 +108,7 @@ public class FadoNested
 
 	static void processFROMs( SelectList parent )
 	{
-		// query gathers every 'table' under 'from', no matter how deep
+		// query gathers every 'table' under 'from'
 		for( GlobbingRuleContext tc : parent.context.find( "from/**/table" ) )
 		{
 			if( ((TableContext) tc).tableRef() != null )
@@ -105,7 +132,7 @@ public class FadoNested
 
 	static void processWHEREs( SelectList parent )
 	{
-		for( GlobbingRuleContext found : parent.context.find( "where/expression" ) )
+		for( GlobbingRuleContext found : parent.context.find( "where/expression" ))
 		{
 			processExpression( parent, (ExpressionContext) found );
 		}
@@ -138,27 +165,53 @@ public class FadoNested
 			case LT2:
 			case LTE:
 			case EQ:
-			case ASSIGN:
 			case NEQ1:
 			case NEQ2:
+			case LIKE:
+			case ILIKE:
 			{
 				// TODO allow right-to-left too
 				ColumnRefContext columnRef = ec.left.columnRef();
 				LiteralContext literal = ec.right.literal();
 				if( columnRef != null && literal != null )
 				{
-					parent.conditionList.add( new Condition( columnRef, literal, op ));
 //					GlobbingRuleContext node = literals.get( 0 );
 //					String literal = node.getText();
 //					literal = trimQuotes( literal );
 //					node.convertToInputParam();
+					parent.conditionList.add( new Condition( columnRef, literal, op ));
 				}
 				break;
 			}
 
-			// TODO LIKE, BETWEEN, IN
+			case BETWEEN:
+			{
+				ColumnRefContext columnRef = ec.left.columnRef();
+				LiteralContext lower = ec.lower.literal();
+				LiteralContext upper = ec.upper.literal();
+				if( columnRef != null && lower != null && upper != null )
+				{
+					parent.conditionList.add( new Between( columnRef, lower, upper ));
+				}
+				break;
+			}
 
-			// do nothing. listed here to be explicit.
+			case IN:
+			{
+				ColumnRefContext columnRef = ec.left.columnRef();
+				ExpressionListContext list = ec.list;
+				if( list != null )
+				{
+					List<LiteralContext> literals = list.find( LiteralContext.class,"expression/literal" );
+					if( literals.size() > 0 )
+					{
+						parent.conditionList.add( new IN( columnRef, literals ));
+					}
+				}
+				break;
+			}
+
+			// do nothing
 			case STRCAT:
 			case AMP:
 			case PIPE:

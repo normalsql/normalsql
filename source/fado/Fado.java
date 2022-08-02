@@ -7,10 +7,8 @@ import java.io.FileWriter;
 import java.io.StringReader;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.List;
-import java.util.Stack;
 
 
 import org.antlr.v4.runtime.CharStream;
@@ -27,16 +25,16 @@ import fado.meta.BETWEEN;
 import fado.meta.Column;
 import fado.meta.Condition;
 import fado.meta.IN;
-import fado.meta.InsertStatement;
+import fado.meta.InsertFadoStatement;
 import fado.meta.LIKE;
-import fado.meta.SelectStatement;
+import fado.meta.SelectFadoStatement;
 import fado.meta.Comparison;
 import fado.meta.Table;
 import fado.meta.TableNotFoundException;
 import fado.meta.Field;
 import fado.meta.MetaField;
-import fado.meta.UpdateStatement;
-import fado.meta.WhereStatement;
+import fado.meta.UpdateFadoStatement;
+import fado.meta.WhereFadoStatement;
 import fado.parse.GlobbingRuleContext;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
@@ -290,18 +288,21 @@ public class
 			temp = temp.replace( "*/", "@/" );
 			List<String> originalLines = chopper( temp.trim() );
 
+			// Params for Velocity templates
+			HashMap map = new HashMap();
+			map.put( "packageName", pkg );
+			map.put( "className", name );
+			map.put( "date", new Date() );
+			map.put( "originalfile", sourceFile.toString() );
+			map.put( "originallines", originalLines );
+
 			for( GlobbingRuleContext child : statementContext.getRuleContexts( GlobbingRuleContext.class ) )
 			{
 				switch( child.getRuleIndex() )
 				{
 					case RULE_select:
 					{
-						SelectStatement statement = new SelectStatement();
-						statement.setName( name );
-						statement.setPackage( pkg );
-						statement.setOriginalFileName( sourceFile.toString() );
-						statement.setOriginalText( originalText );
-						statement.setOriginalLines( originalLines );
+						SelectFadoStatement statement = new SelectFadoStatement();
 
 						extractSelect( child, statement );
 						String retooledSQL = tokens.getText().trim();
@@ -309,49 +310,59 @@ public class
 
 						inspectDatabaseForSelect( _conn, statement );
 
-						generateSelect( statement, targetRoot, name, created );
-						generateResultSet( statement, targetRoot, name, created );
+						map.put( "sql", chopper( retooledSQL ) );
+						// For PreparedStatement wrapper
+						map.put( "conditions", statement.getConditions() );
+						// For ResultSet wrapper
+						map.put( "columns", statement.getFinalColumns() );
+
+						File file1 = generate( _selectTemplate, map, targetRoot, name );
+						created.add( file1 );
+						File file2 = generate( _resultSetTemplate, map, targetRoot, "ResultSet" + name );
+						created.add( file2 );
 						break;
 					}
-					case RULE_insert:
-					{
-						InsertStatement statement = new InsertStatement();
-						statement.setName( name );
-						statement.setPackage( pkg );
-						statement.setOriginalFileName( sourceFile.toString() );
-						statement.setOriginalText( originalText );
-						statement.setOriginalLines( originalLines );
-
-						extractInsert( child, statement );
-						String retooledSQL = tokens.getText().trim();
-						statement.setRetooledSQL( chopper( retooledSQL ) );
-
-						Table table = statement.getTables().iterator().next();
-						inspectTableAndFields( _conn, table, statement.getFields() );
-
-						generateInsert( statement, targetRoot, name, created );
-						break;
-					}
-					case RULE_update:
-					{
-						UpdateStatement statement = new UpdateStatement();
-						statement.setName( name );
-						statement.setPackage( pkg );
-						statement.setOriginalFileName( sourceFile.toString() );
-						statement.setOriginalText( originalText );
-						statement.setOriginalLines( originalLines );
-
-						extractUpdate( child, statement );
-						String retooledSQL = tokens.getText().trim();
-						statement.setRetooledSQL( chopper( retooledSQL ) );
-
-						Table table = statement.getTables().iterator().next();
-						inspectTableAndFields( _conn, table, statement.getFields() );
-						inspectTableAndFields( _conn, table, statement.getConditions() );
-
-						generateUpdate( statement, targetRoot, name, created );
-						break;
-					}
+//					case RULE_insert:
+//					{
+//						InsertFadoStatement statement = new InsertFadoStatement();
+//						statement.setName( name );
+//						statement.setPackage( pkg );
+//						statement.setOriginalFileName( sourceFile.toString() );
+//						statement.setOriginalText( originalText );
+//						statement.setOriginalLines( originalLines );
+//
+//						extractInsert( child, statement );
+//						String retooledSQL = tokens.getText().trim();
+//						statement.setRetooledSQL( chopper( retooledSQL ) );
+//
+//						Table table = statement.getTables().iterator().next();
+//						inspectTableAndFields( _conn, table, statement.getFields() );
+//
+//						File file = generateInsert( statement, targetRoot, name );
+//						created.add( file );
+//						break;
+//					}
+//					case RULE_update:
+//					{
+//						UpdateFadoStatement statement = new UpdateFadoStatement();
+//						statement.setName( name );
+//						statement.setPackage( pkg );
+//						statement.setOriginalFileName( sourceFile.toString() );
+//						statement.setOriginalText( originalText );
+//						statement.setOriginalLines( originalLines );
+//
+//						extractUpdate( child, statement );
+//						String retooledSQL = tokens.getText().trim();
+//						statement.setRetooledSQL( chopper( retooledSQL ) );
+//
+//						Table table = statement.getTables().iterator().next();
+//						inspectTableAndFields( _conn, table, statement.getFields() );
+//						inspectTableAndFields( _conn, table, statement.getConditions() );
+//
+//						File file = generateUpdate( statement, targetRoot, name );
+//						created.add( file );
+//						break;
+//					}
 					default:
 						break;
 				}
@@ -360,53 +371,49 @@ public class
 		}
 		catch( Exception e )
 		{
-//			if( displayParseTree )
-//			{
-//				System.out.println( "string tree: " + builder.getTree().toParseTree() );
-//			}
 			throw e;
 		}
 	}
 
-	private void extractSelect( GlobbingRuleContext selectNode, SelectStatement statement )
+	private void extractSelect( GlobbingRuleContext selectNode, SelectFadoStatement statement )
 			throws Exception
 	{
 		if( _onlyParse ) return;
-		extractSelectTables( selectNode, statement );
+//		extractSelectTables( selectNode, statement );
 		extractSelectColumns( selectNode, statement );
 		extractSelectParams( selectNode, statement );
 	}
 
-	public void extractSelectTables( GlobbingRuleContext selectNode, SelectStatement statement )
-	{
-		{
-			List<GlobbingRuleContext> list = selectNode.findContexts( "from/fromItem" );
-			for( GlobbingRuleContext item : list )
-			{
-				GlobbingRuleContext tableRef = item.findFirst( "tableRef" );
-				String databaseName = tableRef.findFirstString( "databaseName" );
-				String tableName = tableRef.findFirstString( "**/tableName" );
-				String alias = item.findFirstString( "alias" );
-				Table table = new Table( databaseName, tableName, alias );
-				statement.addTable( table );
-			}
-		}
-		{
-			List<GlobbingRuleContext> list = selectNode.findContexts( "joinList/join" );
-			for( GlobbingRuleContext item : list )
-			{
-				GlobbingRuleContext tableRef = item.findFirst( "**/tableRef" );
-				String databaseName = tableRef.findFirstString( "databaseName" );
-				String tableName = tableRef.findFirstString( "**/tableName" );
-				String alias = item.findFirstString( "alias" );
-				Table table = new Table( databaseName, tableName, alias );
-				statement.addTable( table );
-			}
-		}
-	}
+//	public void extractSelectTables( GlobbingRuleContext selectNode, SelectFadoStatement statement )
+//	{
+//		{
+//			List<GlobbingRuleContext> list = selectNode.findContexts( "from/fromItem" );
+//			for( GlobbingRuleContext item : list )
+//			{
+//				GlobbingRuleContext tableRef = item.findFirst( "tableRef" );
+//				String databaseName = tableRef.findFirstString( "databaseName" );
+//				String tableName = tableRef.findFirstString( "**/tableName" );
+//				String alias = item.findFirstString( "alias" );
+//				Table table = new Table( databaseName, tableName, alias );
+//				statement.addTable( table );
+//			}
+//		}
+//		{
+//			List<GlobbingRuleContext> list = selectNode.findContexts( "joinList/join" );
+//			for( GlobbingRuleContext item : list )
+//			{
+//				GlobbingRuleContext tableRef = item.findFirst( "**/tableRef" );
+//				String databaseName = tableRef.findFirstString( "databaseName" );
+//				String tableName = tableRef.findFirstString( "**/tableName" );
+//				String alias = item.findFirstString( "alias" );
+//				Table table = new Table( databaseName, tableName, alias );
+//				statement.addTable( table );
+//			}
+//		}
+//	}
 
-	public void extractSelectColumns( GlobbingRuleContext selectNode, SelectStatement statement )
-			throws Exception
+	public void extractSelectColumns( GlobbingRuleContext selectNode, SelectFadoStatement statement )
+		throws Exception
 	{
 		List<GlobbingRuleContext> list = selectNode.findContexts( "itemList/item" );
 		for( GlobbingRuleContext item : list )
@@ -430,264 +437,265 @@ public class
 		}
 	}
 
-	public void extractSelectParams( GlobbingRuleContext selectNode, SelectStatement statement )
-			throws FadoException
+	public void extractSelectParams( GlobbingRuleContext selectNode, SelectFadoStatement statement )
+		throws FadoException
 	{
 		for( GlobbingRuleContext where : selectNode.findContexts( "where" ) )
 		{
 			List<GlobbingRuleContext> clist = where.findContexts( "**/condition" );
 			for( GlobbingRuleContext condition : clist )
 			{
-				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
-				{
-					extractComparisonParams( comparison, statement );
-					break;
-				}
+//				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
+//				{
+//					extractComparisonParams( comparison, statement );
+//					break;
+//				}
 
-				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
-				{
-					extractINParams( in, statement );
-					break;
-				}
+//				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
+//				{
+//					extractINParams( in, statement );
+//					break;
+//				}
+//
+//				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
+//				{
+//					extractBETWEENParams( between, statement );
+//					break;
+//				}
 
-				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
-				{
-					extractBETWEENParams( between, statement );
-					break;
-				}
-
-				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
-				{
-					extractLIKEParams( like, statement );
-					break;
-				}
+//				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
+//				{
+//					extractLIKEParams( like, statement );
+//					break;
+//				}
 			}
 			break;
 		}
 	}
 
-	private void extractInsert( GlobbingRuleContext insertNode, InsertStatement statement )
-			throws Exception
-	{
-		if( _onlyParse ) return;
-		GlobbingRuleContext tableRef = insertNode.findFirst( "into/tableRef" );
-		String databaseName = tableRef.findFirstString( "databaseName" );
-		String tableName = tableRef.findFirstString( "**/tableName" );
-		String alias = null;
-		Table table = new Table( databaseName, tableName, alias );
-		statement.addTable( table );
-
-		ArrayList<Field> fields = new ArrayList<Field>();
-		List<GlobbingRuleContext> list = insertNode.findContexts( "columnList/columnName" );
-		for( GlobbingRuleContext item : list )
-		{
-			String name = item.getText();
-			fields.add( new Field( name ) );
-		}
-
-		List<GlobbingRuleContext> literals = insertNode.findContexts( "values/literal" );
-
-		if( fields.size() != literals.size() )
-		{
-			throw new Exception( "mismatch, fields: " + fields.size() + ", literals: " + literals.size() );
-		}
-
-		int nth = 0;
-		for( GlobbingRuleContext node : literals )
-		{
-			String literal = node.getText();
-			literal = trimQuotes( literal );
-
-			node.convertToInputParam();
-
-			Field field = fields.get( nth );
-			field.setLiteral( literal );
-			nth++;
-		}
-		statement.setFields( fields );
-	}
+//	private void extractInsert( GlobbingRuleContext insertNode, InsertFadoStatement statement )
+//		throws Exception
+//	{
+//		if( _onlyParse ) return;
+//		GlobbingRuleContext tableRef = insertNode.findFirst( "into/tableRef" );
+//		String databaseName = tableRef.findFirstString( "databaseName" );
+//		String tableName = tableRef.findFirstString( "**/tableName" );
+//		String alias = null;
+//		Table table = new Table( databaseName, tableName, alias );
+//		statement.addTable( table );
+//
+//		ArrayList<Field> fields = new ArrayList<Field>();
+//		List<GlobbingRuleContext> list = insertNode.findContexts( "columnList/columnName" );
+//		for( GlobbingRuleContext item : list )
+//		{
+//			String name = item.getText();
+//			fields.add( new Field( name ) );
+//		}
+//
+//		List<GlobbingRuleContext> literals = insertNode.findContexts( "values/literal" );
+//
+//		if( fields.size() != literals.size() )
+//		{
+//			throw new Exception( "mismatch, fields: " + fields.size() + ", literals: " + literals.size() );
+//		}
+//
+//		int nth = 0;
+//		for( GlobbingRuleContext node : literals )
+//		{
+//			String literal = node.getText();
+//			literal = trimQuotes( literal );
+//
+//			node.convertToInputParam();
+//
+//			Field field = fields.get( nth );
+//			field.setLiteral( literal );
+//			nth++;
+//		}
+//		statement.setFields( fields );
+//	}
 
 	// TODO support unary literals (done?)
-	private void extractUpdate( GlobbingRuleContext updateNode, UpdateStatement statement )
-		throws Exception
-	{
-		if( _onlyParse ) return;
-		GlobbingRuleContext tableRef = updateNode.findFirst( "tableRef" );
-		String databaseName = tableRef.findFirstString( "databaseName" );
-		String tableName = tableRef.findFirstString( "**/tableName" );
-		String alias = null;
-		Table table = new Table( databaseName, tableName, alias );
-		statement.addTable( table );
 
-		ArrayList<Field> fields = new ArrayList<Field>();
-		List<GlobbingRuleContext> setters = updateNode.findContexts( "setter" );
-		for( GlobbingRuleContext node : setters )
-		{
-			String name = node.findFirstString( "columnName" );
-			GlobbingRuleContext literalNode = node.findFirst( "literal" );
-			String literal = literalNode.getText();
-			literal = trimQuotes( literal );
+//	private void extractUpdate( GlobbingRuleContext updateNode, UpdateFadoStatement statement )
+//		throws Exception
+//	{
+//		if( _onlyParse ) return;
+//		GlobbingRuleContext tableRef = updateNode.findFirst( "tableRef" );
+//		String databaseName = tableRef.findFirstString( "databaseName" );
+//		String tableName = tableRef.findFirstString( "**/tableName" );
+//		String alias = null;
+//		Table table = new Table( databaseName, tableName, alias );
+//		statement.addTable( table );
+//
+//		ArrayList<Field> fields = new ArrayList<Field>();
+//		List<GlobbingRuleContext> setters = updateNode.findContexts( "setter" );
+//		for( GlobbingRuleContext node : setters )
+//		{
+//			String name = node.findFirstString( "columnName" );
+//			GlobbingRuleContext literalNode = node.findFirst( "literal" );
+//			String literal = literalNode.getText();
+//			literal = trimQuotes( literal );
+//
+//			literalNode.convertToInputParam();
+//
+//			fields.add( new Field( name, literal ) );
+//		}
+//		statement.setFields( fields );
+//
+//		for( GlobbingRuleContext where : updateNode.findContexts( "where" ) )
+//		{
+//			List<GlobbingRuleContext> clist = where.findContexts( "**/condition" );
+//			for( GlobbingRuleContext condition : clist )
+//			{
+//				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
+//				{
+//					extractComparisonParams( comparison, statement );
+//					break;
+//				}
+//
+//				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
+//				{
+//					extractINParams( in, statement );
+//					break;
+//				}
+//
+//				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
+//				{
+//					extractBETWEENParams( between, statement );
+//					break;
+//				}
+//
+//				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
+//				{
+//					extractLIKEParams( like, statement );
+//					break;
+//				}
+//			}
+//			break;
+//		}
+//	}
 
-			literalNode.convertToInputParam();
+//	// Comparisons, eg column = 'abc'
+//	public void extractComparisonParams( GlobbingRuleContext comparisonNode, WhereFadoStatement statement )
+//		throws TableNotFoundException
+//	{
+//		List<GlobbingRuleContext> columns = comparisonNode.findContexts( "**/columnRef" );
+//		List<GlobbingRuleContext> literals = comparisonNode.findContexts( "**/literal" );
+//		if( columns.size() == 1 && literals.size() == 1 )
+//		{
+//			// System.out.println( "found comparison: " + comparison.toInputString() );
+//			GlobbingRuleContext columnRef = columns.get( 0 );
+//			String column = columnRef.findFirstString( "columnName" );
+//			String tableAlias = columnRef.findFirstString( "tableAlias" );
+//			Table table = null;
+//			if( tableAlias != null )
+//			{
+//				table = statement.getTable( tableAlias );
+//			}
+//
+//			GlobbingRuleContext node = literals.get( 0 );
+//			String literal = node.getText();
+//			literal = trimQuotes( literal );
+//			Comparison comparison = new Comparison( table, column, literal );
+//
+//			statement.addCondition( comparison );
+//
+//			node.convertToInputParam();
+//		}
+//	}
 
-			fields.add( new Field( name, literal ) );
-		}
-		statement.setFields( fields );
+//	// BETWEEN, eg column BETWEEN 1 AND 100
+//	// TODO: BETWEEN condition
+//	public void extractBETWEENParams( GlobbingRuleContext betweenNode, WhereFadoStatement statement )
+//		throws FadoException
+//	{
+//		List<GlobbingRuleContext> columns = betweenNode.findContexts( "**/columnRef" );
+//		List<GlobbingRuleContext> literals = betweenNode.findContexts( "**/literal" );
+//		if( columns.size() == 1 && literals.size() == 2 )
+//		{
+//			GlobbingRuleContext columnRef = columns.get( 0 );
+//			String column = columnRef.findFirstString( "columnName" );
+//			String tableAlias = columnRef.findFirstString( "tableAlias" );
+//			Table table = statement.getTable( tableAlias );
+//
+//			BETWEEN between = new BETWEEN( table, column );
+//
+//			GlobbingRuleContext leftNode = literals.get( 0 );
+//			String left = leftNode.getText();
+//			left = trimQuotes( left );
+//			leftNode.convertToInputParam();
+//			between.setLeft( left );
+//
+//			GlobbingRuleContext rightNode = literals.get( 1 );
+//			String right = rightNode.getText();
+//			right = trimQuotes( right );
+//			rightNode.convertToInputParam();
+//			between.setRight( right );
+//
+//			statement.addCondition( between );
+//		}
+//	}
 
-		for( GlobbingRuleContext where : updateNode.findContexts( "where" ) )
-		{
-			List<GlobbingRuleContext> clist = where.findContexts( "**/condition" );
-			for( GlobbingRuleContext condition : clist )
-			{
-				for( GlobbingRuleContext comparison : condition.findContexts( "comparison" ) )
-				{
-					extractComparisonParams( comparison, statement );
-					break;
-				}
-
-				for( GlobbingRuleContext in : condition.findContexts( "in" ) )
-				{
-					extractINParams( in, statement );
-					break;
-				}
-
-				for( GlobbingRuleContext between : condition.findContexts( "between" ) )
-				{
-					extractBETWEENParams( between, statement );
-					break;
-				}
-
-				for( GlobbingRuleContext like : condition.findContexts( "like" ) )
-				{
-					extractLIKEParams( like, statement );
-					break;
-				}
-			}
-			break;
-		}
-	}
-
-	// Comparisons, eg column = 'abc'
-	public void extractComparisonParams( GlobbingRuleContext comparisonNode, WhereStatement statement )
-		throws TableNotFoundException
-	{
-		List<GlobbingRuleContext> columns = comparisonNode.findContexts( "**/columnRef" );
-		List<GlobbingRuleContext> literals = comparisonNode.findContexts( "**/literal" );
-		if( columns.size() == 1 && literals.size() == 1 )
-		{
-			// System.out.println( "found comparison: " + comparison.toInputString() );
-			GlobbingRuleContext columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = null;
-			if( tableAlias != null )
-			{
-				table = statement.getTable( tableAlias );
-			}
-
-			GlobbingRuleContext node = literals.get( 0 );
-			String literal = node.getText();
-			literal = trimQuotes( literal );
-			Comparison comparison = new Comparison( table, column, literal );
-
-			statement.addCondition( comparison );
-
-			node.convertToInputParam();
-		}
-	}
-
-	// BETWEEN, eg column BETWEEN 1 AND 100
-	// TODO: BETWEEN condition
-	public void extractBETWEENParams( GlobbingRuleContext betweenNode, WhereStatement statement )
-		throws FadoException
-	{
-		List<GlobbingRuleContext> columns = betweenNode.findContexts( "**/columnRef" );
-		List<GlobbingRuleContext> literals = betweenNode.findContexts( "**/literal" );
-		if( columns.size() == 1 && literals.size() == 2 )
-		{
-			GlobbingRuleContext columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = statement.getTable( tableAlias );
-
-			BETWEEN between = new BETWEEN( table, column );
-
-			GlobbingRuleContext leftNode = literals.get( 0 );
-			String left = leftNode.getText();
-			left = trimQuotes( left );
-			leftNode.convertToInputParam();
-			between.setLeft( left );
-
-			GlobbingRuleContext rightNode = literals.get( 1 );
-			String right = rightNode.getText();
-			right = trimQuotes( right );
-			rightNode.convertToInputParam();
-			between.setRight( right );
-
-			statement.addCondition( between );
-		}
-	}
-
-	// LIKE, eg column LIKE 'abc%'
-	// TODO: LIKE condition
-	public void extractLIKEParams( GlobbingRuleContext likeNode, WhereStatement statement )
-			throws FadoException
-	{
-		List<GlobbingRuleContext> columns = likeNode.findContexts( "**/columnRef" );
-		List<GlobbingRuleContext> literals = likeNode.findContexts( "**/literal" );
-		if( columns.size() == 1 && literals.size() == 1 )
-		{
-			GlobbingRuleContext columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = statement.getTable( tableAlias );
-
-			LIKE like = new LIKE( table, column );
-
-			GlobbingRuleContext patternNode = literals.get( 0 );
-			String pattern = patternNode.getText();
-			pattern = trimQuotes( pattern );
-			patternNode.convertToInputParam();
-			like.setPattern( pattern );
-
-			statement.addCondition( like );
-		}
-	}
+//	// LIKE, eg column LIKE 'abc%'
+//	// TODO: LIKE condition
+//	public void extractLIKEParams( GlobbingRuleContext likeNode, WhereFadoStatement statement )
+//			throws FadoException
+//	{
+//		List<GlobbingRuleContext> columns = likeNode.findContexts( "**/columnRef" );
+//		List<GlobbingRuleContext> literals = likeNode.findContexts( "**/literal" );
+//		if( columns.size() == 1 && literals.size() == 1 )
+//		{
+//			GlobbingRuleContext columnRef = columns.get( 0 );
+//			String column = columnRef.findFirstString( "columnName" );
+//			String tableAlias = columnRef.findFirstString( "tableAlias" );
+//			Table table = statement.getTable( tableAlias );
+//
+//			LIKE like = new LIKE( table, column );
+//
+//			GlobbingRuleContext patternNode = literals.get( 0 );
+//			String pattern = patternNode.getText();
+//			pattern = trimQuotes( pattern );
+//			patternNode.convertToInputParam();
+//			like.setPattern( pattern );
+//
+//			statement.addCondition( like );
+//		}
+//	}
 
 
-	// IN, eg column IN ( 1, 2, 3 )
-	// Very naive pattern extraction, assumes column on left and literals on right
-	public void extractINParams( GlobbingRuleContext inNode, WhereStatement statement )
-		throws FadoException
-	{
-		List<GlobbingRuleContext> columns = inNode.findContexts( "**/columnRef" );
-		List<GlobbingRuleContext> literals = inNode.findContexts( "**/literal" );
-		if( columns.size() == 1 && literals.size() > 0 )
-		{
-			GlobbingRuleContext columnRef = columns.get( 0 );
-			String column = columnRef.findFirstString( "columnName" );
-			String tableAlias = columnRef.findFirstString( "tableAlias" );
-			Table table = null;
-			if( tableAlias != null )
-			{
-				table = statement.getTable( tableAlias );
-			}
-			IN in = new IN( table, column );
+//	// IN, eg column IN ( 1, 2, 3 )
+//	// Very naive pattern extraction, assumes column on left and literals on right
+//	public void extractINParams( GlobbingRuleContext inNode, WhereFadoStatement statement )
+//		throws FadoException
+//	{
+//		List<GlobbingRuleContext> columns = inNode.findContexts( "**/columnRef" );
+//		List<GlobbingRuleContext> literals = inNode.findContexts( "**/literal" );
+//		if( columns.size() == 1 && literals.size() > 0 )
+//		{
+//			GlobbingRuleContext columnRef = columns.get( 0 );
+//			String column = columnRef.findFirstString( "columnName" );
+//			String tableAlias = columnRef.findFirstString( "tableAlias" );
+//			Table table = null;
+//			if( tableAlias != null )
+//			{
+//				table = statement.getTable( tableAlias );
+//			}
+//			IN in = new IN( table, column );
+//
+//			for( GlobbingRuleContext node : literals )
+//			{
+//				String text = node.getText();
+//				text = trimQuotes( text );
+//
+//				node.convertToInputParam();
+//
+//				in.addValue( text );
+//			}
+//			statement.addCondition( in );
+//		}
+//	}
 
-			for( GlobbingRuleContext node : literals )
-			{
-				String text = node.getText();
-				text = trimQuotes( text );
-
-				node.convertToInputParam();
-
-				in.addValue( text );
-			}
-			statement.addCondition( in );
-		}
-	}
-
-	public void inspectDatabaseForSelect( Connection conn, SelectStatement select )
+	public void inspectDatabaseForSelect( Connection conn, SelectFadoStatement select )
 		throws Exception
 	{
 		if( _onlyParse ) return;
@@ -876,91 +884,104 @@ public class
 		}
 	}
 
-
-	public void generateSelect( SelectStatement statement, File targetRoot, String name, List<File> created )
-			throws Exception
+	public File generate( Template template, Map map, File targetRoot, String name )
+		throws Exception
 	{
-		VelocityContext context = new VelocityContext();
-		context.put( "packageName", statement.getPackage() );
-		context.put( "className", statement.getName() );
-		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "conditions", statement.getConditions() );
-		context.put( "date", new Date() );
-		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originallines", statement.getOriginalLines() );
-
+		VelocityContext context = new VelocityContext( map );
 		File targetFile = new File( targetRoot, name + ".java" );
 		FileWriter writer = new FileWriter( targetFile );
-		_selectTemplate.merge( context, writer );
+		template.merge( context, writer );
 		writer.flush();
 		writer.close();
 
-		created.add( targetFile );
+		return targetFile;
 	}
 
-	public void generateResultSet( SelectStatement statement, File targetRoot, String name, List<File> created )
-			throws Exception
-	{
-		VelocityContext context = new VelocityContext();
-		context.put( "packageName", statement.getPackage() );
-		context.put( "className", statement.getName() );
-		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "columns", statement.getFinalColumns() );
-		context.put( "date", new Date() );
-		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originallines", statement.getOriginalLines() );
 
-		File targetFile = new File( targetRoot, name + "ResultSet.java" );
-		FileWriter writer = new FileWriter( targetFile );
-		_resultSetTemplate.merge( context, writer );
-		writer.flush();
-		writer.close();
+//	public File generateSelect( SelectFadoStatement statement, File targetRoot, String name )
+//		throws Exception
+//	{
+//		VelocityContext context = new VelocityContext();
+//		context.put( "packageName", statement.getPackage() );
+//		context.put( "className", statement.getName() );
+//		context.put( "sql", statement.getRetooledSQL() );
+//		context.put( "conditions", statement.getConditions() );
+//		context.put( "date", new Date() );
+//		context.put( "originalfile", statement.getOriginalFileName() );
+//		context.put( "originallines", statement.getOriginalLines() );
+//
+//		File targetFile = new File( targetRoot, name + ".java" );
+//		FileWriter writer = new FileWriter( targetFile );
+//		_selectTemplate.merge( context, writer );
+//		writer.flush();
+//		writer.close();
+//
+//		return targetFile;
+//	}
+//
+//	public File generateResultSet( SelectFadoStatement statement, File targetRoot, String name )
+//		throws Exception
+//	{
+//		VelocityContext context = new VelocityContext();
+//		context.put( "packageName", statement.getPackage() );
+//		context.put( "className", statement.getName() );
+//		context.put( "sql", statement.getRetooledSQL() );
+//		context.put( "columns", statement.getFinalColumns() );
+//		context.put( "date", new Date() );
+//		context.put( "originalfile", statement.getOriginalFileName() );
+//		context.put( "originallines", statement.getOriginalLines() );
+//
+//		File targetFile = new File( targetRoot, name + "ResultSet.java" );
+//		FileWriter writer = new FileWriter( targetFile );
+//		_resultSetTemplate.merge( context, writer );
+//		writer.flush();
+//		writer.close();
+//
+//		return targetFile;
+//	}
 
-		created.add( targetFile );
-	}
-
-	public void generateInsert( InsertStatement statement, File targetRoot, String name, List<File> created )
-			throws Exception
-	{
-		VelocityContext context = new VelocityContext();
-		context.put( "packageName", statement.getPackage() );
-		context.put( "className", statement.getName() );
-		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "fields", statement.getFields() );
-		context.put( "date", new Date() );
-		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originallines", statement.getOriginalLines() );
-
-		File targetFile = new File( targetRoot, name + ".java" );
-		FileWriter writer = new FileWriter( targetFile );
-		_insertTemplate.merge( context, writer );
-		writer.flush();
-		writer.close();
-
-		created.add( targetFile );
-	}
-
-	public void generateUpdate( UpdateStatement statement, File targetRoot, String name, List<File> created )
-			throws Exception
-	{
-		VelocityContext context = new VelocityContext();
-		context.put( "packageName", statement.getPackage() );
-		context.put( "className", statement.getName() );
-		context.put( "sql", statement.getRetooledSQL() );
-		context.put( "fields", statement.getFields() );
-		context.put( "conditions", statement.getConditions() );
-		context.put( "date", new Date() );
-		context.put( "originalfile", statement.getOriginalFileName() );
-		context.put( "originallines", statement.getOriginalLines() );
-
-		File targetFile = new File( targetRoot, name + ".java" );
-		FileWriter writer = new FileWriter( targetFile );
-		_updateTemplate.merge( context, writer );
-		writer.flush();
-		writer.close();
-
-		created.add( targetFile );
-	}
+//	public File generateInsert( InsertFadoStatement statement, File targetRoot, String name )
+//		throws Exception
+//	{
+//		VelocityContext context = new VelocityContext();
+//		context.put( "packageName", statement.getPackage() );
+//		context.put( "className", statement.getName() );
+//		context.put( "sql", statement.getRetooledSQL() );
+//		context.put( "fields", statement.getFields() );
+//		context.put( "date", new Date() );
+//		context.put( "originalfile", statement.getOriginalFileName() );
+//		context.put( "originallines", statement.getOriginalLines() );
+//
+//		File targetFile = new File( targetRoot, name + ".java" );
+//		FileWriter writer = new FileWriter( targetFile );
+//		_insertTemplate.merge( context, writer );
+//		writer.flush();
+//		writer.close();
+//
+//		return targetFile;
+//	}
+//
+//	public File generateUpdate( UpdateFadoStatement statement, File targetRoot, String name )
+//		throws Exception
+//	{
+//		VelocityContext context = new VelocityContext();
+//		context.put( "packageName", statement.getPackage() );
+//		context.put( "className", statement.getName() );
+//		context.put( "sql", statement.getRetooledSQL() );
+//		context.put( "fields", statement.getFields() );
+//		context.put( "conditions", statement.getConditions() );
+//		context.put( "date", new Date() );
+//		context.put( "originalfile", statement.getOriginalFileName() );
+//		context.put( "originallines", statement.getOriginalLines() );
+//
+//		File targetFile = new File( targetRoot, name + ".java" );
+//		FileWriter writer = new FileWriter( targetFile );
+//		_updateTemplate.merge( context, writer );
+//		writer.flush();
+//		writer.close();
+//
+//		return targetFile;
+//	}
 
 	public String trimQuotes( String text )
 	{

@@ -3,8 +3,10 @@ package fado.parse;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.WritableToken;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class
@@ -21,6 +23,20 @@ extends
     {
         return find( query, false );
     }
+
+    public <T extends GlobbingRuleContext> List<T> find( Class<? extends T> type, String query ) {
+        List<GlobbingRuleContext> found = find( query );
+        List<T> results = new ArrayList<T>();
+        for( GlobbingRuleContext o : found )
+        {
+            if( type.isInstance( o ))
+            {
+                results.add( type.cast( o ));
+            }
+        }
+        return results;
+    }
+
 
     // TODO delete this
     public List<GlobbingRuleContext> findContexts( String query )

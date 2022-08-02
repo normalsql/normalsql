@@ -4,4 +4,4 @@ FROM classes as c
 WHERE teacher_id IN (
     SELECT id
     FROM teachers
-    WHERE tada > 1 AND subject = 'English' OR subject = 'History');
+    WHERE tada > 1 AND subject = 'English' OR subject = 'History' );

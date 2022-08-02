@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class 
-	SelectStatement
+public class
+SelectFadoStatement
 extends
-	WhereStatement
+		WhereFadoStatement
 {
 //	/** Temporary columns are what's identified in the parsed SQL command. When found,
 //	 * in the database (schema) they're moved to the final columns list.

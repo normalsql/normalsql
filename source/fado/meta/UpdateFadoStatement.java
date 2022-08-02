@@ -2,10 +2,10 @@ package fado.meta;
 
 import java.util.List;
 
-public class 
-	UpdateStatement 
+public class
+UpdateFadoStatement
 extends
-	WhereStatement
+		WhereFadoStatement
 {
 	private List<Field> _fields = null;
 	

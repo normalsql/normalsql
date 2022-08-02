@@ -99,7 +99,7 @@ expression
   | left=expression op=( PLUS | MINUS ) right=expression
   | left=expression op=( LT2 | GT2 | AMP | PIPE ) right=expression
   | left=expression op=( LT | LTE | GT | GTE ) right=expression
-  | left=expression op=( ASSIGN | EQ | NEQ1 | NEQ2 | IN ) right=expression
+  | left=expression op=( EQ | NEQ1 | NEQ2 ) right=expression
   // TODO: This should build LL parse tree, not LR
   | left=expression op=( AND | OR ) right=expression
   | op=NOT right=expression
@@ -109,11 +109,11 @@ expression
   | left=expression NOT* op=( LIKE | ILIKE ) right=expression ( ESCAPE expression )?
   | left=expression NOT* op=REGEXP right=expression ( ESCAPE expression )?
   | expression IS NOT? op=NULL
-  | left=expression NOT* op=IN LPAREN ( select | expressionList ) RPAREN
+  | left=expression NOT* op=IN LPAREN ( select | list=expressionList )? RPAREN
 // TODO additional 'IN' rules
 //          | ( databaseName DOT )? table_name
 //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-  | left=expression NOT* op=BETWEEN right=expression AND right2=expression
+  | left=expression NOT* op=BETWEEN ( ASYMMETRIC | SYMMETRIC )? lower=expression AND upper=expression
 
   | op=EXISTS LPAREN query RPAREN
   | op=UNIQUE LPAREN query RPAREN
@@ -134,6 +134,7 @@ query
 //  | table value
   ;
 
+// TODO inline these 'name' rules
 alias
   : AS? aliasName
   ;
@@ -141,7 +142,7 @@ alias
 // TODO filter_clause? over_clause?
 function
   : functionName LPAREN STAR RPAREN
-  | functionName LPAREN ( ALL | DISTINCT )? expressionList RPAREN
+  | functionName LPAREN ( ALL | DISTINCT ) expressionList RPAREN
   | functionName LPAREN expressionList? RPAREN
   | '{fn' odbcFunctionName LPAREN expressionList? RPAREN '}'
   | Identifier? FUNCTION functionName LPAREN expressionList? RPAREN // T-SQL
@@ -250,10 +251,10 @@ values
   : VALUES LPAREN literal ( COMMA literal )* RPAREN
   ;
 
-value
-  : literal 
-  | columnRef
-  ;
+//value
+//  : literal
+//  | columnRef
+//  ;
   
 literal
   : Float
@@ -265,6 +266,7 @@ literal
   | date
   ;
 
+// TODO turn this rule into a token?
 date
   : '{d' String '}' // Date
   | '{t' String '}' // Time
@@ -319,6 +321,7 @@ AND       : 'AND';
 ANY       : 'ANY';
 AS        : 'AS';
 ASC       : 'ASC';
+ASYMMETRIC: 'ASYMMETRIC';
 BETWEEN   : 'BETWEEN';
 BY        : 'BY';
 CASE      : 'CASE';
@@ -368,6 +371,7 @@ RIGHT     : 'RIGHT';
 SELECT    : 'SELECT';
 SET       : 'SET';
 SOME      : 'SOME';
+SYMMETRIC : 'SYMMETRIC';
 THEN      : 'THEN';
 TIES      : 'TIES';
 TRUE      : 'TRUE';
@@ -399,8 +403,7 @@ STRCAT   : '||' ;
 FUNCTION : '::' ;
 
 AMP      : '&' ;
-ASSIGN   : '=' ;
-EQ       : '==' ;
+EQ       : '=' ;
 NEQ1     : '<>' ;
 NEQ2     : '!=' ;
 LT       : '<'  ;

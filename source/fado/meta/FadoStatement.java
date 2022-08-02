@@ -3,8 +3,8 @@ package fado.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class 
-	Statement 
+public abstract class
+	FadoStatement
 {
 	public String _name = null;
 	

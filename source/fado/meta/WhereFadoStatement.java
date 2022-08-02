@@ -3,10 +3,10 @@ package fado.meta;
 import java.util.ArrayList;
 import java.util.List;
 
-public class 
-	WhereStatement
+public class
+WhereFadoStatement
 extends
-	Statement
+		FadoStatement
 {
 	private List<Condition> _conditions = new ArrayList<Condition>();
 	

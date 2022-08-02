@@ -2,10 +2,10 @@ package fado.meta;
 
 import java.util.List;
 
-public class 
-	InsertStatement 
+public class
+	InsertFadoStatement
 extends
-	Statement
+	FadoStatement
 {
 	private List<Field> _fields = null;
 	
