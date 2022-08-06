@@ -89,7 +89,7 @@ expressionList
 expression
   : literal
   | Variable
-  | unary expression
+  | op=( MINUS | PLUS | TILDE ) expression
   | function
   | columnRef
 
@@ -127,11 +127,11 @@ expression
   ;
 
 // TODO: http://www.h2database.com/html/grammar.html#query
-// TODO: merge 'query' and 'table' rules?
+// TODO: merge 'query' and 'from' rules?
 query
   : select
-//  | explicit table
-//  | table value
+//  | explicit from
+//  | from value
   ;
 
 // TODO inline these 'name' rules
@@ -163,13 +163,13 @@ from
   ;
   
 fromItem
-  : table useIndex?
+  : from useIndex?
   | fromItem join
   | LPAREN fromItem RPAREN
   | function
   ;
 
-table
+from
   : ( LPAREN select RPAREN
     | tableRef
     )
@@ -191,8 +191,8 @@ join
     | OUTER JOIN 
     | NATURAL JOIN
     )
-
-    table
+    // ( INNER | ( LEFT | RIGHT )? OUTER? | NATURAL )? JOIN
+    from
 
     ( ON expression
     | USING LPAREN columnName ( COMMA columnName )* RPAREN
@@ -209,7 +209,6 @@ union
     ( LPAREN query RPAREN
     | query
     )
-
   ;
 
 where
@@ -273,11 +272,7 @@ date
   | '{ts' String '}' // Timestamp
   ;
     
-unary
-  : MINUS
-  | PLUS
-  | TILDE
-  ;
+
  
 tableRef
   : tableName
@@ -316,88 +311,88 @@ aliasName
 
 // Keywords
   
-ALL       : 'ALL';
-AND       : 'AND';
-ANY       : 'ANY';
-AS        : 'AS';
-ASC       : 'ASC';
-ASYMMETRIC: 'ASYMMETRIC';
-BETWEEN   : 'BETWEEN';
-BY        : 'BY';
-CASE      : 'CASE';
-CAST      : 'CAST';
-COLLATE   : 'COLLATE';
-DELETE    : 'DELETE';
-DESC      : 'DESC';
-DISTINCT  : 'DISTINCT';
-DIV       : 'DIV';
-ELSE      : 'ELSE';
-END       : 'END';
-ESCAPE    : 'ESCAPE';
-EXCEPT    : 'EXCEPT';
-EXISTS    : 'EXISTS';
-FALSE     : 'FALSE';
-FOR       : 'FOR';
-FROM      : 'FROM';
-FULL      : 'FULL';
-GROUP     : 'GROUP';
-HAVING    : 'HAVING';
-ILIKE     : 'ILIKE';
-IN        : 'IN';
-INDEX     : 'INDEX';
-INNER     : 'INNER';
-INSERT    : 'INSERT';
-INTO      : 'INTO';
-INTERSECT : 'INTERSECT';
-INTERSECTS: 'INTERSECTS';
-IS        : 'IS';
-JOIN      : 'JOIN';
-LEFT      : 'LEFT';
-LIKE      : 'LIKE';
-LIMIT     : 'LIMIT';
-NATURAL   : 'NATURAL';
-NOT       : 'NOT';
-NULL      : 'NULL';
-OFFSET    : 'OFFSET';
-ON        : 'ON';
-OR        : 'OR';
-ORDER     : 'ORDER';
-OUTER     : 'OUTER';
-PERCENT   : 'PERCENT';
-PIPE      : 'PIPE';
-QUALIFY   : 'QUALIFY';
-REGEXP    : 'REGEXP';
-RIGHT     : 'RIGHT';
-SELECT    : 'SELECT';
-SET       : 'SET';
-SOME      : 'SOME';
-SYMMETRIC : 'SYMMETRIC';
-THEN      : 'THEN';
-TIES      : 'TIES';
-TRUE      : 'TRUE';
-TRY_CAST  : 'TRY_CAST';
-TOP       : 'TOP';
-UNION     : 'UNION';
-UNIQUE    : 'UNIQUE';
-UPDATE    : 'UPDATE';
-USE       : 'USE';
-USING     : 'USING';
-VALUES    : 'VALUES';
-WITH      : 'WITH';
-WHEN      : 'WHEN';
-WHERE     : 'WHERE';
+ALL       : 'ALL' ;
+AND       : 'AND' ;
+ANY       : 'ANY' ;
+AS        : 'AS' ;
+ASC       : 'ASC' ;
+ASYMMETRIC: 'ASYMMETRIC' ;
+BETWEEN   : 'BETWEEN' ;
+BY        : 'BY' ;
+CASE      : 'CASE' ;
+CAST      : 'CAST' ;
+COLLATE   : 'COLLATE' ;
+DELETE    : 'DELETE' ;
+DESC      : 'DESC' ;
+DISTINCT  : 'DISTINCT' ;
+DIV       : 'DIV' ;
+ELSE      : 'ELSE' ;
+END       : 'END' ;
+ESCAPE    : 'ESCAPE' ;
+EXCEPT    : 'EXCEPT' ;
+EXISTS    : 'EXISTS' ;
+FALSE     : 'FALSE' ;
+FOR       : 'FOR' ;
+FROM      : 'FROM' ;
+FULL      : 'FULL' ;
+GROUP     : 'GROUP' ;
+HAVING    : 'HAVING' ;
+ILIKE     : 'ILIKE' ;
+IN        : 'IN' ;
+INDEX     : 'INDEX' ;
+INNER     : 'INNER' ;
+INSERT    : 'INSERT' ;
+INTO      : 'INTO' ;
+INTERSECT : 'INTERSECT' ;
+INTERSECTS: 'INTERSECTS' ;
+IS        : 'IS' ;
+JOIN      : 'JOIN' ;
+LEFT      : 'LEFT' ;
+LIKE      : 'LIKE' ;
+LIMIT     : 'LIMIT' ;
+NATURAL   : 'NATURAL' ;
+NOT       : 'NOT' ;
+NULL      : 'NULL' ;
+OFFSET    : 'OFFSET' ;
+ON        : 'ON' ;
+OR        : 'OR' ;
+ORDER     : 'ORDER' ;
+OUTER     : 'OUTER' ;
+PERCENT   : 'PERCENT' ;
+PIPE      : 'PIPE' ;
+QUALIFY   : 'QUALIFY' ;
+REGEXP    : 'REGEXP' ;
+RIGHT     : 'RIGHT' ;
+SELECT    : 'SELECT' ;
+SET       : 'SET' ;
+SOME      : 'SOME' ;
+SYMMETRIC : 'SYMMETRIC' ;
+THEN      : 'THEN' ;
+TIES      : 'TIES' ;
+TRUE      : 'TRUE' ;
+TRY_CAST  : 'TRY_CAST' ;
+TOP       : 'TOP' ;
+UNION     : 'UNION' ;
+UNIQUE    : 'UNIQUE' ;
+UPDATE    : 'UPDATE' ;
+USE       : 'USE' ;
+USING     : 'USING' ;
+VALUES    : 'VALUES' ;
+WITH      : 'WITH' ;
+WHEN      : 'WHEN' ;
+WHERE     : 'WHERE' ;
 
 // Punctuation
 
-DOT      : '.'  ;
-COMMA    : ','  ;
-LPAREN   : '('  ;
-RPAREN   : ')'  ;
-LCURLY   : '{'  ;
-RCURLY   : '}'  ;
-QUESTION : '?'  ;
-COLON    : ':'  ;
-SEMI     : ';'  ;
+DOT      : '.' ;
+COMMA    : ',' ;
+LPAREN   : '(' ;
+RPAREN   : ')' ;
+LCURLY   : '{' ;
+RCURLY   : '}' ;
+QUESTION : '?' ;
+COLON    : ':' ;
+SEMI     : ' ;' ;
 
 STRCAT   : '||' ;
 FUNCTION : '::' ;
@@ -406,18 +401,18 @@ AMP      : '&' ;
 EQ       : '=' ;
 NEQ1     : '<>' ;
 NEQ2     : '!=' ;
-LT       : '<'  ;
-LT2      : '<<'  ;
+LT       : '<' ;
+LT2      : '<<' ;
 LTE      : '<=' ;
-GT       : '>'  ;
-GT2      : '>>'  ;
+GT       : '>' ;
+GT2      : '>>' ;
 GTE      : '>=' ;
 
-PLUS     : '+'  ;
-MINUS    : '-'  ;
-DIVIDE   : '/'  ;
-STAR     : '*'  ;
-MOD      : '%'  ;
+PLUS     : '+' ;
+MINUS    : '-' ;
+DIVIDE   : '/' ;
+STAR     : '*' ;
+MOD      : '%' ;
 
 TILDE    : '~' ;
 

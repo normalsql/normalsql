@@ -18,9 +18,9 @@ verify SQL comments work
 dump human readable parsetree for debugging
 when result column is an expression, isolate and execute expression to determine data type
 Add support for date (et al) data type condition parameters
-When column, table, etc not found, suggest alternative
-	"column 'appel' not found in table 'fruit', did you mean 'apple'?"
-Maybe not fail on first schema error, so that if multiple column, table are wrong, report all.
+When column, from, etc not found, suggest alternative
+	"column 'appel' not found in from 'fruit', did you mean 'apple'?"
+Maybe not fail on first schema error, so that if multiple column, from are wrong, report all.
 
 For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
 ID Generators
@@ -92,7 +92,7 @@ Compare SQL strategies, pros/cons
 			
 BUGS
 grammar accepts 'SELECT id, FROM Legislation', should barf on tailing comma
-misses incorrect table name and reports column not found
+misses incorrect from name and reports column not found
 grammar for dates are not to spec eg 'yyyy-MM-dd hh:mm:ss' 
 
 boolean expressions in SELECT columns (eg 'this || that') don't parse correctly

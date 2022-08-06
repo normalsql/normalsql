@@ -9,23 +9,26 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.*;
 
 class SelectList extends ArrayList<SelectList>
 {
 	public GlobbingRuleContext context;
-	public ArrayList<Table> tableList = new ArrayList<>();
-	public ArrayList<Object> conditionList = new ArrayList<>();
+	public ArrayList<From> fromList = new ArrayList<>();
+	public ArrayList<Condition> conditionList = new ArrayList<>();
 }
 
-class Table
+class From
 {
+	TableContext context;
 	public final String database;
 	public final String name;
 	public final String alias;
+	Table table;
 
-	public Table( String database, String name, String alias )
+	public From( String database, String name, String alias )
 	{
 		this.database = database;
 		this.name = name;
@@ -35,10 +38,18 @@ class Table
 
 class Condition
 {
-	public final ColumnRefContext columnRef;
+	public ColumnRefContext columnRef;
+	String tableName;
+	String columnName;
+	public From from;
+	Column column;
+}
+
+class Comparison extends Condition
+{
 	public final LiteralContext literal;
 	public final Token op;
-	public Condition( ColumnRefContext columnRef, LiteralContext literal, Token op )
+	public Comparison( ColumnRefContext columnRef, LiteralContext literal, Token op )
 	{
 		this.columnRef = columnRef;
 		this.literal = literal;
@@ -46,9 +57,8 @@ class Condition
 	}
 }
 
-class Between
+class Between extends Condition
 {
-	public ColumnRefContext columnRef;
 	public LiteralContext lower;
 	public LiteralContext upper;
 
@@ -60,9 +70,8 @@ class Between
 	}
 }
 
-class IN
+class IN extends Condition
 {
-	public ColumnRefContext columnRef;
 	public List<LiteralContext> literals;
 
 	public IN( ColumnRefContext columnRef, List<LiteralContext> literals )
@@ -75,8 +84,8 @@ class IN
 
 public class FadoNested
 {
-	public final static void main( String[] args )
-		throws Exception
+	public static void main( String[] args )
+			throws Exception
 	{
 //		CharStream chars = CharStreams.fromPath( Paths.get( sourceFile.getPath() ) );
 //		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/NestedSelect.sql" );
@@ -87,8 +96,17 @@ public class FadoNested
 		StatementContext statement = parser.statement();
 
 		SelectList root = findSELECTs( statement );
-		processFROMs( root );
-		processWHEREs( root );
+		findFROMs( root );
+		findWHEREs( root );
+
+		Class.forName( "org.h2.Driver" );
+		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm", "sa", null );
+		Map<String, Table> tableList = MetaData.getTablesAndColumns( conn );
+
+		resolveFROMs( root, tableList );
+//		inferTypes( root );
+		// sort literals (stream order)
+//		convertConditions( root );
 		System.out.println( root.size() );
 
 	}
@@ -98,26 +116,26 @@ public class FadoNested
 		SelectList result = new SelectList();
 		result.context = parent;
 
-		for( GlobbingRuleContext context : parent.find( "**/select" ))
+		for( GlobbingRuleContext context : parent.find( "**/select" ) )
 		{
-			result.add( findSELECTs( context ));
+			result.add( findSELECTs( context ) );
 		}
 
 		return result;
 	}
 
-	static void processFROMs( SelectList parent )
+	static void findFROMs( SelectList parent )
 	{
 		// query gathers every 'table' under 'from'
 		for( GlobbingRuleContext tc : parent.context.find( "from/**/table" ) )
 		{
-			if( ((TableContext) tc).tableRef() != null )
+			if( ( (TableContext) tc ).tableRef() != null )
 			{
 				String databaseName = tc.findFirstString( "**/databaseName" );
 				String tableName = tc.findFirstString( "**/tableName" );
 				String alias = tc.findFirstString( "**/aliasName" );
-				Table table = new Table( databaseName, tableName, alias );
-				parent.tableList.add( table );
+				From from = new From( databaseName, tableName, alias );
+				parent.fromList.add( from );
 			}
 //			else
 //			{
@@ -126,20 +144,20 @@ public class FadoNested
 		}
 		for( SelectList child : parent )
 		{
-			processFROMs( child );
+			findFROMs( child );
 		}
 	}
 
-	static void processWHEREs( SelectList parent )
+	static void findWHEREs( SelectList parent )
 	{
-		for( GlobbingRuleContext found : parent.context.find( "where/expression" ))
+		for( GlobbingRuleContext found : parent.context.find( "where/expression" ) )
 		{
 			processExpression( parent, (ExpressionContext) found );
 		}
 
 		for( SelectList child : parent )
 		{
-			processWHEREs( child );
+			findWHEREs( child );
 		}
 	}
 
@@ -179,7 +197,7 @@ public class FadoNested
 //					String literal = node.getText();
 //					literal = trimQuotes( literal );
 //					node.convertToInputParam();
-					parent.conditionList.add( new Condition( columnRef, literal, op ));
+					parent.conditionList.add( new Comparison( columnRef, literal, op ) );
 				}
 				break;
 			}
@@ -191,7 +209,7 @@ public class FadoNested
 				LiteralContext upper = ec.upper.literal();
 				if( columnRef != null && lower != null && upper != null )
 				{
-					parent.conditionList.add( new Between( columnRef, lower, upper ));
+					parent.conditionList.add( new Between( columnRef, lower, upper ) );
 				}
 				break;
 			}
@@ -202,10 +220,10 @@ public class FadoNested
 				ExpressionListContext list = ec.list;
 				if( list != null )
 				{
-					List<LiteralContext> literals = list.find( LiteralContext.class,"expression/literal" );
+					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
 					if( literals.size() > 0 )
 					{
-						parent.conditionList.add( new IN( columnRef, literals ));
+						parent.conditionList.add( new IN( columnRef, literals ) );
 					}
 				}
 				break;
@@ -222,6 +240,71 @@ public class FadoNested
 			case MINUS:
 			default:
 				break;
+		}
+	}
+
+
+	public static String trimQuotes( String text )
+	{
+		String result = text;
+		int len = text.length();
+		// Parser ensures token has quotes front and back
+		if( text.indexOf( '[' ) > -1 || text.indexOf( '"' ) > -1 || text.indexOf( '\'' ) > -1 )
+		{
+			result = text.substring( 1, len - 1 );
+		}
+		return result;
+	}
+
+
+	static void resolveFROMs( SelectList parent, Map<String, Table> tableMap )
+	{
+		for( From from : parent.fromList )
+		{
+			from.table = tableMap.get( from.name.toLowerCase() );
+			if( from.table == null )
+			{
+				System.out.printf( "from.name '%s' not found\n", from.name );
+			}
+		}
+
+		for( Condition condition : parent.conditionList )
+		{
+			resolveCondition( parent, condition );
+		}
+
+		for( SelectList child : parent )
+		{
+			resolveFROMs( child, tableMap );
+		}
+	}
+
+	static void resolveCondition( SelectList parent, Condition condition )
+	{
+		String columnName = condition.columnRef.columnName().getText();
+		// Nullsafe query to get tableName
+		String tableName = condition.columnRef.findFirstString( "tableName" );
+		tableName = ( tableName != null ? tableName : "*" );
+
+		found:
+		for( From from : parent.fromList )
+		{
+			if( from.table == null ) continue;
+			if( tableName.equalsIgnoreCase( from.name ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
+			{
+				Column column = from.table.columnMap.get( columnName.toLowerCase() );
+				if( column != null )
+				{
+					condition.from = from;
+					condition.column = column;
+					break found;
+				}
+			}
+		}
+
+		if( condition.column == null )
+		{
+			System.out.printf( "condition.columnName '%s' not found\n", columnName );
 		}
 	}
 }

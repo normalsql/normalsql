@@ -813,76 +813,76 @@ public class
 		}
 	}
 
-	/**
-	 * Find table name, case insensitive
-	 *
-	 * @param conn
-	 * @param table
-	 * @param fields
-	 * @throws Exception
-	 */
-
-	public void inspectTableAndFields( Connection conn, Table table, List<? extends MetaField> fields )
-			throws Exception
-	{
-		ResultSet tableRS = null;
-		try
-		{
-			String catalog = null;
-			String schema = "PUBLIC";
-			String tableName = table.getName();
-
-			DatabaseMetaData meta = conn.getMetaData();
-			tableRS = meta.getTables( catalog, schema, null, null );
-
-			while( tableRS.next() )
-			{
-				String tempTableName = tableRS.getString( "TABLE_NAME" );
-				if( !tableName.equalsIgnoreCase( tempTableName ) ) continue;
-
-				catalog = tableRS.getString( "TABLE_CAT" );
-				schema = tableRS.getString( "TABLE_SCHEM" );
-				inspectFields( meta, catalog, schema, tempTableName, fields );
-			}
-		}
-		finally
-		{
-			safeClose( tableRS );
-		}
-	}
-
-	public void inspectFields( DatabaseMetaData meta, String catalog, String schema, String table, List<? extends MetaField> fields )
-			throws FadoException, SQLException
-	{
-		for( MetaField field : fields )
-		{
-			boolean found = false;
-
-			ResultSet columnRS = meta.getColumns( catalog, schema, table, null );
-
-			while( columnRS.next() )
-			{
-				String columnName = columnRS.getString( "COLUMN_NAME" );
-				if( field.getName().equalsIgnoreCase( columnName ) )
-				{
-					int sqlType = columnRS.getInt( "DATA_TYPE" );
-					field.setSQLType( sqlType );
-					String sqlTypeName = columnRS.getString( "TYPE_NAME" );
-					field.setSQLTypeName( sqlTypeName );
-					int nullable = columnRS.getInt( "NULLABLE" );
-					field.setNullable( nullable == DatabaseMetaData.columnNullable );
-					found = true;
-					break;
-				}
-			}
-			columnRS.close();
-			if( !found )
-			{
-				String msg = String.format( "table '%s' does not contain field '%s'", table, field.getName() );
-				throw new FadoException( msg );
-			}
-		}
-	}
+//	/**
+//	 * Find table name, case insensitive
+//	 *
+//	 * @param conn
+//	 * @param table
+//	 * @param fields
+//	 * @throws Exception
+//	 */
+//
+//	public void inspectTableAndFields( Connection conn, Table table, List<? extends MetaField> fields )
+//			throws Exception
+//	{
+//		ResultSet tableRS = null;
+//		try
+//		{
+//			String catalog = null;
+//			String schema = "PUBLIC";
+//			String tableName = table.getName();
+//
+//			DatabaseMetaData meta = conn.getMetaData();
+//			tableRS = meta.getTables( catalog, schema, null, null );
+//
+//			while( tableRS.next() )
+//			{
+//				String tempTableName = tableRS.getString( "TABLE_NAME" );
+//				if( !tableName.equalsIgnoreCase( tempTableName ) ) continue;
+//
+//				catalog = tableRS.getString( "TABLE_CAT" );
+//				schema = tableRS.getString( "TABLE_SCHEM" );
+//				inspectFields( meta, catalog, schema, tempTableName, fields );
+//			}
+//		}
+//		finally
+//		{
+//			safeClose( tableRS );
+//		}
+//	}
+//
+//	public void inspectFields( DatabaseMetaData meta, String catalog, String schema, String table, List<? extends MetaField> fields )
+//			throws FadoException, SQLException
+//	{
+//		for( MetaField field : fields )
+//		{
+//			boolean found = false;
+//
+//			ResultSet columnRS = meta.getColumns( catalog, schema, table, null );
+//
+//			while( columnRS.next() )
+//			{
+//				String columnName = columnRS.getString( "COLUMN_NAME" );
+//				if( field.getName().equalsIgnoreCase( columnName ) )
+//				{
+//					int sqlType = columnRS.getInt( "DATA_TYPE" );
+//					field.setSQLType( sqlType );
+//					String sqlTypeName = columnRS.getString( "TYPE_NAME" );
+//					field.setSQLTypeName( sqlTypeName );
+//					int nullable = columnRS.getInt( "NULLABLE" );
+//					field.setNullable( nullable == DatabaseMetaData.columnNullable );
+//					found = true;
+//					break;
+//				}
+//			}
+//			columnRS.close();
+//			if( !found )
+//			{
+//				String msg = String.format( "table '%s' does not contain field '%s'", table, field.getName() );
+//				throw new FadoException( msg );
+//			}
+//		}
+//	}
 
 	public File generate( Template template, Map map, File targetRoot, String name )
 		throws Exception
