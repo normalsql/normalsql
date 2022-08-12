@@ -69,7 +69,7 @@ class From
 	}
 }
 
-class Condition
+class Condition implements Comparable
 {
 	ColumnRefContext columnRef;
 	String tableName;
@@ -83,6 +83,14 @@ class Condition
 		this.columnName = columnRef.trimQuotes( columnRef.columnName().getText() );
 		// Null-safe query to get 'tableName'
 		this.tableName = columnRef.trimQuotes( columnRef.findFirstString( "tableName" ));
+	}
+
+	@Override
+	public int compareTo( Object o )
+	{
+		int a = columnRef.start.getStartIndex();
+		int b = ((Condition) o).columnRef.start.getStartIndex();
+		return a - b;
 	}
 }
 
@@ -154,6 +162,12 @@ public class FadoNested
 		// TODO support batches, multiple queries, multiple resultsets
 		List<Item> itemList = root.get( 0 ).itemList;
 		matchItemsToResultColumns( itemList, resultColumnList );
+
+		ArrayList<Condition> conditionList = new ArrayList<>();
+		gatherConditions( root, conditionList );
+		Object[] ffs = conditionList.toArray();
+		Arrays.sort( ffs );
+
 		// sort literals (stream order)
 //		convertConditionsToParams( root );
 		System.out.println( root.size() );
@@ -350,6 +364,16 @@ public class FadoNested
 		}
 	}
 
+	static void gatherConditions( SelectList parent, ArrayList<Condition> conditions )
+	{
+		conditions.addAll( parent.conditionList );
+		for( SelectList child : parent )
+		{
+			gatherConditions( child, conditions );
+		}
+	}
+
+
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL
 	 * used wildcard '*', there will be more columns than items. Assumes items and
@@ -358,37 +382,24 @@ public class FadoNested
 	 */
 	static void matchItemsToResultColumns( List<Item> itemList, List<Result> resultColumnList )
 	{
-		try
+		Iterator<Item> itemIterator = itemList.iterator();
+		String preferred = null;
+
+		outer:
+		for( Result column : resultColumnList )
 		{
-			Iterator<Result> resultIterator = resultColumnList.iterator();
-			Iterator<Item> itemIterator = itemList.iterator();
-			Result column = resultIterator.next();
-			Item item = null;
-
-			while( true )
+			while( preferred == null )
 			{
-				if( item == null ) item = itemIterator.next();
-				String preferred = item.alias != null ? item.alias : item.name;
+				if( !itemIterator.hasNext() ) break outer;
+				Item item = itemIterator.next();
+				preferred = item.alias != null ? item.alias : item.name;
+			}
 
-				// Skip items without alias or name
-				if( preferred == null )
-				{
-					item = null;
-					continue;
-				}
-
-				if( preferred.equalsIgnoreCase( column.label ) || preferred.equalsIgnoreCase( column.name ))
-				{
-					column.preferredName = preferred;
-					item = null;
-				}
-
-				column = resultIterator.next();
+			if( preferred.equalsIgnoreCase( column.label ) || preferred.equalsIgnoreCase( column.name ))
+			{
+				column.preferredName = preferred;
+				preferred = null;
 			}
 		}
-		// Just catch exception, instead of checking for hasNext
-		catch( NoSuchElementException ignore ) {}
-
-		System.out.println( "tada" );
 	}
 }
