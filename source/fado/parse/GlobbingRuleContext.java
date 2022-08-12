@@ -145,6 +145,18 @@ extends
         return result;
     }
 
+    public String trimQuotes( String text )
+    {
+        if( text == null ) return null;
+        // Parser ensures token has quotes front and back
+        if( text.indexOf( '[' ) > -1 || text.indexOf( '"' ) > -1 || text.indexOf( '\'' ) > -1 )
+        {
+            text = text.substring( 1, text.length() - 1 );
+        }
+        return text;
+    }
+
+
     // Replaces original value with a JDBC input parameter '?'
     // TODO: Handle unary numbers, eg -100
     // TODO: Knockout whole 'literal' rule context?

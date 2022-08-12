@@ -10,8 +10,19 @@ IntelliJ plugin
 Generated code has test method
 Generated code has verify schema method
 Add runtime "tested" flag to generated code
-read latest jdbc spec
 
+proper case handling
+    new class for Name, containing String and 'quoted' flag
+    refactor grammar, moving quotes from Identifier token to name rule
+        name : quote=( '[' | '\'' ) Identifier ( ']' | '\'' ) ;
+    convert tableMap and columnMap back to lists
+    utility methods testing equality
+    create case sensitivity equality truth table for each database (w/ config)
+    maybe use Strategy for each database
+    regression tests for each database
+        also documents / validated truth table
+    maybe own case sensitivity test during build
+        create temp table, then inspect it
 
 x  patch ANTLR 4.10.1 to add 'getRuleName' to generated context subclasses
 verify SQL comments work
@@ -21,6 +32,7 @@ Add support for date (et al) data type condition parameters
 When column, from, etc not found, suggest alternative
 	"column 'appel' not found in from 'fruit', did you mean 'apple'?"
 Maybe not fail on first schema error, so that if multiple column, from are wrong, report all.
+adopt try-with-resources
 
 For UPDATEs, is there a strategy for optimistic locking, eg pick the version column?
 ID Generators
@@ -91,10 +103,7 @@ Compare SQL strategies, pros/cons
 			hand written
 			
 BUGS
-grammar accepts 'SELECT id, FROM Legislation', should barf on tailing comma
 misses incorrect from name and reports column not found
 grammar for dates are not to spec eg 'yyyy-MM-dd hh:mm:ss' 
-
-boolean expressions in SELECT columns (eg 'this || that') don't parse correctly
 
 unary negative conditions don't capture the leading minus (eg "WHERE ID = -1" -> "WHERE ID = -?" )

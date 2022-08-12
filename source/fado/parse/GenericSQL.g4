@@ -68,12 +68,12 @@ into
   ;
 
 itemList
-  : item ( COMMA item )*
+  : list+=item ( COMMA list+=item )*
   ;
   
 item
-  : STAR exceptions?
-  | tableName DOT STAR exceptions?
+  : star=STAR exceptions?
+  | tableName DOT star=STAR exceptions?
   | expression alias?
   ;
 
@@ -163,13 +163,13 @@ from
   ;
   
 fromItem
-  : from useIndex?
+  : table useIndex?
   | fromItem join
   | LPAREN fromItem RPAREN
   | function
   ;
 
-from
+table
   : ( LPAREN select RPAREN
     | tableRef
     )
@@ -271,9 +271,7 @@ date
   | '{t' String '}' // Time
   | '{ts' String '}' // Timestamp
   ;
-    
 
- 
 tableRef
   : tableName
   | databaseName DOT tableName
@@ -392,7 +390,7 @@ LCURLY   : '{' ;
 RCURLY   : '}' ;
 QUESTION : '?' ;
 COLON    : ':' ;
-SEMI     : ' ;' ;
+SEMI     : ';' ;
 
 STRCAT   : '||' ;
 FUNCTION : '::' ;
