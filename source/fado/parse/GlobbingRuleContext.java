@@ -26,7 +26,7 @@ extends
 
     public <T extends GlobbingRuleContext> List<T> find( Class<? extends T> type, String query ) {
         List<GlobbingRuleContext> found = find( query );
-        List<T> results = new ArrayList<T>();
+        List<T> results = new ArrayList<>();
         for( GlobbingRuleContext o : found )
         {
             if( type.isInstance( o ))
@@ -37,6 +37,16 @@ extends
         return results;
     }
 
+    public <T extends GlobbingRuleContext> T findFirst( Class<? extends T> type, String expression )
+    {
+        T result = null;
+        List<T> found = find( type, expression );
+        if( found.size() > 0 )
+        {
+            result = found.get( 0 );
+        }
+        return result;
+    }
 
     // TODO delete this
     public List<GlobbingRuleContext> findContexts( String query )
@@ -122,17 +132,6 @@ extends
         }
         return result;
     }
-
-//    public GlobbingRuleContext findFirstContext( String expression )
-//    {
-//        GlobbingRuleContext result = null;
-//        Object first = findFirst( expression );
-//        if( first instanceof GlobbingRuleContext )
-//        {
-//            result = (GlobbingRuleContext) first;
-//        }
-//        return result;
-//    }
 
     public String findFirstString( String expression )
     {

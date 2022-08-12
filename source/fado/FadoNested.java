@@ -27,12 +27,18 @@ class Item
 {
 	ItemContext ic;
 	String alias;
-	List<ColumnRefContext> columnRefList;
+	String name;
 
 	Item( ItemContext ic )
 	{
 		this.ic = ic;
-		this.columnRefList = ic.find( ColumnRefContext.class, "**/columnRef" );
+		ColumnRefContext columnRef = ic.findFirst( ColumnRefContext.class, "**/columnRef" );
+		if( columnRef != null )
+		{
+			// am pretty sure this can't be null
+			this.name = columnRef.columnName().getText();
+		}
+
 		this.alias = ic.trimQuotes( ic.findFirstString( "**/aliasName" ));
 	}
 }
@@ -348,33 +354,24 @@ public class FadoNested
 			Iterator<Result> resultIterator = resultColumnList.iterator();
 			Iterator<Item> itemIterator = itemList.iterator();
 			Result result = resultIterator.next();
-			Item item = itemIterator.next();
+			Item item = null;
+
 			while( true )
 			{
-				String preferred = item.alias;
-				if( preferred == null )
-				{
-					// items can reference 0 or more table columns. use just the first.
-					if( !item.columnRefList.isEmpty() )
-					{
-						ColumnRefContext columnRef = item.columnRefList.get( 0 );
-						// pretty sure this can't be null
-						preferred = columnRef.columnName().getText();
-					}
-				}
+				if( item == null ) item = itemIterator.next();
+				String preferred = item.alias != null ? item.alias : item.name;
 
-				// Skip items without alias or columnName
+				// Skip items without alias or name
 				if( preferred == null )
 				{
-					item = itemIterator.next();
+					item = null;
 					continue;
 				}
 
 				if( preferred.equalsIgnoreCase( result.label ) || preferred.equalsIgnoreCase( result.name ))
 				{
 					result.preferredName = preferred;
-					result = resultIterator.next();
-					item = itemIterator.next();
+					item = null;
 					continue;
 				}
 
