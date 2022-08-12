@@ -36,10 +36,19 @@ class Item
 		if( columnRef != null )
 		{
 			// am pretty sure this can't be null
-			this.name = columnRef.columnName().getText();
+			this.name = ic.trimQuotes( columnRef.columnName().getText() );
 		}
 
 		this.alias = ic.trimQuotes( ic.findFirstString( "**/aliasName" ));
+	}
+
+	@Override
+	public java.lang.String toString()
+	{
+		return "Item{" +
+				"alias='" + alias + '\'' +
+				", name='" + name + '\'' +
+				'}';
 	}
 }
 
@@ -353,7 +362,7 @@ public class FadoNested
 		{
 			Iterator<Result> resultIterator = resultColumnList.iterator();
 			Iterator<Item> itemIterator = itemList.iterator();
-			Result result = resultIterator.next();
+			Result column = resultIterator.next();
 			Item item = null;
 
 			while( true )
@@ -368,14 +377,13 @@ public class FadoNested
 					continue;
 				}
 
-				if( preferred.equalsIgnoreCase( result.label ) || preferred.equalsIgnoreCase( result.name ))
+				if( preferred.equalsIgnoreCase( column.label ) || preferred.equalsIgnoreCase( column.name ))
 				{
-					result.preferredName = preferred;
+					column.preferredName = preferred;
 					item = null;
-					continue;
 				}
 
-				resultIterator.next();
+				column = resultIterator.next();
 			}
 		}
 		// Just catch exception, instead of checking for hasNext

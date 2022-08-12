@@ -45,9 +45,10 @@ class Result
 	@Override
 	public String toString()
 	{
-		return "{" +
+		return "Result{" +
 				"name='" + name + '\'' +
 				", label='" + label + '\'' +
+				", preferredName='" + preferredName + '\'' +
 				", type=" + type +
 				", typeName='" + typeName + '\'' +
 				", isNullable=" + isNullable +
