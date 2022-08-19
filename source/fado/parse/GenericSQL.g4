@@ -254,7 +254,9 @@ values
 //  : literal
 //  | columnRef
 //  ;
-  
+
+// TODO add preparedstatement parameter '?'
+// TODO add 'UNKNOWN'?
 literal
   : Float
   | Integer
@@ -265,7 +267,7 @@ literal
   | date
   ;
 
-// TODO turn this rule into a token?
+// TODO turn this rule into a token
 date
   : '{d' String '}' // Date
   | '{t' String '}' // Time

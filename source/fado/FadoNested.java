@@ -69,66 +69,10 @@ class From
 	}
 }
 
-class Condition implements Comparable
-{
-	ColumnRefContext columnRef;
-	String tableName;
-	String columnName;
-	From from;
-	Column column;
 
-	Condition( ColumnRefContext columnRef )
-	{
-		this.columnRef = columnRef;
-		this.columnName = columnRef.trimQuotes( columnRef.columnName().getText() );
-		// Null-safe query to get 'tableName'
-		this.tableName = columnRef.trimQuotes( columnRef.findFirstString( "tableName" ));
-	}
 
-	@Override
-	public int compareTo( Object o )
-	{
-		int a = columnRef.start.getStartIndex();
-		int b = ((Condition) o).columnRef.start.getStartIndex();
-		return a - b;
-	}
-}
 
-class Comparison extends Condition
-{
-	LiteralContext literal;
-	Token op;
-	Comparison( ColumnRefContext columnRef, LiteralContext literal, Token op )
-	{
-		super( columnRef );
-		this.literal = literal;
-		this.op = op;
-	}
-}
 
-class Between extends Condition
-{
-	LiteralContext lower;
-	LiteralContext upper;
-
-	Between( ColumnRefContext columnRef, LiteralContext lower, LiteralContext upper )
-	{
-		super( columnRef );
-		this.lower = lower;
-		this.upper = upper;
-	}
-}
-
-class IN extends Condition
-{
-	List<LiteralContext> literals;
-
-	IN( ColumnRefContext columnRef, List<LiteralContext> literals )
-	{
-		super( columnRef );
-		this.literals = literals;
-	}
-}
 
 
 public class FadoNested
@@ -165,14 +109,53 @@ public class FadoNested
 
 		ArrayList<Condition> conditionList = new ArrayList<>();
 		gatherConditions( root, conditionList );
-		Object[] ffs = conditionList.toArray();
-		Arrays.sort( ffs );
 
+//		Object[] ffs = conditionList.toArray();
+//		Arrays.sort( ffs );
+//		ArrayList<StatementParam> paramList =
+//		gatherStatementParams( conditionList, tables );
 		// sort literals (stream order)
+
 //		convertConditionsToParams( root );
 		System.out.println( root.size() );
 
 	}
+
+//	/** Create one StatementParam per literal found. */
+//	static ArrayList<StatementParam> gatherStatementParams( List<Condition> conditionList, Map<String, Table> tableMap )
+//	{
+//		ArrayList<StatementParam> params = new ArrayList<>();
+////		StatementParam param = new StatementParam();
+//		for( Condition condition : conditionList )
+//		{
+////			switch( condition.getClass().getSimpleName() )
+////			{
+////				case "Comparison":
+////				{
+////					System.out.println( "yup " );
+////					break;
+////				}
+////			}
+//
+//			Table table = tableMap.get( condition.tableName.toLowerCase() );
+//			Column column = table.getColumn( condition.columnName );
+//
+//			if( condition instanceof Comparison )
+//			{
+////				LiteralContext literal = condition.
+////				StatementParam param = new StatementParam( condition.columnName, column.dataType );
+//			}
+//			else if( condition instanceof Between )
+//			{
+//
+//			}
+//			else if( condition instanceof IN )
+//			{
+//
+//			}
+//		}
+//		return params;
+//	}
 
 	static SelectList findSELECTs( GlobbingRuleContext parent )
 	{
@@ -269,7 +252,7 @@ public class FadoNested
 				if( columnRef != null && literal != null )
 				{
 //					node.convertToInputParam();
-					parent.conditionList.add( new Comparison( columnRef, literal, op ));
+					parent.conditionList.add( new Comparison( op,columnRef, literal ));
 				}
 				break;
 			}
@@ -295,7 +278,7 @@ public class FadoNested
 					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
 					if( literals.size() > 0 )
 					{
-						parent.conditionList.add( new IN( columnRef, literals ));
+						parent.conditionList.add( new IN( columnRef, literals.toArray( new LiteralContext[0] )));
 					}
 				}
 				break;
@@ -402,4 +385,5 @@ public class FadoNested
 			}
 		}
 	}
+
 }

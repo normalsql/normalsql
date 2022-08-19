@@ -1,26 +1,41 @@
 ## Fado's SELECT Statement Template
+##
+## Copyright 2022, 2014, 2011, 2010 Jason Osgood
 ## 
 ## Template Parameters:
 ## 
 ## packageName - target Java package name as String
 ## className - target Java class name as String
 ## sql - lines of retooled SQL statement as List<String>
-## conditions - conditions found in source SQL as List<fado.meta.Condition>
+## conditionList - conditions found in source SQL as List<fado.meta.Condition>
 ## date - Fado's timestamp
 /**
-
-${className}.java   ${date}
-  
-Generated using Fado's Select.vm template. Original SQL:
-    
-#foreach( $line in $originallines )
-$line
+* ${className}.java   ${date}
+*
+* Generated using Fado's Select.vm template. Original SQL:
+*
+* <pre>
+* {@code
+#foreach( $line in $originalSQL.split('\n') )
+* $line
 #end
-
-@see ${originalfile}
-  
-
+* }
+* </pre>
+*
+* @see ${originalfile}
+*
 **/
+
+##${ffs.class.name}
+##$ffs.literals
+##${ffs.horse}
+##
+###foreach( $c in $conditionList )
+##	${c.class.name}
+##	#foreach( $l in ${c.literals} )
+##		${l.class.name}
+##	#end
+###end
 
 ## add null check here
 package ${packageName};
@@ -29,15 +44,15 @@ import java.sql.*;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 
-public class 
+public class
 	${className}
 {
-	PreparedStatement __ps = null;
-
-	/**
-		Pass a Connection. You are responsible for closing that Connection. 
-		${className} is a wrapper for a PreparedStatement, not a Connection.
-	**/
+##	PreparedStatement __ps = null;
+##
+##	/**
+##		Pass a Connection. You are responsible for closing that Connection.
+##		${className} is a wrapper for a PreparedStatement, not a Connection.
+##	**/
 	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
@@ -45,63 +60,51 @@ public class
 		__ps = connection.prepareStatement( sql, resultSetType, resultSetConcurrency );
 	}
 
-	public ${className}( Connection connection )
-		throws SQLException
-	{
-		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-	}
-	
-	/**
-		Pass a DataSource. You are responsible for closing that DataSource. 
-		${className} is a wrapper for a PreparedStatement, not a Connection.
-	**/
-	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
-		throws SQLException
-	{
-		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
-	}
+##	public ${className}( Connection connection )
+##		throws SQLException
+##	{
+##		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+##	}
+##
+##	/**
+##		Pass a DataSource. You are responsible for closing that DataSource.
+##		${className} is a wrapper for a PreparedStatement, not a Connection.
+##	**/
+##	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+##		throws SQLException
+##	{
+##		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
+##	}
+##
+##	public ${className}( DataSource dataSource )
+##		throws SQLException
+##	{
+##		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+##	}
 
-	public ${className}( DataSource dataSource )
-		throws SQLException
-	{
-		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-	}
-		
 	public final ${className}ResultSet execute()
 		throws SQLException
 	{
 #set( $nth = 0 )
-#foreach( $condition in $conditions )
-##
-#if( $condition.isComparison() )
-##
-#set( $nth = $nth + 1 )
-		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
-##
-#elseif( $condition.isLIKE() )
-##
-#set( $nth = $nth + 1 )
-		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}() );
-##
-#elseif( $condition.isIN() )
-##
-#set( $size = $condition.getValues().size() - 1 )
-##
-#foreach( $abc in [0..$size] )
-#set( $nth = $nth + 1 )
-		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}( ${abc} ));
+#foreach( $condition in $conditionList )
+	#set( $method = $helper.toMethodName( $condition.columnName ))
+	#set( $type = $helper.toMethodType( $condition.column.type ))
+	#if( $Comparison.isInstance( $condition ))
+		#set( $nth = $nth + 1 )
+		__ps.set${type}( ${nth}, get${method}() );
+	#elseif( $Between.isInstance( $condition ))
+		#set( $nth = $nth + 1 )
+		__ps.set${type}( ${nth}, get${method}Left() );
+		#set( $nth = $nth + 1 )
+		__ps.set${type}( ${nth}, get${method}Right() );
+	#elseif( $IN.isInstance( $condition ))
+		#foreach( $abc in $condition.literals )
+			#set( $nth = $nth + 1 )
+		__ps.set${type}( ${nth}, get${method}( $foreach.count ));
+		#end
+	#end
 #end
-##
-#elseif( $condition.isBETWEEN() )
-##
-#set( $nth = $nth + 1 )
-		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Left() );
-#set( $nth = $nth + 1 )
-		__ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Right() );
-##
-#end
-#end
-			
+
 		ResultSet rs = null;
 		if( __ps.execute() )
 		{
@@ -111,138 +114,103 @@ public class
 		return result;
 	}
 
-#foreach( $condition in $conditions )
-##
-#if( $condition.isComparison() )
+#foreach( $condition in $conditionList )
+	#set( $method = $helper.toMethodName( $condition.columnName ))
+	#set( $var = $helper.toVariableName( $condition.columnName ))
+	#set( $type = $helper.toVariableType( $condition.column.type ))
+	#if( $Comparison.isInstance( $condition ))
 
-	public ${condition.JavaType} _${condition.NameAsVariable} = $condition.getValueAsCode();
-	
-	public void set${condition.NameAsMethod}( ${condition.JavaType} ${condition.NameAsVariable} )
-	{
-		_${condition.NameAsVariable} = ${condition.NameAsVariable};
-	}
-	
-	public ${condition.JavaType} get${condition.NameAsMethod}()
-	{
-		return _${condition.NameAsVariable};
-	}
+	private ${type} _${var} = $condition.getValueAsCode();
+	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
+	public ${type} get${method}() { return _${var}; }
 
-#elseif( $condition.isLIKE() )
+	#elseif( $Between.isInstance( $condition ))
 
-	public ${condition.JavaType} _${condition.NameAsVariable} = $condition.getValueAsCode();
-	
-	public void set${condition.NameAsMethod}( ${condition.JavaType} ${condition.NameAsVariable} )
-	{
-		_${condition.NameAsVariable} = ${condition.NameAsVariable};
-	}
-	
-	public ${condition.JavaType} get${condition.NameAsMethod}()
-	{
-		return _${condition.NameAsVariable};
-	}
+	private ${type} _${var}Left = $condition.getLeftAsCode();
+	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
+	public ${type} get${method}Left() { return _${var}Left; }
 
-#elseif( $condition.isIN() )
-	private ${condition.JavaType}[] _${condition.NameAsVariable}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
-	private int _${condition.NameAsVariable}Count = 0;
-	public void add${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+	private ${type} _${var}Right = $condition.getRightAsCode();
+	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
+	public ${type} get${method}Right() { return _${var}Right; }
+
+	#elseif( $IN.isInstance( $condition ))
+
+	private ${type}[] _${var}List = new ${type}[] { $condition.getValueAsCode() };
+	private int _${var}Count = 0;
+	public void add${method}Param( ${type} ${var} )
 	{
-		if( _${condition.NameAsVariable}Count == _${condition.NameAsVariable}List.length )
+		if( _${var}Count == _${var}List.length )
 		{
-			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${condition.NameAsVariable}List.length );
+			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${var}List.length );
 		}
-		int count = _${condition.NameAsVariable}Count;
-		
+		int count = _${var}Count;
+
 		// Parameter array get filled to the right, so there are no holes
-		for( int i = count; count < _${condition.NameAsVariable}List.length; count++ )
+		for( int i = count; count < _${var}List.length; count++ )
 		{
-			_${condition.NameAsVariable}List[i] = ${condition.NameAsVariable};
+			_${var}List[i] = ${var};
 		}
-		_${condition.NameAsVariable}Count++;
-	}
-	
-	public ${condition.JavaType} get${condition.NameAsMethod}( int nth )
-	{
-		return _${condition.NameAsVariable}List[ nth ];
-	}
-	
-#elseif( $condition.isBETWEEN() )
-
-	public ${condition.JavaType} _${condition.NameAsVariable}Left = $condition.getLeftAsCode();
-	
-	public void set${condition.NameAsMethod}Left( ${condition.JavaType} ${condition.NameAsVariable} )
-	{
-		_${condition.NameAsVariable}Left = ${condition.NameAsVariable};
-	}
-	
-	public ${condition.JavaType} get${condition.NameAsMethod}Left()
-	{
-		return _${condition.NameAsVariable}Left;
+		_${var}Count++;
 	}
 
-	public ${condition.JavaType} _${condition.NameAsVariable}Right = $condition.getRightAsCode();
-	
-	public void set${condition.NameAsMethod}Right( ${condition.JavaType} ${condition.NameAsVariable} )
+	public ${type} get${method}( int nth )
 	{
-		_${condition.NameAsVariable}Right = ${condition.NameAsVariable};
-	}
-	
-	public ${condition.JavaType} get${condition.NameAsMethod}Right()
-	{
-		return _${condition.NameAsVariable}Right;
-	}
-#end
-#end
-
-	private static String __sql = null;
-	
-	public String getSQL()
-	{
-		if( __sql == null )
-		{
-			StringBuilder sb = new StringBuilder();
-#foreach( $line in $sql )
-			sb.append( "$line" );
-			sb.append( '\n' );
-#end
-			__sql = sb.toString();
-		}
-		return __sql;
-	}
-	
-	public String toString()
-	{
-		String result = getSQL();
-##
-#foreach( $condition in $conditions )
-##
-#if( $condition.isIN() )
-##
-#set( $size = $condition.getValues().size() - 1 )
-#foreach( $abc in [0..$size] )
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}( ${abc} )));
-#end
-##
-#elseif( $condition.isBETWEEN() )
-##
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Left() ));
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Right() ));
-#elseif( $condition.isComparison() || $condition.isLIKE() )
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}() ));
-#end
-#end
-		return result;
-	}
-	
-	private String quotifyString( Object value )
-	{
-		if( value instanceof String )
-		{
-			return "'" + value.toString() + "'";
-		}
-		else
-		{
-			return value.toString();
-		}
+		return _${var}List[ nth ];
 	}
 
+	#end
+#end
+##
+##	private static String __sql = null;
+##
+##	public String getSQL()
+##	{
+##		if( __sql == null )
+##		{
+##			StringBuilder sb = new StringBuilder();
+###foreach( $line in $sql )
+##			sb.append( "$line" );
+##			sb.append( '\n' );
+###end
+##			__sql = sb.toString();
+##		}
+##		return __sql;
+##	}
+
+##	public String toString()
+##	{
+##		String result = getSQL();
+####
+###foreach( $condition in $conditionList )
+####
+###if( $condition.isIN() )
+####
+###set( $size = $condition.getValues().size() - 1 )
+###foreach( $abc in [0..$size] )
+##		result = result.replaceFirst( "\\?", quotifyString( get${method}( ${abc} )));
+###end
+####
+###elseif( $condition.isBETWEEN() )
+####
+##		result = result.replaceFirst( "\\?", quotifyString( get${method}Left() ));
+##		result = result.replaceFirst( "\\?", quotifyString( get${method}Right() ));
+###elseif( $condition.isComparison() || $condition.isLIKE() )
+##		result = result.replaceFirst( "\\?", quotifyString( get${method}() ));
+###end
+###end
+##		return result;
+##	}
+##
+##	private String quotifyString( Object value )
+##	{
+##		if( value instanceof String )
+##		{
+##			return "'" + value.toString() + "'";
+##		}
+##		else
+##		{
+##			return value.toString();
+##		}
+##	}
 }

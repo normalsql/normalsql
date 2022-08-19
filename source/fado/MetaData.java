@@ -25,13 +25,6 @@ class Table
 	}
 }
 
-class Column
-{
-	String name;
-	String dataType;
-	String isNullable;
-}
-
 class Result
 {
 	String name;
@@ -56,30 +49,30 @@ class Result
 	}
 }
 
-class Param
-{
-	boolean isSigned;
-	int scaled;
-	int precision;
-	int mode;
-	int type;
-	String typeName;
-	int isNullable;
-
-	@Override
-	public String toString()
-	{
-		return "Param{" +
-				"isSigned=" + isSigned +
-				", scaled=" + scaled +
-				", precision=" + precision +
-				", mode=" + mode +
-				", type=" + type +
-				", typeName='" + typeName + '\'' +
-				", isNullable=" + isNullable +
-				'}';
-	}
-}
+//class Param
+//{
+//	boolean isSigned;
+//	int scaled;
+//	int precision;
+//	int mode;
+//	int type;
+//	String typeName;
+//	int isNullable;
+//
+//	@Override
+//	public String toString()
+//	{
+//		return "Param{" +
+//				"isSigned=" + isSigned +
+//				", scaled=" + scaled +
+//				", precision=" + precision +
+//				", mode=" + mode +
+//				", type=" + type +
+//				", typeName='" + typeName + '\'' +
+//				", isNullable=" + isNullable +
+//				'}';
+//	}
+//}
 
 public class MetaData
 {
@@ -160,7 +153,8 @@ public class MetaData
 						Column column = new Column();
 						column.name = columnsRS.getString( "COLUMN_NAME" );
 //						column.columnSize = columnsRS.getString("COLUMN_SIZE");
-						column.dataType = columnsRS.getString( "DATA_TYPE" );
+						column.type = columnsRS.getInt( "DATA_TYPE" );
+						column.typeName = columnsRS.getString( "TYPE_NAME" );
 						column.isNullable = columnsRS.getString( "IS_NULLABLE" );
 //						column.isAutoIncrement = columnsRS.getString("IS_AUTOINCREMENT");
 						table.addColumn( column );
