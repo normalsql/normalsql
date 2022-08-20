@@ -4,16 +4,21 @@
 ## 
 ## Template Parameters:
 ## 
-## packageName - target Java package name as String
-## className - target Java class name as String
-## sql - lines of retooled SQL statement as List<String>
-## conditionList - conditions found in source SQL as List<fado.meta.Condition>
-## date - Fado's timestamp
+##     packageName - target Java package name as String
+##     className - target Java class name as String
+##     date - current timestamp
+##     preparedSQL - SQL prepared statement
+##     originalSQL - original unparsed SQL
+##     originalFile - name of original .sql file
+##     conditionList - conditions from prepared SQL as List<fado.Condition>
+##     helper - Utility helper class for misc capitalizations and type conversions
+
 /**
 * ${className}.java   ${date}
 *
 * Generated using Fado's Select.vm template. Original SQL:
 *
+## TODO: Should this be a JavaDoc @snippet?
 * <pre>
 * {@code
 #foreach( $line in $originalSQL.split('\n') )
@@ -22,22 +27,11 @@
 * }
 * </pre>
 *
-* @see ${originalfile}
+* @see ${originalFile}
 *
 **/
 
-##${ffs.class.name}
-##$ffs.literals
-##${ffs.horse}
-##
-###foreach( $c in $conditionList )
-##	${c.class.name}
-##	#foreach( $l in ${c.literals} )
-##		${l.class.name}
-##	#end
-###end
-
-## add null check here
+## TODO add null check here
 package ${packageName};
 
 import java.sql.*;
@@ -47,12 +41,12 @@ import java.math.BigDecimal;
 public class
 	${className}
 {
-##	PreparedStatement __ps = null;
-##
-##	/**
-##		Pass a Connection. You are responsible for closing that Connection.
-##		${className} is a wrapper for a PreparedStatement, not a Connection.
-##	**/
+	PreparedStatement __ps = null;
+
+	/**
+		Pass a Connection. You are responsible for closing that Connection.
+		${className} is a wrapper for a PreparedStatement, not a Connection.
+	**/
 	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
@@ -60,27 +54,27 @@ public class
 		__ps = connection.prepareStatement( sql, resultSetType, resultSetConcurrency );
 	}
 
-##	public ${className}( Connection connection )
-##		throws SQLException
-##	{
-##		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-##	}
-##
-##	/**
-##		Pass a DataSource. You are responsible for closing that DataSource.
-##		${className} is a wrapper for a PreparedStatement, not a Connection.
-##	**/
-##	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
-##		throws SQLException
-##	{
-##		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
-##	}
-##
-##	public ${className}( DataSource dataSource )
-##		throws SQLException
-##	{
-##		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-##	}
+	public ${className}( Connection connection )
+		throws SQLException
+	{
+		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
+
+	/**
+		Pass a DataSource. You are responsible for closing that DataSource.
+		${className} is a wrapper for a PreparedStatement, not a Connection.
+	**/
+	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+		throws SQLException
+	{
+		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
+	}
+
+	public ${className}( DataSource dataSource )
+		throws SQLException
+	{
+		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
 
 	public final ${className}ResultSet execute()
 		throws SQLException
@@ -115,28 +109,31 @@ public class
 	}
 
 #foreach( $condition in $conditionList )
-	#set( $method = $helper.toMethodName( $condition.columnName ))
-	#set( $var = $helper.toVariableName( $condition.columnName ))
-	#set( $type = $helper.toVariableType( $condition.column.type ))
-	#if( $Comparison.isInstance( $condition ))
+#set( $method = $helper.toMethodName( $condition.columnName ))
+#set( $var = $helper.toVariableName( $condition.columnName ))
+#set( $type = $helper.toVariableType( $condition.column.type ))
+#set( $codeList = $helper.convertToCodeList( $condition ))
 
-	private ${type} _${var} = $condition.getValueAsCode();
+#if( $Comparison.isInstance( $condition ))
+	private ${type} _${var} = $codeList[0];
 	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
 	public ${type} get${method}() { return _${var}; }
 
-	#elseif( $Between.isInstance( $condition ))
-
-	private ${type} _${var}Left = $condition.getLeftAsCode();
+#elseif( $Between.isInstance( $condition ))
+	private ${type} _${var}Left = $codeList[0];
 	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
 	public ${type} get${method}Left() { return _${var}Left; }
 
-	private ${type} _${var}Right = $condition.getRightAsCode();
+	private ${type} _${var}Right = $codeList[1];
 	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
 	public ${type} get${method}Right() { return _${var}Right; }
 
-	#elseif( $IN.isInstance( $condition ))
-
-	private ${type}[] _${var}List = new ${type}[] { $condition.getValueAsCode() };
+#elseif( $IN.isInstance( $condition ))
+	private ${type}[] _${var}List = new ${type}[] {
+	#foreach( $code in $codeList )
+		$code #if( $foreach.hasNext ), #end
+	#end
+	};
 	private int _${var}Count = 0;
 	public void add${method}Param( ${type} ${var} )
 	{
@@ -158,25 +155,24 @@ public class
 	{
 		return _${var}List[ nth ];
 	}
-
-	#end
 #end
-##
-##	private static String __sql = null;
-##
-##	public String getSQL()
-##	{
-##		if( __sql == null )
-##		{
-##			StringBuilder sb = new StringBuilder();
-###foreach( $line in $sql )
-##			sb.append( "$line" );
-##			sb.append( '\n' );
-###end
-##			__sql = sb.toString();
-##		}
-##		return __sql;
-##	}
+#end
+
+	private static String __sql = null;
+
+	public String getSQL()
+	{
+		if( __sql == null )
+		{
+			StringBuilder sb = new StringBuilder();
+#foreach( $line in $sql )
+			sb.append( "$line" );
+			sb.append( '\n' );
+#end
+			__sql = sb.toString();
+		}
+		return __sql;
+	}
 
 ##	public String toString()
 ##	{

@@ -80,12 +80,12 @@ public class FadoNested
 	public static void main( String[] args )
 			throws Exception
 	{
-		String sql = new String( Files.readAllBytes( Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" )));
+		String originalSQL = new String( Files.readAllBytes( Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" )));
 
 //		CharStream chars = CharStreams.fromPath( Paths.get( sourceFile.getPath() ) );
 //		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/NestedSelect.sql" );
 //		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
-		CharStream chars = CharStreams.fromString( sql );
+		CharStream chars = CharStreams.fromString( originalSQL );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
@@ -102,13 +102,15 @@ public class FadoNested
 		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
 		resolveFROMs( root, tables );
 
-		List<Result> resultColumnList = MetaData.extractResultColumns( conn, sql );
+		List<Result> resultColumnList = MetaData.extractResultColumns( conn, originalSQL );
 		// TODO support batches, multiple queries, multiple resultsets
 		List<Item> itemList = root.get( 0 ).itemList;
 		matchItemsToResultColumns( itemList, resultColumnList );
 
 		ArrayList<Condition> conditionList = new ArrayList<>();
 		gatherConditions( root, conditionList );
+		processConditions( conditionList );
+
 
 //		Object[] ffs = conditionList.toArray();
 //		Arrays.sort( ffs );
@@ -355,6 +357,26 @@ public class FadoNested
 			gatherConditions( child, conditions );
 		}
 	}
+
+	/**
+	 * Populate each Condition with text from literals. Replace each
+	 * literal's text with '?' parameter, for creating a PreparedStatement.
+	 *
+	 * @param conditionList
+	 */
+	static void processConditions( ArrayList<Condition> conditionList )
+	{
+		for( Condition condition : conditionList )
+		{
+			for( LiteralContext lc : condition.literals )
+			{
+				String value = lc.getText();
+				condition.valueList.add( value );
+				// TODO: change literal text to '?'
+			}
+		}
+	}
+
 
 
 	/**

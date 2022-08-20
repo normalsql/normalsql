@@ -1,5 +1,9 @@
 package fado.meta;
 
+import fado.Condition;
+
+import java.util.ArrayList;
+import java.util.List;
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 import static java.sql.Types.*;
@@ -247,4 +251,125 @@ public class
 		return result;
 	}
 
+	public static List<String> convertToCodeList( Condition condition )
+	{
+		int type = condition.column.type;
+		ArrayList<String> codeList = new ArrayList<>();
+		for( String value : condition.valueList )
+		{
+			String code = convertToCode( type, value );
+			codeList.add( code );
+		}
+		return codeList;
+	}
+
+	public static String convertToCode( Condition condition )
+	{
+		int type = condition.column.type;
+		String value = condition.valueList.get( 0 );
+		String code = convertToCode( type, value );
+		return code;
+	}
+
+	/**
+	 * Convert value to an appropriate Java code value/instance declaration. Used by
+	 * code generating templates.
+	 *
+	 * @param sqlType
+	 * @param value
+	 * @return
+	 */
+	// TODO: Add 'value' to Exception messages
+	public static String convertToCode( int sqlType, String value )
+	{
+		String code = null;
+		switch( sqlType )
+		{
+			case CHAR:
+			case VARCHAR:
+			case LONGVARCHAR:
+			case LONGNVARCHAR:
+				code = "\"" + value + "\"";
+				break;
+			case BIGINT:
+//				code = "new java.math.BigInteger( " + literal + " );";
+				code = value + "L";
+				break;
+			case BIT:
+			case BOOLEAN:
+			{
+				// assume value is already either "true" or "false"?
+				boolean ugh = Boolean.parseBoolean( value );
+				code = ugh ? "true" : "false";
+				break;
+			}
+			case BINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BINARY" );
+
+			case ARRAY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BINARY" );
+			case BLOB:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type BLOB" );
+			case CLOB:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type CLOB" );
+			case DATALINK:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+			case DECIMAL:
+				code = "new java.math.BigDecimal( " + value + " );";
+				break;
+			case DISTINCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			case DOUBLE:
+				code = value + "d";
+				break;
+			case FLOAT:
+			case REAL:
+				code = value + "f";
+				break;
+			case INTEGER:
+				code = value;
+				break;
+			case JAVA_OBJECT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+
+			case LONGVARBINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type LONGVARBINARY" );
+
+			case NUMERIC:
+				code = "new java.math.BigDecimal( " + value + " );";
+				break;
+			case NULL:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+			case OTHER:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+			case REF:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type REF" );
+			case SMALLINT:
+				code = "(short) " + value;
+				break;
+			case TINYINT:
+				code = "(byte) " + value;
+				break;
+
+			case STRUCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type STRUCT" );
+
+			case DATE:
+				code = "java.sql.Date.valueOf( \"" + value + "\" )";
+				break;
+			case TIME:
+				code = "java.sql.Time.valueOf( \"" + value + "\" )";
+				break;
+			case TIMESTAMP:
+				code = "java.sql.Timestamp.valueOf( \"" + value + "\" )";
+				break;
+			case VARBINARY:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type VARBINARY" );
+
+			default:
+				code = "unknown SQL Type: " + sqlType;
+				throw new IllegalArgumentException( code );
+		}
+		return code;
+	}
 }

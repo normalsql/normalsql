@@ -1,4 +1,6 @@
 package fado;
+import java.util.ArrayList;
+
 import static fado.parse.GenericSQLParser.*;
 
 public class Condition // implements Comparable<Condition>
@@ -6,10 +8,14 @@ public class Condition // implements Comparable<Condition>
 	public ColumnRefContext columnRef;
 	public String tableName;
 	public String columnName;
+	// TODO remove 'from' and add Table reference to Column
 	public From from;
 	public Column column;
+	// TODO: convert to List<LiteralContext>
 	public LiteralContext[] literals;
+	public ArrayList<String> valueList = new ArrayList<>();
 
+	// TODO add constuctor w/ List<LiteralContext>
 	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
 	{
 		this.columnRef = columnRef;

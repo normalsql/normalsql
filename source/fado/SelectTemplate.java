@@ -38,12 +38,16 @@ public class SelectTemplate
 		comparison.columnName = "apple";
 		comparison.column = new Column();
 		comparison.column.type = VARCHAR;
+		comparison.valueList.add( "cosmic crisp" );
 		conditions.add( comparison );
+
 
 		Between between = new Between( null );
 		between.columnName = "banana";
 		between.column = new Column();
-		between.column.type = DATE;
+		between.column.type = INTEGER;
+		between.valueList.add( "1" );
+		between.valueList.add( "9" );
 		conditions.add( between );
 
 		GenericSQLParser.LiteralContext l1 = new GenericSQLParser.LiteralContext( null, 0 );
@@ -52,7 +56,10 @@ public class SelectTemplate
 		IN in = new IN( null, l1, l2, l3 );
 		in.columnName = "cherry";
 		in.column = new Column();
-		in.column.type = INTEGER;
+		in.column.type = CHAR;
+		in.valueList.add( "bitter" );
+		in.valueList.add( "sweet" );
+		in.valueList.add( "tart" );
 		conditions.add( in );
 
 		String className = "Test";
