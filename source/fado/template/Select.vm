@@ -7,7 +7,7 @@
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
 ##     date - current timestamp
-##     preparedSQL - SQL prepared statement
+##     preparedSQL - prepared SQL statement (containg '?' params)
 ##     originalSQL - original unparsed SQL
 ##     originalFile - name of original .sql file
 ##     conditionList - conditions from prepared SQL as List<fado.Condition>

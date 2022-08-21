@@ -110,16 +110,11 @@ public class FadoNested
 		ArrayList<Condition> conditionList = new ArrayList<>();
 		gatherConditions( root, conditionList );
 		processConditions( conditionList );
+		String preparedSQL = tokens.getText();
+		System.out.println( preparedSQL );
 
-
-//		Object[] ffs = conditionList.toArray();
-//		Arrays.sort( ffs );
 //		ArrayList<StatementParam> paramList =
 //		gatherStatementParams( conditionList, tables );
-		// sort literals (stream order)
-
-//		convertConditionsToParams( root );
-		System.out.println( root.size() );
 
 	}
 
@@ -253,7 +248,6 @@ public class FadoNested
 				LiteralContext literal = ec.right.literal();
 				if( columnRef != null && literal != null )
 				{
-//					node.convertToInputParam();
 					parent.conditionList.add( new Comparison( op,columnRef, literal ));
 				}
 				break;
@@ -302,6 +296,11 @@ public class FadoNested
 
 	static void resolveFROMs( SelectList parent, Map<String, Table> tableMap )
 	{
+		for( SelectList child : parent )
+		{
+			resolveFROMs( child, tableMap );
+		}
+
 		for( From from : parent.fromList )
 		{
 			from.table = tableMap.get( from.tableName.toLowerCase() );
@@ -314,11 +313,6 @@ public class FadoNested
 		for( Condition condition : parent.conditionList )
 		{
 			resolveCondition( parent, condition );
-		}
-
-		for( SelectList child : parent )
-		{
-			resolveFROMs( child, tableMap );
 		}
 	}
 
@@ -351,11 +345,11 @@ public class FadoNested
 
 	static void gatherConditions( SelectList parent, ArrayList<Condition> conditions )
 	{
-		conditions.addAll( parent.conditionList );
 		for( SelectList child : parent )
 		{
 			gatherConditions( child, conditions );
 		}
+		conditions.addAll( parent.conditionList );
 	}
 
 	/**
@@ -373,11 +367,10 @@ public class FadoNested
 				String value = lc.getText();
 				condition.valueList.add( value );
 				// TODO: change literal text to '?'
+				lc.convertToInputParam();
 			}
 		}
 	}
-
-
 
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL

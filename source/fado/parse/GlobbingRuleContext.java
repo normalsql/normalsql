@@ -155,16 +155,17 @@ extends
         return text;
     }
 
-
-    // Replaces original value with a JDBC input parameter '?'
+    // Replaces original literal value with a JDBC input parameter '?'
     // TODO: Handle unary numbers, eg -100
     // TODO: Knockout whole 'literal' rule context?
+//    static int param = 0;
     public void convertToInputParam()
     {
         // Replace text of first "visible" (non whitespace) token, then exit
         Token start = getStart();
         if( start instanceof WritableToken )
         {
+//            ((WritableToken) start).setText( "?" + param++ );
             ((WritableToken) start).setText( "?" );
         }
     }
