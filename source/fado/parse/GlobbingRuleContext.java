@@ -1,12 +1,25 @@
+/*
+ Fado - GloggingRuleContext.java
+
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
+
+ Custom RuleContext superclass. Used by SQL parser grammar.
+
+ Inlines globbing path expressions. Alternative to ANTLR's stock separate XPath
+ query expression thing.
+
+ TODO: Add find*String globbing methods to eliminate .getText() in client code.
+
+ Utility methods (removing quotes, setText), because I don't know where else to put them.
+
+*/
 package fado.parse;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.WritableToken;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class
@@ -49,19 +62,19 @@ extends
     }
 
     // TODO delete this
-    public List<GlobbingRuleContext> findContexts( String query )
-    {
-        List<GlobbingRuleContext> list = find( query );
-        ArrayList<GlobbingRuleContext> result = new ArrayList<>();
-        for( Object ugh : list )
-        {
-            if( ugh instanceof GlobbingRuleContext )
-            {
-                result.add( (GlobbingRuleContext) ugh );
-            }
-        }
-        return result;
-    }
+//    public List<GlobbingRuleContext> findContexts( String query )
+//    {
+//        List<GlobbingRuleContext> list = find( query );
+//        ArrayList<GlobbingRuleContext> result = new ArrayList<>();
+//        for( Object ugh : list )
+//        {
+//            if( ugh instanceof GlobbingRuleContext )
+//            {
+//                result.add( (GlobbingRuleContext) ugh );
+//            }
+//        }
+//        return result;
+//    }
 
     // TODO: validate expression
     protected List<GlobbingRuleContext> find( String query, boolean first )
@@ -158,6 +171,7 @@ extends
     // Replaces original literal value with a JDBC input parameter '?'
     // TODO: Handle unary numbers, eg -100
     // TODO: Knockout whole 'literal' rule context?
+    // TODO: Change this method to setText( ... )?
 //    static int param = 0;
     public void convertToInputParam()
     {

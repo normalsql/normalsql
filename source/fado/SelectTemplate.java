@@ -1,5 +1,5 @@
 /*
- SelectTemplate.java
+ Fado - SelectTemplate.java
 
  Copyright 2022, 2014, 2011, 2010 Jason Osgood
 
@@ -8,7 +8,8 @@
 
 package fado;
 
-import fado.meta.Util;
+import fado.meta.*;
+import fado.template.JavaHelper;
 import fado.parse.GenericSQLParser;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -20,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import static java.sql.Types.*;
@@ -75,22 +77,28 @@ public class SelectTemplate
 			BufferedWriter writer = new BufferedWriter( osw );
 		)
 		{
+			// TODO: This will have to be moved
 			Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
 			Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
 			Velocity.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
 			Velocity.init();
 
+			// TODO: Just one template instance
 			Template template = Velocity.getTemplate( "fado/template/Select.vm" );
 
 			HashMap<String, Object> map = new HashMap<>();
-			map.put( "helper", Util.class );
 			map.put( "Comparison", Comparison.class );
 			map.put( "Between", Between.class );
 			map.put( "IN", IN.class );
 			map.put( "packageName", packageName );
 			map.put( "className", className );
+			map.put( "date", new Date() );
+//			map.put( "originalFile", originalFile );
 			map.put( "originalSQL", originalSQL );
+//			map.put( "preparedSQL", preparedSQL );
+//			map.put( "printfSQL", printfSQL );
 			map.put( "conditionList", conditionList );
+			map.put( "helper", JavaHelper.class );
 
 			VelocityContext context = new VelocityContext( map );
 			template.merge( context, writer );

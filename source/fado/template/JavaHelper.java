@@ -1,6 +1,13 @@
-package fado.meta;
+/*
+ Fado - JavaHelper.java
 
-import fado.Condition;
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
+
+ Capitalization and type conversions methods.
+*/
+package fado.template;
+
+import fado.meta.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,8 +15,8 @@ import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 import static java.sql.Types.*;
 
-public class 
-	Util 
+public class
+JavaHelper
 {
 	public static boolean isAllUpperCase( String s ) 
 	{
@@ -27,7 +34,7 @@ public class
 	// bigPony => BigPony
 	public static String toMethodName( String name )
 	{
-		if( !Util.isAllUpperCase( name ))
+		if( !JavaHelper.isAllUpperCase( name ))
 		{
 			name = toUpperCase( name.charAt( 0 ) ) + name.substring( 1 );
 		}
@@ -38,7 +45,7 @@ public class
 	// BigPony => bigPony
 	public static String toVariableName( String name )
 	{
-		if( Util.isAllUpperCase( name ))
+		if( JavaHelper.isAllUpperCase( name ))
 		{
 			name = name.toLowerCase();
 		}

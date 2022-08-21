@@ -1,5 +1,9 @@
 package fado;
 
+import fado.meta.Column;
+import fado.meta.Result;
+import fado.meta.Table;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
@@ -8,46 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-class Table
-{
-	String name;
-	private HashMap<String, Column> columnMap = new HashMap<>();
-
-	public void addColumn( Column c )
-	{
-		columnMap.put( c.name.toLowerCase(), c );
-	}
-
-	public Column getColumn( String name )
-	{
-		return columnMap.get( name.toLowerCase() );
-	}
-}
-
-class Result
-{
-	String name;
-	String label;
-	// Preferred capitalization from original SQL source
-	String preferredName;
-	int type;
-	String typeName;
-	int isNullable;
-
-	@Override
-	public String toString()
-	{
-		return "Result{" +
-				"name='" + name + '\'' +
-				", label='" + label + '\'' +
-				", preferredName='" + preferredName + '\'' +
-				", type=" + type +
-				", typeName='" + typeName + '\'' +
-				", isNullable=" + isNullable +
-				'}';
-	}
-}
 
 //class Param
 //{

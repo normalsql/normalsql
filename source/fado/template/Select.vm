@@ -1,17 +1,22 @@
-## Fado's SELECT Statement Template
+## Fado's SELECT Statement Template for Java & JDBC
 ##
 ## Copyright 2022, 2014, 2011, 2010 Jason Osgood
 ## 
 ## Template Parameters:
-## 
+##
+##     Comparison - reference to Comparison.class
+##     Between - reference to Between.class
+##     IN - reference to IN.class
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
 ##     date - current timestamp
-##     preparedSQL - prepared SQL statement (containg '?' params)
+##     originalFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
+##     preparedSQL - prepared SQL statement (containg '?' params)
+##     printfSQL - like preparedSQL, but for printf.
 ##     originalFile - name of original .sql file
 ##     conditionList - conditions from prepared SQL as List<fado.Condition>
-##     helper - Utility helper class for misc capitalizations and type conversions
+##     helper - Capitalization and type conversions methods.
 
 /**
 * ${className}.java   ${date}
@@ -174,6 +179,7 @@ public class
 		return __sql;
 	}
 
+## TODO: printfSQL for easier debugging
 ##	public String toString()
 ##	{
 ##		String result = getSQL();

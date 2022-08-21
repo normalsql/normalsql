@@ -1,5 +1,6 @@
 package fado;
 
+import fado.meta.*;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import static fado.parse.GenericSQLParser.*;
@@ -14,65 +15,6 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
-
-class SelectList extends ArrayList<SelectList>
-{
-	GlobbingRuleContext context;
-	ArrayList<Item> itemList = new ArrayList<>();
-	ArrayList<From> fromList = new ArrayList<>();
-	ArrayList<Condition> conditionList = new ArrayList<>();
-}
-
-class Item
-{
-	ItemContext ic;
-	String alias;
-	String name;
-
-	Item( ItemContext ic )
-	{
-		this.ic = ic;
-		ColumnRefContext columnRef = ic.findFirst( ColumnRefContext.class, "**/columnRef" );
-		if( columnRef != null )
-		{
-			// am pretty sure this can't be null
-			this.name = ic.trimQuotes( columnRef.columnName().getText() );
-		}
-
-		this.alias = ic.trimQuotes( ic.findFirstString( "**/aliasName" ));
-	}
-
-	@Override
-	public java.lang.String toString()
-	{
-		return "Item{" +
-				"alias='" + alias + '\'' +
-				", name='" + name + '\'' +
-				'}';
-	}
-}
-
-class From
-{
-	TableContext tc;
-	String databaseName;
-	String tableName;
-	String alias;
-	Table table;
-
-	From( TableContext tc )
-	{
-		this.tc = tc;
-		this.databaseName = tc.trimQuotes( tc.findFirstString( "**/databaseName" ));
-		this.tableName = tc.trimQuotes( tc.findFirstString( "**/tableName" ));
-		this.alias = tc.trimQuotes( tc.findFirstString( "**/aliasName" ));
-	}
-}
-
-
-
-
-
 
 
 public class FadoNested

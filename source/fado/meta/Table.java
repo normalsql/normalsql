@@ -1,37 +1,25 @@
+/*
+ Fado - Column.java
+
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
+
+ Represents SQL table.
+*/
 package fado.meta;
 
-public class 
-	Table
+import java.util.HashMap;
+
+public class Table
 {
-	private String _database;
-	private String _name;
-	private String _alias;
-	
-	public Table( String database, String name, String alias )
+	public String name;
+	// TODO: replace Map with searching List, cuz Map is not case sensitive
+	private HashMap<String, Column> columnMap = new HashMap<>();
+	public void addColumn( Column c )
 	{
-		_database = database;
-		_name = name;
-		_alias = alias;
+		columnMap.put( c.name.toLowerCase(), c );
 	}
-	
-	public String getDatabase() { return _database; }
-	public String getName() { return _name; }
-	public String getAlias() { return _alias; }
-	
-	public String toString()
+	public Column getColumn( String name )
 	{
-		StringBuffer sb = new StringBuffer();
-		if( getDatabase() != null )
-		{
-			sb.append( getDatabase() );
-			sb.append( "." );
-		}
-		sb.append( getName() );
-		if( getAlias() != null )
-		{
-			sb.append( " AS " );
-			sb.append( getAlias() );
-		}
-		return sb.toString();
+		return columnMap.get( name.toLowerCase() );
 	}
 }

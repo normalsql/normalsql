@@ -1,38 +1,47 @@
+/*
+ Fado - Condition.java
+
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
+
+ Superclass representing conditions in SQL expressions.
+*/
+
 package fado.meta;
 
-public abstract class 
-	Condition 
-extends
-	MetaField
+import java.util.ArrayList;
+
+import static fado.parse.GenericSQLParser.*;
+
+public abstract class Condition // implements Comparable<Condition>
 {
-	public Condition( Table table, String name )
+	public ColumnRefContext columnRef;
+	public String tableName;
+	public String columnName;
+	// TODO remove 'from' and add Table reference to Column
+	public From from;
+	public Column column;
+	// TODO: convert to List<LiteralContext>
+	public LiteralContext[] literals;
+	public ArrayList<String> valueList = new ArrayList<>();
+
+	// TODO add constuctor w/ List<LiteralContext>
+	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
 	{
-		super( name );
-		_table = table;
-	}
-	
-	private Table _table = null;
-	public final Table getTable() { return _table; }
-	public final boolean hasTable() { return _table != null; }
-	
-	/** 
-	 * These four are used by Velocity template, because I don't know how to do Java instanceof
-	 * from within the template. 
-	 * 
-	 * @return
-	 */
-	public boolean isComparison() { return false; }
-	public boolean isIN() { return false; }
-	public boolean isBETWEEN() { return false; }
-	public boolean isLIKE() { return false; }
-	
-	@Override
-	public String toString()
-	{
-		return "Condition [table=" + _table + 
-				", field=" + getName() + 
-				", nullable=" + isNullable()
-				+ ", sqlType=" + getSQLType() + "]";
+		this.columnRef = columnRef;
+		this.literals = literals;
+		if( columnRef != null )
+		{
+			this.columnName = columnRef.trimQuotes( columnRef.columnName().getText() );
+			// Null-safe query to get 'tableName'
+			this.tableName = columnRef.trimQuotes( columnRef.findFirstString( "tableName" ));
+		}
 	}
 
+//	@Override
+//	public int compareTo( Condition that )
+//	{
+//		int a = this.columnRef.start.getStartIndex();
+//		int b = that.columnRef.start.getStartIndex();
+//		return a - b;
+//	}
 }

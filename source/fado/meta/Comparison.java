@@ -1,31 +1,23 @@
+/*
+ Fado - Comparison.java
+
+ Copyright 2022, 2014, 2011, 2010 Jason Osgood
+
+ Represents comparison operators in SQL expressions.
+*/
+
 package fado.meta;
 
-public class 
-	Comparison
-extends
-	Condition
+import static fado.parse.GenericSQLParser.*;
+
+import org.antlr.v4.runtime.Token;
+
+public class Comparison extends Condition
 {
-	public Comparison( Table table, String accessor, String value )
+	public Token op;
+	public Comparison( Token op, ColumnRefContext columnRef, LiteralContext... literals )
 	{
-		super( table, accessor );
-		_value = value;
+		super( columnRef, literals );
+		this.op = op;
 	}
-	
-	String _value = null;
-	public void setValue( String value )
-	{
-		_value = value;
-	}
-	public String getValue()
-	{
-		return _value;
-	}
-	
-	public String getValueAsCode()
-	{
-		String result = TypeConverter.getValueAsCode( getSQLType(), getValue() );
-		return result;
-	}
-	
-	public boolean isComparison() { return true; }
 }
