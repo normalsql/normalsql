@@ -10,13 +10,13 @@
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
 ##     date - current timestamp
-##     originalFile - name of original .sql file
+##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared SQL statement (containg '?' params)
-##     printfSQL - like preparedSQL, but for printf.
+##     printfSQL - like preparedSQL, but for printf
 ##     originalFile - name of original .sql file
 ##     conditionList - conditions from prepared SQL as List<fado.Condition>
-##     helper - Capitalization and type conversions methods.
+##     helper - Capitalization and type casting methods.
 
 /**
 * ${className}.java   ${date}
@@ -32,7 +32,7 @@
 * }
 * </pre>
 *
-* @see ${originalFile}
+* @see ${sourceFile}
 *
 **/
 
@@ -46,7 +46,12 @@ import java.math.BigDecimal;
 public class
 	${className}
 {
-	PreparedStatement __ps = null;
+	private PreparedStatement __ps = null;
+	public final String __preparedSQL =
+#foreach( $line in $preparedSQL.split('\n') )
+## add back each '\n', then concat each line with '+', then end with ';'
+		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+#end
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -55,8 +60,7 @@ public class
 	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
-		String sql = getSQL();
-		__ps = connection.prepareStatement( sql, resultSetType, resultSetConcurrency );
+		__ps = connection.prepareStatement( __preparedSQL, resultSetType, resultSetConcurrency );
 	}
 
 	public ${className}( Connection connection )
@@ -136,7 +140,7 @@ public class
 #elseif( $IN.isInstance( $condition ))
 	private ${type}[] _${var}List = new ${type}[] {
 	#foreach( $code in $codeList )
-		$code #if( $foreach.hasNext ), #end
+		${code}#if( $foreach.hasNext ),#end
 	#end
 	};
 	private int _${var}Count = 0;
@@ -162,22 +166,6 @@ public class
 	}
 #end
 #end
-
-	private static String __sql = null;
-
-	public String getSQL()
-	{
-		if( __sql == null )
-		{
-			StringBuilder sb = new StringBuilder();
-#foreach( $line in $sql )
-			sb.append( "$line" );
-			sb.append( '\n' );
-#end
-			__sql = sb.toString();
-		}
-		return __sql;
-	}
 
 ## TODO: printfSQL for easier debugging
 ##	public String toString()

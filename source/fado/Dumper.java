@@ -90,5 +90,29 @@ public class
 			rs.beforeFirst();
 		}
 	}
-
+//	public static void dumpResultSet( ResultSet rs )
+//			throws SQLException
+//	{
+//		System.out.println();
+//		ResultSetMetaData meta = rs.getMetaData();
+//		int count = meta.getColumnCount();
+//		for( int i = 0; i < count; i++ )
+//		{
+//			String temp = meta.getColumnName( i + 1 );
+//			System.out.print( temp + "\t" );
+//		}
+//		System.out.print( "\n--\n" );
+////		set.first();
+//		while( rs.next() )
+//		{
+//			for( int i = 0; i < count; i++ )
+//			{
+//				Object temp = rs.getObject( i + 1 );
+//				System.out.print( temp + "\t" );
+//			}
+//			System.out.print( "\n" );
+//
+//		}
+//		System.out.println();
+//	}
 }

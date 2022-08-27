@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -20,14 +21,56 @@ import java.util.*;
 public class FadoNested
 {
 	public static void main( String[] args )
-			throws Exception
+		throws Exception
 	{
-		String originalSQL = new String( Files.readAllBytes( Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" )));
+		Class.forName( "org.h2.Driver" );
 
-//		CharStream chars = CharStreams.fromPath( Paths.get( sourceFile.getPath() ) );
-//		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/NestedSelect.sql" );
-//		CharStream chars = CharStreams.fromFileName( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
-		CharStream chars = CharStreams.fromString( originalSQL );
+		Work work = new Work();
+		work.sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
+		work.targetFile = Paths.get( "" );
+		work.packageName = "blerg";
+		work.className = "SelectCourseDescr";
+
+		process( work );
+	}
+
+	public static void process( Work work )
+		throws Exception
+	{
+		// TODO support batches, multiple queries, multiple resultsets
+
+		String originalSQL = new String( Files.readAllBytes( work.sourceFile ));
+		work.originalSQL = originalSQL;
+
+		parse( work );
+
+		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm", "sa", null );
+		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
+		resolveFROMs( work.root, tables );
+
+		MetaData.processPreparedStatement( conn, work );
+		List<Item> itemList = work.root.get( 0 ).itemList;
+		matchItemsToRSColumns( itemList, work.rsColumnList );
+
+		gatherConditions( work.root, work.conditionList );
+		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
+
+		updateLiterals( work.conditionList );
+		String preparedSQL = work.tokens.getText();
+		work.preparedSQL = preparedSQL;
+
+		SelectTemplate template = new SelectTemplate();
+		template.merge( work );
+
+//		ArrayList<StatementParam> paramList =
+//		gatherStatementParams( conditionList, tables );
+
+	}
+
+	public static void parse( Work work )
+		throws IOException
+	{
+		CharStream chars = CharStreams.fromString( work.originalSQL );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
@@ -37,64 +80,9 @@ public class FadoNested
 		findFROMs( root );
 		findWHEREs( root );
 		findItems( root );
-
-		Class.forName( "org.h2.Driver" );
-		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm", "sa", null );
-
-		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
-		resolveFROMs( root, tables );
-
-		List<Result> resultColumnList = MetaData.extractResultColumns( conn, originalSQL );
-		// TODO support batches, multiple queries, multiple resultsets
-		List<Item> itemList = root.get( 0 ).itemList;
-		matchItemsToResultColumns( itemList, resultColumnList );
-
-		ArrayList<Condition> conditionList = new ArrayList<>();
-		gatherConditions( root, conditionList );
-		processConditions( conditionList );
-		String preparedSQL = tokens.getText();
-		System.out.println( preparedSQL );
-
-//		ArrayList<StatementParam> paramList =
-//		gatherStatementParams( conditionList, tables );
-
+		work.root = root;
+		work.tokens = tokens;
 	}
-
-//	/** Create one StatementParam per literal found. */
-//	static ArrayList<StatementParam> gatherStatementParams( List<Condition> conditionList, Map<String, Table> tableMap )
-//	{
-//		ArrayList<StatementParam> params = new ArrayList<>();
-////		StatementParam param = new StatementParam();
-//		for( Condition condition : conditionList )
-//		{
-////			switch( condition.getClass().getSimpleName() )
-////			{
-////				case "Comparison":
-////				{
-////					System.out.println( "yup " );
-////					break;
-////				}
-////			}
-//
-//			Table table = tableMap.get( condition.tableName.toLowerCase() );
-//			Column column = table.getColumn( condition.columnName );
-//
-//			if( condition instanceof Comparison )
-//			{
-////				LiteralContext literal = condition.
-////				StatementParam param = new StatementParam( condition.columnName, column.dataType );
-//			}
-//			else if( condition instanceof Between )
-//			{
-//
-//			}
-//			else if( condition instanceof IN )
-//			{
-//
-//			}
-//		}
-//		return params;
-//	}
 
 	static SelectList findSELECTs( GlobbingRuleContext parent )
 	{
@@ -269,7 +257,7 @@ public class FadoNested
 
 			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
 			{
-				Column column = from.table.getColumn( condition.columnName );
+				TColumn column = from.table.getColumn( condition.columnName );
 				if( column != null )
 				{
 					condition.from = from;
@@ -300,7 +288,7 @@ public class FadoNested
 	 *
 	 * @param conditionList
 	 */
-	static void processConditions( ArrayList<Condition> conditionList )
+	static void updateLiterals( ArrayList<Condition> conditionList )
 	{
 		for( Condition condition : conditionList )
 		{
@@ -320,13 +308,13 @@ public class FadoNested
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	static void matchItemsToResultColumns( List<Item> itemList, List<Result> resultColumnList )
+	static void matchItemsToRSColumns( List<Item> itemList, List<RSColumn> rsColumnList )
 	{
 		Iterator<Item> itemIterator = itemList.iterator();
 		String preferred = null;
 
 		outer:
-		for( Result column : resultColumnList )
+		for( RSColumn column : rsColumnList )
 		{
 			while( preferred == null )
 			{
@@ -342,5 +330,42 @@ public class FadoNested
 			}
 		}
 	}
+
+	//	/** Create one StatementParam per literal found. */
+//	static ArrayList<StatementParam> gatherStatementParams( List<Condition> conditionList, Map<String, Table> tableMap )
+//	{
+//		ArrayList<StatementParam> params = new ArrayList<>();
+////		StatementParam param = new StatementParam();
+//		for( Condition condition : conditionList )
+//		{
+////			switch( condition.getClass().getSimpleName() )
+////			{
+////				case "Comparison":
+////				{
+////					System.out.println( "yup " );
+////					break;
+////				}
+////			}
+//
+//			Table table = tableMap.get( condition.tableName.toLowerCase() );
+//			Column column = table.getColumn( condition.columnName );
+//
+//			if( condition instanceof Comparison )
+//			{
+////				LiteralContext literal = condition.
+////				StatementParam param = new StatementParam( condition.columnName, column.dataType );
+//			}
+//			else if( condition instanceof Between )
+//			{
+//
+//			}
+//			else if( condition instanceof IN )
+//			{
+//
+//			}
+//		}
+//		return params;
+//	}
+
 
 }

@@ -20,10 +20,9 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+
 import static java.sql.Types.*;
 
 public class SelectTemplate
@@ -32,45 +31,46 @@ public class SelectTemplate
 	{
 		SelectTemplate self = new SelectTemplate();
 
-		String originalSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = 'ENGL'";
+		Work work = new Work();
 
-		ArrayList<Condition> conditions = new ArrayList<>();
+		work.originalSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = 'ENGL'";
+		work.preparedSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = ?";
 
 		Comparison comparison = new Comparison( null, null );
 		comparison.columnName = "apple";
-		comparison.column = new Column();
+		comparison.column = new TColumn();
 		comparison.column.type = VARCHAR;
 		comparison.valueList.add( "cosmic crisp" );
-		conditions.add( comparison );
+		work.conditionList.add( comparison );
 
 
 		Between between = new Between( null );
 		between.columnName = "banana";
-		between.column = new Column();
+		between.column = new TColumn();
 		between.column.type = INTEGER;
 		between.valueList.add( "1" );
 		between.valueList.add( "9" );
-		conditions.add( between );
+		work.conditionList.add( between );
 
 		GenericSQLParser.LiteralContext l1 = new GenericSQLParser.LiteralContext( null, 0 );
 		GenericSQLParser.LiteralContext l2 = new GenericSQLParser.LiteralContext( null, 0 );
 		GenericSQLParser.LiteralContext l3 = new GenericSQLParser.LiteralContext( null, 0 );
 		IN in = new IN( null, l1, l2, l3 );
 		in.columnName = "cherry";
-		in.column = new Column();
+		in.column = new TColumn();
 		in.column.type = CHAR;
 		in.valueList.add( "bitter" );
 		in.valueList.add( "sweet" );
 		in.valueList.add( "tart" );
-		conditions.add( in );
+		work.conditionList.add( in );
 
-		String className = "Test";
-		String packageName = "test";
+		work.className = "Test";
+		work.packageName = "test";
 
-		self.merge( className, packageName, originalSQL, conditions );
+		self.merge( work );
 	}
 
-	public void merge( String className, String packageName, String originalSQL, List<Condition> conditionList ) throws IOException
+	public void merge( Work work ) throws IOException
 	{
 		try (
 			OutputStreamWriter osw = new OutputStreamWriter( System.out );
@@ -90,14 +90,15 @@ public class SelectTemplate
 			map.put( "Comparison", Comparison.class );
 			map.put( "Between", Between.class );
 			map.put( "IN", IN.class );
-			map.put( "packageName", packageName );
-			map.put( "className", className );
+			map.put( "packageName", work.packageName );
+			map.put( "className", work.className );
+			// TODO change to 'now', use same Date for all artifacts
 			map.put( "date", new Date() );
-//			map.put( "originalFile", originalFile );
-			map.put( "originalSQL", originalSQL );
-//			map.put( "preparedSQL", preparedSQL );
+			map.put( "sourceFile", work.sourceFile );
+			map.put( "originalSQL", work.originalSQL );
+			map.put( "preparedSQL", work.preparedSQL );
 //			map.put( "printfSQL", printfSQL );
-			map.put( "conditionList", conditionList );
+			map.put( "conditionList", work.conditionList );
 			map.put( "helper", JavaHelper.class );
 
 			VelocityContext context = new VelocityContext( map );

@@ -19,7 +19,7 @@ public abstract class Condition // implements Comparable<Condition>
 	public String columnName;
 	// TODO remove 'from' and add Table reference to Column
 	public From from;
-	public Column column;
+	public TColumn column;
 	// TODO: convert to List<LiteralContext>
 	public LiteralContext[] literals;
 	public ArrayList<String> valueList = new ArrayList<>();
