@@ -139,9 +139,7 @@ public class
 
 #elseif( $IN.isInstance( $condition ))
 	private ${type}[] _${var}List = new ${type}[] {
-	#foreach( $code in $codeList )
-		${code}#if( $foreach.hasNext ),#end
-	#end
+		$helper.join( ", ", $codeList )
 	};
 	private int _${var}Count = 0;
 	public void add${method}Param( ${type} ${var} )

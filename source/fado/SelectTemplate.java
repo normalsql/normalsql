@@ -13,7 +13,7 @@ import fado.template.JavaHelper;
 import fado.parse.GenericSQLParser;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
+import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
@@ -77,19 +77,25 @@ public class SelectTemplate
 			BufferedWriter writer = new BufferedWriter( osw );
 		)
 		{
+
+			VelocityEngine engine = new VelocityEngine();
+
 			// TODO: This will have to be moved
-			Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-			Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-			Velocity.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
-			Velocity.init();
+			engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+			engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
+
+			engine.init();
 
 			// TODO: Just one template instance
-			Template template = Velocity.getTemplate( "fado/template/Select.vm" );
+			Template template = engine.getTemplate( "fado/template/Select.vm" );
 
 			HashMap<String, Object> map = new HashMap<>();
 			map.put( "Comparison", Comparison.class );
 			map.put( "Between", Between.class );
 			map.put( "IN", IN.class );
+			map.put( "helper", JavaHelper.class );
+
 			map.put( "packageName", work.packageName );
 			map.put( "className", work.className );
 			// TODO change to 'now', use same Date for all artifacts
@@ -99,10 +105,10 @@ public class SelectTemplate
 			map.put( "preparedSQL", work.preparedSQL );
 //			map.put( "printfSQL", printfSQL );
 			map.put( "conditionList", work.conditionList );
-			map.put( "helper", JavaHelper.class );
 
 			VelocityContext context = new VelocityContext( map );
 			template.merge( context, writer );
+
 		}
 	}
 }
