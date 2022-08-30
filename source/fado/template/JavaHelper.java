@@ -8,6 +8,7 @@
 package fado.template;
 
 import fado.meta.Condition;
+import fado.meta.RSColumn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -182,7 +183,7 @@ JavaHelper
 				result = "boolean";
 				break;
 			case CHAR:
-				result = "java.lang.String";
+				result = "String";
 				break;
 			case CLOB:
 				result = "java.sql.Clob";
@@ -213,7 +214,7 @@ JavaHelper
 				break;
 			case LONGVARCHAR:
 			case LONGNVARCHAR:
-				result = "java.lang.String";
+				result = "String";
 				break;
 
 			case NUMERIC:
@@ -270,13 +271,13 @@ JavaHelper
 		return codeList;
 	}
 
-	public static String convertToCode( Condition condition )
-	{
-		int type = condition.column.type;
-		String value = condition.valueList.get( 0 );
-		String code = convertToCode( type, value );
-		return code;
-	}
+//	public static String convertToCode( Condition condition )
+//	{
+//		int type = condition.column.type;
+//		String value = condition.valueList.get( 0 );
+//		String code = convertToCode( type, value );
+//		return code;
+//	}
 
 	/**
 	 * Convert value to an appropriate Java code value/instance declaration. Used by
@@ -378,6 +379,115 @@ JavaHelper
 				throw new IllegalArgumentException( code );
 		}
 		return code;
+	}
+
+	public static String getInitializerValue( int sqlType )
+	{
+		String result = null;
+		switch( sqlType )
+		{
+			case ARRAY:
+				result = "null";
+				break;
+			case BIGINT:
+				result = "0L";
+//				result = "null";
+				break;
+			case BINARY:
+				result = "null";
+				break;
+			case BIT:
+				result = "false";
+				break;
+			case BLOB:
+				result = "null";
+				break;
+			case BOOLEAN:
+				result = "false";
+				break;
+			case CHAR:
+				result = "null";
+				break;
+			case CLOB:
+				result = "null";
+				break;
+			case DATALINK:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+			case DATE:
+				result = "null";
+				break;
+			case DECIMAL:
+				result = "null";
+				break;
+			case DISTINCT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type DISTINCT" );
+			case DOUBLE:
+				result = "0d";
+				break;
+			case FLOAT:
+				result = "0f";
+				break;
+			case INTEGER:
+				result = "0";
+				break;
+			case JAVA_OBJECT:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+			case LONGVARBINARY:
+				result = "null";
+				break;
+
+			case LONGVARCHAR:
+			case LONGNVARCHAR:
+				result = "null";
+				break;
+
+			case NUMERIC:
+				result = "null";
+				break;
+			case NULL:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+			case OTHER:
+				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+			case REAL:
+				result = "0f";
+				break;
+			case REF:
+				result = "null";
+				break;
+			case SMALLINT:
+				result = "0";
+				break;
+			case STRUCT:
+				result = "null";
+				break;
+			case TINYINT:
+				result = "0";
+				break;
+			case TIME:
+				result = "null";
+				break;
+			case TIMESTAMP:
+				result = "null";
+				break;
+			case VARBINARY:
+				result = "null";
+				break;
+			case VARCHAR:
+				result = "null";
+				break;
+			default:
+				result = "unknown SQL Type: " + sqlType;
+				throw new IllegalArgumentException( result );
+		}
+		return result;
+	}
+
+	public static String toNameAndAlias( RSColumn column )
+	{
+		if( column.preferredName.equalsIgnoreCase( column.name ))
+			return column.preferredName;
+		else
+			return column.preferredName + " (" + column.name + ")";
 	}
 
 	public static String join( CharSequence delimiter, CharSequence... elements )

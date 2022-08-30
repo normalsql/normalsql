@@ -1,27 +1,28 @@
-## Fado's SELECT Statement Template
+## Fado's SELECT ResultSet Template for Java & JDBC
 ## 
+## Copyright 2022, 2014, 2011, 2010 Jason Osgood
+##
 ## Template Parameters:
-## 
-## packageName - target Java package name as String
-## className - target Java class name as String
-## sql - lines of retooled SQL statement as List<String>
-## columns - columns found in source SQL as List<fado.meta.Column>
-## date - Fado's timestamp
+##
+##     helper - Capitalization and type casting methods.
+##     date - current timestamp
+##     packageName - target Java package name as String
+##     className - target Java class name as String
+##     sourceFile - name of original .sql file
+##     originalSQL - original unparsed SQL
+##     printfSQL - like preparedSQL, but for printf
+##     sourceFile - name of original .sql file
+##     columnList - conditions from prepared SQL as List<fado.Condition>
 /**
-
-${className}ResultSet.java   ${date}
-  
-Generated using Fado's ResultSet.vm template. Original SQL:
-    
-#foreach( $line in $originallines )
-$line
-#end
-
-@see ${originalfile}
-  
-
+* ${className}ResultSet.java   ${date}
+*
+* Generated using Fado's ResultSet.vm template.
+*
+* @see ${sourceFile}
+*
 **/
 
+## TODO add null check here
 package ${packageName};
 
 import java.sql.*;
@@ -41,14 +42,14 @@ public class
 	{
 		return __resultSet;
 	}
-	
+
 	public boolean getSuccess()
 	{
 		return __resultSet != null;
 	}
-	
+
 	/**
-		Closes the contained ResultSet instance. Also closes contained Connection instance 
+		Closes the contained ResultSet instance. Also closes contained Connection instance
 		created via a DataSource connection factory.
 	**/
 	public void close()
@@ -66,20 +67,18 @@ public class
 		}
 	}
 
-	
 	private Connection __connection = null;
-	
+
 	public void setConnection( Connection connection )
 	{
 		__connection = connection;
 	}
-	
+
 	public Connection getConnection()
 	{
 		return __connection;
 	}
-	
-	
+
 	public final boolean hasNext()
 		throws SQLException
 	{
@@ -88,38 +87,46 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
-#set( $nth = 0 )
-#foreach( $column in $columns )
-#set( $nth = $nth + 1 )
-			_${column.NameAsVariable} = rs.get${column.TypedMethod}( ${nth} );
-#if( $column.Nullable )
-			_${column.NameAsVariable}_has = !rs.wasNull();
+#foreach( $column in $columnList )
+	#set( $method = $helper.toMethodName( $column.preferredName ))
+	#set( $var = $helper.toVariableName( $column.preferredName ))
+	#set( $type = $helper.toVariableType( $column.type ))
+			_${var} = rs.get${method}( ${foreach.count} );
+#if( $column.isNullable )
+			_${var}_wasNULL = !rs.wasNull();
 #end
 #end
 		}
 		return success;
 	}
-	
-	public int count()
+
+	/**
+     *  Attempt to count this ResultSet's number of rows.
+     *  @return number of rows. Or -1 if ResultSet's scroll type is TYPE_FORWARD_ONLY
+     *  or if any exception occurs.
+     */
+	public int countRows()
 	{
-		int result = 0;
+		int result = -1;
 		try
 		{
 			ResultSet rs = getResultSet();
-			int current = rs.getRow();
-			if( rs.last() )
+			if( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
 			{
-				result = rs.getRow();
-				if( current == 0 )
+				int current = rs.getRow();
+				if( rs.last() )
 				{
-					rs.beforeFirst();
-				}
-				else
-				{
-					rs.absolute( current );
+					result = rs.getRow();
+					if( current == 0 )
+					{
+						rs.beforeFirst();
+					}
+					else
+					{
+						rs.absolute( current );
+					}
 				}
 			}
-				
 		}
 		catch( SQLException e )
 		{
@@ -128,25 +135,20 @@ public class
 		return result;
 	}
 	
-#foreach( $column in $columns )
-	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
-
-	/** ${column.JavaDocText} **/
-	public ${column.JavaType} get${column.NameAsMethod}()
-	{
-		return _${column.NameAsVariable};
-	}	
-
-#if( $column.Nullable )
-	private boolean _${column.NameAsVariable}_has = false;
-	
-	/** returns true if ${column.JavaDocText} is non-null **/
-	public boolean has${column.NameAsMethod}()
-	{
-		return _${column.NameAsVariable}_has;
-	}	
-	
-#end	
+#foreach( $column in $columnList )
+#set( $method = $helper.toMethodName( $column.preferredName ))
+#set( $var = $helper.toVariableName( $column.preferredName ))
+#set( $type = $helper.toVariableType( $column.type ))
+#set( $type = $helper.toVariableType( $column.type ))
+#set( $javadoc = $helper.toNameAndAlias( $column ))
+	private ${type} _${var} = ${helper.getInitializerValue( $column.type )};
+	/** column ${javadoc} **/
+	public ${type} get${method}() { return _${var}; }
+#if( $column.isNullable )
+	private boolean _${var}_wasNULL = false;
+	/** returns true if column ${javadoc} was NULL **/
+	public boolean was${method}NULL() { return _${var}_wasNULL; }
+#end
 #end
 
 	public String toString()
@@ -156,10 +158,14 @@ public class
 			return "No results";
 		}
 		StringBuilder sb = new StringBuilder();
-#foreach( $column in $columns )
-		sb.append( "${column.NameAsMethod}: " );
-		sb.append( get${column.NameAsMethod}() );
-		sb.append( "\n" );
+		sb.append( "#row: " );
+		sb.append( getRow() );
+		sb.append( ", \n" );
+#foreach( $column in $columnList )
+#set( $method = $helper.toMethodName( $column.preferredName ))
+		sb.append( "${method}: " );
+		sb.append( get${method}() );
+		sb.append( ", \n" );
 #end
 		return sb.toString();
 	}

@@ -50,7 +50,7 @@ public class FadoNested
 
 		MetaData.processPreparedStatement( conn, work );
 		List<Item> itemList = work.root.get( 0 ).itemList;
-		matchItemsToRSColumns( itemList, work.rsColumnList );
+		matchItemsToRSColumns( itemList, work.columnList );
 
 		gatherConditions( work.root, work.conditionList );
 		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
@@ -288,14 +288,17 @@ public class FadoNested
 	 *
 	 * @param conditionList
 	 */
+	// TODO split into two methods 'copyLiteralsToValues' and 'rewriteLiterals( String text )'
 	static void updateLiterals( ArrayList<Condition> conditionList )
 	{
 		for( Condition condition : conditionList )
 		{
 			for( LiteralContext lc : condition.literals )
 			{
-				String value = lc.getText();
+				// TODO: move this to 'copyLiteralsToValues'
+				String value = lc.trimQuotes( lc.getText() );
 				condition.valueList.add( value );
+
 				// TODO: change literal text to '?'
 				lc.convertToInputParam();
 			}

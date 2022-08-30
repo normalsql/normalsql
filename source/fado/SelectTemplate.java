@@ -3,7 +3,7 @@
 
  Copyright 2022, 2014, 2011, 2010 Jason Osgood
 
- Utility class for Velocity template.
+ Utility class for Select.vm and ResultSet.vm Velocity templates.
 */
 
 package fado;
@@ -43,7 +43,6 @@ public class SelectTemplate
 		comparison.valueList.add( "cosmic crisp" );
 		work.conditionList.add( comparison );
 
-
 		Between between = new Between( null );
 		between.columnName = "banana";
 		between.column = new TColumn();
@@ -77,38 +76,32 @@ public class SelectTemplate
 			BufferedWriter writer = new BufferedWriter( osw );
 		)
 		{
-
+			// TODO: This will have to be moved to common place, maybe into superclass
 			VelocityEngine engine = new VelocityEngine();
-
-			// TODO: This will have to be moved
 			engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
 			engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
 			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
-
 			engine.init();
 
-			// TODO: Just one template instance
-			Template template = engine.getTemplate( "fado/template/Select.vm" );
-
-			HashMap<String, Object> map = new HashMap<>();
-			map.put( "Comparison", Comparison.class );
-			map.put( "Between", Between.class );
-			map.put( "IN", IN.class );
-			map.put( "helper", JavaHelper.class );
-
-			map.put( "packageName", work.packageName );
-			map.put( "className", work.className );
+			// Specific to template
+			HashMap<String, Object> parentMap = new HashMap<>();
+			parentMap.put( "Comparison", Comparison.class );
+			parentMap.put( "Between", Between.class );
+			parentMap.put( "IN", IN.class );
+			parentMap.put( "helper", JavaHelper.class );
 			// TODO change to 'now', use same Date for all artifacts
-			map.put( "date", new Date() );
-			map.put( "sourceFile", work.sourceFile );
-			map.put( "originalSQL", work.originalSQL );
-			map.put( "preparedSQL", work.preparedSQL );
-//			map.put( "printfSQL", printfSQL );
-			map.put( "conditionList", work.conditionList );
+			parentMap.put( "date", new Date() );
+			VelocityContext parentContext = new VelocityContext( parentMap );
 
-			VelocityContext context = new VelocityContext( map );
-			template.merge( context, writer );
+			// Related to statement
+			HashMap<String, Object> childMap = work.asMap();
+			VelocityContext childContext = new VelocityContext( childMap, parentContext );
 
+			// TODO: Just one template instance
+//			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
+//			selectTemplate.merge( childContext, writer );
+			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
+			resultSetTemplate.merge( childContext, writer );
 		}
 	}
 }

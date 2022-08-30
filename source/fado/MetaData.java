@@ -63,39 +63,10 @@ public class MetaData
 			column.typeName = md.getColumnTypeName( nth );
 			column.isNullable = md.isNullable( nth );
 			column.clazz = md.getColumnClassName( nth );
-			work.rsColumnList.add( column );
+			work.columnList.add( column );
 //			System.out.println( column );
 		}
 	}
-
-//	static List<RSColumn> extractResultColumns( Connection conn, String sql ) throws SQLException
-//	{
-//		try
-//		(
-//			Statement s = conn.createStatement();
-//			ResultSet rs = s.executeQuery( sql );
-//		)
-//		{
-//			ArrayList<RSColumn> rsColumnList = new ArrayList<>();
-//			ResultSetMetaData md = rs.getMetaData();
-//			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
-//			{
-//				RSColumn column = new RSColumn();
-//				column.name = md.getColumnName( nth );
-//				column.label = md.getColumnLabel( nth );
-//				column.type = md.getColumnType( nth );
-//				column.typeName = md.getColumnTypeName( nth );
-//				column.isNullable = md.isNullable( nth );
-//				rsColumnList.add( column );
-////				System.out.println( result );
-//			}
-//			return rsColumnList;
-//		}
-////		catch( SQLException e )
-////		{
-////			throw e;
-////		}
-//	}
 
 	public static Map<String, Table> getTablesAndColumns( Connection conn ) throws SQLException
 	{

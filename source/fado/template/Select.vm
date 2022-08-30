@@ -7,17 +7,15 @@
 ##     Comparison - reference to Comparison.class
 ##     Between - reference to Between.class
 ##     IN - reference to IN.class
+##     helper - Capitalization and type casting methods.
+##     date - current timestamp
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
-##     date - current timestamp
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared SQL statement (containg '?' params)
 ##     printfSQL - like preparedSQL, but for printf
-##     originalFile - name of original .sql file
 ##     conditionList - conditions from prepared SQL as List<fado.Condition>
-##     helper - Capitalization and type casting methods.
-
 /**
 * ${className}.java   ${date}
 *
