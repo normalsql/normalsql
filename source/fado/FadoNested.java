@@ -5,10 +5,8 @@ import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import static fado.parse.GenericSQLParser.*;
 import fado.parse.GlobbingRuleContext;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
+import fado.template.JavaHelper;
+import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,15 +54,10 @@ public class FadoNested
 		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
 
 		updateLiterals( work.conditionList );
-		String preparedSQL = work.tokens.getText();
-		work.preparedSQL = preparedSQL;
+		work.preparedSQL = work.tokens.getText();
 
-		SelectTemplate template = new SelectTemplate();
-		template.merge( work );
-
-//		ArrayList<StatementParam> paramList =
-//		gatherStatementParams( conditionList, tables );
-
+		replaceLiterals( work.conditionList );
+		work.printfSQL = work.tokens.getText();
 	}
 
 	public static void parse( Work work )
@@ -289,7 +282,7 @@ public class FadoNested
 	 * @param conditionList
 	 */
 	// TODO split into two methods 'copyLiteralsToValues' and 'rewriteLiterals( String text )'
-	static void updateLiterals( ArrayList<Condition> conditionList )
+	public static void updateLiterals( ArrayList<Condition> conditionList )
 	{
 		for( Condition condition : conditionList )
 		{
@@ -304,6 +297,20 @@ public class FadoNested
 			}
 		}
 	}
+
+	public static void replaceLiterals( ArrayList<Condition> conditionList )
+	{
+		for( Condition condition : conditionList )
+		{
+			java.lang.String gruff = JavaHelper.toPrintfConverter( condition.column.type );
+			for( LiteralContext lc : condition.literals )
+			{
+				Token start = lc.getStart();
+				((WritableToken) start).setText( gruff );
+			}
+		}
+	}
+
 
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL
@@ -333,42 +340,4 @@ public class FadoNested
 			}
 		}
 	}
-
-	//	/** Create one StatementParam per literal found. */
-//	static ArrayList<StatementParam> gatherStatementParams( List<Condition> conditionList, Map<String, Table> tableMap )
-//	{
-//		ArrayList<StatementParam> params = new ArrayList<>();
-////		StatementParam param = new StatementParam();
-//		for( Condition condition : conditionList )
-//		{
-////			switch( condition.getClass().getSimpleName() )
-////			{
-////				case "Comparison":
-////				{
-////					System.out.println( "yup " );
-////					break;
-////				}
-////			}
-//
-//			Table table = tableMap.get( condition.tableName.toLowerCase() );
-//			Column column = table.getColumn( condition.columnName );
-//
-//			if( condition instanceof Comparison )
-//			{
-////				LiteralContext literal = condition.
-////				StatementParam param = new StatementParam( condition.columnName, column.dataType );
-//			}
-//			else if( condition instanceof Between )
-//			{
-//
-//			}
-//			else if( condition instanceof IN )
-//			{
-//
-//			}
-//		}
-//		return params;
-//	}
-
-
 }

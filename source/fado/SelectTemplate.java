@@ -98,10 +98,10 @@ public class SelectTemplate
 			VelocityContext childContext = new VelocityContext( childMap, parentContext );
 
 			// TODO: Just one template instance
-//			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
-//			selectTemplate.merge( childContext, writer );
-			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
-			resultSetTemplate.merge( childContext, writer );
+			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
+			selectTemplate.merge( childContext, writer );
+//			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
+//			resultSetTemplate.merge( childContext, writer );
 		}
 	}
 }

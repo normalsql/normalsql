@@ -50,6 +50,11 @@ public class
 ## add back each '\n', then concat each line with '+', then end with ';'
 		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
 #end
+	public final String __printfSQL =
+#foreach( $line in $printfSQL.split('\n') )
+## add back each '\n' (as %n), then concat each line with '+', then end with ';'
+		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
+#end
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -163,40 +168,22 @@ public class
 #end
 #end
 
-## TODO: printfSQL for easier debugging
-##	public String toString()
-##	{
-##		String result = getSQL();
-####
-###foreach( $condition in $conditionList )
-####
-###if( $condition.isIN() )
-####
-###set( $size = $condition.getValues().size() - 1 )
-###foreach( $abc in [0..$size] )
-##		result = result.replaceFirst( "\\?", quotifyString( get${method}( ${abc} )));
-###end
-####
-###elseif( $condition.isBETWEEN() )
-####
-##		result = result.replaceFirst( "\\?", quotifyString( get${method}Left() ));
-##		result = result.replaceFirst( "\\?", quotifyString( get${method}Right() ));
-###elseif( $condition.isComparison() || $condition.isLIKE() )
-##		result = result.replaceFirst( "\\?", quotifyString( get${method}() ));
-###end
-###end
-##		return result;
-##	}
-##
-##	private String quotifyString( Object value )
-##	{
-##		if( value instanceof String )
-##		{
-##			return "'" + value.toString() + "'";
-##		}
-##		else
-##		{
-##			return value.toString();
-##		}
-##	}
+	public String toString()
+	{
+		return String.format( __printfSQL
+#foreach( $condition in $conditionList )
+	#set( $method = $helper.toMethodName( $condition.columnName ))
+	#if( $Comparison.isInstance( $condition ))
+			, get${method}()
+	#elseif( $Between.isInstance( $condition ))
+	        , get${method}Left()
+			, get${method}Right()
+	#elseif( $IN.isInstance( $condition ))
+		#foreach( $abc in $condition.literals )
+			, get${method}( $foreach.count )
+		#end
+	#end
+#end
+		));
+	}
 }
