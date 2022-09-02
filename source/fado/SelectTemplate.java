@@ -66,7 +66,7 @@ public class SelectTemplate
 		work.className = "Test";
 		work.packageName = "test";
 
-		self.merge( work );
+//		self.merge( work );
 	}
 
 	public void merge( Work work ) throws IOException

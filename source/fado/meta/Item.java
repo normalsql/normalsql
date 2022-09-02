@@ -23,10 +23,10 @@ public class Item
 		if( columnRef != null )
 		{
 			// am pretty sure this can't be null
-			this.name = ic.trimQuotes( columnRef.columnName().getText() );
+			this.name = columnRef.columnName().getTrimmedText();
 		}
 
-		this.alias = ic.trimQuotes( ic.findFirstString( "**/aliasName" ) );
+		this.alias = ic.findFirstString( "**/aliasName" );
 	}
 
 	@Override

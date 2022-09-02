@@ -9,10 +9,12 @@
 package fado.meta;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static fado.parse.GenericSQLParser.*;
 
-public abstract class Condition // implements Comparable<Condition>
+public abstract class Condition
 {
 	public ColumnRefContext columnRef;
 	public String tableName;
@@ -20,28 +22,27 @@ public abstract class Condition // implements Comparable<Condition>
 	// TODO remove 'from' and add Table reference to Column
 	public From from;
 	public TColumn column;
-	// TODO: convert to List<LiteralContext>
-	public LiteralContext[] literals;
+	public List<LiteralContext> literalList;
 	public ArrayList<String> valueList = new ArrayList<>();
 
-	// TODO add constuctor w/ List<LiteralContext>
 	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
 	{
-		this.columnRef = columnRef;
-		this.literals = literals;
-		if( columnRef != null )
-		{
-			this.columnName = columnRef.trimQuotes( columnRef.columnName().getText() );
-			// Null-safe query to get 'tableName'
-			this.tableName = columnRef.trimQuotes( columnRef.findFirstString( "tableName" ));
-		}
+		this( columnRef, Arrays.asList( literals ));
 	}
 
-//	@Override
-//	public int compareTo( Condition that )
-//	{
-//		int a = this.columnRef.start.getStartIndex();
-//		int b = that.columnRef.start.getStartIndex();
-//		return a - b;
-//	}
+	public Condition( ColumnRefContext columnRef, List<LiteralContext> literalList )
+	{
+		this.columnRef = columnRef;
+		this.literalList = literalList;
+		if( columnRef != null )
+		{
+			this.columnName = columnRef.columnName().getTrimmedText();
+			this.tableName = columnRef.findFirstString( "tableName" );
+		}
+
+		for( LiteralContext lc : literalList )
+		{
+			valueList.add( lc.getTrimmedText() );
+		}
+	}
 }

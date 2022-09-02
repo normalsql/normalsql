@@ -61,22 +61,7 @@ extends
         return result;
     }
 
-    // TODO delete this
-//    public List<GlobbingRuleContext> findContexts( String query )
-//    {
-//        List<GlobbingRuleContext> list = find( query );
-//        ArrayList<GlobbingRuleContext> result = new ArrayList<>();
-//        for( Object ugh : list )
-//        {
-//            if( ugh instanceof GlobbingRuleContext )
-//            {
-//                result.add( (GlobbingRuleContext) ugh );
-//            }
-//        }
-//        return result;
-//    }
-
-    // TODO: validate expression
+    // TODO: validate globbing query expression
     protected List<GlobbingRuleContext> find( String query, boolean first )
     {
         if( query == null )
@@ -148,13 +133,8 @@ extends
 
     public String findFirstString( String expression )
     {
-        String result = null;
-        Object first = findFirst( expression );
-        if( first instanceof GlobbingRuleContext )
-        {
-            result = ((GlobbingRuleContext) first).getText();
-        }
-        return result;
+        GlobbingRuleContext first = findFirst( expression );
+        return first != null ? first.getTrimmedText() : null;
     }
 
     public String trimQuotes( String text )
@@ -168,19 +148,16 @@ extends
         return text;
     }
 
-    // Replaces original literal value with a JDBC input parameter '?'
+    public String getTrimmedText()
+    {
+        return trimQuotes( getText() );
+    }
+
     // TODO: Handle unary numbers, eg -100
-    // TODO: Knockout whole 'literal' rule context?
-    // TODO: Change this method to setText( ... )?
-//    static int param = 0;
-    public void convertToInputParam()
+    public void setStartTokenText( String text )
     {
         // Replace text of first "visible" (non whitespace) token, then exit
-        Token start = getStart();
-        if( start instanceof WritableToken )
-        {
-//            ((WritableToken) start).setText( "?" + param++ );
-            ((WritableToken) start).setText( "?" );
-        }
+        WritableToken start = (WritableToken) getStart();
+        start.setText( text );
     }
 }

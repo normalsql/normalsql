@@ -53,11 +53,23 @@ public class FadoNested
 		gatherConditions( work.root, work.conditionList );
 		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
 
-		updateLiterals( work.conditionList );
+		// Creates text for PreparedStatement by replacing
+		// original literal value with a JDBC input parameter '?'
+		work.conditionList.forEach(
+			c -> c.literalList.forEach(
+				lc -> lc.setStartTokenText( "?" )));
 		work.preparedSQL = work.tokens.getText();
+		System.out.println( work.preparedSQL );
 
-		replaceLiterals( work.conditionList );
+		// Creates printf template for generated statement's
+		// toString() method (for easier inspection, debugging).
+		work.conditionList.forEach( c ->
+			c.literalList.forEach( lc ->
+				lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))
+			)
+		);
 		work.printfSQL = work.tokens.getText();
+		System.out.println( work.printfSQL );
 	}
 
 	public static void parse( Work work )
@@ -113,30 +125,22 @@ public class FadoNested
 
 	static void findWHEREs( SelectList parent )
 	{
-		for( GlobbingRuleContext found : parent.context.find( "where/expression" ) )
+		for( ExpressionContext found : parent.context.find( ExpressionContext.class, "where/expression" ) )
 		{
-			processExpression( parent, (ExpressionContext) found );
+			processExpression( parent, found );
 		}
+
+		// is this really better than loop?
+//		parent.context.find( ExpressionContext.class, "where/expression" ).forEach(
+//			found -> processExpression( parent, found ));
 
 		for( SelectList child : parent )
 		{
 			findWHEREs( child );
 		}
-	}
 
-	static void findItems( SelectList parent )
-	{
-		for( SelectList child : parent )
-		{
-			if( child.context.getRuleIndex() == RULE_select )
-			{
-				SelectContext sc = (SelectContext) child.context;
-				for( ItemContext ic : sc.itemList().item() )
-				{
-					child.itemList.add( new Item( ic ));
-				}
-			}
-		}
+		// is this really better than loop?
+//		parent.forEach( child -> findWHEREs( child ));
 	}
 
 	static void processExpression( SelectList parent, ExpressionContext ec )
@@ -171,7 +175,7 @@ public class FadoNested
 				LiteralContext literal = ec.right.literal();
 				if( columnRef != null && literal != null )
 				{
-					parent.conditionList.add( new Comparison( op,columnRef, literal ));
+					parent.conditionList.add( new Comparison( op, columnRef, literal ));
 				}
 				break;
 			}
@@ -214,6 +218,21 @@ public class FadoNested
 			case MINUS:
 			default:
 				break;
+		}
+	}
+
+	static void findItems( SelectList parent )
+	{
+		for( SelectList child : parent )
+		{
+			if( child.context.getRuleIndex() == RULE_select )
+			{
+				SelectContext sc = (SelectContext) child.context;
+				for( ItemContext ic : sc.itemList().item() )
+				{
+					child.itemList.add( new Item( ic ));
+				}
+			}
 		}
 	}
 
@@ -274,43 +293,6 @@ public class FadoNested
 		}
 		conditions.addAll( parent.conditionList );
 	}
-
-	/**
-	 * Populate each Condition with text from literals. Replace each
-	 * literal's text with '?' parameter, for creating a PreparedStatement.
-	 *
-	 * @param conditionList
-	 */
-	// TODO split into two methods 'copyLiteralsToValues' and 'rewriteLiterals( String text )'
-	public static void updateLiterals( ArrayList<Condition> conditionList )
-	{
-		for( Condition condition : conditionList )
-		{
-			for( LiteralContext lc : condition.literals )
-			{
-				// TODO: move this to 'copyLiteralsToValues'
-				String value = lc.trimQuotes( lc.getText() );
-				condition.valueList.add( value );
-
-				// TODO: change literal text to '?'
-				lc.convertToInputParam();
-			}
-		}
-	}
-
-	public static void replaceLiterals( ArrayList<Condition> conditionList )
-	{
-		for( Condition condition : conditionList )
-		{
-			java.lang.String gruff = JavaHelper.toPrintfConverter( condition.column.type );
-			for( LiteralContext lc : condition.literals )
-			{
-				Token start = lc.getStart();
-				((WritableToken) start).setText( gruff );
-			}
-		}
-	}
-
 
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL

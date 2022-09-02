@@ -21,8 +21,8 @@ public class From
 	public From( TableContext tc )
 	{
 		this.tc = tc;
-		this.databaseName = tc.trimQuotes( tc.findFirstString( "**/databaseName" ) );
-		this.tableName = tc.trimQuotes( tc.findFirstString( "**/tableName" ) );
-		this.alias = tc.trimQuotes( tc.findFirstString( "**/aliasName" ) );
+		this.databaseName = tc.findFirstString( "**/databaseName" );
+		this.tableName = tc.findFirstString( "**/tableName" );
+		this.alias = tc.findFirstString( "**/aliasName" );
 	}
 }
