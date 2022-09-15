@@ -1,38 +1,31 @@
 package fado.drill;
 
 import fado.parse.GenericSQLLexer;
-import static fado.parse.GenericSQLLexer.*;
 import fado.parse.GenericSQLParser;
 import fado.parse.GenericSQLParser.*;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class Drill
 {
 	public static void main( String... args )
 	{
-		String sql = "1 + -2";
+		String sql = "date";
+//		boolean ugh = "DATE".equalsIgnoreCase( sql );
 		CharStream chars = CharStreams.fromString( sql );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
-		ExpressionContext e = parser.expression();
+//		ExpressionContext e = parser.expression();
 
-		System.out.println( e.toStringTree( parser ) );
 //		System.out.println( e.toInfoString( parser ) );
 
-		process( e );
+//		process( e );
 
-		System.out.println( e.toStringTree( parser ) );
+//		System.out.println( e.toStringTree( parser ) );
 	}
 
-	static void process( ExpressionContext ec )
-	{
+//	static void process( MaybeContext ec )
+//	{
 //		if( ec.op != null && ec.op.getType() == MINUS )
 //		{
 //			ExpressionContext parent = (ExpressionContext) ec.getParent();
@@ -55,5 +48,5 @@ public class Drill
 //				process( child );
 //			}
 //		}
-	}
+//	}
 }

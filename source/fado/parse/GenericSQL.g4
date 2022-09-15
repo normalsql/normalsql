@@ -14,6 +14,43 @@ options {
   caseInsensitive = true;
 }
 
+@parser::header
+{
+import java.util.HashSet;
+}
+
+@parser::members
+{
+	HashSet<String> __keywords = keywords();
+
+	public HashSet<String> keywords()
+	{
+		HashSet<String> words = new HashSet<>();
+		// Skip first literal
+		for( int nth = 1; nth < _LITERAL_NAMES.length; nth++ )
+		{
+			String symbol = _SYMBOLIC_NAMES[ nth ];
+			if( symbol == null )
+			{
+				String keyword = _LITERAL_NAMES[ nth ];
+				keyword = keyword.substring( 1, keyword.length() - 1 );
+				if( Character.isLetter( keyword.charAt( 0 )))
+				{
+					words.add( keyword );
+				}
+			}
+		}
+		return words;
+	}
+
+    public boolean isKeyword( Token t )
+    {
+        String text = t.getText().toUpperCase();
+        boolean contains = keywords().contains( text );
+        return contains;
+    }
+}
+
 parse   : statement* EOF ;
 
 statement
@@ -125,7 +162,7 @@ expression
   | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN # subquery
   | expression 'NOT'* ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? # LIKE
   | expression 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? # REGEXP
-  | expression 'IS' 'NOT'? 'NULL' # IsNull
+  | expression 'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'UNKNOWN' ) # IsNull
   | expression 'IS' 'NOT'? 'DISTINCT' 'FROM' expression # IsDistinct
   | expression 'NOT'* 'IN' LPAREN ( query | expressionList )? RPAREN # in
 // TODO additional 'IN' rules
@@ -134,7 +171,7 @@ expression
   | expression 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression # between
   | 'INTERSECTS' LPAREN expression COMMA expression RPAREN # intersects
   | 'CASE' expression? ( 'WHEN' expression 'THEN' expression )+ ( 'ELSE' expression )? 'END' # case
-  | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' ID RPAREN # cast
+  | ( 'CAST' | 'TRY_CAST' ) LPAREN ID* expression 'AS' type RPAREN # cast
   | expression 'COLLATE' ID # collate
 //  TODO | raise_function
   ;
@@ -161,7 +198,7 @@ function
     )?
 
   // some ODBC function names are also SQL reserved words
-  | '{fn' ( 'LEFT' | 'RIGHT' | 'INSERT' | name ) LPAREN expressionList? RPAREN '}'
+  | '{fn' keyword LPAREN expressionList? RPAREN '}'
 //  | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
 //  | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
   ;
@@ -182,12 +219,13 @@ following : ( 'UNBOUNDED' | literal ) 'FOLLOWING'
           | preceding
           ;
 
-//table
-//  : ( LPAREN select RPAREN
-//    | name
-//    )
-//    alias?
-//  ;
+type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
+     | keyword* ( LPAREN integer ( COMMA integer )? RPAREN ID* )? keyword*
+     ;
+
+keyword : ID
+        | { isKeyword( getCurrentToken() ) }? .
+        ;
 
 useIndex : 'USE' 'INDEX' LPAREN ID ( COMMA ID )* RPAREN
          ;
@@ -207,9 +245,8 @@ having   : 'HAVING' expressionList
 qualify  : 'QUALIFY' expression
          ;
   
-orderBy
-  : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
-  ;
+orderBy : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
+        ;
   
 orderByItem
   : expression ( 'ASC' | 'DESC' )?
@@ -230,15 +267,19 @@ forUpdate
 // TODO add 'UNKNOWN'?
 literal
   : ( MINUS | PLUS )? Float
-  | ( MINUS | PLUS )? Integer
+  | integer
   | String
+  // TODO Convert these from keywords to lexer tokens?
   | 'TRUE'
   | 'FALSE'
   | 'NULL'
   | Date
   | 'DATE' String
+  | ( 'TIME' | 'TIMESTAMP' ) (( 'WITH '| 'WITHOUT' ) 'TIME' 'ZONE' )? String?
   | QUESTION
   ;
+
+integer : ( MINUS | PLUS )? Integer ;
 
 reference : name ( DOT name )* ;
 
@@ -260,7 +301,7 @@ SEMI     : ';' ;
 PLUS     : '+' ;
 MINUS    : '-' ;
 DIVIDE   : '/' ;
-STAR     : '*' ;
+STAR     : '*' ; // multiplication
 MODULO   : '%' ;
 CARET    : '^' ; // exponent
 AT       : '@' ; // absolute value
