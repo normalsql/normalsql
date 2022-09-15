@@ -27,81 +27,81 @@ import static java.sql.Types.*;
 
 public class SelectTemplate
 {
-	public static void main( String[] args ) throws Exception
-	{
-		SelectTemplate self = new SelectTemplate();
-
-		Work work = new Work();
-
-		work.originalSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = 'ENGL'";
-		work.preparedSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = ?";
-
-		Comparison comparison = new Comparison( null, null );
-		comparison.columnName = "apple";
-		comparison.column = new TColumn();
-		comparison.column.type = VARCHAR;
-		comparison.valueList.add( "cosmic crisp" );
-		work.conditionList.add( comparison );
-
-		Between between = new Between( null );
-		between.columnName = "banana";
-		between.column = new TColumn();
-		between.column.type = INTEGER;
-		between.valueList.add( "1" );
-		between.valueList.add( "9" );
-		work.conditionList.add( between );
-
-		GenericSQLParser.LiteralContext l1 = new GenericSQLParser.LiteralContext( null, 0 );
-		GenericSQLParser.LiteralContext l2 = new GenericSQLParser.LiteralContext( null, 0 );
-		GenericSQLParser.LiteralContext l3 = new GenericSQLParser.LiteralContext( null, 0 );
-		IN in = new IN( null, l1, l2, l3 );
-		in.columnName = "cherry";
-		in.column = new TColumn();
-		in.column.type = CHAR;
-		in.valueList.add( "bitter" );
-		in.valueList.add( "sweet" );
-		in.valueList.add( "tart" );
-		work.conditionList.add( in );
-
-		work.className = "Test";
-		work.packageName = "test";
-
-//		self.merge( work );
-	}
-
-	public void merge( Work work ) throws IOException
-	{
-		try (
-			OutputStreamWriter osw = new OutputStreamWriter( System.out );
-			BufferedWriter writer = new BufferedWriter( osw );
-		)
-		{
-			// TODO: This will have to be moved to common place, maybe into superclass
-			VelocityEngine engine = new VelocityEngine();
-			engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-			engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
-			engine.init();
-
-			// Specific to template
-			HashMap<String, Object> parentMap = new HashMap<>();
-			parentMap.put( "Comparison", Comparison.class );
-			parentMap.put( "Between", Between.class );
-			parentMap.put( "IN", IN.class );
-			parentMap.put( "helper", JavaHelper.class );
-			// TODO change to 'now', use same Date for all artifacts
-			parentMap.put( "date", new Date() );
-			VelocityContext parentContext = new VelocityContext( parentMap );
-
-			// Related to statement
-			HashMap<String, Object> childMap = work.asMap();
-			VelocityContext childContext = new VelocityContext( childMap, parentContext );
-
-			// TODO: Just one template instance
-			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
-			selectTemplate.merge( childContext, writer );
-//			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
-//			resultSetTemplate.merge( childContext, writer );
-		}
-	}
+//	public static void main( String[] args ) throws Exception
+//	{
+//		SelectTemplate self = new SelectTemplate();
+//
+//		Work work = new Work();
+//
+//		work.originalSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = 'ENGL'";
+//		work.preparedSQL = "SELECT id, lastATP, course_title, description, revision\n FROM Course \nWHERE department_abbrev = ?";
+//
+//		Comparison comparison = new Comparison( null, null );
+//		comparison.columnName = "apple";
+//		comparison.column = new TColumn();
+//		comparison.column.type = VARCHAR;
+//		comparison.valueList.add( "cosmic crisp" );
+//		work.conditionList.add( comparison );
+//
+//		Between between = new Between( null );
+//		between.columnName = "banana";
+//		between.column = new TColumn();
+//		between.column.type = INTEGER;
+//		between.valueList.add( "1" );
+//		between.valueList.add( "9" );
+//		work.conditionList.add( between );
+//
+//		GenericSQLParser.LiteralContext l1 = new GenericSQLParser.LiteralContext( null, 0 );
+//		GenericSQLParser.LiteralContext l2 = new GenericSQLParser.LiteralContext( null, 0 );
+//		GenericSQLParser.LiteralContext l3 = new GenericSQLParser.LiteralContext( null, 0 );
+//		IN in = new IN( null, l1, l2, l3 );
+//		in.columnName = "cherry";
+//		in.column = new TColumn();
+//		in.column.type = CHAR;
+//		in.valueList.add( "bitter" );
+//		in.valueList.add( "sweet" );
+//		in.valueList.add( "tart" );
+//		work.conditionList.add( in );
+//
+//		work.className = "Test";
+//		work.packageName = "test";
+//
+////		self.merge( work );
+//	}
+//
+//	public void merge( Work work ) throws IOException
+//	{
+//		try (
+//			OutputStreamWriter osw = new OutputStreamWriter( System.out );
+//			BufferedWriter writer = new BufferedWriter( osw );
+//		)
+//		{
+//			// TODO: This will have to be moved to common place, maybe into superclass
+//			VelocityEngine engine = new VelocityEngine();
+//			engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+//			engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+//			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectImpl,org.apache.velocity.util.introspection.UberspectPublicFields" );
+//			engine.init();
+//
+//			// Specific to template
+//			HashMap<String, Object> parentMap = new HashMap<>();
+//			parentMap.put( "Comparison", Comparison.class );
+//			parentMap.put( "Between", Between.class );
+//			parentMap.put( "IN", IN.class );
+//			parentMap.put( "helper", JavaHelper.class );
+//			// TODO change to 'now', use same Date for all artifacts
+//			parentMap.put( "date", new Date() );
+//			VelocityContext parentContext = new VelocityContext( parentMap );
+//
+//			// Related to statement
+//			HashMap<String, Object> childMap = work.asMap();
+//			VelocityContext childContext = new VelocityContext( childMap, parentContext );
+//
+//			// TODO: Just one template instance
+//			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
+//			selectTemplate.merge( childContext, writer );
+////			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
+////			resultSetTemplate.merge( childContext, writer );
+//		}
+//	}
 }

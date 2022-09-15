@@ -7,27 +7,27 @@
 */
 package fado.meta;
 
-import fado.parse.GenericSQLParser.ColumnRefContext;
-import fado.parse.GenericSQLParser.ItemContext;
+//import fado.parse.GenericSQLParser.ColumnRefContext;
+//import fado.parse.GenericSQLParser.ItemContext;
 
 public class Item
 {
-	public ItemContext ic;
+//	public ItemContext ic;
 	public String alias;
 	public String name;
 
-	public Item( ItemContext ic )
-	{
-		this.ic = ic;
-		ColumnRefContext columnRef = ic.findFirst( ColumnRefContext.class, "**/columnRef" );
-		if( columnRef != null )
-		{
-			// am pretty sure this can't be null
-			this.name = columnRef.columnName().getTrimmedText();
-		}
-
-		this.alias = ic.findFirstString( "**/aliasName" );
-	}
+//	public Item( ItemContext ic )
+//	{
+//		this.ic = ic;
+//		ColumnRefContext columnRef = ic.findFirst( ColumnRefContext.class, "**/columnRef" );
+//		if( columnRef != null )
+//		{
+//			// am pretty sure this can't be null
+//			this.name = columnRef.columnName().getTrimmedText();
+//		}
+//
+//		this.alias = ic.findFirstString( "**/aliasName" );
+//	}
 
 	@Override
 	public String toString()

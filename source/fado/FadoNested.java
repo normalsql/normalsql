@@ -53,21 +53,19 @@ public class FadoNested
 		gatherConditions( work.root, work.conditionList );
 		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
 
-		// Creates text for PreparedStatement by replacing
-		// original literal value with a JDBC input parameter '?'
-		work.conditionList.forEach(
-			c -> c.literalList.forEach(
-				lc -> lc.setStartTokenText( "?" )));
+		// Creates text for PreparedStatement by replacing found
+		// original literal values with the JDBC input parameter '?'
+//		work.conditionList.forEach(
+//			c -> c.literalList.forEach(
+//				lc -> lc.setStartTokenText( "?" )));
 		work.preparedSQL = work.tokens.getText();
 		System.out.println( work.preparedSQL );
 
 		// Creates printf template for generated statement's
 		// toString() method (for easier inspection, debugging).
-		work.conditionList.forEach( c ->
-			c.literalList.forEach( lc ->
-				lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))
-			)
-		);
+//		work.conditionList.forEach(
+//			c -> c.literalList.forEach(
+//				lc -> lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))));
 		work.printfSQL = work.tokens.getText();
 		System.out.println( work.printfSQL );
 	}
@@ -81,12 +79,12 @@ public class FadoNested
 		GenericSQLParser parser = new GenericSQLParser( tokens );
 		StatementContext statement = parser.statement();
 
-		SelectList root = findSELECTs( statement );
-		findFROMs( root );
-		findWHEREs( root );
-		findItems( root );
-		work.root = root;
-		work.tokens = tokens;
+//		SelectList root = findSELECTs( statement );
+//		findFROMs( root );
+//		findWHEREs( root );
+//		findItems( root );
+//		work.root = root;
+//		work.tokens = tokens;
 	}
 
 	static SelectList findSELECTs( GlobbingRuleContext parent )
@@ -102,33 +100,33 @@ public class FadoNested
 		return result;
 	}
 
-	static void findFROMs( SelectList parent )
-	{
-		for( TableContext tc : parent.context.find( TableContext.class, "from/**/table" ))
-		{
-			if( tc.tableRef() != null )
-			{
-				From from = new From( tc );
-				parent.fromList.add( from );
-			}
-			// TODO: support nested 'select', and maybe 'VALUES (...)' too
-//			else
+//	static void findFROMs( SelectList parent )
+//	{
+//		for( TableContext tc : parent.context.find( TableContext.class, "from/**/table" ))
+//		{
+//			if( tc.tableRef() != null )
 //			{
-//
+//				From from = new From( tc );
+//				parent.fromList.add( from );
 //			}
-		}
-		for( SelectList child : parent )
-		{
-			findFROMs( child );
-		}
-	}
+//			// TODO: support nested 'select', and maybe 'VALUES (...)' too
+////			else
+////			{
+////
+////			}
+//		}
+//		for( SelectList child : parent )
+//		{
+//			findFROMs( child );
+//		}
+//	}
 
 	static void findWHEREs( SelectList parent )
 	{
-		for( ExpressionContext found : parent.context.find( ExpressionContext.class, "where/expression" ) )
-		{
-			processExpression( parent, found );
-		}
+//		for( ExpressionContext found : parent.context.find( ExpressionContext.class, "where/expression" ) )
+//		{
+//			processExpression( parent, found );
+//		}
 
 		// is this really better than loop?
 //		parent.context.find( ExpressionContext.class, "where/expression" ).forEach(
@@ -145,144 +143,144 @@ public class FadoNested
 
 	static void processExpression( SelectList parent, ExpressionContext ec )
 	{
-		Token op = ec.op;
-		switch( op.getType() )
-		{
-			case AND:
-			case OR:
-				processExpression( parent, ec.left );
-				processExpression( parent, ec.right );
-				break;
-
-			case NOT:
-				processExpression( parent, ec.right );
-				break;
-
-			case GT:
-			case GT2:
-			case GTE:
-			case LT:
-			case LT2:
-			case LTE:
-			case EQ:
-			case NEQ1:
-			case NEQ2:
-			case LIKE:
-			case ILIKE:
-			{
-				// TODO allow right-to-left too
-				ColumnRefContext columnRef = ec.left.columnRef();
-				LiteralContext literal = ec.right.literal();
-				if( columnRef != null && literal != null )
-				{
-					parent.conditionList.add( new Comparison( op, columnRef, literal ));
-				}
-				break;
-			}
-
-			case BETWEEN:
-			{
-				ColumnRefContext columnRef = ec.left.columnRef();
-				LiteralContext lower = ec.lower.literal();
-				LiteralContext upper = ec.upper.literal();
-				if( columnRef != null && lower != null && upper != null )
-				{
-					parent.conditionList.add( new Between( columnRef, lower, upper ));
-				}
-				break;
-			}
-
-			case IN:
-			{
-				ColumnRefContext columnRef = ec.left.columnRef();
-				ExpressionListContext list = ec.list;
-				if( list != null )
-				{
-					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
-					if( literals.size() > 0 )
-					{
-						parent.conditionList.add( new IN( columnRef, literals.toArray( new LiteralContext[0] )));
-					}
-				}
-				break;
-			}
-
-			// do nothing
-			case STRCAT:
-			case AMP:
-			case PIPE:
-			case STAR:
-			case DIV:
-			case MOD:
-			case PLUS:
-			case MINUS:
-			default:
-				break;
-		}
+//		Token op = ec.op;
+//		switch( op.getType() )
+//		{
+//			case AND:
+//			case OR:
+//				processExpression( parent, ec.left );
+//				processExpression( parent, ec.right );
+//				break;
+//
+//			case NOT:
+//				processExpression( parent, ec.right );
+//				break;
+//
+//			case GT:
+//			case GT2:
+//			case GTE:
+//			case LT:
+//			case LT2:
+//			case LTE:
+//			case EQ:
+//			case NEQ1:
+//			case NEQ2:
+//			case LIKE:
+//			case ILIKE:
+//			{
+//				// TODO allow right-to-left too
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				LiteralContext literal = ec.right.literal();
+//				if( columnRef != null && literal != null )
+//				{
+//					parent.conditionList.add( new Comparison( op, columnRef, literal ));
+//				}
+//				break;
+//			}
+//
+//			case BETWEEN:
+//			{
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				LiteralContext lower = ec.lower.literal();
+//				LiteralContext upper = ec.upper.literal();
+//				if( columnRef != null && lower != null && upper != null )
+//				{
+//					parent.conditionList.add( new Between( columnRef, lower, upper ));
+//				}
+//				break;
+//			}
+//
+//			case IN:
+//			{
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				ExpressionListContext list = ec.list;
+//				if( list != null )
+//				{
+//					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
+//					if( literals.size() > 0 )
+//					{
+//						parent.conditionList.add( new IN( columnRef, literals.toArray( new LiteralContext[0] )));
+//					}
+//				}
+//				break;
+//			}
+//
+//			// do nothing
+//			case STRCAT:
+//			case AMP:
+//			case PIPE:
+//			case STAR:
+//			case DIV:
+//			case MOD:
+//			case PLUS:
+//			case MINUS:
+//			default:
+//				break;
+//		}
 	}
 
 	static void findItems( SelectList parent )
 	{
-		for( SelectList child : parent )
-		{
-			if( child.context.getRuleIndex() == RULE_select )
-			{
-				SelectContext sc = (SelectContext) child.context;
-				for( ItemContext ic : sc.itemList().item() )
-				{
-					child.itemList.add( new Item( ic ));
-				}
-			}
-		}
+//		for( SelectList child : parent )
+//		{
+//			if( child.context.getRuleIndex() == RULE_select )
+//			{
+//				SelectContext sc = (SelectContext) child.context;
+//				for( ItemContext ic : sc.itemList().item() )
+//				{
+//					child.itemList.add( new Item( ic ));
+//				}
+//			}
+//		}
 	}
 
 	static void resolveFROMs( SelectList parent, Map<String, Table> tableMap )
 	{
-		for( SelectList child : parent )
-		{
-			resolveFROMs( child, tableMap );
-		}
-
-		for( From from : parent.fromList )
-		{
-			from.table = tableMap.get( from.tableName.toLowerCase() );
-			if( from.table == null )
-			{
-				System.out.printf( "from.name '%s' not found\n", from.tableName );
-			}
-		}
-
-		for( Condition condition : parent.conditionList )
-		{
-			resolveCondition( parent, condition );
-		}
+//		for( SelectList child : parent )
+//		{
+//			resolveFROMs( child, tableMap );
+//		}
+//
+//		for( From from : parent.fromList )
+//		{
+//			from.table = tableMap.get( from.tableName.toLowerCase() );
+//			if( from.table == null )
+//			{
+//				System.out.printf( "from.name '%s' not found\n", from.tableName );
+//			}
+//		}
+//
+//		for( Condition condition : parent.conditionList )
+//		{
+//			resolveCondition( parent, condition );
+//		}
 	}
 
 	static void resolveCondition( SelectList parent, Condition condition )
 	{
-		String tableName = condition.tableName;
-		tableName = ( tableName != null ? tableName : "*" );
-
-		for( From from : parent.fromList )
-		{
-			if( from.table == null ) continue;
-
-			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
-			{
-				TColumn column = from.table.getColumn( condition.columnName );
-				if( column != null )
-				{
-					condition.from = from;
-					condition.column = column;
-					break;
-				}
-			}
-		}
-
-		if( condition.column == null )
-		{
-			System.out.printf( "condition.columnName '%s' not found\n", condition.columnName );
-		}
+//		String tableName = condition.tableName;
+//		tableName = ( tableName != null ? tableName : "*" );
+//
+//		for( From from : parent.fromList )
+//		{
+//			if( from.table == null ) continue;
+//
+//			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
+//			{
+//				TColumn column = from.table.getColumn( condition.columnName );
+//				if( column != null )
+//				{
+//					condition.from = from;
+//					condition.column = column;
+//					break;
+//				}
+//			}
+//		}
+//
+//		if( condition.column == null )
+//		{
+//			System.out.printf( "condition.columnName '%s' not found\n", condition.columnName );
+//		}
 	}
 
 	static void gatherConditions( SelectList parent, ArrayList<Condition> conditions )

@@ -16,6 +16,7 @@
 package fado.parse;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContextWithAltNum;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.WritableToken;
 
@@ -26,7 +27,9 @@ public class
     GlobbingRuleContext
 extends
     ParserRuleContext
+//    RuleContextWithAltNum
 {
+    public GlobbingRuleContext() { }
     public GlobbingRuleContext( ParserRuleContext parent, int invokingStateNumber )
     {
         super( parent, invokingStateNumber );

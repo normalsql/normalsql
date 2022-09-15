@@ -16,7 +16,7 @@ import static fado.parse.GenericSQLParser.*;
 
 public abstract class Condition
 {
-	public ColumnRefContext columnRef;
+//	public ColumnRefContext columnRef;
 	public String tableName;
 	public String columnName;
 	// TODO remove 'from' and add Table reference to Column
@@ -25,24 +25,24 @@ public abstract class Condition
 	public List<LiteralContext> literalList;
 	public ArrayList<String> valueList = new ArrayList<>();
 
-	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
-	{
-		this( columnRef, Arrays.asList( literals ));
-	}
-
-	public Condition( ColumnRefContext columnRef, List<LiteralContext> literalList )
-	{
-		this.columnRef = columnRef;
-		this.literalList = literalList;
-		if( columnRef != null )
-		{
-			this.columnName = columnRef.columnName().getTrimmedText();
-			this.tableName = columnRef.findFirstString( "tableName" );
-		}
-
-		for( LiteralContext lc : literalList )
-		{
-			valueList.add( lc.getTrimmedText() );
-		}
-	}
+//	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
+//	{
+//		this( columnRef, Arrays.asList( literals ));
+//	}
+//
+//	public Condition( ColumnRefContext columnRef, List<LiteralContext> literalList )
+//	{
+//		this.columnRef = columnRef;
+//		this.literalList = literalList;
+//		if( columnRef != null )
+//		{
+//			this.columnName = columnRef.columnName().getTrimmedText();
+//			this.tableName = columnRef.findFirstString( "tableName" );
+//		}
+//
+//		for( LiteralContext lc : literalList )
+//		{
+//			valueList.add( lc.getTrimmedText() );
+//		}
+//	}
 }

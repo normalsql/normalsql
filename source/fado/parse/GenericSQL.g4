@@ -10,9 +10,11 @@
 grammar GenericSQL;
 
 options {
-  contextSuperClass=fado.parse.GlobbingRuleContext;
+//  contextSuperClass=fado.parse.GlobbingRuleContext;
   caseInsensitive = true;
 }
+
+parse   : statement* EOF ;
 
 statement
   : ( select
@@ -20,16 +22,17 @@ statement
     | update
 //  | delete
     )
-    SEMI? EOF
+    SEMI?
   ;
   
 select
-  : SELECT
-    ( ALL | DISTINCT | UNIQUE )?
-    ( TOP expression PERCENT? ( WITH TIES )? )?
-    itemList
+  : 'SELECT'
+    ( 'ALL' | 'DISTINCT' | 'UNIQUE' )?
+    ( 'TOP' expression 'PERCENT'? ( 'WITH' 'TIES' )? )?
+    item ( COMMA item )*
     into?
-    from?
+//    ( 'FROM' fromItem ( COMMA fromItem )* )?
+    ( 'FROM' joiner )?
     where?
     groupBy?
     having?
@@ -43,43 +46,56 @@ select
     forUpdate?
   ;
 
+item
+  : STAR exceptions?
+  | reference DOT STAR exceptions?
+  | expression alias?
+  ;
+
+joiner   : column ( COMMA column )*
+         | column ( ( 'CROSS' | 'NATURAL' )? ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? )? 'JOIN'
+           column ( 'ON' expression | 'USING' LPAREN name ( COMMA name )* RPAREN )? )*
+         //join     : ( 'CROSS' | 'NATURAL' )? ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? )? 'JOIN' fromItem
+         //           ( 'ON' expression | 'USING' LPAREN name ( COMMA name )* RPAREN )?
+          | LPAREN joiner RPAREN
+          ;
+
+column : source ( 'AS'? name ( LPAREN name ( COMMA name )* RPAREN )? )?
+       ;
+
+source   : reference useIndex?
+         | function
+         | query
+         | LPAREN source RPAREN
+         ;
+
 insert
-  : INSERT into columnList?
-  ( values
-// | select
-  )
+  : 'INSERT' into columnList?
+//  ( values
+//// | select
+//  )
   ;  
 
 update
-  : UPDATE tableRef SET setter ( COMMA setter )*
+  : 'UPDATE' reference 'SET' setter ( COMMA setter )*
     where?
   ;
 
 columnList
-  : LPAREN columnName ( COMMA columnName )* RPAREN
+  : LPAREN reference ( COMMA reference )* RPAREN
   ;
 
 setter
-  : columnName EQ literal
+  : reference EQ literal
   ;
   
 into
-  : INTO tableRef ( COMMA tableRef )*
-  ;
-
-itemList
-  : list+=item ( COMMA list+=item )*
-  ;
-  
-item
-  : star=STAR exceptions?
-  | tableName DOT star=STAR exceptions?
-  | expression alias?
+  : 'INTO' reference ( COMMA reference )*
   ;
 
 // http://www.h2database.com/html/grammar.html#wildcard_expression
 exceptions
-  : EXCEPT LPAREN columnRef ( COMMA columnRef )* RPAREN
+  : 'EXCEPT' LPAREN reference ( COMMA reference )* RPAREN
   ;
 
 expressionList
@@ -87,336 +103,190 @@ expressionList
   ;
 
 expression
-  : literal
-  | Variable
-  | op=( MINUS | PLUS | TILDE ) expression
-  | function
-  | columnRef
+  : literal # stuff
+  | Variable # var
+  | ( MINUS | PLUS ) expression # unary
+  | function # func
+  | reference # ref
 
-  // Best guess for precedence of  operators
-  | left=expression op=STRCAT right=expression
-  | left=expression op=( STAR | DIV | MOD ) right=expression
-  | left=expression op=( PLUS | MINUS ) right=expression
-  | left=expression op=( LT2 | GT2 | AMP | PIPE ) right=expression
-  | left=expression op=( LT | LTE | GT | GTE ) right=expression
-  | left=expression op=( EQ | NEQ1 | NEQ2 ) right=expression
+  // Best guess for precedence of operators
+  | expression CONCAT expression # concat
+  | expression CARET expression # caret
+  | expression ( STAR | DIVIDE | MODULO ) expression # Products
+  | expression ( PLUS | MINUS ) expression # Sums
+  | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression # bitwise
+  | expression ( LT | LTE | GT | GTE ) expression # compare
+  | expression ( EQ | NEQ ) expression # equal
   // TODO: This should build LL parse tree, not LR
-  | left=expression op=( AND | OR ) right=expression
-  | op=NOT right=expression
-
-  | LPAREN expression RPAREN
-  | LPAREN query RPAREN
-  | left=expression NOT* op=( LIKE | ILIKE ) right=expression ( ESCAPE expression )?
-  | left=expression NOT* op=REGEXP right=expression ( ESCAPE expression )?
-  | expression IS NOT? op=NULL
-  | left=expression NOT* op=IN LPAREN ( select | list=expressionList )? RPAREN
+  | expression ( 'AND' | 'OR' ) expression # boolean
+  | 'NOT' expression # not
+  | LPAREN expressionList RPAREN # nested
+  | LPAREN RPAREN # empty
+  | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN # subquery
+  | expression 'NOT'* ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? # LIKE
+  | expression 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? # REGEXP
+  | expression 'IS' 'NOT'? 'NULL' # IsNull
+  | expression 'IS' 'NOT'? 'DISTINCT' 'FROM' expression # IsDistinct
+  | expression 'NOT'* 'IN' LPAREN ( query | expressionList )? RPAREN # in
 // TODO additional 'IN' rules
 //          | ( databaseName DOT )? table_name
 //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-  | left=expression NOT* op=BETWEEN ( ASYMMETRIC | SYMMETRIC )? lower=expression AND upper=expression
-
-  | op=EXISTS LPAREN query RPAREN
-  | op=UNIQUE LPAREN query RPAREN
-  // http://www.h2database.com/html/grammar.html#condition
-  | op=INTERSECTS LPAREN expression COMMA expression RPAREN
-  | op=CASE expression? ( WHEN expression THEN expression )+ ( ELSE expression )? END
-  | op=( CAST | TRY_CAST ) LPAREN expression AS typeName RPAREN
-  | expression op=COLLATE collateName
+  | expression 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression # between
+  | 'INTERSECTS' LPAREN expression COMMA expression RPAREN # intersects
+  | 'CASE' expression? ( 'WHEN' expression 'THEN' expression )+ ( 'ELSE' expression )? 'END' # case
+  | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' ID RPAREN # cast
+  | expression 'COLLATE' ID # collate
 //  TODO | raise_function
-  | op=( ALL | ANY | SOME ) LPAREN query RPAREN
   ;
 
-// TODO: http://www.h2database.com/html/grammar.html#query
-// TODO: merge 'query' and 'from' rules?
 query
   : select
-//  | explicit from
-//  | from value
+  | 'TABLE' reference orderBy? // offset? fetch?
+  | 'VALUES' 'ROWS'? expressionList
   ;
 
-// TODO inline these 'name' rules
-alias
-  : AS? aliasName
-  ;
+alias    : 'AS'? name
+         ;
 
-// TODO filter_clause? over_clause?
 function
-  : functionName LPAREN STAR RPAREN
-  | functionName LPAREN ( ALL | DISTINCT ) expressionList RPAREN
-  | functionName LPAREN expressionList? RPAREN
-  | '{fn' odbcFunctionName LPAREN expressionList? RPAREN '}'
-  | Identifier? FUNCTION functionName LPAREN expressionList? RPAREN // T-SQL
-  | Identifier DOT functionName LPAREN expressionList? RPAREN // T-SQL?
-  ;
-
-functionName
-  : Identifier
-  ;
-
-odbcFunctionName
-  : LEFT | RIGHT | INSERT // also SQL reserved words
-  | Identifier
-  ;
-
-from
-  : FROM fromItem ( COMMA fromItem )*
-  ;
-  
-fromItem
-  : table useIndex?
-  | fromItem join
-  | LPAREN fromItem RPAREN
-  | function
-  ;
-
-table
-  : ( LPAREN select RPAREN
-    | tableRef
-    )
-    alias?
-  ;
-
-useIndex
-  : USE INDEX LPAREN Identifier ( COMMA Identifier )* RPAREN
-  ;
-
-join
-  : 
-    ( JOIN
-    | INNER JOIN
-    | LEFT JOIN
-    | LEFT OUTER JOIN
-    | RIGHT JOIN 
-    | RIGHT OUTER JOIN
-    | OUTER JOIN 
-    | NATURAL JOIN
-    )
-    // ( INNER | ( LEFT | RIGHT )? OUTER? | NATURAL )? JOIN
-    from
-
-    ( ON expression
-    | USING LPAREN columnName ( COMMA columnName )* RPAREN
+  : name LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList? | STAR )? RPAREN
+    ( 'FILTER' LPAREN 'WHERE' expression RPAREN )?
+    ( 'OVER'
+      ( reference
+      | LPAREN reference?
+        ( 'PARTITION' 'BY' expressionList )?
+        ( 'ORDER' 'BY' orderSpec ( COMMA orderSpec )* )? window?
+        RPAREN
+      )
     )?
 
-  | LPAREN join RPAREN
+  // some ODBC function names are also SQL reserved words
+  | '{fn' ( 'LEFT' | 'RIGHT' | 'INSERT' | name ) LPAREN expressionList? RPAREN '}'
+//  | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
+//  | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
   ;
 
-union
-  : ( UNION ALL?
-    | EXCEPT
-    | INTERSECT
-    )
-    ( LPAREN query RPAREN
-    | query
-    )
-  ;
+orderSpec : expression ( 'COLLATE' ID )? ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
+          ;
 
-where
-  : WHERE expression
-  ;
+window    : ( 'RANGE'| 'ROWS' | 'GROUPS' )
+            ( preceding | 'BETWEEN' following 'AND' following )
+            ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+          ;
+
+preceding : ( 'UNBOUNDED' | literal ) 'PRECEDING'
+          | 'CURRENT' 'ROW'
+          ;
+
+following : ( 'UNBOUNDED' | literal ) 'FOLLOWING'
+          | preceding
+          ;
+
+//table
+//  : ( LPAREN select RPAREN
+//    | name
+//    )
+//    alias?
+//  ;
+
+useIndex : 'USE' 'INDEX' LPAREN ID ( COMMA ID )* RPAREN
+         ;
+
+union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query // ( LPAREN query RPAREN | query )
+         ;
+
+where    : 'WHERE' expression
+         ;
   
-groupBy
-  : GROUP BY
-    ( expressionList?
-    | LPAREN expressionList? RPAREN
-    )
-  ;
+groupBy  : 'GROUP' 'BY' ( expressionList? | LPAREN expressionList? RPAREN )
+         ;
   
-having
-  : HAVING expressionList
-  ;
+having   : 'HAVING' expressionList
+         ;
 
-qualify
-  : QUALIFY expression
-  ;
+qualify  : 'QUALIFY' expression
+         ;
   
 orderBy
-  : ORDER BY orderByItem ( COMMA orderByItem )*
+  : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
   ;
   
 orderByItem
-  : expression ( ASC | DESC )?
+  : expression ( 'ASC' | 'DESC' )?
   ;
 
 limit
-  : LIMIT expression (( OFFSET | COMMA ) expression )?
+  : 'LIMIT' expression (( 'OFFSET' | COMMA ) expression )?
   ;
 
 forUpdate
-  : FOR UPDATE
+  : 'FOR' 'UPDATE'
   ;
 
-values
-  : VALUES LPAREN literal ( COMMA literal )* RPAREN
-  ;
-
-//value
-//  : literal
-//  | columnRef
+//values
+//  : 'VALUES' LPAREN literal ( COMMA literal )* RPAREN
 //  ;
 
-// TODO add preparedstatement parameter '?'
 // TODO add 'UNKNOWN'?
 literal
-  : Float
-  | Integer
+  : ( MINUS | PLUS )? Float
+  | ( MINUS | PLUS )? Integer
   | String
-  | TRUE
-  | FALSE
-  | NULL
-  | date
+  | 'TRUE'
+  | 'FALSE'
+  | 'NULL'
+  | Date
+  | 'DATE' String
+  | QUESTION
   ;
 
-// TODO turn this rule into a token
-date
-  : '{d' String '}' // Date
-  | '{t' String '}' // Time
-  | '{ts' String '}' // Timestamp
-  ;
+reference : name ( DOT name )* ;
 
-tableRef
-  : tableName
-  | databaseName DOT tableName
-  ;
-  
-columnRef
-  : (( databaseName DOT )? tableName DOT )? columnName
-  ;
-
-databaseName
-  : Identifier
-  ;
-  
-tableName
-  : Identifier
-  ;
-  
-columnName
-  : Identifier
-  ;
-
-typeName
-  : Identifier
-  ;
-
-collateName
-  : Identifier
-  ;
-
-aliasName
-  : Identifier
-  ;
+name      : ID | String ;
 
 // Lexer
 
-// Keywords
-  
-ALL       : 'ALL' ;
-AND       : 'AND' ;
-ANY       : 'ANY' ;
-AS        : 'AS' ;
-ASC       : 'ASC' ;
-ASYMMETRIC: 'ASYMMETRIC' ;
-BETWEEN   : 'BETWEEN' ;
-BY        : 'BY' ;
-CASE      : 'CASE' ;
-CAST      : 'CAST' ;
-COLLATE   : 'COLLATE' ;
-DELETE    : 'DELETE' ;
-DESC      : 'DESC' ;
-DISTINCT  : 'DISTINCT' ;
-DIV       : 'DIV' ;
-ELSE      : 'ELSE' ;
-END       : 'END' ;
-ESCAPE    : 'ESCAPE' ;
-EXCEPT    : 'EXCEPT' ;
-EXISTS    : 'EXISTS' ;
-FALSE     : 'FALSE' ;
-FOR       : 'FOR' ;
-FROM      : 'FROM' ;
-FULL      : 'FULL' ;
-GROUP     : 'GROUP' ;
-HAVING    : 'HAVING' ;
-ILIKE     : 'ILIKE' ;
-IN        : 'IN' ;
-INDEX     : 'INDEX' ;
-INNER     : 'INNER' ;
-INSERT    : 'INSERT' ;
-INTO      : 'INTO' ;
-INTERSECT : 'INTERSECT' ;
-INTERSECTS: 'INTERSECTS' ;
-IS        : 'IS' ;
-JOIN      : 'JOIN' ;
-LEFT      : 'LEFT' ;
-LIKE      : 'LIKE' ;
-LIMIT     : 'LIMIT' ;
-NATURAL   : 'NATURAL' ;
-NOT       : 'NOT' ;
-NULL      : 'NULL' ;
-OFFSET    : 'OFFSET' ;
-ON        : 'ON' ;
-OR        : 'OR' ;
-ORDER     : 'ORDER' ;
-OUTER     : 'OUTER' ;
-PERCENT   : 'PERCENT' ;
-PIPE      : 'PIPE' ;
-QUALIFY   : 'QUALIFY' ;
-REGEXP    : 'REGEXP' ;
-RIGHT     : 'RIGHT' ;
-SELECT    : 'SELECT' ;
-SET       : 'SET' ;
-SOME      : 'SOME' ;
-SYMMETRIC : 'SYMMETRIC' ;
-THEN      : 'THEN' ;
-TIES      : 'TIES' ;
-TRUE      : 'TRUE' ;
-TRY_CAST  : 'TRY_CAST' ;
-TOP       : 'TOP' ;
-UNION     : 'UNION' ;
-UNIQUE    : 'UNIQUE' ;
-UPDATE    : 'UPDATE' ;
-USE       : 'USE' ;
-USING     : 'USING' ;
-VALUES    : 'VALUES' ;
-WITH      : 'WITH' ;
-WHEN      : 'WHEN' ;
-WHERE     : 'WHERE' ;
-
 // Punctuation
 
-DOT      : '.' ;
-COMMA    : ',' ;
 LPAREN   : '(' ;
 RPAREN   : ')' ;
-LCURLY   : '{' ;
-RCURLY   : '}' ;
-QUESTION : '?' ;
-COLON    : ':' ;
+//LCURLY   : '{' ;
+//RCURLY   : '}' ;
+LSQUARE  : '[' ;
+RSQUARE  : ']' ;
+COMMA    : ',' ;
 SEMI     : ';' ;
-
-STRCAT   : '||' ;
-FUNCTION : '::' ;
-
-AMP      : '&' ;
-EQ       : '=' ;
-NEQ1     : '<>' ;
-NEQ2     : '!=' ;
-LT       : '<' ;
-LT2      : '<<' ;
-LTE      : '<=' ;
-GT       : '>' ;
-GT2      : '>>' ;
-GTE      : '>=' ;
 
 PLUS     : '+' ;
 MINUS    : '-' ;
 DIVIDE   : '/' ;
 STAR     : '*' ;
-MOD      : '%' ;
+MODULO   : '%' ;
+CARET    : '^' ; // exponent
+AT       : '@' ; // absolute value
+BANG     : '!' ; // factorial
 
-TILDE    : '~' ;
+EQ       : '=' ;
+NEQ      : '<>' | '!=' ;
+LT       : '<' ;
+LTE      : '<=' ;
+GT       : '>' ;
+GTE      : '>=' ;
 
-// Token rules
+CONCAT   : '||' ; // concatenation
+AMP      : '&' ; // bitwise AND
+PIPE     : '|' ; // bitwise XOR
+POUND    : '#' ; // bitwise XOR
+TILDE    : '~' ; // bitwise NOT
+LSHIFT   : '<<' ; // bitwise shift left
+RSHIFT   : '>>' ; // bitwise shift right
+
+DOT      : '.' ;
+COLON    : ':' ;
+FUNCTION : '::' ;
+QUESTION : '?' ;
+
+// Tokens
 
 Integer
   : DIGIT+ 'L'?
@@ -434,7 +304,13 @@ String options { caseInsensitive=false; }
   : [NE]? '\'' ( ~'\'' | '\'\'' )* '\''
   ;
 
-Identifier
+// ODBC date time
+Date     : '{d' String '}'
+         | '{t' String '}'
+         | '{ts' String '}'
+         ;
+
+ID
   : '"' ( ~'"' | '""' )* '"'
   | '`' ( ~'`' | '``' )* '`'
   | '[' ~']'* ']'
@@ -442,7 +318,7 @@ Identifier
   ;
 
 Variable
-  : [:@$] Identifier
+  : [:@$] ID
   | '?' DIGIT*
   ;
 
@@ -455,8 +331,9 @@ BlockComment
   ;
 
 Whitespace
-  : [ \u000B\t\r\n] -> channel( HIDDEN )
+  : [ \t\r\n] -> channel( HIDDEN )
   ;
 
 fragment DIGIT : [0-9] ;
 
+Whoops : . ;
