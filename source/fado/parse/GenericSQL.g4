@@ -65,7 +65,7 @@ statement
 // TODO experiment replace ( exprList ) w/ just expr
 select
   : 'SELECT'
-    ( 'ALL' | 'DISTINCT' | 'UNIQUE' )?
+    distinct?
     ( 'TOP' expression 'PERCENT'? ( 'WITH' 'TIES' )? )?
     ( item ( COMMA item )* )?
     into?
@@ -83,34 +83,48 @@ select
     forUpdate?
   ;
 
-item     : STAR exceptions?
-         | reference DOT STAR exceptions?
+distinct : 'ALL'
+         | 'DISTINCT' ( 'ON' LPAREN expressionList RPAREN )?
+         | 'UNIQUE' // oracle
+         ;
+
+item     : (( reference DOT )? STAR ) exceptions?
          | expression alias?
+         ;
+
+alias    : 'AS'? name
          ;
 
 join     : table ( COMMA table )*
          | LPAREN join RPAREN
          | table ( ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER' | 'CROSS' | 'NATURAL' )?
-           'JOIN' table ( 'ON' expression | 'USING' LPAREN name ( COMMA name )* RPAREN )? )*
+           'JOIN' join ( 'ON' expression | 'USING' LPAREN name ( COMMA name )* RPAREN )? )*
+           | table
          ;
 
 table    : source ( 'AS'? name ( LPAREN name ( COMMA name )* RPAREN )? )? useIndex?
          ;
 
-source   : reference
+source   : query
+         | reference
          | function
-         | query
+         | unnest
          | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN
          | LPAREN source RPAREN
          ;
 
-tableRow : ( name | reference ) keyword EQ ( array | row )
+//tableRow : ( name | reference ) keyword EQ ( array | row )
+tableRow : ( name | reference ) keyword EQ ( array | expression )
          ;
 
 query    : select
          | 'TABLE' reference orderBy? // offset? fetch?
-         | 'VALUES' 'ROWS'? expressionList
+//         | 'VALUES' row ( COMMA row )*
+         | 'VALUES' expressionList
          ;
+
+unnest : 'UNNEST' LPAREN array ( COMMA array )* RPAREN ( 'WITH' 'ORDINALITY' )?
+       ;
 
 insert
   : 'INSERT' into columnList?
@@ -136,13 +150,13 @@ into
   : 'INTO' reference ( COMMA reference )*
   ;
 
-// http://www.h2database.com/html/grammar.html#wildcard_expression
 exceptions
   : 'EXCEPT' LPAREN reference ( COMMA reference )* RPAREN
   ;
 
 expressionList
-  : expression ( COMMA expression )*
+  : LPAREN expressionList RPAREN
+  | expression ( COMMA expression )*
   ;
 
 // Best guess for precedence of operators
@@ -154,7 +168,7 @@ expression
   | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression
   | expression compare
   | 'NOT' expression
-  | LPAREN expressionList RPAREN
+  | LPAREN expression RPAREN
   | LPAREN RPAREN
   | quantified
   | expression like
@@ -168,18 +182,22 @@ expression
   | 'INTERSECTS' LPAREN expression COMMA expression RPAREN
   | 'CASE' expression ( 'WHEN' ( expressionList | whenPred ) 'THEN' expression )+ ( 'ELSE' expression )? 'END'
   | 'CASE' ( 'WHEN' expressionList 'THEN' expression )+ ( 'ELSE' expression )? 'END'
-  | ( 'CAST' | 'TRY_CAST' ) LPAREN ID* expression 'AS' type RPAREN
-  | expression 'COLLATE' ID
+  | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' type RPAREN
+  | expression 'COLLATE' keyword
 //  | raise_function
   // TODO: This should build LL parse tree, not LR
   | expression ( 'AND' | 'OR' ) expression
-   | literal
-    | Variable
-    | ( MINUS | PLUS ) expression
-    | function
-    | reference
-    | row
-    | query
+  | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
+  | LPAREN expressionList RPAREN DOT name
+  | 'ROW' LPAREN expressionList RPAREN
+  | query
+  | literal
+  | Variable
+      | ( MINUS | PLUS ) expression
+      | function
+      | reference
+//      | row
+      | array
 ;
 
 whenPred  : compare
@@ -205,29 +223,18 @@ between    : 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' e
 // TODO additional 'IN' rules
 //          | ( databaseName DOT )? table_name
 //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-in         : 'NOT'* 'IN' expression;
+in         : 'NOT'* 'IN' expressionList;
 //in         : 'NOT'* 'IN' LPAREN (  expressionList )? RPAREN ;
 //in         : 'NOT'* 'IN' LPAREN ( /* query */ | expressionList )? RPAREN ;
 like       : 'NOT'* ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? ;
 regexp     : 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? ;
 
 
-alias    : 'AS'? name
-         ;
 
 function
-  : name LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList? | STAR )? RPAREN
+  : name LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
     ( 'FILTER' LPAREN 'WHERE' expression RPAREN )?
-    ( 'OVER' window
-//      ( reference
-//      | LPAREN reference?
-//        ( 'PARTITION' 'BY' expressionList )?
-//        ( 'ORDER' 'BY' orderSpec ( COMMA orderSpec )* )?
-//        windowFrame?
-//        RPAREN
-//      )
-    )?
-
+    ( 'OVER' window )?
   // some ODBC function names are also SQL reserved words
   | '{fn' keyword LPAREN expressionList? RPAREN '}'
 //  | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
@@ -239,7 +246,7 @@ type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
      | keyword* ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
      ;
 
-useIndex : 'USE' 'INDEX' LPAREN ID ( COMMA ID )* RPAREN
+useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
          ;
 
 union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query // ( LPAREN query RPAREN | query )
@@ -248,8 +255,8 @@ union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query // ( LPAREN query R
 where    : 'WHERE' expression
          ;
   
-groupBy  : 'GROUP' 'BY' expression
 //groupBy  : 'GROUP' 'BY' ( expressionList? | LPAREN expressionList? RPAREN )
+groupBy  : 'GROUP' 'BY' expressionList?
          ;
   
 having   : 'HAVING' expressionList
@@ -258,7 +265,7 @@ having   : 'HAVING' expressionList
 windowAlias : name 'AS' window
             ;
 
-window      :  name
+window      : name
             | LPAREN name? partitionBy? orderBy? windowFrame? RPAREN
             ;
 
@@ -301,17 +308,14 @@ limit       : 'LIMIT' expression (( 'OFFSET' | COMMA ) expression )?
 forUpdate   : 'FOR' 'UPDATE'
             ;
 
-//values
-//  : 'VALUES' LPAREN literal ( COMMA literal )* RPAREN
-//  ;
+//row       : 'ROW'? LPAREN expressionList? RPAREN
+//          // two or more expressions
+////          | LPAREN expression COMMA expressionList RPAREN
+////          | expression
+//          ;
 
-row       : 'ROW'? LPAREN expressionList? RPAREN
-          // two or more expressions
-          | LPAREN expression COMMA expressionList RPAREN
-//          | expression
+array     : 'ARRAY' LSQUARE expressionList? RSQUARE
           ;
-
-array     : LSQUARE expressionList RSQUARE ;
 
 literal
   : ( MINUS | PLUS )? Float
@@ -320,28 +324,34 @@ literal
   | Blob
   | boolean
   | 'NULL'
-  | Date
-  | 'DATE' String
+  | date
   | ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
   | QUESTION
+  | 'INTERVAL' String ( 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'SECOND' )
   ;
 
 integer   : ( MINUS | PLUS )? Integer ;
 // TODO Convert boolean values from keywords to lexer tokens?
 boolean   : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-
+date
+// ODBC date time
+     : '{d' String '}'
+         | '{t' String '}'
+         | '{ts' String '}'
+  | 'DATE' String
+;
 keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
-name      : ID | String ;
+name      : String | keyword;
 reference : name ( DOT name )* ;
 
 // Lexer
 
 // Punctuation
 
+//NULL : 'NULL';
+
 LPAREN   : '(' ;
 RPAREN   : ')' ;
-//LCURLY   : '{' ;
-//RCURLY   : '}' ;
 LSQUARE  : '[' ;
 RSQUARE  : ']' ;
 COMMA    : ',' ;
@@ -356,7 +366,7 @@ CARET    : '^' ; // exponent
 AT       : '@' ; // absolute value
 BANG     : '!' ; // factorial
 
-EQ       : '=' ;
+EQ       : '=' | ':=' ;
 NEQ      : '<>' | '!=' ;
 LT       : '<' ;
 LTE      : '<=' ;
@@ -397,16 +407,11 @@ Blob options { caseInsensitive=false; }
   : [X] '\'' ( ~'\'' | '\'\'' )* '\''
   ;
 
-// ODBC date time
-Date     : '{d' String '}'
-         | '{t' String '}'
-         | '{ts' String '}'
-         ;
 
 ID
   : '"' ( ~'"' | '""' )* '"'
   | '`' ( ~'`' | '``' )* '`'
-  | '[' ~']'* ']'
+//  | '[' ~']'* ']'
   | [A-Z_] [A-Z_0-9]*
   ;
 
