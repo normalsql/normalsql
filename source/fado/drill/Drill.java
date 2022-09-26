@@ -9,19 +9,19 @@ public class Drill
 {
 	public static void main( String... args )
 	{
-		String sql = "date";
-//		boolean ugh = "DATE".equalsIgnoreCase( sql );
+		String sql = "BIT_NAND_AGG(V) FILTER (WHERE V <= 0xffffffff0fff) FROM TEST"
+			;
 		CharStream chars = CharStreams.fromString( sql );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
-//		ExpressionContext e = parser.expression();
+		ParserRuleContext e = parser.parse();
 
-//		System.out.println( e.toInfoString( parser ) );
+		System.out.println( e.toInfoString( parser ) );
+		System.out.println( e.toStringTree( parser ) );
 
 //		process( e );
 
-//		System.out.println( e.toStringTree( parser ) );
 	}
 
 //	static void process( MaybeContext ec )

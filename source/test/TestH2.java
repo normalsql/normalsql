@@ -11,13 +11,9 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class
 	TestH2
-	extends
-//	BaseErrorListener
-	DiagnosticErrorListener
 {
 	static int count = 0;
 
@@ -39,10 +35,16 @@ public class
 		app.go();
 	}
 
+	class Work {
+		Path source;
+		String sql;
+		int line;
+	}
 	public void go() throws Exception
 	{
 
-		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/h2database/h2/src/test/org/h2/test/scripts" );
+//		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/h2database/h2/src/test/org/h2/test/scripts" );
+		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/fado/source/test/" );
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
 			{
@@ -70,12 +72,14 @@ public class
 			}
 			);
 
-		System.out.printf( "found %d\n", files.size() );
+		System.out.printf( "files found %d\n", files.size() );
 
-		rooster:
-		for( Path file : files )
+		ArrayList<Work> workList = new ArrayList<>();
+
+		try
 		{
-			try
+			rooster:
+			for( Path file : files )
 			{
 				ArrayList<String> sql = new ArrayList<>();
 				List<String> lines = Files.readAllLines( file );
@@ -95,9 +99,11 @@ public class
 					{
 						String gorp = String.join( "\n", sql );
 //									String gorp = String.join( " ", sql );
+						int argh = nth;
+						Work w = new Work() {{ source=file;sql=gorp;line=argh;}};
+						workList.add( w );
 						sql.clear();
 						TestH2.count();
-						parse( file, nth, gorp );
 					}
 					if( error > 0 )
 					{
@@ -105,49 +111,74 @@ public class
 					}
 				}
 			}
+		}
 			catch( Exception e )
 			{
 				e.printStackTrace();
 			}
+		System.out.println();
+		System.out.printf( "statements found %d\n", workList.size() );
+
+		System.out.println();
+
+//		for( Work w : workList )
+//		{
+//			System.out.println( w.sql );
+//		}
+
+		System.out.println();
+		System.out.println();
+
+		for( Work w : workList )
+		{
+			parse( w.source, w.line, w.sql );
 		}
+
 
 		System.out.println( "statements found: " + count );
 		System.out.println( "errors found: " + error );
+
 	}
 
-	public void parse( Path sourceFile, int nth, String sql ) throws Exception
+	ArrayList<String> fails = new ArrayList<>();
+	public void parse( Path sourceFile, int nth, String sql )
 	{
 		CharStream chars = CharStreams.fromString( sql );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
-		parser.removeErrorListeners();
-		parser.addErrorListener( this );
+//		parser.removeErrorListeners();
+		parser.addErrorListener( new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer,
+			                        Object offendingSymbol,
+			                        int line,
+			                        int charPositionInLine,
+			                        String msg,
+			                        RecognitionException e)
+			{
+				if( e != null )
+				{
+					error();
+					fails.add( msg );
+					fails.add( sql );
+//					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
+//					System.out.println( sourceFile );
+//					System.out.println( "line: " + nth );
+//					System.out.println( sql );
+
+//					System.out.println( );
+
+				}
+			}
+
+		} );
 
 		GenericSQLParser.ParseContext result = parser.parse();
-		if( error > 0 )
+		for( String fail : fails )
 		{
-			System.out.println( sourceFile );
-			System.out.println( "line: " + nth );
-			System.out.println( sql );
-
-			System.out.println( result.toStringTree( parser ) );
+					System.out.println( fail );
+					System.out.println( );
 		}
 	}
-
-	@Override
-	public void syntaxError(Recognizer<?, ?> recognizer,
-	                        Object offendingSymbol,
-	                        int line,
-	                        int charPositionInLine,
-	                        String msg,
-	                        RecognitionException e)
-	{
-		if( e != null )
-		{
-			error();
-			System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
-		}
-	}
-
 }

@@ -14,13 +14,11 @@ options {
   caseInsensitive = true;
 }
 
-@parser::header
-{
+@parser::header {
 import java.util.HashSet;
 }
 
-@parser::members
-{
+@parser::members {
 	HashSet<String> __keywords = keywords();
 
 	public HashSet<String> keywords()
@@ -45,7 +43,9 @@ import java.util.HashSet;
 
     public boolean isKeyword( Token t )
     {
-        String text = t.getText().toUpperCase();
+        String text1 = t.getText();
+        if( !Character.isLetter( text1.charAt( 0 ))) return false;
+        String text = text1.toUpperCase();
         boolean contains = keywords().contains( text );
         return contains;
     }
@@ -59,7 +59,7 @@ statement
     | update
 //  | delete
     )
-    SEMI?
+    SEMI
   ;
 
 // TODO experiment replace ( exprList ) w/ just expr
@@ -69,7 +69,7 @@ select
     ( 'TOP' expression 'PERCENT'? ( 'WITH' 'TIES' )? )?
     ( item ( COMMA item )* )?
     into?
-    ( 'FROM' join )?
+    ( 'FROM' join ( COMMA join )* )?
     where?
     groupBy?
     having?
@@ -95,22 +95,27 @@ item     : (( reference DOT )? STAR ) exceptions?
 alias    : 'AS'? name
          ;
 
-join     : table ( COMMA table )*
-         | LPAREN join RPAREN
-         | table ( ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER' | 'CROSS' | 'NATURAL' )?
-           'JOIN' join ( 'ON' expression | 'USING' LPAREN name ( COMMA name )* RPAREN )? )*
-           | table
+join     : ( LPAREN join RPAREN )
+         | join joinStyle join joinOn?
+         | table
          ;
 
-table    : source ( 'AS'? name ( LPAREN name ( COMMA name )* RPAREN )? )? useIndex?
+joinStyle : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
+          ;
+
+joinOn    : 'ON' expression
+          | 'USING' LPAREN name ( COMMA name )* RPAREN
+          ;
+
+table    : source  ( 'AS'? name ( LPAREN name ( COMMA name )* RPAREN )? )? useIndex?
          ;
 
-source   : query
+source   : LPAREN source RPAREN
+         | query
          | reference
          | function
          | unnest
          | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN
-         | LPAREN source RPAREN
          ;
 
 //tableRow : ( name | reference ) keyword EQ ( array | row )
@@ -119,9 +124,14 @@ tableRow : ( name | reference ) keyword EQ ( array | expression )
 
 query    : select
          | 'TABLE' reference orderBy? // offset? fetch?
-//         | 'VALUES' row ( COMMA row )*
-         | 'VALUES' expressionList
+         | 'VALUES' row ( COMMA row )*
+//         | 'VALUES' expressionList
          ;
+
+row :  'ROW'? LPAREN expressionList RPAREN
+| expression
+;
+
 
 unnest : 'UNNEST' LPAREN array ( COMMA array )* RPAREN ( 'WITH' 'ORDINALITY' )?
        ;
@@ -155,21 +165,30 @@ exceptions
   ;
 
 expressionList
-  : LPAREN expressionList RPAREN
-  | expression ( COMMA expression )*
+  : expression ( COMMA expression )*
+  | LPAREN expressionList RPAREN
   ;
 
 // Best guess for precedence of operators
 expression
-  : expression CONCAT expression
+  :
+  LPAREN RPAREN
+    |
+    function
+
+    | LPAREN expression RPAREN
+
+    | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
+    | LPAREN expressionList RPAREN DOT name
+
+   | expression CONCAT expression
   | expression CARET expression
   | expression ( STAR | DIVIDE | MODULO ) expression
   | expression ( PLUS | MINUS ) expression
   | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression
   | expression compare
   | 'NOT' expression
-  | LPAREN expression RPAREN
-  | LPAREN RPAREN
+//  | row
   | quantified
   | expression like
   | expression regexp
@@ -187,18 +206,14 @@ expression
 //  | raise_function
   // TODO: This should build LL parse tree, not LR
   | expression ( 'AND' | 'OR' ) expression
-  | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
-  | LPAREN expressionList RPAREN DOT name
-  | 'ROW' LPAREN expressionList RPAREN
+  | expression function2
   | query
   | literal
   | Variable
-      | ( MINUS | PLUS ) expression
-      | function
-      | reference
-//      | row
-      | array
-;
+  | ( MINUS | PLUS ) expression
+  | reference
+  | array
+  ;
 
 whenPred  : compare
           | quantified
@@ -224,21 +239,36 @@ between    : 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' e
 //          | ( databaseName DOT )? table_name
 //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
 in         : 'NOT'* 'IN' expressionList;
-//in         : 'NOT'* 'IN' LPAREN (  expressionList )? RPAREN ;
-//in         : 'NOT'* 'IN' LPAREN ( /* query */ | expressionList )? RPAREN ;
 like       : 'NOT'* ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? ;
 regexp     : 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? ;
 
+function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'? expression RPAREN
+         | 'SUBSTRING' LPAREN expression 'FROM' expression ( 'FOR' expression )? RPAREN
+         // Window functions
+         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
+           filter? ( 'FROM' ( 'FIRST' | 'LAST' ) )? ( ( 'RESPECT' | 'IGNORE' ) 'NULLS' )? over?
 
+         // Aggregate functions
+         | keyword LPAREN literal RPAREN 'WITHIN' 'GROUP' LPAREN orderBy RPAREN filter? over?
 
-function
-  : name LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
-    ( 'FILTER' LPAREN 'WHERE' expression RPAREN )?
-    ( 'OVER' window )?
-  // some ODBC function names are also SQL reserved words
-  | '{fn' keyword LPAREN expressionList? RPAREN '}'
+         // Generic functions
+         | keyword LPAREN keyword 'FROM' keyword String RPAREN
+//         | keyword
+
+         // some ODBC function names are also SQL reserved words
+         | '{fn' keyword LPAREN expressionList? RPAREN '}'
 //  | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
 //  | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
+         ;
+
+filter : 'FILTER' LPAREN 'WHERE' expression RPAREN
+       ;
+
+over   : 'OVER' window
+       ;
+
+function2
+  : FUNCTION keyword
   ;
 
 
@@ -249,7 +279,7 @@ type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
 useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
          ;
 
-union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query // ( LPAREN query RPAREN | query )
+union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) ( LPAREN query RPAREN | query )
          ;
 
 where    : 'WHERE' expression
@@ -265,8 +295,15 @@ having   : 'HAVING' expressionList
 windowAlias : name 'AS' window
             ;
 
-window      : name
-            | LPAREN name? partitionBy? orderBy? windowFrame? RPAREN
+window      :
+//name
+//            |
+            LPAREN
+            name?
+            partitionBy?
+            orderBy?
+            windowFrame?
+            RPAREN
             ;
 
 windowFrame : ( 'RANGE'| 'ROWS' | 'GROUPS' )
@@ -274,11 +311,11 @@ windowFrame : ( 'RANGE'| 'ROWS' | 'GROUPS' )
               ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
             ;
 
-preceding : ( 'UNBOUNDED' | literal ) 'PRECEDING'
+preceding : ( 'UNBOUNDED' | 'CATEGORY' | expression ) 'PRECEDING'
           | 'CURRENT' 'ROW'
           ;
 
-following : ( 'UNBOUNDED' | literal ) 'FOLLOWING'
+following : ( 'UNBOUNDED' | expression ) 'FOLLOWING'
           | preceding
           ;
 
@@ -308,12 +345,6 @@ limit       : 'LIMIT' expression (( 'OFFSET' | COMMA ) expression )?
 forUpdate   : 'FOR' 'UPDATE'
             ;
 
-//row       : 'ROW'? LPAREN expressionList? RPAREN
-//          // two or more expressions
-////          | LPAREN expression COMMA expressionList RPAREN
-////          | expression
-//          ;
-
 array     : 'ARRAY' LSQUARE expressionList? RSQUARE
           ;
 
@@ -322,6 +353,8 @@ literal
   | integer
   | String
   | Blob
+  | Unicode
+  | Hex
   | boolean
   | 'NULL'
   | date
@@ -341,14 +374,24 @@ date
   | 'DATE' String
 ;
 keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
-name      : String | keyword;
+name      : String | Unicode | keyword
+;
 reference : name ( DOT name )* ;
 
 // Lexer
 
 // Punctuation
 
+// Reserved keywords
 //NULL : 'NULL';
+VALUES : 'VALUES';
+SELECT : 'SELECT';
+FROM : 'FROM';
+WHERE : 'WHERE';
+INSERT : 'INSERT';
+DELETE : 'DELETE';
+JOIN : 'JOIN';
+LEFT : 'LEFT';
 
 LPAREN   : '(' ;
 RPAREN   : ')' ;
@@ -383,9 +426,13 @@ LSHIFT   : '<<' ; // bitwise shift left
 RSHIFT   : '>>' ; // bitwise shift right
 
 DOT      : '.' ;
-COLON    : ':' ;
 FUNCTION : '::' ;
+COLON    : ':' ;
 QUESTION : '?' ;
+
+Hex // options { caseInsensitive=false; }
+  : '0x' [A-F0-9]+
+  ;
 
 Integer
   : DIGIT+ 'L'?
@@ -399,12 +446,16 @@ Float
     ( 'E' [-+]? DIGIT+ )?
   ;
 
-String options { caseInsensitive=false; }
-  : [NE]? '\'' ( ~'\'' | '\'\'' )* '\''
+String // options { caseInsensitive=false; }
+  : /* [NE]? */ '\'' ( ~'\'' | '\'\'' )* '\''
   ;
 
-Blob options { caseInsensitive=false; }
-  : [X] '\'' ( ~'\'' | '\'\'' )* '\''
+Blob // options { caseInsensitive=false; }
+  : 'X\'' ( ~'\'' | '\'\'' )* '\''
+  ;
+
+Unicode // options { caseInsensitive=false; }
+  : 'U&"' ( ~'"' | '""' )* '"'
   ;
 
 
@@ -416,8 +467,10 @@ ID
   ;
 
 Variable
-  : [:@$] ID
-  | '?' DIGIT*
+  :
+  [:@$] ID
+  |
+  '?' DIGIT*
   ;
 
 Comment
