@@ -171,16 +171,10 @@ expressionList
 
 // Best guess for precedence of operators
 expression
-  :
-  LPAREN RPAREN
-    |
-    function
-
+  : LPAREN RPAREN
     | LPAREN expression RPAREN
-
     | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
     | LPAREN expressionList RPAREN DOT name
-
    | expression CONCAT expression
   | expression CARET expression
   | expression ( STAR | DIVIDE | MODULO ) expression
@@ -206,6 +200,7 @@ expression
 //  | raise_function
   // TODO: This should build LL parse tree, not LR
   | expression ( 'AND' | 'OR' ) expression
+  | function
   | expression function2
   | query
   | literal
@@ -227,11 +222,11 @@ whenPred  : compare
           | regexp
           ;
 
-compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) expression ;
+compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) expression ;
 quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN ;
 isNull     : 'IS' 'NOT'? 'NULL' ;
 isDistinct : 'IS' 'NOT'? 'DISTINCT' 'FROM' expression ;
-isBoolean  : 'IS' 'NOT'? boolean ;
+isBoolean  : 'IS' 'NOT'? booleanX ;
 isType     : 'IS' 'OF' LPAREN keyword ( COMMA keyword )* RPAREN;
 between    : 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression ;
 
@@ -273,7 +268,8 @@ function2
 
 
 type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
-     | keyword* ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
+     | keyword+ ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
+//     | keyword ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
      ;
 
 useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
@@ -332,7 +328,7 @@ orderBy : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
 orderByItem  : expression ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
           ;
 
-offset      : 'OFFSET' expression ( 'ROW' | 'ROWS' )
+offset      : 'OFFSET' expression ( 'ROW' | 'ROWS' )?
             ;
 
 fetch  : 'FETCH' ( 'FIRST' | 'NEXT' ) ( expression 'PERCENT'? )?
@@ -353,9 +349,9 @@ literal
   | integer
   | String
   | Blob
-  | Unicode
+  | Unicode ( 'UESCAPE' String )?
   | Hex
-  | boolean
+  | booleanX
   | 'NULL'
   | date
   | ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
@@ -365,13 +361,14 @@ literal
 
 integer   : ( MINUS | PLUS )? Integer ;
 // TODO Convert boolean values from keywords to lexer tokens?
-boolean   : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+booleanX   : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
 date
 // ODBC date time
      : '{d' String '}'
          | '{t' String '}'
          | '{ts' String '}'
   | 'DATE' String
+  | 'TIMESTAMP' String
 ;
 keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
 name      : String | Unicode | keyword
@@ -421,7 +418,14 @@ CONCAT   : '||' ; // concatenation
 AMP      : '&' ; // bitwise AND
 PIPE     : '|' ; // bitwise XOR
 POUND    : '#' ; // bitwise XOR
-TILDE    : '~' ; // bitwise NOT
+// TILDE     : '~' ; // bitwise NOT
+// https://www.postgresql.org/docs/current/functions-matching.html
+// POSIX Regular Exressions
+TILDE1    : '~' ; // match regex case sensitive
+TILDE2    : '~*' ; // match regex case insensitive
+TILDE3    : '!~' ; // not match regex case sensitive
+TILDE4    : '!~*' ; // not match regex case insensitive
+
 LSHIFT   : '<<' ; // bitwise shift left
 RSHIFT   : '>>' ; // bitwise shift right
 
@@ -447,17 +451,16 @@ Float
   ;
 
 String // options { caseInsensitive=false; }
-  : /* [NE]? */ '\'' ( ~'\'' | '\'\'' )* '\''
+  : /* [NE]? */ GOBBLE
   ;
 
 Blob // options { caseInsensitive=false; }
-  : 'X\'' ( ~'\'' | '\'\'' )* '\''
+  : 'X' GOBBLE
   ;
 
 Unicode // options { caseInsensitive=false; }
-  : 'U&"' ( ~'"' | '""' )* '"'
+  : 'U&' GOBBLE// ( 'UESCAPE' )
   ;
-
 
 ID
   : '"' ( ~'"' | '""' )* '"'
@@ -485,6 +488,7 @@ Whitespace
   : [ \t\r\n] -> channel( HIDDEN )
   ;
 
+fragment GOBBLE : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT : [0-9] ;
 
 Whoops : . ;
