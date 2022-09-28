@@ -66,7 +66,7 @@ statement
 select
   : 'SELECT'
     distinct?
-    ( 'TOP' ( Integer | Float | LPAREN expression RPAREN ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
+    ( 'TOP' ( Decimal | Real | LPAREN expression RPAREN ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
     ( item ( COMMA item )* )?
     into?
     ( 'FROM' join ( COMMA join )* )?
@@ -205,6 +205,7 @@ expression
   | query
   | literal
   | Variable
+  // merge with 'NOT', remove 'NOT'*
   | ( MINUS | PLUS ) expression
   | reference
   | array
@@ -247,7 +248,9 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
            filter? ( 'FROM' ( 'FIRST' | 'LAST' ) )? ( ( 'RESPECT' | 'IGNORE' ) 'NULLS' )? over?
 
          // Aggregate functions
-         | keyword LPAREN literal RPAREN 'WITHIN' 'GROUP' LPAREN orderBy RPAREN filter? over?
+//         | 'LISTAGG' LPAREN ( 'ALL' | 'DISTINCT' )? expression string RPAREN
+         | 'STRING_AGG' LPAREN expression COMMA string orderBy RPAREN
+         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expression ( COMMA string )? )? RPAREN 'WITHIN' 'GROUP' LPAREN orderBy RPAREN filter? over?
          | keyword LPAREN ( 'ALL' | 'DISTINCT' )? ( literal | name ) orderBy RPAREN filter? over?
 
          // Generic functions
@@ -343,42 +346,48 @@ array     : 'ARRAY' LSQUARE expressionList? RSQUARE
 literal
   : float
   | integer
-  | String
-  | Blob
-  | Unicode ( 'UESCAPE' String )?
-  | Hex
+  | string
+  | Hexadecimal
   | bool
   | 'NULL'
   | date
-  | ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
+  | time
   | QUESTION
   | interval
   | jsonObject
   | jsonArray
   ;
 
+float    : ( MINUS | PLUS )? Real ;
+integer  : ( MINUS | PLUS )? Decimal ;
+string   : String+ | unicode | national | blob ;
+unicode  : Unicode String* ( 'UESCAPE' String )? ;
+national : National String* ;
+blob     : Blob String* ;
+
+// TODO Convert boolean values from keywords to lexer tokens?
+bool       : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+
+date       : 'DATE' String
+           // ODBC date time
+           | '{d' String '}'
+           | '{t' String '}'
+           | '{ts' String '}'
+           ;
+
+time       : ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
+           ;
+
 interval : 'INTERVAL' String timeSpan ;
 
-timeSpan : 'YEAR' ( 'TO' 'MONTH' )?
+timeSpan : 'EPOCH'
+         | 'YEAR' ( 'TO' 'MONTH' )?
          | 'MONTH'
          | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
          | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
          | 'MINUTE' ( 'TO' 'SECOND' )?
          | 'SECOND'
          ;
-
-float   : ( MINUS | PLUS )? Float ;
-integer   : ( MINUS | PLUS )? Integer ;
-// TODO Convert boolean values from keywords to lexer tokens?
-bool       : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-
-date       : 'DATE' String
-           | 'TIMESTAMP' String
-           // ODBC date time
-           | '{d' String '}'
-           | '{t' String '}'
-           | '{ts' String '}'
-           ;
 
 jsonObject    : 'JSON_OBJECT' LPAREN jsonKeys? onNull? uniqueKeys? formatJson? RPAREN
               ;
@@ -399,8 +408,9 @@ onNull : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 uniqueKeys : ( 'WITH' | 'WITHOUT' ) 'UNIQUE' 'KEYS' ;
 formatJson : 'FORMAT' 'JSON' ;
 
+// TODO isKeyword(...) ignore quoted strings Unicode and Blob
 keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
-name      : String | Unicode | keyword ;
+name      : String | keyword ;
 reference : name ( DOT name )* ;
 
 // Lexer
@@ -462,46 +472,30 @@ FUNCTION : '::' ;
 COLON    : ':' ;
 QUESTION : '?' ;
 
-Hex
-  : '0x' [A-F0-9]+
-  ;
+National : 'N' QUOTE1 ;
+String   : QUOTE1 ;
+Unicode  : 'U&' QUOTE1 ;
+Decimal  : DIGIT+ 'L'?;
+// matches "0.e1" or ".0e1", but not ".e1"
+Real     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) EXPO? ;
 
-Integer
-  : DIGIT+ 'L'?
-  ;
-
-Float
-  // matches "0.e1" or ".0e1", but not ".e1"
-  : ( DIGIT+ ( '.' DIGIT* )?
-    | '.' DIGIT+
-    )
-    ( 'E' [-+]? DIGIT+ )?
-  ;
-
-String // options { caseInsensitive=false; }
-  : [N]? GOBBLE
-  ;
-
-Blob // options { caseInsensitive=false; }
-  : 'X' GOBBLE
-  ;
-
-Unicode // options { caseInsensitive=false; }
-  : 'U&' GOBBLE// ( 'UESCAPE' )
-  ;
+Hexadecimal : '0x' HEX+ 'L'?;
+/*
+// TODO: this rule collides with ID, dunno why
+Blob        : 'X' ( HEX HEX )+ ;
+*/
+Blob        : 'X' QUOTE1 ;
 
 ID
-  : '"' ( ~'"' | '""' )* '"'
+  : 'U&'? '"' ( ~'"' | '""' )* '"'
   | '`' ( ~'`' | '``' )* '`'
 //  | '[' ~']'* ']'
-  | [A-Z_] [A-Z_0-9]*
+  | ALPHA ALPHANUM*
   ;
 
 Variable
-  :
-  [:@$] ID
-  |
-  '?' DIGIT*
+  : [:@$] ID
+  | '?' DIGIT*
   ;
 
 Comment
@@ -516,7 +510,11 @@ Whitespace
   : [ \t\r\n] -> channel( HIDDEN )
   ;
 
-fragment GOBBLE : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+fragment QUOTE1 : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT : [0-9] ;
+fragment HEX   : [0-9A-F] ;
+fragment ALPHA : [A-Z_] ;
+fragment ALPHANUM : [A-Z_0-9] ;
+fragment EXPO  : 'E' [-+]? DIGIT+ ;
 
-Whoops : . ;
+ERROR : . ;
