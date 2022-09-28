@@ -66,7 +66,7 @@ statement
 select
   : 'SELECT'
     distinct?
-    ( 'TOP' expression 'PERCENT'? ( 'WITH' 'TIES' )? )?
+    ( 'TOP' ( Integer | Float | LPAREN expression RPAREN ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
     ( item ( COMMA item )* )?
     into?
     ( 'FROM' join ( COMMA join )* )?
@@ -226,7 +226,7 @@ compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILD
 quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN ;
 isNull     : 'IS' 'NOT'? 'NULL' ;
 isDistinct : 'IS' 'NOT'? 'DISTINCT' 'FROM' expression ;
-isBoolean  : 'IS' 'NOT'? booleanX ;
+isBoolean  : 'IS' 'NOT'? bool ;
 isType     : 'IS' 'OF' LPAREN keyword ( COMMA keyword )* RPAREN;
 between    : 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression ;
 
@@ -239,12 +239,16 @@ regexp     : 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? ;
 
 function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'? expression RPAREN
          | 'SUBSTRING' LPAREN expression 'FROM' expression ( 'FOR' expression )? RPAREN
+         | 'JSON_OBJECTAGG' LPAREN jsonKeys onNull? uniqueKeys? RPAREN filter? over?
+         | 'JSON_ARRAYAGG' LPAREN ( 'ALL' | 'DISTINCT' )? expression orderBy? onNull? RPAREN filter? over?
+         | 'EXTRACT' LPAREN timeSpan 'FROM' expression RPAREN
          // Window functions
          | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
            filter? ( 'FROM' ( 'FIRST' | 'LAST' ) )? ( ( 'RESPECT' | 'IGNORE' ) 'NULLS' )? over?
 
          // Aggregate functions
          | keyword LPAREN literal RPAREN 'WITHIN' 'GROUP' LPAREN orderBy RPAREN filter? over?
+         | keyword LPAREN ( 'ALL' | 'DISTINCT' )? ( literal | name ) orderBy RPAREN filter? over?
 
          // Generic functions
          | keyword LPAREN keyword 'FROM' keyword String RPAREN
@@ -252,8 +256,8 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
 
          // some ODBC function names are also SQL reserved words
          | '{fn' keyword LPAREN expressionList? RPAREN '}'
-//  | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
-//  | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
+         // | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
+         // | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
          ;
 
 filter : 'FILTER' LPAREN 'WHERE' expression RPAREN
@@ -265,7 +269,6 @@ over   : 'OVER' window
 function2
   : FUNCTION keyword
   ;
-
 
 type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
      | keyword+ ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
@@ -291,15 +294,8 @@ having   : 'HAVING' expressionList
 windowAlias : name 'AS' window
             ;
 
-window      :
-//name
-//            |
-            LPAREN
-            name?
-            partitionBy?
-            orderBy?
-            windowFrame?
-            RPAREN
+window      : name
+            | LPAREN name? partitionBy? orderBy? windowFrame? RPAREN
             ;
 
 windowFrame : ( 'RANGE'| 'ROWS' | 'GROUPS' )
@@ -345,34 +341,66 @@ array     : 'ARRAY' LSQUARE expressionList? RSQUARE
           ;
 
 literal
-  : ( MINUS | PLUS )? Float
+  : float
   | integer
   | String
   | Blob
   | Unicode ( 'UESCAPE' String )?
   | Hex
-  | booleanX
+  | bool
   | 'NULL'
   | date
   | ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
   | QUESTION
-  | 'INTERVAL' String ( 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'SECOND' )
+  | interval
+  | jsonObject
+  | jsonArray
   ;
 
+interval : 'INTERVAL' String timeSpan ;
+
+timeSpan : 'YEAR' ( 'TO' 'MONTH' )?
+         | 'MONTH'
+         | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
+         | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
+         | 'MINUTE' ( 'TO' 'SECOND' )?
+         | 'SECOND'
+         ;
+
+float   : ( MINUS | PLUS )? Float ;
 integer   : ( MINUS | PLUS )? Integer ;
 // TODO Convert boolean values from keywords to lexer tokens?
-booleanX   : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-date
-// ODBC date time
-     : '{d' String '}'
-         | '{t' String '}'
-         | '{ts' String '}'
-  | 'DATE' String
-  | 'TIMESTAMP' String
-;
+bool       : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+
+date       : 'DATE' String
+           | 'TIMESTAMP' String
+           // ODBC date time
+           | '{d' String '}'
+           | '{t' String '}'
+           | '{ts' String '}'
+           ;
+
+jsonObject    : 'JSON_OBJECT' LPAREN jsonKeys? onNull? uniqueKeys? formatJson? RPAREN
+              ;
+
+jsonKeys      : jsonKey ( COMMA jsonKey )*
+              ;
+
+jsonKey       : name COLON expression
+              | 'KEY'? name 'VALUE' expression
+              ;
+
+jsonArray    : 'JSON_ARRAY' LPAREN ( expressionList | LPAREN query RPAREN )?
+               formatJson? onNull?
+               RPAREN
+             ;
+
+onNull : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
+uniqueKeys : ( 'WITH' | 'WITHOUT' ) 'UNIQUE' 'KEYS' ;
+formatJson : 'FORMAT' 'JSON' ;
+
 keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
-name      : String | Unicode | keyword
-;
+name      : String | Unicode | keyword ;
 reference : name ( DOT name )* ;
 
 // Lexer
@@ -383,12 +411,12 @@ reference : name ( DOT name )* ;
 //NULL : 'NULL';
 VALUES : 'VALUES';
 SELECT : 'SELECT';
-FROM : 'FROM';
-WHERE : 'WHERE';
+FROM   : 'FROM';
+WHERE  : 'WHERE';
 INSERT : 'INSERT';
 DELETE : 'DELETE';
-JOIN : 'JOIN';
-LEFT : 'LEFT';
+JOIN   : 'JOIN';
+//LEFT   : 'LEFT';
 
 LPAREN   : '(' ;
 RPAREN   : ')' ;
@@ -434,7 +462,7 @@ FUNCTION : '::' ;
 COLON    : ':' ;
 QUESTION : '?' ;
 
-Hex // options { caseInsensitive=false; }
+Hex
   : '0x' [A-F0-9]+
   ;
 
@@ -451,7 +479,7 @@ Float
   ;
 
 String // options { caseInsensitive=false; }
-  : /* [NE]? */ GOBBLE
+  : [N]? GOBBLE
   ;
 
 Blob // options { caseInsensitive=false; }
