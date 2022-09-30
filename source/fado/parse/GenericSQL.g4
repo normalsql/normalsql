@@ -75,12 +75,12 @@ select
     having?
     ( 'WINDOW' windowAlias ( COMMA windowAlias )* )?
     qualify?
-    union?
     orderBy?
     offset?
     fetch?
     limit?
     forUpdate?
+    union?
   ;
 
 distinct : 'ALL'
@@ -96,7 +96,7 @@ alias    : 'AS'? name
          ;
 
 join     : ( LPAREN join RPAREN )
-         | join joinStyle join joinOn?
+         | join joinStyle join joinOn? // TODO this recursion is probably wrong
          | table
          ;
 
@@ -118,20 +118,15 @@ source   : LPAREN source RPAREN
          | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN
          ;
 
-//tableRow : ( name | reference ) keyword EQ ( array | row )
+// TODO: Rename this to tableColumn or columnSpec or fieldSpec...?
 tableRow : ( name | reference ) keyword EQ ( array | expression )
          ;
 
 query    : select
          | 'TABLE' reference orderBy? // offset? fetch?
-         | 'VALUES' row ( COMMA row )*
-//         | 'VALUES' expressionList
+         | 'VALUES' expressionList
+         | LPAREN query RPAREN // TODO refactor all the callers
          ;
-
-row :  'ROW'? LPAREN expressionList RPAREN
-| expression
-;
-
 
 unnest : 'UNNEST' LPAREN array ( COMMA array )* RPAREN ( 'WITH' 'ORDINALITY' )?
        ;
@@ -174,6 +169,8 @@ expression
   : LPAREN RPAREN
     | LPAREN expression RPAREN
     | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
+
+    | 'ROW'? LPAREN expressionList RPAREN
     | LPAREN expressionList RPAREN DOT name
    | expression CONCAT expression
   | expression CARET expression
@@ -204,7 +201,7 @@ expression
   | expression function2
   | query
   | literal
-  | Variable
+  | Variable // TODO move this to literal?
   // merge with 'NOT', remove 'NOT'*
   | ( MINUS | PLUS ) expression
   | reference
@@ -241,19 +238,17 @@ regexp     : 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? ;
 function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'? expression RPAREN
          | 'SUBSTRING' LPAREN expression 'FROM' expression ( 'FOR' expression )? RPAREN
          | 'JSON_OBJECTAGG' LPAREN jsonKeys onNull? uniqueKeys? RPAREN filter? over?
-         | 'JSON_ARRAYAGG' LPAREN ( 'ALL' | 'DISTINCT' )? expression orderBy? onNull? RPAREN filter? over?
-         | 'EXTRACT' LPAREN timeSpan 'FROM' expression RPAREN
-         // Window functions
-         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
-           filter? ( 'FROM' ( 'FIRST' | 'LAST' ) )? ( ( 'RESPECT' | 'IGNORE' ) 'NULLS' )? over?
-
-         // Aggregate functions
-//         | 'LISTAGG' LPAREN ( 'ALL' | 'DISTINCT' )? expression string RPAREN
+         | 'JSON_ARRAYAGG' LPAREN allDistinct? expression orderBy? onNull? RPAREN filter? over?
+         | 'EXTRACT' LPAREN keyword 'FROM' expression RPAREN
+//         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
+//           filter? firstLast? respectIgnore? over?
+         | 'LISTAGG' LPAREN allDistinct? expression string RPAREN
          | 'STRING_AGG' LPAREN expression COMMA string orderBy RPAREN
-         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expression ( COMMA string )? )? RPAREN 'WITHIN' 'GROUP' LPAREN orderBy RPAREN filter? over?
-         | keyword LPAREN ( 'ALL' | 'DISTINCT' )? ( literal | name ) orderBy RPAREN filter? over?
 
-         // Generic functions
+         | keyword LPAREN ( allDistinct? expressionList | STAR )? RPAREN withinGroup? filter? firstLast? respectIgnore? over?
+
+         | keyword LPAREN allDistinct? ( literal | name ) orderBy RPAREN filter? over?
+
          | keyword LPAREN keyword 'FROM' keyword String RPAREN
 //         | keyword
 
@@ -263,6 +258,10 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
          // | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
          ;
 
+allDistinct : 'ALL' | 'DISTINCT' ;
+withinGroup : 'WITHIN' 'GROUP' LPAREN orderBy RPAREN ;
+firstLast : 'FROM' ( 'FIRST' | 'LAST' ) ;
+respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 filter : 'FILTER' LPAREN 'WHERE' expression RPAREN
        ;
 
@@ -274,14 +273,13 @@ function2
   ;
 
 type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
-     | keyword+ ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
-//     | keyword ( LPAREN integer ( COMMA integer )? RPAREN keyword* )?
+     | keyword+ ( LPAREN decimal ( COMMA decimal )? RPAREN keyword* )?
      ;
 
 useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
          ;
 
-union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) ( LPAREN query RPAREN | query )
+union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query
          ;
 
 where    : 'WHERE' expression
@@ -343,9 +341,10 @@ forUpdate   : 'FOR' 'UPDATE'
 array     : 'ARRAY' LSQUARE expressionList? RSQUARE
           ;
 
+// TODO rename 'literal' to 'value'?
 literal
-  : float
-  | integer
+  : real
+  | decimal
   | string
   | Hexadecimal
   | bool
@@ -358,8 +357,8 @@ literal
   | jsonArray
   ;
 
-float    : ( MINUS | PLUS )? Real ;
-integer  : ( MINUS | PLUS )? Decimal ;
+real     : ( MINUS | PLUS )? Real ;
+decimal  : ( MINUS | PLUS )? Decimal ;
 string   : String+ | unicode | national | blob ;
 unicode  : Unicode String* ( 'UESCAPE' String )? ;
 national : National String* ;
@@ -378,7 +377,8 @@ date       : 'DATE' String
 time       : ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String?
            ;
 
-interval : 'INTERVAL' String timeSpan ;
+//interval : 'INTERVAL' expression timeSpan ;
+interval : 'INTERVAL' expression keyword ( 'TO' keyword )?;
 
 timeSpan : 'EPOCH'
          | 'YEAR' ( 'TO' 'MONTH' )?
