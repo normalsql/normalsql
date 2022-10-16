@@ -54,13 +54,23 @@ import java.util.HashSet;
 parse   : statement* EOF ;
 
 statement
-  : ( select
+  : ( union
     | insert
     | update
 //  | delete
+//  | merge
     )
-    SEMI
+    SEMI // ?
   ;
+
+union    : query (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) ( 'ALL' | 'DISTINCT' )? query )*
+         ;
+
+query    : LPAREN union RPAREN
+         | select
+         | 'TABLE' reference
+         | values
+         ;
 
 // TODO experiment replace ( exprList ) w/ just expr
 select
@@ -69,25 +79,24 @@ select
     ( 'TOP' ( Decimal | Real | LPAREN expression RPAREN ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
     ( item ( COMMA item )* )?
     into?
-    ( 'FROM' join ( COMMA join )* )?
+    ( 'FROM' join )?
     where?
     groupBy?
     having?
     ( 'WINDOW' windowAlias ( COMMA windowAlias )* )?
     qualify?
-    orderBy?
-    offset?
-    fetch?
-    limit?
+    orderBy? offset? fetch? limit?
     forUpdate?
-    union?
   ;
+
+values : 'VALUES' expressionList
+       ;
 
 distinct : 'ALL'
          | 'DISTINCT' ( 'ON' LPAREN expressionList RPAREN )?
          | 'UNIQUE' // oracle
          ;
-
+// TODO: rename to 'column' or 'col'?
 item     : (( reference DOT )? STAR ) exceptions?
          | expression alias?
          ;
@@ -95,37 +104,35 @@ item     : (( reference DOT )? STAR ) exceptions?
 alias    : 'AS'? name
          ;
 
-join     : ( LPAREN join RPAREN )
-         | join joinStyle join joinOn? // TODO this recursion is probably wrong
-         | table
-         ;
+join : ( table | LPAREN join RPAREN )
+       ( joinType join ( 'ON' expression | 'USING' columnRefs )? )*
+     ;
 
-joinStyle : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
-          ;
-
-joinOn    : 'ON' expression
-          | 'USING' LPAREN name ( COMMA name )* RPAREN
-          ;
-
-table    : source  ( 'AS'? name ( LPAREN name ( COMMA name )* RPAREN )? )? useIndex?
-         ;
-
-source   : LPAREN source RPAREN
-         | query
-         | reference
-         | function
+table    : LPAREN union RPAREN tableAlias?
+         | values tableAlias?
+         | function tableAlias?
          | unnest
-         | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN
+         | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN tableAlias?
+         // TODO 'delete' and 'merge' rules
+         | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LPAREN ( insert | update /* | delete | merge */ ) RPAREN
+////         | 'JSON_TABLE'
+////         | 'XMLTABLE'
+         | LPAREN table RPAREN tableAlias?
+         | reference tableAlias? useIndex?
+         ;
+
+tableAlias : alias columnRefs? ;
+
+columnRefs : LPAREN name ( COMMA name )* RPAREN
+         ;
+
+joinType : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
+         | COMMA
          ;
 
 // TODO: Rename this to tableColumn or columnSpec or fieldSpec...?
+// TODO: just 'reference'
 tableRow : ( name | reference ) keyword EQ ( array | expression )
-         ;
-
-query    : select
-         | 'TABLE' reference orderBy? // offset? fetch?
-         | 'VALUES' expressionList
-         | LPAREN query RPAREN // TODO refactor all the callers
          ;
 
 unnest : 'UNNEST' LPAREN array ( COMMA array )* RPAREN ( 'WITH' 'ORDINALITY' )?
@@ -143,6 +150,7 @@ update
     where?
   ;
 
+// TODO rename to 'referenceList' or 'refs'?
 columnList
   : LPAREN reference ( COMMA reference )* RPAREN
   ;
@@ -161,25 +169,22 @@ exceptions
 
 expressionList
   : expression ( COMMA expression )*
-  | LPAREN expressionList RPAREN
   ;
 
 // Best guess for precedence of operators
 expression
   : LPAREN RPAREN
-    | LPAREN expression RPAREN
-    | LPAREN query RPAREN 'EXCEPT' LPAREN query RPAREN
-
-    | 'ROW'? LPAREN expressionList RPAREN
-    | LPAREN expressionList RPAREN DOT name
-   | expression CONCAT expression
+  | LPAREN expression RPAREN
+  | union
+  | 'ROW'? LPAREN expressionList RPAREN
+  | LPAREN expressionList RPAREN DOT name
+  | expression CONCAT expression
   | expression CARET expression
   | expression ( STAR | DIVIDE | MODULO ) expression
   | expression ( PLUS | MINUS ) expression
   | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression
   | expression compare
   | 'NOT' expression
-//  | row
   | quantified
   | expression like
   | expression regexp
@@ -194,18 +199,16 @@ expression
   | 'CASE' ( 'WHEN' expressionList 'THEN' expression )+ ( 'ELSE' expression )? 'END'
   | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' type RPAREN
   | expression 'COLLATE' keyword
-//  | raise_function
-  // TODO: This should build LL parse tree, not LR
-  | expression ( 'AND' | 'OR' ) expression
+  | expression ( 'AND' | 'OR' ) expression // TODO: This should build LL parse tree, not LR
   | function
   | expression function2
-  | query
   | literal
   | Variable // TODO move this to literal?
-  // merge with 'NOT', remove 'NOT'*
-  | ( MINUS | PLUS ) expression
+  | ( MINUS | PLUS ) expression // TODO merge with 'NOT', remove 'NOT'*
   | reference
   | array
+  | expression 'AT' ( 'LOCAL' | 'TIME' 'ZONE' ( interval | string ) )?
+  | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' reference
   ;
 
 whenPred  : compare
@@ -221,7 +224,7 @@ whenPred  : compare
           ;
 
 compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) expression ;
-quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN ;
+quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN ; // TODO should be 'union'?
 isNull     : 'IS' 'NOT'? 'NULL' ;
 isDistinct : 'IS' 'NOT'? 'DISTINCT' 'FROM' expression ;
 isBoolean  : 'IS' 'NOT'? bool ;
@@ -240,20 +243,23 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
          | 'JSON_OBJECTAGG' LPAREN jsonKeys onNull? uniqueKeys? RPAREN filter? over?
          | 'JSON_ARRAYAGG' LPAREN allDistinct? expression orderBy? onNull? RPAREN filter? over?
          | 'EXTRACT' LPAREN keyword 'FROM' expression RPAREN
-//         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
-//           filter? firstLast? respectIgnore? over?
-         | 'LISTAGG' LPAREN allDistinct? expression string RPAREN
+         | 'LISTAGG' LPAREN allDistinct? expression COMMA string
+           ( 'ON''OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? ( 'WITH' | 'WITHOUT' ) 'COUNT' ))? RPAREN withinGroup? filter? over?
          | 'STRING_AGG' LPAREN expression COMMA string orderBy RPAREN
+         | 'GROUP_CONCAT' LPAREN 'DISTINCT'? expressionList orderBy? ( 'SEPARATOR' string )? RPAREN filter?
 
          | keyword LPAREN ( allDistinct? expressionList | STAR )? RPAREN withinGroup? filter? firstLast? respectIgnore? over?
 
-         | keyword LPAREN allDistinct? ( literal | name ) orderBy RPAREN filter? over?
+         | keyword LPAREN allDistinct? ( literal | name ) orderBy RPAREN ( LSQUARE expression RSQUARE )? filter? over?
 
          | keyword LPAREN keyword 'FROM' keyword String RPAREN
-//         | keyword
 
          // some ODBC function names are also SQL reserved words
          | '{fn' keyword LPAREN expressionList? RPAREN '}'
+
+         //         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
+         //           filter? firstLast? respectIgnore? over?
+
          // | ID? 'FUNCTION' ID LPAREN expressionList? RPAREN // T-SQL
          // | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
          ;
@@ -269,7 +275,7 @@ over   : 'OVER' window
        ;
 
 function2
-  : FUNCTION keyword
+  : CAST keyword
   ;
 
 type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
@@ -279,8 +285,6 @@ type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
 useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
          ;
 
-union    : ( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' ) query
-         ;
 
 where    : 'WHERE' expression
          ;
@@ -288,7 +292,7 @@ where    : 'WHERE' expression
 //groupBy  : 'GROUP' 'BY' ( expressionList? | LPAREN expressionList? RPAREN )
 groupBy  : 'GROUP' 'BY' expressionList?
          ;
-  
+
 having   : 'HAVING' expressionList
          ;
 
@@ -364,6 +368,12 @@ unicode  : Unicode String* ( 'UESCAPE' String )? ;
 national : National String* ;
 blob     : Blob String* ;
 
+// TODO isKeyword(...) ignore quoted strings Unicode and Blob
+keyword   : ID | { isKeyword( getCurrentToken() ) }? . ; // TODO rename to 'id'
+name      : keyword  | Name  ( 'UESCAPE' String )?;
+reference : name ( DOT name )* ; // TODO: rename to 'ref'?
+
+
 // TODO Convert boolean values from keywords to lexer tokens?
 bool       : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
 
@@ -395,11 +405,11 @@ jsonObject    : 'JSON_OBJECT' LPAREN jsonKeys? onNull? uniqueKeys? formatJson? R
 jsonKeys      : jsonKey ( COMMA jsonKey )*
               ;
 
-jsonKey       : name COLON expression
-              | 'KEY'? name 'VALUE' expression
+jsonKey       : ( string | name ) COLON expression
+              | 'KEY'? ( string | name ) 'VALUE' expression
               ;
 
-jsonArray    : 'JSON_ARRAY' LPAREN ( expressionList | LPAREN query RPAREN )?
+jsonArray    : 'JSON_ARRAY' LPAREN ( expressionList | LPAREN query RPAREN )? // TODO should be 'union'?
                formatJson? onNull?
                RPAREN
              ;
@@ -408,25 +418,10 @@ onNull : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 uniqueKeys : ( 'WITH' | 'WITHOUT' ) 'UNIQUE' 'KEYS' ;
 formatJson : 'FORMAT' 'JSON' ;
 
-// TODO isKeyword(...) ignore quoted strings Unicode and Blob
-keyword   : ID | { isKeyword( getCurrentToken() ) }? . ;
-name      : String | keyword ;
-reference : name ( DOT name )* ;
 
 // Lexer
 
 // Punctuation
-
-// Reserved keywords
-//NULL : 'NULL';
-VALUES : 'VALUES';
-SELECT : 'SELECT';
-FROM   : 'FROM';
-WHERE  : 'WHERE';
-INSERT : 'INSERT';
-DELETE : 'DELETE';
-JOIN   : 'JOIN';
-//LEFT   : 'LEFT';
 
 LPAREN   : '(' ;
 RPAREN   : ')' ;
@@ -468,13 +463,20 @@ LSHIFT   : '<<' ; // bitwise shift left
 RSHIFT   : '>>' ; // bitwise shift right
 
 DOT      : '.' ;
-FUNCTION : '::' ;
+CAST     : '::' ;
 COLON    : ':' ;
 QUESTION : '?' ;
 
-National : 'N' QUOTE1 ;
 String   : QUOTE1 ;
+National : [NE] QUOTE1 ;
 Unicode  : 'U&' QUOTE1 ;
+Name : 'U&'? '"' ( ~'"' | '""' )* '"' ;
+
+ID
+  : '`' ( ~'`' | '``' )* '`'
+  | ALPHA ALPHANUM*
+  ;
+
 Decimal  : DIGIT+ 'L'?;
 // matches "0.e1" or ".0e1", but not ".e1"
 Real     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) EXPO? ;
@@ -486,13 +488,7 @@ Blob        : 'X' ( HEX HEX )+ ;
 */
 Blob        : 'X' QUOTE1 ;
 
-ID
-  : 'U&'? '"' ( ~'"' | '""' )* '"'
-  | '`' ( ~'`' | '``' )* '`'
-//  | '[' ~']'* ']'
-  | ALPHA ALPHANUM*
-  ;
-
+// TODO validate 'Variable' rule
 Variable
   : [:@$] ID
   | '?' DIGIT*
