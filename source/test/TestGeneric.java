@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class
-	TestH2
+TestGeneric
 {
 	static int count = 0;
 
@@ -31,7 +31,7 @@ public class
 
 	public static void main( String[] args ) throws Exception
 	{
-		TestH2 app = new TestH2();
+		TestGeneric app = new TestGeneric();
 		app.go();
 	}
 
@@ -78,9 +78,10 @@ public class
 
 		try
 		{
-			rooster:
 			for( Path file : files )
 			{
+				System.out.println( file );
+
 				ArrayList<String> sql = new ArrayList<>();
 				List<String> lines = Files.readAllLines( file );
 				int nth = 0;
@@ -91,31 +92,26 @@ public class
 					{
 						sql.add( line );
 					}
-					if( line.toLowerCase().startsWith( "select" ))
+					else if( line.toLowerCase().startsWith( "select" ))
 					{
 						sql.add( line );
 					}
 					if( !sql.isEmpty() && line.endsWith( ";" ))
 					{
 						String gorp = String.join( "\n", sql );
-//									String gorp = String.join( " ", sql );
 						int argh = nth;
 						Work w = new Work() {{ source=file;sql=gorp;line=argh;}};
 						workList.add( w );
 						sql.clear();
-						TestH2.count();
-					}
-					if( error > 0 )
-					{
-						break rooster;
+						TestGeneric.count();
 					}
 				}
 			}
 		}
-			catch( Exception e )
-			{
-				e.printStackTrace();
-			}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+		}
 		System.out.println();
 		System.out.printf( "statements found %d\n", workList.size() );
 
@@ -134,13 +130,20 @@ public class
 			parse( w.source, w.line, w.sql );
 		}
 
+		for( String fail : fails )
+		{
+			System.out.println( fail );
+			System.out.println( );
+		}
 
 		System.out.println( "statements found: " + count );
 		System.out.println( "errors found: " + error );
-
+		System.out.println( new java.util.Date() );
 	}
 
 	ArrayList<String> fails = new ArrayList<>();
+	String last = null;
+
 	public void parse( Path sourceFile, int nth, String sql )
 	{
 		CharStream chars = CharStreams.fromString( sql );
@@ -148,6 +151,7 @@ public class
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
 //		parser.removeErrorListeners();
+		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer,
@@ -157,11 +161,12 @@ public class
 			                        String msg,
 			                        RecognitionException e)
 			{
-				if( e != null )
+				if( !sql.equals( last ))
 				{
 					error();
 					fails.add( msg );
 					fails.add( sql );
+					last = sql;
 //					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
 //					System.out.println( sourceFile );
 //					System.out.println( "line: " + nth );
@@ -175,10 +180,5 @@ public class
 		} );
 
 		GenericSQLParser.ParseContext result = parser.parse();
-		for( String fail : fails )
-		{
-					System.out.println( fail );
-					System.out.println( );
-		}
 	}
 }

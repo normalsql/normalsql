@@ -9,13 +9,33 @@ public class Drill
 {
 	public static void main( String... args )
 	{
-		String sql = "BIT_NAND_AGG(V) FILTER (WHERE V <= 0xffffffff0fff) FROM TEST"
+		String sql =
+"select * from (select 1), (select 2);"
+//"SELECT * FROM VALUES (1), (2) T(x)"
+//"SELECT * FROM SYSTEM_RANGE(1, 10) WHERE X IN ((SELECT 1), (SELECT 2));"
+//"select id from test where 1=0;"
+//"SELECT X FROM VALUES (2), (3);"
 			;
 		CharStream chars = CharStreams.fromString( sql );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
+		parser.addErrorListener( new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer,
+			                        Object offendingSymbol,
+			                        int line,
+			                        int charPositionInLine,
+			                        String msg,
+			                        RecognitionException e)
+			{
+					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
+			}
+
+		} );
+
 		ParserRuleContext e = parser.parse();
+//		ParserRuleContext e = parser.function();
 
 		System.out.println( e.toInfoString( parser ) );
 		System.out.println( e.toStringTree( parser ) );

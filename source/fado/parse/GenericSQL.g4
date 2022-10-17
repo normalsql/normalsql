@@ -63,10 +63,10 @@ statement
     SEMI // ?
   ;
 
-union    : query (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) ( 'ALL' | 'DISTINCT' )? query )*
+union    : rowset (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) ( 'ALL' | 'DISTINCT' )? rowset )*
          ;
 
-query    : LPAREN union RPAREN
+rowset   : LPAREN union RPAREN
          | select
          | 'TABLE' reference
          | values
@@ -77,7 +77,7 @@ select
   : 'SELECT'
     distinct?
     ( 'TOP' ( Decimal | Real | LPAREN expression RPAREN ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
-    ( item ( COMMA item )* )?
+    ( column ( COMMA column )* )?
     into?
     ( 'FROM' join )?
     where?
@@ -96,23 +96,23 @@ distinct : 'ALL'
          | 'DISTINCT' ( 'ON' LPAREN expressionList RPAREN )?
          | 'UNIQUE' // oracle
          ;
-// TODO: rename to 'column' or 'col'?
-item     : (( reference DOT )? STAR ) exceptions?
+
+column   : (( reference DOT )? STAR ) exceptions?
          | expression alias?
          ;
 
 alias    : 'AS'? name
          ;
 
-join : ( table | LPAREN join RPAREN )
-       ( joinType join ( 'ON' expression | 'USING' columnRefs )? )*
-     ;
+join     : ( table | LPAREN join RPAREN )
+           ( joinType join ( 'ON' expression | 'USING' columnRefs )? )*
+         ;
 
 table    : LPAREN union RPAREN tableAlias?
          | values tableAlias?
          | function tableAlias?
          | unnest
-         | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN tableRow ( COMMA tableRow )* RPAREN tableAlias?
+         | ( 'TABLE' | 'TABLE_DISTINCT' ) LPAREN columnSpec ( COMMA columnSpec )* RPAREN tableAlias?
          // TODO 'delete' and 'merge' rules
          | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LPAREN ( insert | update /* | delete | merge */ ) RPAREN
 ////         | 'JSON_TABLE'
@@ -130,33 +130,31 @@ joinType : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATUR
          | COMMA
          ;
 
-// TODO: Rename this to tableColumn or columnSpec or fieldSpec...?
-// TODO: just 'reference'
-tableRow : ( name | reference ) keyword EQ ( array | expression )
-         ;
+// TODO: just use 'reference'
+columnSpec  : ( name | reference ) keyword EQ ( array | expression )
+       ;
 
 unnest : 'UNNEST' LPAREN array ( COMMA array )* RPAREN ( 'WITH' 'ORDINALITY' )?
        ;
 
 insert
-  : 'INSERT' into columnList?
+  : 'INSERT' into refs?
 //  ( values
 //// | select
 //  )
   ;  
+
+refs : LPAREN reference ( COMMA reference )* RPAREN ;
+
 
 update
   : 'UPDATE' reference 'SET' setter ( COMMA setter )*
     where?
   ;
 
-// TODO rename to 'referenceList' or 'refs'?
-columnList
-  : LPAREN reference ( COMMA reference )* RPAREN
-  ;
 
 setter
-  : reference EQ literal
+  : reference EQ value
   ;
   
 into
@@ -202,7 +200,7 @@ expression
   | expression ( 'AND' | 'OR' ) expression // TODO: This should build LL parse tree, not LR
   | function
   | expression function2
-  | literal
+  | value
   | Variable // TODO move this to literal?
   | ( MINUS | PLUS ) expression // TODO merge with 'NOT', remove 'NOT'*
   | reference
@@ -224,7 +222,7 @@ whenPred  : compare
           ;
 
 compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) expression ;
-quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN query RPAREN ; // TODO should be 'union'?
+quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN rowset RPAREN ; // TODO should be 'union'?
 isNull     : 'IS' 'NOT'? 'NULL' ;
 isDistinct : 'IS' 'NOT'? 'DISTINCT' 'FROM' expression ;
 isBoolean  : 'IS' 'NOT'? bool ;
@@ -250,7 +248,7 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
 
          | keyword LPAREN ( allDistinct? expressionList | STAR )? RPAREN withinGroup? filter? firstLast? respectIgnore? over?
 
-         | keyword LPAREN allDistinct? ( literal | name ) orderBy RPAREN ( LSQUARE expression RSQUARE )? filter? over?
+         | keyword LPAREN allDistinct? ( value | name ) orderBy RPAREN ( LSQUARE expression RSQUARE )? filter? over?
 
          | keyword LPAREN keyword 'FROM' keyword String RPAREN
 
@@ -289,7 +287,6 @@ useIndex : 'USE' 'INDEX' LPAREN keyword ( COMMA keyword )* RPAREN
 where    : 'WHERE' expression
          ;
   
-//groupBy  : 'GROUP' 'BY' ( expressionList? | LPAREN expressionList? RPAREN )
 groupBy  : 'GROUP' 'BY' expressionList?
          ;
 
@@ -345,8 +342,7 @@ forUpdate   : 'FOR' 'UPDATE'
 array     : 'ARRAY' LSQUARE expressionList? RSQUARE
           ;
 
-// TODO rename 'literal' to 'value'?
-literal
+value
   : real
   | decimal
   | string
@@ -409,7 +405,7 @@ jsonKey       : ( string | name ) COLON expression
               | 'KEY'? ( string | name ) 'VALUE' expression
               ;
 
-jsonArray    : 'JSON_ARRAY' LPAREN ( expressionList | LPAREN query RPAREN )? // TODO should be 'union'?
+jsonArray    : 'JSON_ARRAY' LPAREN ( expressionList | LPAREN rowset RPAREN )? // TODO should be 'union'?
                formatJson? onNull?
                RPAREN
              ;
@@ -420,8 +416,6 @@ formatJson : 'FORMAT' 'JSON' ;
 
 
 // Lexer
-
-// Punctuation
 
 LPAREN   : '(' ;
 RPAREN   : ')' ;
