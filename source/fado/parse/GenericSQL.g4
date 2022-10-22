@@ -28,6 +28,7 @@ import java.util.HashSet;
 		for( int nth = 1; nth < _LITERAL_NAMES.length; nth++ )
 		{
 			String symbol = _SYMBOLIC_NAMES[ nth ];
+			// Keywords are literals without a matching symbol
 			if( symbol == null )
 			{
 				String keyword = _LITERAL_NAMES[ nth ];
@@ -170,71 +171,58 @@ expressionList
   ;
 
 // Best guess for precedence of operators
-expression
-  : LPAREN RPAREN
-  | LPAREN expression RPAREN
-  | union
-  | 'ROW'? LPAREN expressionList RPAREN
-  | LPAREN expressionList RPAREN DOT name
-  | expression CONCAT expression
-  | expression CARET expression
-  | expression ( STAR | DIVIDE | MODULO ) expression
-  | expression ( PLUS | MINUS ) expression
-  | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression
-  | expression compare
-  | 'NOT' expression
-  | quantified
-  | expression like
-  | expression regexp
-  | expression isNull
-  | expression isDistinct
-  | expression isBoolean
-  | expression isType
-  | expression in
-  | expression between
-  | 'INTERSECTS' LPAREN expression COMMA expression RPAREN
-  | 'CASE' expression ( 'WHEN' ( expressionList | whenPred ) 'THEN' expression )+ ( 'ELSE' expression )? 'END'
-  | 'CASE' ( 'WHEN' expressionList 'THEN' expression )+ ( 'ELSE' expression )? 'END'
-  | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' type RPAREN
-  | expression 'COLLATE' keyword
-  | expression ( 'AND' | 'OR' ) expression // TODO: This should build LL parse tree, not LR
-  | function
-  | expression function2
-  | value
-  | Variable // TODO move this to literal?
-  | ( MINUS | PLUS ) expression // TODO merge with 'NOT', remove 'NOT'*
-  | reference
-  | array
-  | expression 'AT' ( 'LOCAL' | 'TIME' 'ZONE' ( interval | string ) )?
-  | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' reference
-  ;
+expression : LPAREN RPAREN
+           | LPAREN expression RPAREN
+           | union
+           | 'ROW'? LPAREN expressionList RPAREN
+           | LPAREN expressionList RPAREN DOT name
+           | expression CONCAT expression
+           | expression CARET expression
+           | expression ( STAR | DIVIDE | MODULO ) expression
+           | expression ( PLUS | MINUS ) expression
+           | expression ( LSHIFT | RSHIFT | AMP | PIPE ) expression
+           | expression compare
+           | quantified
+           | expression predicate
+           | expression isType
+           | expression 'NOT'? ( between | in | like | regexp )
+           | 'INTERSECTS' LPAREN expression COMMA expression RPAREN
+           | 'CASE' expression ( 'WHEN' ( expressionList | whenPred ) 'THEN' expression )+ ( 'ELSE' expression )? 'END'
+           | 'CASE' ( 'WHEN' expressionList 'THEN' expression )+ ( 'ELSE' expression )? 'END'
+           | ( 'CAST' | 'TRY_CAST' ) LPAREN expression 'AS' type RPAREN
+           | expression 'COLLATE' keyword
+           | expression ( 'AND' | 'OR' ) expression // TODO: This should build LL parse tree, not LR
+           | function
+           | expression function2
+           | value
+           | Variable // TODO move this to 'value'?
+           | ( MINUS | PLUS | 'NOT' ) expression
+           | reference
+           | array
+           | expression 'AT' ( 'LOCAL' | 'TIME' 'ZONE' ( interval | string ) )?
+           | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' reference
+           ;
 
-whenPred  : compare
-          | quantified
-          | isNull
-          | isDistinct
-          | isBoolean
-          | isType
-          | between
-          | in
-          | like
-          | regexp
-          ;
+whenPred   : compare
+           | quantified
+           | predicate
+           | isType
+           | 'NOT'? ( between | in | like | regexp )
+           ;
 
 compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) expression ;
-quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN rowset RPAREN ; // TODO should be 'union'?
-isNull     : 'IS' 'NOT'? 'NULL' ;
-isDistinct : 'IS' 'NOT'? 'DISTINCT' 'FROM' expression ;
-isBoolean  : 'IS' 'NOT'? bool ;
+quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LPAREN rowset RPAREN ; // TODO change 'rowset' to 'union'?
+predicate  : 'IS' 'NOT'? ( 'NULL' | bool | 'DISTINCT' 'FROM' expression );
 isType     : 'IS' 'OF' LPAREN keyword ( COMMA keyword )* RPAREN;
-between    : 'NOT'* 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression ;
 
 // TODO additional 'IN' rules
 //          | ( databaseName DOT )? table_name
 //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-in         : 'NOT'* 'IN' expressionList;
-like       : 'NOT'* ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? ;
-regexp     : 'NOT'* 'REGEXP' expression ( 'ESCAPE' expression )? ;
+in         : 'IN' expressionList ;
+like       : ( 'LIKE' | 'ILIKE' ) expression ( 'ESCAPE' expression )? ;
+regexp     : 'REGEXP' expression ( 'ESCAPE' expression )? ;
+between    : 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? expression 'AND' expression ;
+
 
 function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'? expression RPAREN
          | 'SUBSTRING' LPAREN expression 'FROM' expression ( 'FOR' expression )? RPAREN
@@ -252,7 +240,7 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
 
          | keyword LPAREN keyword 'FROM' keyword String RPAREN
 
-         // some ODBC function names are also SQL reserved words
+         //  ODBC style
          | '{fn' keyword LPAREN expressionList? RPAREN '}'
 
          //         | keyword LPAREN ( ( 'ALL' | 'DISTINCT' )? expressionList | STAR )? RPAREN
@@ -262,19 +250,14 @@ function : 'TRIM' LPAREN ( 'BOTH' | 'LEADING' | 'TRAILING' )? expression? 'FROM'
          // | ID DOT ID LPAREN expressionList? RPAREN // T-SQL?
          ;
 
+function2 : CAST keyword ;
+
 allDistinct : 'ALL' | 'DISTINCT' ;
 withinGroup : 'WITHIN' 'GROUP' LPAREN orderBy RPAREN ;
-firstLast : 'FROM' ( 'FIRST' | 'LAST' ) ;
+firstLast   : 'FROM' ( 'FIRST' | 'LAST' ) ;
 respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
-filter : 'FILTER' LPAREN 'WHERE' expression RPAREN
-       ;
-
-over   : 'OVER' window
-       ;
-
-function2
-  : CAST keyword
-  ;
+filter      : 'FILTER' LPAREN 'WHERE' expression RPAREN ;
+over        : 'OVER' window ;
 
 type : 'ROW' LPAREN name type ( COMMA name type )* RPAREN
      | keyword+ ( LPAREN decimal ( COMMA decimal )? RPAREN keyword* )?
