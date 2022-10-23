@@ -55,80 +55,116 @@ import java.util.HashSet;
 
 parse   : statement* EOF ;
 
-statement
-  : ( union
-    | insert
-    | update
-//  | delete
-//  | merge
-    )
-    SEMI // ?
-  ;
+statement     : ( delete | insert | merge | update | query ) SEMI? ;
 
-insert        : 'INSERT' into ( LP refs RP )? ( values | select ) ;
+delete        : 'DELETE' ; // TODO
+
+insert        : 'INSERT' into ( LP refs RP )? ( values | select ) ; // TODO
+
+merge         : 'MERGE' ; // TODO
+
 update        : 'UPDATE' ref 'SET' setter ( COMMA setter )* where? ;
-union         : rowset (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) ( 'ALL' | 'DISTINCT' )? rowset )* ;
 
-rowset   : LP union RP
-         | select
-         | 'TABLE' ref
-         | values
-         ;
+    setter        : ref EQ value ;
 
-select        : 'SELECT' distinct? ( 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? ( 'WITH' 'TIES' )? )?
-                ( column ( COMMA column )* )? into? ( 'FROM' join )?
-                where? groupBy? having? ( 'WINDOW' windowAlias ( COMMA windowAlias )* )?
-                qualify? orderBy? offset? fetch? limit? forUpdate?
+query         : rows (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
+
+rows          : LP query RP
+              | values
+              | select
+              | 'TABLE' ref
               ;
 
 values        : 'VALUES' terms ;
 
-distinct : 'ALL'
-         | 'DISTINCT' ( 'ON' LP terms RP )?
-         | 'UNIQUE'
-         ;
-
-column   : (( ref DOT )? STAR ) exceptions?
-         | term alias?
-         ;
-
-alias         : 'AS'? name ;
-tableAlias    : alias names? ;
-
-join          : ( table | LP join RP ) ( joinType join ( 'ON' term | 'USING' names )? )* ;
-joinType      : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
-              | COMMA
+select        : 'SELECT' distinct? top? ( column ( COMMA column )* )? into? ( 'FROM' join )?
+                where? groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate?
               ;
 
-table    : LP union RP tableAlias?
-         | values tableAlias?
-         | function tableAlias?
-         | unnest
-         | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP tableAlias?
-         // TODO 'delete' and 'merge' rules
-         | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( insert | update /* | delete | merge */ ) RP
-////         | 'JSON_TABLE'
-////         | 'XMLTABLE'
-         | LP table RP tableAlias?
-         | ref tableAlias? useIndex?
-         ;
+    distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
+    column        : (( ref DOT )? STAR ) exceptions?
+                  | term alias?
+                  ;
 
+        exceptions    : 'EXCEPT' LP refs RP ;
 
-// TODO: just use 'reference'?
-columnSpec    : ( name | ref ) id EQ ( array | term ) ;
+    top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? ( 'WITH' 'TIES' )? ;
 
-unnest        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
+    into          : 'INTO' refs ;
 
+    join          : ( table | LP join RP ) ( joinType join ( 'ON' term | 'USING' names )? )* ;
 
-setter        : ref EQ value ;
-into          : 'INTO' refs ;
-exceptions    : 'EXCEPT' LP refs RP ;
+        joinType      : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
+                      | COMMA
+                      ;
+
+    where         : 'WHERE' term ;
+
+    groupBy       : 'GROUP' 'BY' terms? ;
+
+    having        : 'HAVING' terms ;
+
+    windows       : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
+
+        windowAlias   : name 'AS' window ;
+
+        window        : name | LP name? partitionBy? orderBy? windowFrame? RP ;
+
+            partitionBy   : 'PARTITION' 'BY' terms ;
+
+            windowFrame   : ( 'RANGE'| 'ROWS' | 'GROUPS' )
+                            ( preceding | 'BETWEEN' following 'AND' following )
+                            ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+                          ;
+
+            preceding     : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+                          | 'CURRENT' 'ROW'
+                          ;
+
+            following     : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+                          | preceding
+                          ;
+
+    qualify       : 'QUALIFY' term ;
+
+    orderBy       : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
+
+        //orderByItem  : term ( 'COLLATE' ID )? ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
+        orderByItem   : term ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
+
+    offset        : 'OFFSET' term rowRows? ;
+
+    fetch         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | ( 'WITH' 'TIES' )) ;
+
+    limit         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+
+    forUpdate     : 'FOR' 'UPDATE' ;
+
+table         : LP query RP tableAlias?
+              | values tableAlias?
+              | function tableAlias?
+              | unnest
+              | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP tableAlias?
+              // TODO 'delete' and 'merge' rules
+              | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
+              | 'JSON_TABLE' // TODO
+              | 'XMLTABLE' // TODO
+              | LP table RP tableAlias?
+              | ref tableAlias? useIndex?
+              ;
+
+    unnest        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
+
+    columnSpec    : ( name | ref ) id EQ ( array | term ) ; // TODO: just use 'ref'?
+
+    useIndex      : 'USE' 'INDEX' ids ;
 
 terms         : term ( COMMA term )* ;
+
 term          : LP RP
               | LP term RP
-              | union
+              | query
               | 'ROW'? LP terms RP
               | LP terms RP DOT name
               | term CONCAT term
@@ -153,153 +189,124 @@ term          : LP RP
               | ( MINUS | PLUS | 'NOT' ) term
               | ref
               | array
-              | term 'AT' ( 'LOCAL' | 'TIME' 'ZONE' ( interval | string ) )?
+              | term 'AT' ( 'LOCAL' | timeZone ( interval | string ) )?
               | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref
               ;
 
-whenPred      : compare
-              | quantified
-              | predicate
-              | isType
-              | 'NOT'? ( between | in | like | regexp )
+    compare       : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) term ;
+
+    quantified    : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LP rows RP ; // TODO change 'rows' to 'union'?
+
+    predicate     : 'IS' 'NOT'? ( 'NULL' | bool | 'DISTINCT' 'FROM' term );
+
+    isType        : 'IS' 'OF' ids ;
+
+    // TODO additional 'IN' rules
+    //          | ( databaseName DOT )? table_name
+    //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
+    in            : 'IN' terms ;
+
+    like          : ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )? ;
+
+    regexp        : 'REGEXP' term ( 'ESCAPE' term )? ;
+
+    between       : 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term ;
+
+    whenPred      : compare
+                  | quantified
+                  | predicate
+                  | isType
+                  | 'NOT'? ( between | in | like | regexp )
+                  ;
+
+function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
+              | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
+              | 'JSON_OBJECTAGG' LP jsonKeys onNull? uniqueKeys? RP filter? over?
+              | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
+              | 'EXTRACT' LP id 'FROM' term RP
+              | 'LISTAGG' LP allDistinct? term COMMA string
+                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? withWithout 'COUNT' ))? RP withinGroup? filter? over?
+              | 'STRING_AGG' LP term COMMA string orderBy RP
+              | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
+              | id LP ( allDistinct? terms | STAR )? RP withinGroup? filter? firstLast? respectIgnore? over?
+              | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
+              | id LP id 'FROM' id String RP
+              //  ODBC style
+              | '{fn' id LP terms? RP '}'
+              //         | id LPAREN ( ( 'ALL' | 'DISTINCT' )? terms | STAR )? RPAREN
+              //           filter? firstLast? respectIgnore? over?
+              // | ID? 'FUNCTION' ID LPAREN terms? RPAREN // T-SQL
+              // | ID DOT ID LPAREN terms? RPAREN // T-SQL?
               ;
 
-compare    : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP | TILDE1 | TILDE2 | TILDE3 | TILDE4 ) term ;
-quantified : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LP rowset RP ; // TODO change 'rowset' to 'union'?
-predicate  : 'IS' 'NOT'? ( 'NULL' | bool | 'DISTINCT' 'FROM' term );
-isType     : 'IS' 'OF' ids ;
+    withinGroup   : 'WITHIN' 'GROUP' LP orderBy RP ;
 
-// TODO additional 'IN' rules
-//          | ( databaseName DOT )? table_name
-//          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-in         : 'IN' terms ;
-like       : ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )? ;
-regexp     : 'REGEXP' term ( 'ESCAPE' term )? ;
-between    : 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term ;
+    filter        : 'FILTER' LP 'WHERE' term RP ;
 
-function : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
-         | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
-         | 'JSON_OBJECTAGG' LP jsonKeys onNull? uniqueKeys? RP filter? over?
-         | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
-         | 'EXTRACT' LP id 'FROM' term RP
-         | 'LISTAGG' LP allDistinct? term COMMA string
-           ( 'ON''OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? ( 'WITH' | 'WITHOUT' ) 'COUNT' ))? RP withinGroup? filter? over?
-         | 'STRING_AGG' LP term COMMA string orderBy RP
-         | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
-         | id LP ( allDistinct? terms | STAR )? RP withinGroup? filter? firstLast? respectIgnore? over?
-         | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
-         | id LP id 'FROM' id String RP
-         //  ODBC style
-         | '{fn' id LP terms? RP '}'
+    over          : 'OVER' window ;
 
-         //         | id LPAREN ( ( 'ALL' | 'DISTINCT' )? terms | STAR )? RPAREN
-         //           filter? firstLast? respectIgnore? over?
-
-         // | ID? 'FUNCTION' ID LPAREN terms? RPAREN // T-SQL
-         // | ID DOT ID LPAREN terms? RPAREN // T-SQL?
-         ;
-
-function2 : CAST id ;
-
-allDistinct   : 'ALL' | 'DISTINCT' ;
-withinGroup   : 'WITHIN' 'GROUP' LP orderBy RP ;
-firstLast     : 'FROM' ( 'FIRST' | 'LAST' ) ;
-respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
-filter        : 'FILTER' LP 'WHERE' term RP ;
-over          : 'OVER' window ;
+function2     : CAST id ;
 
 type          : 'ROW' LP name type ( COMMA name type )* RP
               | id+ ( LP decimal ( COMMA decimal )? RP id* )?
               ;
 
-useIndex      : 'USE' 'INDEX' ids ;
-where         : 'WHERE' term ;
-groupBy       : 'GROUP' 'BY' terms? ;
-having        : 'HAVING' terms ;
-windowAlias   : name 'AS' window ;
-window        : name
-              | LP name? partitionBy? orderBy? windowFrame? RP
-              ;
-
-windowFrame   : ( 'RANGE'| 'ROWS' | 'GROUPS' )
-                ( preceding | 'BETWEEN' following 'AND' following )
-                ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-              ;
-
-preceding     : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-              | 'CURRENT' 'ROW'
-              ;
-
-following     : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-              | preceding
-              ;
-
-qualify       : 'QUALIFY' term ;
-partitionBy   : 'PARTITION' 'BY' terms ;
-orderBy       : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
-
-//orderByItem  : expression ( 'COLLATE' ID )? ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
-orderByItem   : term ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
-offset        : 'OFFSET' term ( 'ROW' | 'ROWS' )? ;
-
-fetch         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )?
-                ( 'ROW' | 'ROWS' ) ( 'ONLY' | ( 'WITH' 'TIES' ))
-              ;
-
-limit         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
-forUpdate     : 'FOR' 'UPDATE' ;
 array         : 'ARRAY' LS terms? RS ;
 
-value       : real
-            | decimal
-            | string
-            | Hexadecimal
-            | bool
-            | 'NULL'
-            | date
-            | time
-            | interval
-            | jsonObject
-            | jsonArray
-            | Variable
-            ;
+value         : real
+              | decimal
+              | string
+              | Hexadecimal
+              | bool
+              | 'NULL'
+              | date
+              | time
+              | interval
+              | jsonObject
+              | jsonArray
+              | Variable
+              ;
 
-real     : ( MINUS | PLUS )? Real ;
-decimal  : ( MINUS | PLUS )? Decimal ;
-string   : String+ | unicode | national | blob ;
-unicode  : Unicode String* ( 'UESCAPE' String )? ;
-national : National String* ;
-blob     : Blob String* ;
-bool     : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-date       : 'DATE' String
-           // ODBC date time
-           | '{d' String '}'
-           | '{t' String '}'
-           | '{ts' String '}'
-           ;
-
-time          : ( 'TIME' | 'TIMESTAMP' ) (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )? String? ;
+real          : ( MINUS | PLUS )? Real ;
+decimal       : ( MINUS | PLUS )? Decimal ;
+string        : String+ | unicode | national | blob ;
+unicode       : Unicode String* ( 'UESCAPE' String )? ;
+national      : National String* ;
+blob          : Blob String* ;
+bool          : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+time          : ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? String? ;
 //interval : 'INTERVAL' expression timeSpan ;
 interval      : 'INTERVAL' term id ( 'TO' id )? ;
-
-timeSpan : 'EPOCH'
-         | 'YEAR' ( 'TO' 'MONTH' )?
-         | 'MONTH'
-         | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-         | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-         | 'MINUTE' ( 'TO' 'SECOND' )?
-         | 'SECOND'
-         ;
+date          : 'DATE' String
+              // ODBC date time
+              | ( '{d' | '{t' | '{ts' ) String '}'
+              ;
 
 jsonObject    : 'JSON_OBJECT' LP jsonKeys? onNull? uniqueKeys? formatJson? RP ;
 jsonKeys      : jsonKey ( COMMA jsonKey )* ;
 jsonKey       : ( string | name ) COLON term | 'KEY'? ( string | name ) 'VALUE' term ;
-// TODO change 'rowset' to 'union'?
-jsonArray     : 'JSON_ARRAY' LP ( terms | LP rowset RP )? formatJson? onNull? RP ;
+jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
 
+allDistinct   : 'ALL' | 'DISTINCT' ;
+firstLast     : 'FROM' ( 'FIRST' | 'LAST' ) ;
+respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 onNull        : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
-uniqueKeys    : ( 'WITH' | 'WITHOUT' ) 'UNIQUE' 'KEYS' ;
+uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
+withWithout   : 'WITH' | 'WITHOUT' ;
 formatJson    : 'FORMAT' 'JSON' ;
+timeZone      : 'TIME' 'ZONE' ;
+rowRows       : 'ROW' | 'ROWS' ;
+timeSpan      : 'EPOCH'
+              | 'YEAR' ( 'TO' 'MONTH' )?
+              | 'MONTH'
+              | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
+              | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
+              | 'MINUTE' ( 'TO' 'SECOND' )?
+              | 'SECOND'
+              ;
+
+alias         : 'AS'? name ;
+tableAlias    : alias names? ;
 
 refs          : ref ( COMMA ref )* ;
 ref           : name ( DOT name )* ;
@@ -308,7 +315,7 @@ name          : id  | Name  ( 'UESCAPE' String )?;
 ids           : LP id ( COMMA id )* RP ;
 id            : ID | { isKeyword( getCurrentToken() ) }? . ;
 
-// Lexer
+// Lexemes
 
 LP       : '(' ;
 RP       : ')' ;
@@ -375,9 +382,9 @@ Variable : [:@$] ID
          | '?' DIGIT*
          ;
 
-Comment       : '--' ~[\r\n]* -> channel( HIDDEN ) ;
-BlockComment  : '/*' .*? '*/' -> channel( HIDDEN ) ;
-Whitespace    : [ \t\r\n] -> channel( HIDDEN ) ;
+Comment  : '--' ~[\r\n]* -> channel( HIDDEN ) ;
+Block    : '/*' .*? '*/' -> channel( HIDDEN ) ;
+Spaces   : [ \t\r\n] -> channel( HIDDEN ) ;
 
 fragment QUOTED   : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT    : [0-9] ;
