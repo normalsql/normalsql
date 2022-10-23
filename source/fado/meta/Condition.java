@@ -22,7 +22,7 @@ public abstract class Condition
 	// TODO remove 'from' and add Table reference to Column
 	public From from;
 	public TColumn column;
-	public List<LiteralContext> literalList;
+	public List<ValueContext> literalList;
 	public ArrayList<String> valueList = new ArrayList<>();
 
 //	public Condition( ColumnRefContext columnRef, LiteralContext... literals )

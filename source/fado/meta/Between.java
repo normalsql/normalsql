@@ -11,8 +11,8 @@ import static fado.parse.GenericSQLParser.*;
 
 public class Between extends Condition
 {
-	public LiteralContext lower;
-	public LiteralContext upper;
+	public ValueContext lower;
+	public ValueContext upper;
 
 //	public Between( ColumnRefContext columnRef, LiteralContext... literals )
 //	{

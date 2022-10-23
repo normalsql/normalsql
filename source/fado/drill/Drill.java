@@ -16,6 +16,11 @@ public class Drill
 //"select id from test where 1=0;"
 //"SELECT X FROM VALUES (2), (3);"
 			;
+		System.out.println( sql.length() );
+		System.out.println( sql.charAt( sql.length() - 1 ));
+		System.out.println( Character.isAlphabetic( sql.charAt( sql.length() - 1 )) );
+		System.out.println( Character.isAlphabetic( sql.charAt( sql.length() - 1 )) );
+
 		CharStream chars = CharStreams.fromString( sql );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );

@@ -141,7 +141,7 @@ public class FadoNested
 //		parent.forEach( child -> findWHEREs( child ));
 	}
 
-	static void processExpression( SelectList parent, ExpressionContext ec )
+	static void processExpression( SelectList parent, TermContext ec )
 	{
 //		Token op = ec.op;
 //		switch( op.getType() )
