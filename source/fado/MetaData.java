@@ -6,7 +6,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-
+// TODO move methods to main Fado.java
 public class MetaData
 {
 	public static void main( String[] args )
@@ -83,7 +83,7 @@ public class MetaData
 				{
 					while( columnsRS.next() )
 					{
-						TColumn column = new TColumn();
+						Table.Column column = new Table.Column();
 						column.name = columnsRS.getString( "COLUMN_NAME" );
 //						column.columnSize = columnsRS.getString("COLUMN_SIZE");
 						column.type = columnsRS.getInt( "DATA_TYPE" );

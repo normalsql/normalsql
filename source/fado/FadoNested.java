@@ -42,7 +42,8 @@ public class FadoNested
 
 		parse( work );
 
-		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm", "sa", null );
+		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+		Connection conn = DriverManager.getConnection( url, "sa", null );
 		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
 		resolveFROMs( work.root, tables );
 
@@ -56,7 +57,7 @@ public class FadoNested
 		// Creates text for PreparedStatement by replacing
 		// original literal value with a JDBC input parameter '?'
 		work.conditionList.forEach(
-			c -> c.literalList.forEach(
+			c -> c.vcList.forEach(
 				lc -> lc.setStartTokenText( "?" )));
 		work.preparedSQL = work.tokens.getText();
 		System.out.println( work.preparedSQL );
@@ -64,7 +65,7 @@ public class FadoNested
 		// Creates printf template for generated statement's
 		// toString() method (for easier inspection, debugging).
 		work.conditionList.forEach( c ->
-			c.literalList.forEach( lc ->
+			c.vcList.forEach( lc ->
 				lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))
 			)
 		);
@@ -125,13 +126,13 @@ public class FadoNested
 
 	static void findWHEREs( SelectList parent )
 	{
-		for( ExpressionContext found : parent.context.find( ExpressionContext.class, "where/expression" ) )
+		for( TermContext found : parent.context.find( TermContext.class, "where/term" ))
 		{
 			processExpression( parent, found );
 		}
 
 		// is this really better than loop?
-//		parent.context.find( ExpressionContext.class, "where/expression" ).forEach(
+//		parent.context.find( TermContext.class, "where/expression" ).forEach(
 //			found -> processExpression( parent, found ));
 
 		for( SelectList child : parent )
@@ -143,82 +144,116 @@ public class FadoNested
 //		parent.forEach( child -> findWHEREs( child ));
 	}
 
-	static void processExpression( SelectList parent, ExpressionContext ec )
+	static void processExpression( SelectList parent, TermContext ec )
 	{
-		Token op = ec.op;
-		switch( op.getType() )
+		switch( ec )
 		{
-			case AND:
-			case OR:
-				processExpression( parent, ec.left );
-				processExpression( parent, ec.right );
+			case TermBooleanContext tbc:
+				processExpression( parent, tbc.term( 0 ));
+				processExpression( parent, tbc.term( 1 ));
 				break;
 
-			case NOT:
-				processExpression( parent, ec.right );
+			case TermUnaryContext tuc:
+				processExpression( parent, tuc.term() );
 				break;
 
-			case GT:
-			case GT2:
-			case GTE:
-			case LT:
-			case LT2:
-			case LTE:
-			case EQ:
-			case NEQ1:
-			case NEQ2:
-			case LIKE:
-			case ILIKE:
-			{
-				// TODO allow right-to-left too
-				ColumnRefContext columnRef = ec.left.columnRef();
-				LiteralContext literal = ec.right.literal();
-				if( columnRef != null && literal != null )
+			case TermComparisonContext tcc:
+				TermContext left = tcc.term( 0 );
+				TermContext right = tcc.term( 1 );
+				RefContext ref = null;
+				ValueContext value = null;
+				if( left instanceof TermValueContext && right instanceof TermRefContext )
 				{
-					parent.conditionList.add( new Comparison( op, columnRef, literal ));
+					value = ((TermValueContext) left).value();
+					ref = ((TermRefContext) right).ref();
 				}
-				break;
-			}
-
-			case BETWEEN:
-			{
-				ColumnRefContext columnRef = ec.left.columnRef();
-				LiteralContext lower = ec.lower.literal();
-				LiteralContext upper = ec.upper.literal();
-				if( columnRef != null && lower != null && upper != null )
+				else if( right instanceof TermValueContext && left instanceof TermRefContext )
 				{
-					parent.conditionList.add( new Between( columnRef, lower, upper ));
+					value = ((TermValueContext) right).value();
+					ref = ((TermRefContext) left).ref();
 				}
-				break;
-			}
 
-			case IN:
-			{
-				ColumnRefContext columnRef = ec.left.columnRef();
-				ExpressionListContext list = ec.list;
-				if( list != null )
-				{
-					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
-					if( literals.size() > 0 )
-					{
-						parent.conditionList.add( new IN( columnRef, literals.toArray( new LiteralContext[0] )));
-					}
-				}
+				parent.conditionList.add( new Comparison( null, ref, value ));
 				break;
-			}
 
-			// do nothing
-			case STRCAT:
-			case AMP:
-			case PIPE:
-			case STAR:
-			case DIV:
-			case MOD:
-			case PLUS:
-			case MINUS:
 			default:
 				break;
 		}
+
+//		Token op = ec.op;
+//		switch( op.getType() )
+//		{
+//			case AND:
+//			case OR:
+//				processExpression( parent, ec.left );
+//				processExpression( parent, ec.right );
+//				break;
+//
+//			case NOT:
+//				processExpression( parent, ec.right );
+//				break;
+//
+//			case GT:
+//			case GT2:
+//			case GTE:
+//			case LT:
+//			case LT2:
+//			case LTE:
+//			case EQ:
+//			case NEQ1:
+//			case NEQ2:
+//			case LIKE:
+//			case ILIKE:
+//			{
+//				// TODO allow right-to-left too
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				LiteralContext literal = ec.right.literal();
+//				if( columnRef != null && literal != null )
+//				{
+//					parent.conditionList.add( new Comparison( op, columnRef, literal ));
+//				}
+//				break;
+//			}
+//
+//			case BETWEEN:
+//			{
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				LiteralContext lower = ec.lower.literal();
+//				LiteralContext upper = ec.upper.literal();
+//				if( columnRef != null && lower != null && upper != null )
+//				{
+//					parent.conditionList.add( new Between( columnRef, lower, upper ));
+//				}
+//				break;
+//			}
+//
+//			case IN:
+//			{
+//				ColumnRefContext columnRef = ec.left.columnRef();
+//				ExpressionListContext list = ec.list;
+//				if( list != null )
+//				{
+//					List<LiteralContext> literals = list.find( LiteralContext.class, "expression/literal" );
+//					if( literals.size() > 0 )
+//					{
+//						parent.conditionList.add( new IN( columnRef, literals.toArray( new LiteralContext[0] )));
+//					}
+//				}
+//				break;
+//			}
+//
+//			// do nothing
+//			case STRCAT:
+//			case AMP:
+//			case PIPE:
+//			case STAR:
+//			case DIV:
+//			case MOD:
+//			case PLUS:
+//			case MINUS:
+//			default:
+//				break;
+//		}
 	}
 
 	static void findItems( SelectList parent )
@@ -228,7 +263,7 @@ public class FadoNested
 			if( child.context.getRuleIndex() == RULE_select )
 			{
 				SelectContext sc = (SelectContext) child.context;
-				for( ItemContext ic : sc.itemList().item() )
+				for( ColumnContext ic : sc.column() )
 				{
 					child.itemList.add( new Item( ic ));
 				}
@@ -269,7 +304,7 @@ public class FadoNested
 
 			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
 			{
-				TColumn column = from.table.getColumn( condition.columnName );
+				Table.Column column = from.table.getColumn( condition.columnName );
 				if( column != null )
 				{
 					condition.from = from;

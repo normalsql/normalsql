@@ -9,11 +9,12 @@
 package fado.meta;
 
 import fado.parse.GenericSQLParser.TableContext;
+import fado.parse.GenericSQLParser.TableRefContext;
 
 public class From
 {
 	public TableContext tc;
-	public String databaseName;
+	public String schemaName;
 	public String tableName;
 	public String alias;
 	public Table table;
@@ -21,8 +22,9 @@ public class From
 	public From( TableContext tc )
 	{
 		this.tc = tc;
-		this.databaseName = tc.findFirstString( "**/databaseName" );
-		this.tableName = tc.findFirstString( "**/tableName" );
-		this.alias = tc.findFirstString( "**/aliasName" );
+		TableRefContext trc = tc.tableRef();
+		schemaName = ( trc.schemaName != null ? trc.schemaName.getTrimmedText() : null );
+		tableName = trc.tableName.getTrimmedText();
+		alias = tc.alias() != null ? tc.alias().name().getTrimmedText() : null;
 	}
 }

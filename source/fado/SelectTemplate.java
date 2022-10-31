@@ -38,25 +38,25 @@ public class SelectTemplate
 
 		Comparison comparison = new Comparison( null, null );
 		comparison.columnName = "apple";
-		comparison.column = new TColumn();
+		comparison.column = new Table.Column();
 		comparison.column.type = VARCHAR;
 		comparison.valueList.add( "cosmic crisp" );
 		work.conditionList.add( comparison );
 
 		Between between = new Between( null );
 		between.columnName = "banana";
-		between.column = new TColumn();
+		between.column = new Table.Column();
 		between.column.type = INTEGER;
 		between.valueList.add( "1" );
 		between.valueList.add( "9" );
 		work.conditionList.add( between );
 
-		GenericSQLParser.LiteralContext l1 = new GenericSQLParser.LiteralContext( null, 0 );
-		GenericSQLParser.LiteralContext l2 = new GenericSQLParser.LiteralContext( null, 0 );
-		GenericSQLParser.LiteralContext l3 = new GenericSQLParser.LiteralContext( null, 0 );
+		GenericSQLParser.ValueContext l1 = new GenericSQLParser.ValueContext( null, 0 );
+		GenericSQLParser.ValueContext l2 = new GenericSQLParser.ValueContext( null, 0 );
+		GenericSQLParser.ValueContext l3 = new GenericSQLParser.ValueContext( null, 0 );
 		IN in = new IN( null, l1, l2, l3 );
 		in.columnName = "cherry";
-		in.column = new TColumn();
+		in.column = new Table.Column();
 		in.column.type = CHAR;
 		in.valueList.add( "bitter" );
 		in.valueList.add( "sweet" );

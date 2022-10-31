@@ -11,38 +11,44 @@ package fado.meta;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 import static fado.parse.GenericSQLParser.*;
 
 public abstract class Condition
 {
-	public ColumnRefContext columnRef;
+	public RefContext rc;
 	public String tableName;
 	public String columnName;
 	// TODO remove 'from' and add Table reference to Column
 	public From from;
-	public TColumn column;
-	public List<LiteralContext> literalList;
+	public Table.Column column;
+	public List<ValueContext> vcList;
 	public ArrayList<String> valueList = new ArrayList<>();
 
-	public Condition( ColumnRefContext columnRef, LiteralContext... literals )
+	public Condition( RefContext rc, ValueContext... literals )
 	{
-		this( columnRef, Arrays.asList( literals ));
+		this( rc, Arrays.asList( literals ));
 	}
 
-	public Condition( ColumnRefContext columnRef, List<LiteralContext> literalList )
+	public Condition( RefContext rc, List<ValueContext> vcList )
 	{
-		this.columnRef = columnRef;
-		this.literalList = literalList;
-		if( columnRef != null )
+		this.rc = rc;
+		this.vcList = vcList;
+		if( rc != null )
 		{
-			this.columnName = columnRef.columnName().getTrimmedText();
-			this.tableName = columnRef.findFirstString( "tableName" );
+			ListIterator<NameContext> i = rc.name().listIterator( rc.name().size() );
+			if( i.hasPrevious() ) this.columnName = i.previous().getTrimmedText();
+			if( i.hasPrevious() ) this.tableName = i.previous().getTrimmedText();
+//
+////			this.columnName = columnRef.columnName().getTrimmedText();
+//			this.columnName = columnRef.getTrimmedText();
+//			this.tableName = columnRef.findFirstString( "tableName" );
 		}
 
-		for( LiteralContext lc : literalList )
+		for( ValueContext vc : vcList )
 		{
-			valueList.add( lc.getTrimmedText() );
+			this.valueList.add( vc.getTrimmedText() );
 		}
 	}
 }

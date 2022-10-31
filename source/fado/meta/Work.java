@@ -16,6 +16,8 @@ import java.util.HashMap;
 
 public class Work
 {
+	// TODO make RSColumn inner class
+
 	public Path sourceFile;
 	public Path targetFile;
 	public String packageName;

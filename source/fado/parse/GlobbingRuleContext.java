@@ -27,6 +27,8 @@ public class
 extends
     ParserRuleContext
 {
+    public GlobbingRuleContext() { }
+
     public GlobbingRuleContext( ParserRuleContext parent, int invokingStateNumber )
     {
         super( parent, invokingStateNumber );
