@@ -8,30 +8,25 @@
 package fado.meta;
 
 import fado.parse.GenericSQLParser.RefContext;
-import fado.parse.GenericSQLParser.ColumnContext;
+import fado.parse.GenericSQLParser.ItemContext;
 
 public class Item
 {
-	public ColumnContext ic;
+	public ItemContext ic;
 	public String alias;
 	// TODO don't store this if not used later...
 	public String name;
 
-	public Item( ColumnContext ic )
+	public Item( ItemContext ic )
 	{
 		this.ic = ic;
 		RefContext rc = ic.findFirst( RefContext.class, "**/ref" );
 		if( rc != null )
 		{
-			// am pretty sure this can't be null
-//			this.name = rc.columnName().getTrimmedText();
 			// TODO get last 'name' in list
 			// TODO handle both 'id' and 'Name' rules
 			this.name = rc.getTrimmedText();
 		}
-		// TODO fix
-		// TODO fix other aliasName
-//		this.alias = ic.findFirstString( "**/aliasName" );
 		this.alias = ic.findFirstString( "**/alias/name" );
 	}
 

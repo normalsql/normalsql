@@ -8,23 +8,26 @@
 
 package fado.meta;
 
-import fado.parse.GenericSQLParser.TableContext;
+import fado.parse.GenericSQLParser.SourceContext;
 import fado.parse.GenericSQLParser.TableRefContext;
 
+// TODO maybe rename this to TableRef and change to have Table contain TableRef
 public class From
 {
-	public TableContext tc;
-	public String schemaName;
+	public SourceContext sc;
+	public String database;
+	public String schema;
 	public String tableName;
 	public String alias;
 	public Table table;
 
-	public From( TableContext tc )
+	public From( SourceContext sc )
 	{
-		this.tc = tc;
-		TableRefContext trc = tc.tableRef();
-		schemaName = ( trc.schemaName != null ? trc.schemaName.getTrimmedText() : null );
-		tableName = trc.tableName.getTrimmedText();
-		alias = tc.alias() != null ? tc.alias().name().getTrimmedText() : null;
+		this.sc = sc;
+		TableRefContext trc = sc.tableRef();
+		database = ( trc.database != null ? trc.database.getTrimmedText() : null );
+		schema = ( trc.schema != null ? trc.schema.getTrimmedText() : null );
+		tableName = trc.table.getTrimmedText();
+		alias = sc.alias() != null ? sc.alias().name().getTrimmedText() : null;
 	}
 }

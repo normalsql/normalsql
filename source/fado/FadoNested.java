@@ -105,11 +105,11 @@ public class FadoNested
 
 	static void findFROMs( SelectList parent )
 	{
-		for( TableContext tc : parent.context.find( TableContext.class, "from/**/table" ))
+		for( SourceContext sc : parent.context.find( SourceContext.class, "from/**/table" ))
 		{
-			if( tc.tableRef() != null )
+			if( sc.tableRef() != null )
 			{
-				From from = new From( tc );
+				From from = new From( sc );
 				parent.fromList.add( from );
 			}
 			// TODO: support nested 'select', and maybe 'VALUES (...)' too
@@ -263,7 +263,7 @@ public class FadoNested
 			if( child.context.getRuleIndex() == RULE_select )
 			{
 				SelectContext sc = (SelectContext) child.context;
-				for( ColumnContext ic : sc.column() )
+				for( ItemContext ic : sc.item() )
 				{
 					child.itemList.add( new Item( ic ));
 				}

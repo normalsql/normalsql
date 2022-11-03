@@ -77,13 +77,13 @@ rows          : LP query RP
 
 values        : 'VALUES' terms ;
 
-select        : 'SELECT' distinct? top? ( column ( COMMA column )* )? into? ( 'FROM' from )?
+select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM' from )?
                 where? groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate?
               ;
 
     distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
-    column        : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP refs RP )?
+    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP refs RP )?
                   | term alias?
                   ;
 
@@ -92,9 +92,9 @@ select        : 'SELECT' distinct? top? ( column ( COMMA column )* )? into? ( 'F
     into          : 'INTO' refs ;
 
     // TODO try 'term' style self-recursion
-    from          : ( table | LP from RP ) ( joinType from ( 'ON' term | 'USING' names )? )* ;
+    from          : ( source | LP from RP ) ( joinType from ( 'ON' term | 'USING' names )? )* ;
 
-        table         : ( LP query RP
+        source          : ( LP query RP
                         | values
                         | function
                         | unnest
@@ -102,9 +102,9 @@ select        : 'SELECT' distinct? top? ( column ( COMMA column )* )? into? ( 'F
                         | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
 //                        | 'JSON_TABLE' // TODO
 //                        | 'XMLTABLE' // TODO
-                        | LP table RP
+                        | LP source RP
                         | tableRef )
-                        ( alias names? )? useIndex? // TODO not every 'table' allows 'useIndex'
+                        ( alias names? )? useIndex? // TODO not every source allows 'useIndex'
                       ;
 
         joinType      : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
@@ -304,8 +304,8 @@ timeSpan      : 'EPOCH'
 alias         : 'AS'? name ;
 
 refs          : ref ( COMMA ref )* ;
-ref           : ((( domainName=name DOT )? schemaName=name DOT )? tableName=name DOT )? columnName=name ;
-tableRef      : (( domainName=name DOT )? schemaName=name DOT )? tableName=name ;
+ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name ;
+tableRef      : (( database=name DOT )? schema=name DOT )? table=name ;
 names         : LP name ( COMMA name )* RP ;
 name          : id  | Name ( 'UESCAPE' String )?;
 ids           : LP id ( COMMA id )* RP ;
