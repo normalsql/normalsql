@@ -161,7 +161,8 @@ select        : 'SELECT' distinct? top? ( column ( COMMA column )* )? into? ( 'F
 
 terms         : term ( COMMA term )* ;
 
-term          : function # TermFunction
+term          : LP term? RP # TermNested
+              | LP terms RP DOT name # TermColumn
               | term CONCAT term # TermConcat
               | term CARET term # TermCaret
               | term ( STAR | DIVIDE | MODULO ) term # TermMultiplication
@@ -172,54 +173,48 @@ term          : function # TermFunction
               | quantified # TermQuantified
               | term predicate # TermWithPredicate
               | term isType # TermIsType
-              | term 'NOT'? ( between | in | like | regexp ) # TermCompare2
+              | term 'NOT'? 'IN' LP terms? RP # TermInList
+              | term 'NOT'? ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )? # TermLike
+              | term 'NOT'? 'REGEXP' term ( 'ESCAPE' term )? # TermRegex
+              | term 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term # TermBetween
               | 'INTERSECTS' LP term COMMA term RP # TermIntersects
               | 'CASE' term ( 'WHEN' ( terms | whenPred ) 'THEN' term )+ ( 'ELSE' term )? 'END' # TermCaseSwitch
               | 'CASE' ( 'WHEN' terms 'THEN' term )+ ( 'ELSE' term )? 'END' # TermCaseTests
               | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP # TermCast
+              | 'ROW'? LP terms RP # TermRow
               | term 'COLLATE' id # TermCollate
-              | term function2 # TermMethod
+              | function # TermFunction
+              | term TYPECAST id # TermTypeCast
               | ( MINUS | PLUS | 'NOT' ) term # TermUnary
               | term op=( 'AND' | 'OR' ) term # TermBoolean
               | term 'AT' ( 'LOCAL' | timeZone ( interval | string ) )? # TermTime
               | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref # TermSequence
               | value # TermValue
               | ref # TermRef
-//              | ID # TermRef
+              | ID # TermRef
               | array # TermArray
-              | LP terms RP DOT name # TermColumn
-              | LP term? RP # TermNested
               | query # TermQuery
-              | 'ROW'? LP terms RP # TermRow
               ;
 
-    comparison       : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
+    comparison    : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
 
     matchRegex    : TILDE1 | TILDE2 | TILDE3 | TILDE4 ;
 
-    quantified    : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' )? LP rows RP ; // TODO change 'rows' to 'union'?
+    quantified    : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP rows RP ; // TODO change 'rows' to 'union'?
 
     predicate     : 'IS' 'NOT'? ( 'NULL' | bool | 'DISTINCT' 'FROM' term );
 
     isType        : 'IS' 'OF' ids ;
-
-    // TODO additional 'IN' rules
-    //          | ( databaseName DOT )? table_name
-    //          | ( databaseName DOT )? table_function_name LPAREN ( expression ( COMMA expression )* )? RPAREN
-    in            : 'IN' terms ;
-
-    like          : ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )? ;
-
-    regexp        : 'REGEXP' term ( 'ESCAPE' term )? ;
-
-    between       : 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term ;
 
     whenPred      : comparison term
                   | matchRegex term
                   | quantified
                   | predicate
                   | isType
-                  | 'NOT'? ( between | in | like | regexp )
+                  | 'NOT'? 'IN' LP terms? RP
+                  | 'NOT'? ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )?
+                  | 'NOT'? 'REGEXP' term ( 'ESCAPE' term )?
+                  | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term
                   ;
 
 function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
@@ -247,8 +242,6 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
     filter        : 'FILTER' LP 'WHERE' term RP ;
 
     over          : 'OVER' window ;
-
-function2     : CAST id ; // TODO inline this within 'term' rule?
 
 type          : 'ROW' LP name type ( COMMA name type )* RP
               | id+ ( LP decimal ( COMMA decimal )? RP id* )?
@@ -309,13 +302,10 @@ timeSpan      : 'EPOCH'
               ;
 
 alias         : 'AS'? name ;
-//tableAlias    : alias names? ;
 
 refs          : ref ( COMMA ref )* ;
-// TODO create separate tableRef and columnRef, add labels
-//ref           : name ( DOT name )* ;
-ref           : (( schemaName=name DOT )? tableName=name DOT )? columnName=name ;
-tableRef      : ( schemaName=name DOT )? tableName=name ;
+ref           : ((( domainName=name DOT )? schemaName=name DOT )? tableName=name DOT )? columnName=name ;
+tableRef      : (( domainName=name DOT )? schemaName=name DOT )? tableName=name ;
 names         : LP name ( COMMA name )* RP ;
 name          : id  | Name ( 'UESCAPE' String )?;
 ids           : LP id ( COMMA id )* RP ;
@@ -363,7 +353,7 @@ LSHIFT   : '<<' ; // bitwise shift left
 RSHIFT   : '>>' ; // bitwise shift right
 
 DOT      : '.' ;
-CAST     : '::' ;
+TYPECAST : '::' ;
 COLON    : ':' ;
 //QUESTION : '?' ;
 
