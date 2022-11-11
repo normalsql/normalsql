@@ -24,7 +24,8 @@ public class FadoNested
 		Class.forName( "org.h2.Driver" );
 
 		Work work = new Work();
-		work.sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
+//		work.sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
+		work.sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
 		work.targetFile = Paths.get( "" );
 		work.packageName = "blerg";
 		work.className = "SelectCourseDescr";
@@ -51,26 +52,29 @@ public class FadoNested
 		List<Item> itemList = work.root.get( 0 ).itemList;
 		matchItemsToRSColumns( itemList, work.columnList );
 
-		gatherConditions( work.root, work.conditionList );
+		gatherConditions( work.root, work.termList );
 		// TODO: some kind of sanity check to ensure datatypes of conditions and params match
 
-		// Creates text for PreparedStatement by replacing
-		// original literal value with a JDBC input parameter '?'
-		work.conditionList.forEach(
-			c -> c.vcList.forEach(
-				lc -> lc.setStartTokenText( "?" )));
-		work.preparedSQL = work.tokens.getText();
-		System.out.println( work.preparedSQL );
-
-		// Creates printf template for generated statement's
-		// toString() method (for easier inspection, debugging).
-		work.conditionList.forEach( c ->
-			c.vcList.forEach( lc ->
-				lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))
-			)
-		);
+//		// Creates text for PreparedStatement by replacing
+//		// original literal value with a JDBC input parameter '?'
+//		work.termList.forEach(
+//			c -> c.vcList.forEach(
+//				lc -> lc.setStartTokenText( "?" )));
+//		work.preparedSQL = work.tokens.getText();
+//		System.out.println( work.preparedSQL );
+//
+//		// Creates printf template for generated statement's
+//		// toString() method (for easier inspection, debugging).
+//		work.termList.forEach( c ->
+//			c.vcList.forEach( lc ->
+//				lc.setStartTokenText( JavaHelper.toPrintfConverter( c.column.type ))
+//			)
+//		);
 		work.printfSQL = work.tokens.getText();
 		System.out.println( work.printfSQL );
+
+		SelectTemplate template = new SelectTemplate();
+		template.merge( work );
 	}
 
 	public static void parse( Work work )
@@ -105,7 +109,7 @@ public class FadoNested
 
 	static void findFROMs( SelectList parent )
 	{
-		for( SourceContext sc : parent.context.find( SourceContext.class, "from/**/table" ))
+		for( SourceContext sc : parent.context.find( SourceContext.class, "from/**/source" ))
 		{
 			if( sc.tableRef() != null )
 			{
@@ -131,17 +135,11 @@ public class FadoNested
 			processExpression( parent, found );
 		}
 
-		// is this really better than loop?
-//		parent.context.find( TermContext.class, "where/expression" ).forEach(
-//			found -> processExpression( parent, found ));
-
 		for( SelectList child : parent )
 		{
 			findWHEREs( child );
 		}
 
-		// is this really better than loop?
-//		parent.forEach( child -> findWHEREs( child ));
 	}
 
 	static void processExpression( SelectList parent, TermContext ec )
@@ -158,22 +156,37 @@ public class FadoNested
 				break;
 
 			case TermComparisonContext tcc:
-				TermContext left = tcc.term( 0 );
-				TermContext right = tcc.term( 1 );
-				RefContext ref = null;
-				ValueContext value = null;
-				if( left instanceof TermValueContext && right instanceof TermRefContext )
+				Comparison comparison = new Comparison( tcc );
+				if( comparison.match() != Comparison.Params.NotMatched )
 				{
-					value = ((TermValueContext) left).value();
-					ref = ((TermRefContext) right).ref();
+					parent.termList.add( comparison );
 				}
-				else if( right instanceof TermValueContext && left instanceof TermRefContext )
-				{
-					value = ((TermValueContext) right).value();
-					ref = ((TermRefContext) left).ref();
-				}
+				break;
 
-				parent.conditionList.add( new Comparison( null, ref, value ));
+//				TermContext left = tcc.term( 0 );
+//				TermContext right = tcc.term( 1 );
+//				RefContext ref = null;
+//				ValueContext value = null;
+//				if( left instanceof TermValueContext && right instanceof TermRefContext )
+//				{
+//					value = ((TermValueContext) left).value();
+//					ref = ((TermRefContext) right).ref();
+//				}
+//				else if( right instanceof TermValueContext && left instanceof TermRefContext )
+//				{
+//					value = ((TermValueContext) right).value();
+//					ref = ((TermRefContext) left).ref();
+//				}
+//
+//				parent.termList.add( new Comparison( null, ref, value ));
+//				break;
+
+			case TermBetweenContext tbc:
+				Between between = new Between( tbc );
+				if( between.match() != Between.Params.NotMatched )
+				{
+					parent.termList.add( between );
+				}
 				break;
 
 			default:
@@ -183,15 +196,7 @@ public class FadoNested
 //		Token op = ec.op;
 //		switch( op.getType() )
 //		{
-//			case AND:
-//			case OR:
-//				processExpression( parent, ec.left );
-//				processExpression( parent, ec.right );
-//				break;
 //
-//			case NOT:
-//				processExpression( parent, ec.right );
-//				break;
 //
 //			case GT:
 //			case GT2:
@@ -287,46 +292,48 @@ public class FadoNested
 			}
 		}
 
-		for( Condition condition : parent.conditionList )
+		for( Term term : parent.termList )
 		{
-			resolveCondition( parent, condition );
+			resolveCondition( parent, term );
 		}
 	}
 
-	static void resolveCondition( SelectList parent, Condition condition )
+	static void resolveCondition( SelectList parent, Term term )
 	{
-		String tableName = condition.tableName;
-		tableName = ( tableName != null ? tableName : "*" );
-
-		for( From from : parent.fromList )
-		{
-			if( from.table == null ) continue;
-
-			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
-			{
-				Table.Column column = from.table.getColumn( condition.columnName );
-				if( column != null )
-				{
-					condition.from = from;
-					condition.column = column;
-					break;
-				}
-			}
-		}
-
-		if( condition.column == null )
-		{
-			System.out.printf( "condition.columnName '%s' not found\n", condition.columnName );
-		}
+		List<TermRefContext> refs = term.tc.find( TermRefContext.class, "ref" );
+		System.out.println( "doink" );
+//		String tableName = term.tableName;
+//		tableName = ( tableName != null ? tableName : "*" );
+//
+//		for( From from : parent.fromList )
+//		{
+//			if( from.table == null ) continue;
+//
+//			if( tableName.equalsIgnoreCase( from.tableName ) || tableName.equalsIgnoreCase( from.alias ) || tableName.equals( "*" ))
+//			{
+//				Table.Column column = from.table.getColumn( term.columnName );
+//				if( column != null )
+//				{
+//					term.from = from;
+//					term.column = column;
+//					break;
+//				}
+//			}
+//		}
+//
+//		if( term.column == null )
+//		{
+//			System.out.printf( "condition.columnName '%s' not found\n", term.columnName );
+//		}
 	}
 
-	static void gatherConditions( SelectList parent, ArrayList<Condition> conditions )
+	static void gatherConditions( SelectList parent, ArrayList<Term> terms )
 	{
 		for( SelectList child : parent )
 		{
-			gatherConditions( child, conditions );
+			gatherConditions( child, terms );
 		}
-		conditions.addAll( parent.conditionList );
+		terms.addAll( parent.termList );
 	}
 
 	/**

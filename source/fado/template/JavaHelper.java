@@ -7,7 +7,7 @@
 */
 package fado.template;
 
-import fado.meta.Condition;
+import fado.meta.Term;
 import fado.meta.RSColumn;
 
 import java.util.ArrayList;
@@ -358,15 +358,15 @@ JavaHelper
 		return result;
 	}
 
-	public static List<String> convertToCodeList( Condition condition )
+	public static List<String> convertToCodeList( Term term )
 	{
-		int type = condition.column.type;
+//		int type = term.column.type;
 		ArrayList<String> codeList = new ArrayList<>();
-		for( String value : condition.valueList )
-		{
-			String code = convertToCode( type, value );
-			codeList.add( code );
-		}
+//		for( String value : term.valueList )
+//		{
+//			String code = convertToCode( type, value );
+//			codeList.add( code );
+//		}
 		return codeList;
 	}
 

@@ -15,7 +15,7 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared SQL statement (containg '?' params)
 ##     printfSQL - like preparedSQL, but for printf
-##     conditionList - conditions from prepared SQL as List<fado.Condition>
+##     conditionList - terms from prepared SQL as List<fado.Condition>
 /**
 * ${className}.java   ${date}
 *
@@ -92,19 +92,19 @@ public class
 		throws SQLException
 	{
 #set( $nth = 0 )
-#foreach( $condition in $conditionList )
-	#set( $method = $helper.toMethodName( $condition.columnName ))
-	#set( $type = $helper.toMethodType( $condition.column.type ))
-	#if( $Comparison.isInstance( $condition ))
+#foreach( $term in $conditionList )
+	#set( $method = $helper.toMethodName( $term.columnName ))
+	#set( $type = $helper.toMethodType( $term.column.type ))
+	#if( $Comparison.isInstance( $term ))
 		#set( $nth = $nth + 1 )
 		__ps.set${type}( ${nth}, get${method}() );
-	#elseif( $Between.isInstance( $condition ))
+	#elseif( $Between.isInstance( $term ))
 		#set( $nth = $nth + 1 )
 		__ps.set${type}( ${nth}, get${method}Left() );
 		#set( $nth = $nth + 1 )
 		__ps.set${type}( ${nth}, get${method}Right() );
-	#elseif( $IN.isInstance( $condition ))
-		#foreach( $abc in $condition.literals )
+	#elseif( $IN.isInstance( $term ))
+		#foreach( $abc in $term.literals )
 			#set( $nth = $nth + 1 )
 		__ps.set${type}( ${nth}, get${method}( $foreach.count ));
 		#end
@@ -120,18 +120,18 @@ public class
 		return result;
 	}
 
-#foreach( $condition in $conditionList )
-#set( $method = $helper.toMethodName( $condition.columnName ))
-#set( $var = $helper.toVariableName( $condition.columnName ))
-#set( $type = $helper.toVariableType( $condition.column.type ))
-#set( $codeList = $helper.convertToCodeList( $condition ))
+#foreach( $term in $conditionList )
+#set( $method = $helper.toMethodName( $term.columnName ))
+#set( $var = $helper.toVariableName( $term.columnName ))
+#set( $type = $helper.toVariableType( $term.column.type ))
+#set( $codeList = $helper.convertToCodeList( $term ))
 
-#if( $Comparison.isInstance( $condition ))
+#if( $Comparison.isInstance( $term ))
 	private ${type} _${var} = $codeList[0];
 	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
 	public ${type} get${method}() { return _${var}; }
 
-#elseif( $Between.isInstance( $condition ))
+#elseif( $Between.isInstance( $term ))
 	private ${type} _${var}Left = $codeList[0];
 	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
 	public ${type} get${method}Left() { return _${var}Left; }
@@ -140,7 +140,7 @@ public class
 	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
 	public ${type} get${method}Right() { return _${var}Right; }
 
-#elseif( $IN.isInstance( $condition ))
+#elseif( $IN.isInstance( $term ))
 	private ${type}[] _${var}List = new ${type}[] {
 		$helper.join( ", ", $codeList )
 	};
@@ -149,7 +149,7 @@ public class
 	{
 		if( _${var}Count == _${var}List.length )
 		{
-			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${var}List.length );
+			throw new IndexOutOfBoundsException( "IN term parameter array only has room for: " + _${var}List.length );
 		}
 		int count = _${var}Count;
 
@@ -171,15 +171,15 @@ public class
 	public String toString()
 	{
 		return String.format( __printfSQL
-#foreach( $condition in $conditionList )
-	#set( $method = $helper.toMethodName( $condition.columnName ))
-	#if( $Comparison.isInstance( $condition ))
+#foreach( $term in $conditionList )
+	#set( $method = $helper.toMethodName( $term.columnName ))
+	#if( $Comparison.isInstance( $term ))
 			, get${method}()
-	#elseif( $Between.isInstance( $condition ))
+	#elseif( $Between.isInstance( $term ))
 	        , get${method}Left()
 			, get${method}Right()
-	#elseif( $IN.isInstance( $condition ))
-		#foreach( $abc in $condition.literals )
+	#elseif( $IN.isInstance( $term ))
+		#foreach( $abc in $term.literals )
 			, get${method}( $foreach.count )
 		#end
 	#end

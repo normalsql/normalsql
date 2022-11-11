@@ -6,7 +6,7 @@
 ## className - target Java class name as String
 ## sql - lines of retooled SQL statement as List<String>
 ## fields - fields found in source SQL as List<fado.meta.Field>
-## conditions - conditions found in source SQL as List<fado.meta.Condition>
+## terms - terms found in source SQL as List<fado.meta.Term>
 ## date - Fado's timestamp
 
 /**
@@ -60,33 +60,33 @@ public class
 		ps.set${method}( ${nth}, get${field.NameAsMethod}() );
 ##
 #end
-#foreach( $condition in $conditions )
+#foreach( $term in $terms )
 ##
-#if( $condition.isComparison() )
-##
-#set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
-##
-#elseif( $condition.isLIKE() )
+#if( $term.isComparison() )
 ##
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param() );
+		ps.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param() );
 ##
-#elseif( $condition.isIN() )
+#elseif( $term.isLIKE() )
 ##
-#set( $size = $condition.getValues().size() - 1 )
+#set( $nth = $nth + 1 )
+		ps.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param() );
+##
+#elseif( $term.isIN() )
+##
+#set( $size = $term.getValues().size() - 1 )
 ##
 #foreach( $abc in [0..$size] )
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}Param( ${abc} ));
+		ps.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param( ${abc} ));
 #end
 ##
-#elseif( $condition.isBETWEEN() )
+#elseif( $term.isBETWEEN() )
 ##
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}LeftParam() );
+		ps.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}LeftParam() );
 #set( $nth = $nth + 1 )
-		ps.set${condition.TypedMethod}( ${nth}, get${condition.NameAsMethod}RightParam() );
+		ps.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}RightParam() );
 ##
 #end
 #end
@@ -113,84 +113,84 @@ public class
 
 #end
 
-#foreach( $condition in $conditions )
+#foreach( $term in $terms )
 ##
-#if( $condition.isComparison() )
+#if( $term.isComparison() )
 
-	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
+	public ${term.JavaType} _${term.NameAsVariable}Param = $term.getValueAsCode();
 	
-	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+	public void set${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
 	{
-		_${condition.NameAsVariable}Param = ${condition.NameAsVariable};
+		_${term.NameAsVariable}Param = ${term.NameAsVariable};
 	}
 	
-	public ${condition.JavaType} get${condition.NameAsMethod}Param()
+	public ${term.JavaType} get${term.NameAsMethod}Param()
 	{
-		return _${condition.NameAsVariable}Param;
+		return _${term.NameAsVariable}Param;
 	}
 
-#elseif( $condition.isLIKE() )
+#elseif( $term.isLIKE() )
 
-	public ${condition.JavaType} _${condition.NameAsVariable}Param = $condition.getValueAsCode();
+	public ${term.JavaType} _${term.NameAsVariable}Param = $term.getValueAsCode();
 	
-	public void set${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+	public void set${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
 	{
-		_${condition.NameAsVariable}Param = ${condition.NameAsVariable};
+		_${term.NameAsVariable}Param = ${term.NameAsVariable};
 	}
 	
-	public ${condition.JavaType} get${condition.NameAsMethod}Param()
+	public ${term.JavaType} get${term.NameAsMethod}Param()
 	{
-		return _${condition.NameAsVariable}Param;
+		return _${term.NameAsVariable}Param;
 	}
 
-#elseif( $condition.isIN() )
-	private ${condition.JavaType}[] _${condition.NameAsVariable}List = new ${condition.JavaType}[] { $condition.getValueAsCode() };
-	private int _${condition.NameAsVariable}Count = 0;
-	public void add${condition.NameAsMethod}Param( ${condition.JavaType} ${condition.NameAsVariable} )
+#elseif( $term.isIN() )
+	private ${term.JavaType}[] _${term.NameAsVariable}List = new ${term.JavaType}[] { $term.getValueAsCode() };
+	private int _${term.NameAsVariable}Count = 0;
+	public void add${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
 	{
-		if( _${condition.NameAsVariable}Count == _${condition.NameAsVariable}List.length )
+		if( _${term.NameAsVariable}Count == _${term.NameAsVariable}List.length )
 		{
-			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${condition.NameAsVariable}List.length );
+			throw new IndexOutOfBoundsException( "IN term parameter array only has room for: " + _${term.NameAsVariable}List.length );
 		}
-		int count = _${condition.NameAsVariable}Count;
+		int count = _${term.NameAsVariable}Count;
 		
 		// Parameter array get filled to the right, so there are no holes
-		for( int i = count; count < _${condition.NameAsVariable}List.length; count++ )
+		for( int i = count; count < _${term.NameAsVariable}List.length; count++ )
 		{
-			_${condition.NameAsVariable}List[i] = ${condition.NameAsVariable};
+			_${term.NameAsVariable}List[i] = ${term.NameAsVariable};
 		}
-		_${condition.NameAsVariable}Count++;
+		_${term.NameAsVariable}Count++;
 	}
 	
-	public ${condition.JavaType} get${condition.NameAsMethod}Param( int nth )
+	public ${term.JavaType} get${term.NameAsMethod}Param( int nth )
 	{
-		return _${condition.NameAsVariable}List[ nth ];
+		return _${term.NameAsVariable}List[ nth ];
 	}
 	
-#elseif( $condition.isBETWEEN() )
+#elseif( $term.isBETWEEN() )
 
-	public ${condition.JavaType} _${condition.NameAsVariable}LeftParam = $condition.getLeftAsCode();
+	public ${term.JavaType} _${term.NameAsVariable}LeftParam = $term.getLeftAsCode();
 	
-	public void set${condition.NameAsMethod}LeftParam( ${condition.JavaType} ${condition.NameAsVariable} )
+	public void set${term.NameAsMethod}LeftParam( ${term.JavaType} ${term.NameAsVariable} )
 	{
-		_${condition.NameAsVariable}LeftParam = ${condition.NameAsVariable};
+		_${term.NameAsVariable}LeftParam = ${term.NameAsVariable};
 	}
 	
-	public ${condition.JavaType} get${condition.NameAsMethod}LeftParam()
+	public ${term.JavaType} get${term.NameAsMethod}LeftParam()
 	{
-		return _${condition.NameAsVariable}LeftParam;
+		return _${term.NameAsVariable}LeftParam;
 	}
 
-	public ${condition.JavaType} _${condition.NameAsVariable}RightParam = $condition.getRightAsCode();
+	public ${term.JavaType} _${term.NameAsVariable}RightParam = $term.getRightAsCode();
 	
-	public void set${condition.NameAsMethod}RightParam( ${condition.JavaType} ${condition.NameAsVariable} )
+	public void set${term.NameAsMethod}RightParam( ${term.JavaType} ${term.NameAsVariable} )
 	{
-		_${condition.NameAsVariable}RightParam = ${condition.NameAsVariable};
+		_${term.NameAsVariable}RightParam = ${term.NameAsVariable};
 	}
 	
-	public ${condition.JavaType} get${condition.NameAsMethod}RightParam()
+	public ${term.JavaType} get${term.NameAsMethod}RightParam()
 	{
-		return _${condition.NameAsVariable}RightParam;
+		return _${term.NameAsVariable}RightParam;
 	}
 #end
 #end
@@ -217,21 +217,21 @@ public class
 #foreach( $field in $fields )
 		result = result.replaceFirst( "\\?", quotifyString( get${field.NameAsMethod}() ));
 #end
-#foreach( $condition in $conditions )
+#foreach( $term in $terms )
 ##
-#if( $condition.isIN() )
+#if( $term.isIN() )
 ##
-#set( $size = $condition.getValues().size() - 1 )
+#set( $size = $term.getValues().size() - 1 )
 #foreach( $abc in [0..$size] )
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Param( ${abc} )));
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}Param( ${abc} )));
 #end
 ##
-#elseif( $condition.isBETWEEN() )
+#elseif( $term.isBETWEEN() )
 ##
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}LeftParam() ));
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}RightParam() ));
-#elseif( $condition.isComparison() || $condition.isLIKE() )
-		result = result.replaceFirst( "\\?", quotifyString( get${condition.NameAsMethod}Param() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}LeftParam() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}RightParam() ));
+#elseif( $term.isComparison() || $term.isLIKE() )
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}Param() ));
 #end
 #end
 		return result;

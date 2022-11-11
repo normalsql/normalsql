@@ -12,7 +12,7 @@
 ##     originalSQL - original unparsed SQL
 ##     printfSQL - like preparedSQL, but for printf
 ##     sourceFile - name of original .sql file
-##     columnList - conditions from prepared SQL as List<fado.Condition>
+##     columnList - terms from prepared SQL as List<fado.Condition>
 /**
 * ${className}ResultSet.java   ${date}
 *

@@ -7,7 +7,7 @@
 
 */
 
-grammar GenericSQL;
+grammar H2;
 
 options {
   contextSuperClass=fado.parse.GlobbingRuleContext;
@@ -67,12 +67,12 @@ update        : 'UPDATE' ref 'SET' setter ( COMMA setter )* where? ;
 
     setter        : ref EQ value ;
 
-query         : rows (( 'UNION' | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
+query         : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
 
-rows          : LP query RP
-              | values
-              | select
-              | 'TABLE' tableRef
+rows          : select
+              | 'TABLE' tableRef // orderBy? offset? fetch?
+              | values // orderBy? offset? fetch?
+              | LP query RP
               ;
 
 values        : 'VALUES' terms ;
@@ -87,6 +87,8 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
                   | term alias?
                   ;
 
+        alias         : 'AS'? name ;
+
     top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? ( 'WITH' 'TIES' )? ;
 
     into          : 'INTO' refs ;
@@ -94,7 +96,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
     // TODO try 'term' style self-recursion
     from          : ( source | LP from RP ) ( joinType from ( 'ON' term | 'USING' names )? )* ;
 
-        source          : ( LP query RP
+        source          : ( query
                         | values
                         | function
                         | unnest
@@ -104,7 +106,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 //                        | 'XMLTABLE' // TODO
                         | LP source RP
                         | tableRef )
-                        ( alias names? )? useIndex? // TODO not every source allows 'useIndex'
+                        ( alias names? )? useIndex? // TODO not every alt allows 'useIndex'
                       ;
 
         joinType      : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
@@ -162,60 +164,60 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 terms         : term ( COMMA term )* ;
 
 term          : LP term? RP # TermNested
-              | LP terms RP DOT name # TermColumn
-              | term CONCAT term # TermConcat
-              | term CARET term # TermCaret
-              | term ( STAR | DIVIDE | MODULO ) term # TermMultiplication
-              | term ( PLUS | MINUS ) term # TermAddition
-              | term ( LSHIFT | RSHIFT | AMP | PIPE ) term # TermBitwise
-              | term comparison term # TermComparison
-              | term matchRegex term # TermMatchRegex
-              | quantified # TermQuantified
-              | term predicate # TermWithPredicate
-              | term isType # TermIsType
-              | term 'NOT'? 'IN' LP terms? RP # TermInList
-              | term 'NOT'? ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )? # TermLike
-              | term 'NOT'? 'REGEXP' term ( 'ESCAPE' term )? # TermRegex
-              | left=term 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? low=term 'AND' high=term # TermBetween
-              | 'INTERSECTS' LP term COMMA term RP # TermIntersects
-              | 'CASE' term ( 'WHEN' ( terms | whenPred ) 'THEN' term )+ ( 'ELSE' term )? 'END' # TermCaseSwitch
-              | 'CASE' ( 'WHEN' terms 'THEN' term )+ ( 'ELSE' term )? 'END' # TermCaseTests
-              | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP # TermCast
-              | 'ROW'? LP terms RP # TermRow
-              | term 'COLLATE' id # TermCollate
-              | function # TermFunction
-              | term TYPECAST id # TermTypeCast
-              | ( MINUS | PLUS | 'NOT' ) term # TermUnary
-              | term op=( 'AND' | 'OR' ) term # TermBoolean
-              | term 'AT' ( 'LOCAL' | timeZone ( interval | string ) )? # TermTime
-              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref # TermSequence
-              | value # TermValue
-              | ref # TermRef
-              | ID # TermRef
-              | array # TermArray
-              | query # TermQuery
+              | term 'AND' term # TermAND
+              | term 'OR' term # TermOR
+              | term predicate # TermPredicate // TODO does this alt belong in 'subterm'?
+              | 'NOT' term # TermNOT
+              | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP # TermQuantified // TODO where to put 'quantified'?
+              | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
+              | subterm #TermSubterm
               ;
 
-    comparison    : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
+subterm       : subterm CONCAT subterm # SubtermConcat
+              | subterm CARET subterm  # SubtermCaret
+              | subterm ( STAR | DIVIDE | MODULO ) subterm  # SubtermMultiplication
+              | subterm ( PLUS | MINUS ) subterm  # SubtermAddition
+              | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm # SubtermBitwise
+              | LP term RP # SubtermNestedTerm
+              | ( PLUS | MINUS ) subterm # SubtermUnary
+              | LP term RP DOT name # SubtermFieldReference
+              | query # SubtermQuery
+              | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSimple
+              | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSearch
+              | subterm TYPECAST id # SubtermTypeCast
+              | array # SubtermArray
+              | 'ROW'? LP terms RP ( DOT name )? # SubtermRow
+              | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP # SubtermCast
+              | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )? # SubtermTime
+              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref # SubtermSequence
+              | function # SubtermFunction
+              | value # SubtermValue
+              | ref # SubtermRef
+//              | term 'COLLATE' id # TermCollate TODO
+//              | sequenceValueExpression TODO
+//              | arrayElementReference TODO
+              ;
 
-    matchRegex    : TILDE1 | TILDE2 | TILDE3 | TILDE4 ;
+predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term
+              | ( TILDE1 | TILDE2 | TILDE3 | TILDE4 ) term
+              | 'IS' 'NOT'? 'NULL'
+              | 'IS' 'NOT'? bool
+              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term // TODO should this be 'subterm'?
+            //| 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP // TODO where to put 'quantified'?
+              | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP
+              | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?
+              | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
+              | 'NOT'? 'IN' LP ( query | terms )? RP
+              | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?
+              | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?
+              ;
 
-    quantified    : ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP rows RP ; // TODO change 'rows' to 'union'?
+type          : 'ROW' LP name type ( COMMA name type )* RP
+              | type 'ARRAY' ( LS decimal RS )?
+              | id+ ( LP decimal ( COMMA decimal )? RP id* )?
+              ;
 
-    predicate     : 'IS' 'NOT'? ( 'NULL' | bool | 'DISTINCT' 'FROM' term );
-
-    isType        : 'IS' 'OF' ids ;
-
-    whenPred      : comparison term
-                  | matchRegex term
-                  | quantified
-                  | predicate
-                  | isType
-                  | 'NOT'? 'IN' LP terms? RP
-                  | 'NOT'? ( 'LIKE' | 'ILIKE' ) term ( 'ESCAPE' term )?
-                  | 'NOT'? 'REGEXP' term ( 'ESCAPE' term )?
-                  | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term
-                  ;
+array         : 'ARRAY' LS terms? RS ;
 
 function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
               | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
@@ -226,15 +228,12 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
                 ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? withWithout 'COUNT' ))? RP withinGroup? filter? over?
               | 'STRING_AGG' LP term COMMA string orderBy RP
               | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
-              | id LP ( allDistinct? terms | STAR )? RP withinGroup? filter? firstLast? respectIgnore? over?
+              | id LP ( STAR | allDistinct? terms )? RP withinGroup? filter? firstLast? respectIgnore? over?
               | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
               | id LP id 'FROM' id String RP
-              //  ODBC style
-              | '{fn' id LP terms? RP '}'
-              //         | id LPAREN ( ( 'ALL' | 'DISTINCT' )? terms | STAR )? RPAREN
-              //           filter? firstLast? respectIgnore? over?
-              // | ID? 'FUNCTION' ID LPAREN terms? RPAREN // T-SQL
-              // | ID DOT ID LPAREN terms? RPAREN // T-SQL?
+              | '{fn' id LP terms? RP '}'               //  ODBC style
+              // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
+              // | ID DOT ID LP terms? RP // T-SQL?
               ;
 
     withinGroup   : 'WITHIN' 'GROUP' LP orderBy RP ;
@@ -243,12 +242,6 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
 
     over          : 'OVER' window ;
 
-type          : 'ROW' LP name type ( COMMA name type )* RP
-              | id+ ( LP decimal ( COMMA decimal )? RP id* )?
-              ;
-
-array         : 'ARRAY' LS terms? RS ;
-
 value         : real
               | decimal
               | string
@@ -256,6 +249,7 @@ value         : real
               | bool
               | 'NULL'
               | date
+              | dateODBC
               | time
               | interval
               | jsonObject
@@ -263,6 +257,7 @@ value         : real
               | Variable
               ;
 
+// Types
 real          : ( MINUS | PLUS )? Real ;
 decimal       : ( MINUS | PLUS )? Decimal ;
 string        : String+ | unicode | national | blob ;
@@ -271,18 +266,24 @@ national      : National String* ;
 blob          : Blob String* ;
 bool          : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
 time          : ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? String? ;
-//interval : 'INTERVAL' expression timeSpan ;
+date          : 'DATE' String ;
+dateODBC      : ( '{d' | '{t' | '{ts' ) String '}' ;
 interval      : 'INTERVAL' term id ( 'TO' id )? ;
-date          : 'DATE' String
-              // ODBC date time
-              | ( '{d' | '{t' | '{ts' ) String '}'
-              ;
-
+//interval : 'INTERVAL' expression timeSpan ;
+//timeSpan      : 'EPOCH'
+//              | 'YEAR' ( 'TO' 'MONTH' )?
+//              | 'MONTH'
+//              | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
+//              | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
+//              | 'MINUTE' ( 'TO' 'SECOND' )?
+//              | 'SECOND'
+//              ;
 jsonObject    : 'JSON_OBJECT' LP jsonKeys? onNull? uniqueKeys? formatJson? RP ;
 jsonKeys      : jsonKey ( COMMA jsonKey )* ;
 jsonKey       : ( string | name ) COLON term | 'KEY'? ( string | name ) 'VALUE' term ;
 jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
 
+// DRY
 allDistinct   : 'ALL' | 'DISTINCT' ;
 firstLast     : 'FROM' ( 'FIRST' | 'LAST' ) ;
 respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
@@ -292,27 +293,16 @@ withWithout   : 'WITH' | 'WITHOUT' ;
 formatJson    : 'FORMAT' 'JSON' ;
 timeZone      : 'TIME' 'ZONE' ;
 rowRows       : 'ROW' | 'ROWS' ;
-timeSpan      : 'EPOCH'
-              | 'YEAR' ( 'TO' 'MONTH' )?
-              | 'MONTH'
-              | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-              | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-              | 'MINUTE' ( 'TO' 'SECOND' )?
-              | 'SECOND'
-              ;
-
-alias         : 'AS'? name ;
 
 refs          : ref ( COMMA ref )* ;
-ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name ;
+ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name ; // TODO: add _ROWID_ ?
 tableRef      : (( database=name DOT )? schema=name DOT )? table=name ;
 names         : LP name ( COMMA name )* RP ;
 name          : id  | Name ( 'UESCAPE' String )?;
 ids           : LP id ( COMMA id )* RP ;
 id            : ID | { isKeyword( getCurrentToken() ) }? . ;
 
-// Lexemes
-
+// Tokens
 LP       : '(' ;
 RP       : ')' ;
 LS       : '[' ;
@@ -326,8 +316,8 @@ DIVIDE   : '/' ;
 STAR     : '*' ; // multiplication
 MODULO   : '%' ;
 CARET    : '^' ; // exponent
-AT       : '@' ; // absolute value
-BANG     : '!' ; // factorial
+//AT       : '@' ; // absolute value
+//BANG     : '!' ; // factorial
 
 EQ       : '=' | ':=' ;
 NEQ      : '<>' | '!=' ;
@@ -338,19 +328,18 @@ GTE      : '>=' ;
 OVERLAP  : '&&' ;
 
 CONCAT   : '||' ; // concatenation
-AMP      : '&' ; // bitwise AND
-PIPE     : '|' ; // bitwise XOR
-POUND    : '#' ; // bitwise XOR
+AMP      : '&'  ; // bitwise AND
+PIPE     : '|'  ; // bitwise XOR
+LSHIFT   : '<<' ; // bitwise shift left
+RSHIFT   : '>>' ; // bitwise shift right
+//POUND    : '#'  ; // bitwise XOR
 // TILDE     : '~' ; // bitwise NOT
 // https://www.postgresql.org/docs/current/functions-matching.html
-// POSIX Regular Exressions
+// POSIX Regular Expressions
 TILDE1   : '~' ; // match regex case sensitive
 TILDE2   : '~*' ; // match regex case insensitive
 TILDE3   : '!~' ; // not match regex case sensitive
 TILDE4   : '!~*' ; // not match regex case insensitive
-
-LSHIFT   : '<<' ; // bitwise shift left
-RSHIFT   : '>>' ; // bitwise shift right
 
 DOT      : '.' ;
 TYPECAST : '::' ;
