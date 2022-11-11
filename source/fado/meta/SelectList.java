@@ -21,5 +21,5 @@ public class SelectList extends ArrayList<SelectList>
 	public GlobbingRuleContext context;
 	public ArrayList<Item> itemList = new ArrayList<>();
 	public ArrayList<From> fromList = new ArrayList<>();
-	public ArrayList<Condition> conditionList = new ArrayList<>();
+	public ArrayList<Term> termList = new ArrayList<>();
 }

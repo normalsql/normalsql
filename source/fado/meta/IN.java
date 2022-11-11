@@ -9,10 +9,10 @@ package fado.meta;
 
 import static fado.parse.GenericSQLParser.*;
 
-public class IN extends Condition
+public class IN extends Term< TermBetweenContext >
 {
-	public IN( RefContext columnRef, ValueContext... literals )
+	public IN( TermBetweenContext tc )
 	{
-		super( columnRef, literals );
+		super( tc );
 	}
 }

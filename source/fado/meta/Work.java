@@ -28,7 +28,7 @@ public class Work
 	public String preparedSQL;
 	public String printfSQL;
 	// All the conditions from all the selects and sub-selects gathered into one list
-	public ArrayList<Condition> conditionList = new ArrayList<>();
+	public ArrayList<Term> termList = new ArrayList<>();
 	// Copied from the PreparedStatement's metadata
 	public ArrayList<Param> paramList = new ArrayList<>();
 	// Copied from the PreparedStatement's metadata

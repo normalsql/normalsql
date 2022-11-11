@@ -89,14 +89,14 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
         alias         : 'AS'? name ;
 
-    top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? ( 'WITH' 'TIES' )? ;
+    top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
     into          : 'INTO' refs ;
 
     // TODO try 'term' style self-recursion
     from          : ( source | LP from RP ) ( joinType from ( 'ON' term | 'USING' names )? )* ;
 
-        source          : ( query
+        source        : ( query
                         | values
                         | function
                         | unnest
@@ -145,11 +145,11 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
     orderBy       : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
 
         //orderByItem  : term ( 'COLLATE' ID )? ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
-        orderByItem   : term ( 'ASC' | 'DESC' )? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
+        orderByItem   : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
 
     offset        : 'OFFSET' term rowRows? ;
 
-    fetch         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | ( 'WITH' 'TIES' )) ;
+    fetch         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     limit         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
 
@@ -163,14 +163,13 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
 terms         : term ( COMMA term )* ;
 
-term          : LP term? RP # TermNested
-              | term 'AND' term # TermAND
+term          : term 'AND' term # TermAND
               | term 'OR' term # TermOR
-              | term predicate # TermPredicate // TODO does this alt belong in 'subterm'?
               | 'NOT' term # TermNOT
               | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP # TermQuantified // TODO where to put 'quantified'?
               | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
-              | subterm #TermSubterm
+              | subterm # TermSubterm
+//              | LP term? RP # TermNested
               ;
 
 subterm       : subterm CONCAT subterm # SubtermConcat
@@ -178,15 +177,14 @@ subterm       : subterm CONCAT subterm # SubtermConcat
               | subterm ( STAR | DIVIDE | MODULO ) subterm  # SubtermMultiplication
               | subterm ( PLUS | MINUS ) subterm  # SubtermAddition
               | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm # SubtermBitwise
-              | LP term RP # SubtermNestedTerm
               | ( PLUS | MINUS ) subterm # SubtermUnary
               | LP term RP DOT name # SubtermFieldReference
               | query # SubtermQuery
+              | subterm predicate # SubtermPredicate // TODO does this alt belong in 'subterm'?
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSimple
               | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSearch
               | subterm TYPECAST id # SubtermTypeCast
               | array # SubtermArray
-              | 'ROW'? LP terms RP ( DOT name )? # SubtermRow
               | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP # SubtermCast
               | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )? # SubtermTime
               | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref # SubtermSequence
@@ -196,6 +194,9 @@ subterm       : subterm CONCAT subterm # SubtermConcat
 //              | term 'COLLATE' id # TermCollate TODO
 //              | sequenceValueExpression TODO
 //              | arrayElementReference TODO
+//              | LP term? RP # SubtermNestedTerm
+              | LP RP # SubtermEmpty
+              | 'ROW'? LP terms? RP ( DOT name )? # SubtermRow
               ;
 
 predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term
@@ -228,7 +229,7 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
                 ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? withWithout 'COUNT' ))? RP withinGroup? filter? over?
               | 'STRING_AGG' LP term COMMA string orderBy RP
               | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
-              | id LP ( STAR | allDistinct? terms )? RP withinGroup? filter? firstLast? respectIgnore? over?
+              | id LP ( STAR | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
               | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
               | id LP id 'FROM' id String RP
               | '{fn' id LP terms? RP '}'               //  ODBC style
@@ -278,21 +279,22 @@ interval      : 'INTERVAL' term id ( 'TO' id )? ;
 //              | 'MINUTE' ( 'TO' 'SECOND' )?
 //              | 'SECOND'
 //              ;
+jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
 jsonObject    : 'JSON_OBJECT' LP jsonKeys? onNull? uniqueKeys? formatJson? RP ;
 jsonKeys      : jsonKey ( COMMA jsonKey )* ;
 jsonKey       : ( string | name ) COLON term | 'KEY'? ( string | name ) 'VALUE' term ;
-jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
 
 // DRY
 allDistinct   : 'ALL' | 'DISTINCT' ;
-firstLast     : 'FROM' ( 'FIRST' | 'LAST' ) ;
-respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
-onNull        : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
-uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
-withWithout   : 'WITH' | 'WITHOUT' ;
+firstLast     : 'FIRST' | 'LAST' ;
 formatJson    : 'FORMAT' 'JSON' ;
-timeZone      : 'TIME' 'ZONE' ;
+onNull        : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
+respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 rowRows       : 'ROW' | 'ROWS' ;
+timeZone      : 'TIME' 'ZONE' ;
+uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
+withTies      : 'WITH' 'TIES' ;
+withWithout   : 'WITH' | 'WITHOUT' ;
 
 refs          : ref ( COMMA ref )* ;
 ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name ; // TODO: add _ROWID_ ?
