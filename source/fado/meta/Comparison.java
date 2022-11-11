@@ -11,9 +11,9 @@ package fado.meta;
 
 import static fado.parse.GenericSQLParser.*;
 
-public class Comparison extends Term< TermComparisonContext >
+public class Comparison extends Predicate< PredicateCompareContext >
 {
-	public Comparison( TermComparisonContext tc )
+	public Comparison( PredicateCompareContext tc )
 	{
 		super( tc );
 	}
@@ -29,13 +29,13 @@ public class Comparison extends Term< TermComparisonContext >
 
 	public Params match()
 	{
-		boolean leftIsValue   = tc.term().get( 0 ) instanceof TermValueContext;
-		boolean leftIsRef     = tc.term().get( 0 ) instanceof TermRefContext;
-		boolean rightIsValue  = tc.term().get( 1 ) instanceof TermValueContext;
-		boolean rightIsRef    = tc.term().get( 1 ) instanceof TermRefContext;
+//		boolean leftIsValue   = tc.term().get( 0 ) instanceof TermValueContext;
+//		boolean leftIsRef     = tc.term().get( 0 ) instanceof TermRefContext;
+//		boolean rightIsValue  = tc.term().get( 1 ) instanceof TermValueContext;
+//		boolean rightIsRef    = tc.term().get( 1 ) instanceof TermRefContext;
 
-		if( leftIsRef   && rightIsValue ) return Params.RefValue;
-		if( leftIsValue && rightIsRef   ) return Params.ValueRef;
+//		if( leftIsRef   && rightIsValue ) return Params.RefValue;
+//		if( leftIsValue && rightIsRef   ) return Params.ValueRef;
 
 		return Params.NotMatched;
 	}

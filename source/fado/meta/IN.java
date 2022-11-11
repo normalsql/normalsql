@@ -9,9 +9,9 @@ package fado.meta;
 
 import static fado.parse.GenericSQLParser.*;
 
-public class IN extends Term< TermBetweenContext >
+public class IN extends Predicate< PredicateINContext >
 {
-	public IN( TermBetweenContext tc )
+	public IN( PredicateINContext tc )
 	{
 		super( tc );
 	}

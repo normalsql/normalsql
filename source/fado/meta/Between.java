@@ -10,9 +10,9 @@ package fado.meta;
 
 import static fado.parse.GenericSQLParser.*;
 
-public class Between extends Term< TermBetweenContext >
+public class Between extends Predicate< PredicateBETWEENContext >
 {
-	public Between( TermBetweenContext tc )
+	public Between( PredicateBETWEENContext tc )
 	{
 		super( tc );
 	}
@@ -31,15 +31,15 @@ public class Between extends Term< TermBetweenContext >
 
 	public Params match()
 	{
-		boolean leftIsValue = tc.left instanceof TermValueContext;
-		boolean leftIsRef   =   tc.left instanceof TermRefContext;
-		boolean lowIsValue  =   tc.low   instanceof TermValueContext;
-		boolean lowIsRef    =     tc.low   instanceof TermRefContext;
-		boolean highIsValue =  tc.high  instanceof TermValueContext;
-		boolean highIsRef   =    tc.high  instanceof TermRefContext;
+//		boolean leftIsValue = tc.left instanceof TermValueContext;
+//		boolean leftIsRef   =   tc.left instanceof TermRefContext;
+//		boolean lowIsValue  =   tc.low   instanceof TermValueContext;
+//		boolean lowIsRef    =     tc.low   instanceof TermRefContext;
+//		boolean highIsValue =  tc.high  instanceof TermValueContext;
+//		boolean highIsRef   =    tc.high  instanceof TermRefContext;
 
-		if( leftIsRef   && lowIsValue && highIsValue ) return Params.LowHigh;
-		if( leftIsValue && lowIsRef   && highIsRef ) return Params.Value;
+//		if( leftIsRef   && lowIsValue && highIsValue ) return Params.LowHigh;
+//		if( leftIsValue && lowIsRef   && highIsRef ) return Params.Value;
 		// TODO add rest of tests
 		return Params.NotMatched;
 	}

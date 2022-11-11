@@ -15,7 +15,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
 
-
 public class FadoNested
 {
 	public static void main( String[] args )
@@ -130,7 +129,7 @@ public class FadoNested
 
 	static void findWHEREs( SelectList parent )
 	{
-		for( TermContext found : parent.context.find( TermContext.class, "where/term" ))
+		for( SubtermContext found : parent.context.find( SubtermContext.class, "where/**/term/subterm" ))
 		{
 			processExpression( parent, found );
 		}
@@ -142,26 +141,26 @@ public class FadoNested
 
 	}
 
-	static void processExpression( SelectList parent, TermContext ec )
+	static void processExpression( SelectList parent, SubtermContext ec )
 	{
 		switch( ec )
 		{
-			case TermBooleanContext tbc:
-				processExpression( parent, tbc.term( 0 ));
-				processExpression( parent, tbc.term( 1 ));
+			case SubtermPredicateContext tbc:
+//				processExpression( parent, tbc.term( 0 ));
+//				processExpression( parent, tbc.term( 1 ));
 				break;
 
-			case TermUnaryContext tuc:
-				processExpression( parent, tuc.term() );
-				break;
-
-			case TermComparisonContext tcc:
-				Comparison comparison = new Comparison( tcc );
-				if( comparison.match() != Comparison.Params.NotMatched )
-				{
-					parent.termList.add( comparison );
-				}
-				break;
+//			case TermUnaryContext tuc:
+//				processExpression( parent, tuc.term() );
+//				break;
+//
+//			case TermComparisonContext tcc:
+//				Comparison comparison = new Comparison( tcc );
+//				if( comparison.match() != Comparison.Params.NotMatched )
+//				{
+//					parent.termList.add( comparison );
+//				}
+//				break;
 
 //				TermContext left = tcc.term( 0 );
 //				TermContext right = tcc.term( 1 );
@@ -181,13 +180,13 @@ public class FadoNested
 //				parent.termList.add( new Comparison( null, ref, value ));
 //				break;
 
-			case TermBetweenContext tbc:
-				Between between = new Between( tbc );
-				if( between.match() != Between.Params.NotMatched )
-				{
-					parent.termList.add( between );
-				}
-				break;
+//			case TermBetweenContext tbc:
+//				Between between = new Between( tbc );
+//				if( between.match() != Between.Params.NotMatched )
+//				{
+//					parent.termList.add( between );
+//				}
+//				break;
 
 			default:
 				break;
@@ -300,7 +299,7 @@ public class FadoNested
 
 	static void resolveCondition( SelectList parent, Term term )
 	{
-		List<TermRefContext> refs = term.tc.find( TermRefContext.class, "ref" );
+//		List<TermRefContext> refs = term.tc.find( TermRefContext.class, "ref" );
 		System.out.println( "doink" );
 //		String tableName = term.tableName;
 //		tableName = ( tableName != null ? tableName : "*" );
