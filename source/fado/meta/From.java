@@ -28,6 +28,6 @@ public class From
 		database = ( trc.database != null ? trc.database.getTrimmedText() : null );
 		schema = ( trc.schema != null ? trc.schema.getTrimmedText() : null );
 		tableName = trc.table.getTrimmedText();
-		alias = sc.alias() != null ? sc.alias().name().getTrimmedText() : null;
+//		alias = sc.alias() != null ? sc.alias().name().getTrimmedText() : null;
 	}
 }

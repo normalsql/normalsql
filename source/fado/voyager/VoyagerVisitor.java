@@ -13,7 +13,7 @@ class Select
 {
 
 	public ArrayList<Item> items = new ArrayList();
-	public ArrayList<Item> tables = new ArrayList();
+	public ArrayList<Source> tables = new ArrayList();
 	public ArrayList<Item> terms = new ArrayList();
 }
 
@@ -28,10 +28,10 @@ class Ref
 {
 	public Ref( RefContext context )
 	{
-		database = context.findFirstString( "database" );
-		schema = context.findFirstString( "schema" );
-		table = context.findFirstString( "table" );
-		column = context.findFirstString( "column" );
+		database = context.database != null ? context.database.getTrimmedText() : null ;
+		schema = context.schema != null ? context.schema.getTrimmedText() : null ;
+		table = context.table != null ? context.table.getTrimmedText() : null ;
+		column = context.column != null ? context.column.getTrimmedText() : null ;
 	}
 
 	public String database;
@@ -44,9 +44,9 @@ class TableRef
 {
 	public TableRef( TableRefContext context )
 	{
-		database = context.findFirstString( "database" );
-		schema = context.findFirstString( "schema" );
-		table = context.findFirstString( "table" );
+		database = context.database != null ? context.database.getTrimmedText() : null ;
+		schema = context.schema != null ? context.schema.getTrimmedText() : null ;
+		table = context.table != null ? context.table.getTrimmedText() : null ;
 	}
 
 	public String database;
@@ -54,9 +54,10 @@ class TableRef
 	public String table;
 }
 
-class From
+class Source
 {
-
+	public TableRef tableRef;
+	public String alias;
 }
 
 public class
@@ -107,11 +108,19 @@ extends
 		return super.visitItemColumn( context );
 	}
 
-//	@Override
-//	public Work visitFrom( FromContext ctx )
-//	{
-//		From from = new From();
-////		ctx.
-//		return super.visitFrom( ctx );
-//	}
+	@Override
+	public Work visitSource( SourceContext context )
+	{
+		if( context.tableRef() != null )
+		{
+			Source source = new Source();
+			source.tableRef = new TableRef( context.tableRef() );
+			if( context.alias() != null )
+			{
+				source.alias = context.alias().name().getTrimmedText();
+			}
+			stack.peek().tables.add( source );
+		}
+		return super.visitSource( context );
+	}
 }

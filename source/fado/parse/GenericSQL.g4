@@ -93,10 +93,10 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     into          : 'INTO' refs ;
 
-    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' names )?
-                  | join COMMA join
-                  | source
-                  | LP join RP
+    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' names )?  # JoinTwo
+                  | join COMMA join                                            # JoinOldStyle
+                  | source                                                     # JoinSource
+                  | LP join RP                                                 # JoinNested
                   ;
 
         joinType      : 'INNER'
@@ -115,7 +115,8 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 //                        | 'XMLTABLE' // TODO
                         | LP source RP
                         | tableRef )
-                        ( alias names? )? useIndex? // TODO not every alt allows 'useIndex'
+                        ( alias names? )?
+                        useIndex? // TODO which alts allow 'useIndex'?
                       ;
 
     where         : 'WHERE' term ;
@@ -168,53 +169,56 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
 terms         : term ( COMMA term )* ;
 
-term          : 'NOT' term # TermNOT
-              | term 'AND' term # TermAND
-              | term 'OR' term # TermOR
-              | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP # TermQuantified // TODO where to put 'quantified'?
-              | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
-              | subterm # TermSubterm
+term          : 'NOT' term                                                    # TermNOT
+              | term 'AND' term                                               # TermAND
+              | term 'OR' term                                                # TermOR
+              // TODO where to put 'quantified'?
+              | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP  # TermQuantified
+              | 'INTERSECTS' LP subterm COMMA subterm RP                      # TermIntersects
+              | subterm                                                       # TermSubterm
 //              | LP term? RP # TermNested
               ;
 
-subterm       : subterm CONCAT subterm # SubtermConcat
-              | subterm CARET subterm  # SubtermCaret
-              | subterm ( STAR | DIVIDE | MODULO ) subterm  # SubtermMultiplication
-              | subterm ( PLUS | MINUS ) subterm  # SubtermAddition
-              | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm # SubtermBitwise
-              | ( PLUS | MINUS ) subterm # SubtermUnary
-              | LP term RP DOT name # SubtermFieldReference
-              | query # SubtermQuery
-              | subterm predicate # SubtermPredicate
-              | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSimple
-              | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' # SubtermCaseSearch
-              | subterm TYPECAST id # SubtermTypeCast
-              | array # SubtermArray
-              | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP # SubtermCast
-              | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )? # SubtermTime
-              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref # SubtermSequence
-              | function # SubtermFunction
-              | value # SubtermValue
-              | ref # SubtermRef
+subterm       : subterm CONCAT subterm                                                            # SubtermConcat
+              | subterm CARET subterm                                                             # SubtermCaret
+              | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
+              | subterm ( PLUS | MINUS ) subterm                                                  # SubtermAddition
+              | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
+              | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
+              | LP term RP DOT name                                                               # SubtermFieldReference
+              | query                                                                             # SubtermQuery
+              | subterm predicate                                                                 # SubtermPredicate
+              | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
+              | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        # SubtermCaseSearch
+              | subterm TYPECAST id                                                               # SubtermTypeCast
+              | array                                                                             # SubtermArray
+              | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                      # SubtermCast
+              | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )?                        # SubtermTime
+              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref                                          # SubtermSequence
+              | function                                                                          # SubtermFunction
+              | value                                                                             # SubtermValue
+              | ref                                                                               # SubtermRef
 //              | term 'COLLATE' id # TermCollate TODO
 //              | sequenceValueExpression TODO
 //              | arrayElementReference TODO
-              | LP RP # SubtermEmpty
-              | 'ROW'? LP terms? RP ( DOT name )? # SubtermRow
+              | LP RP                                                                             # SubtermEmpty
+              | 'ROW'? LP terms? RP ( DOT name )?                                                 # SubtermRow
               ;
 
-predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term # PredicateCompare
-              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) term # PredicateMatch
-              | 'IS' 'NOT'? 'NULL' # PredicateIsNULL
-              | 'IS' 'NOT'? bool # PredicateIsBool
-              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term  # PredicateIsDistinct // TODO should this be in 'subterm'?
-            //| 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP // TODO where to put 'quantified'?
-              | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP # PredicateIsType
+predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term                            # PredicateCompare
+              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) term                                   # PredicateMatch
+              | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
+              | 'IS' 'NOT'? bool                                                             # PredicateIsBool
+               // TODO should this be in 'subterm'?
+              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                           # PredicateIsDistinct
+              // TODO where to put 'quantified'?
+            //| 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP
+              | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
               | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
-              | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # PredicateBETWEEN
-              | 'NOT'? 'IN' LP ( query | terms )? RP  # PredicateIN
-              | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?  # PredicateLIKE
-              | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?  # PredicateREGEXP
+              | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+              | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
+              | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLIKE
+              | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateREGEXP
               ;
 
 type          : 'ROW' LP name type ( COMMA name type )* RP
