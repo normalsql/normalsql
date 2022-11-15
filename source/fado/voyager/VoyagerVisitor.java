@@ -107,11 +107,11 @@ extends
 		return super.visitItemColumn( context );
 	}
 
-	@Override
-	public Work visitFrom( FromContext ctx )
-	{
-		From from = new From();
-//		ctx.
-		return super.visitFrom( ctx );
-	}
+//	@Override
+//	public Work visitFrom( FromContext ctx )
+//	{
+//		From from = new From();
+////		ctx.
+//		return super.visitFrom( ctx );
+//	}
 }

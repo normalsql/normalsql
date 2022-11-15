@@ -77,7 +77,7 @@ rows          : select
 
 values        : 'VALUES' terms ;
 
-select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM' from )?
+select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM' join )?
                 where? groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate?
               ;
 
@@ -93,8 +93,17 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     into          : 'INTO' refs ;
 
-    // TODO try 'term' style self-recursion
-    from          : ( source | LP from RP ) ( joinType from ( 'ON' term | 'USING' names )? )* ;
+    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' names )?
+                  | join COMMA join
+                  | source
+                  | LP join RP
+                  ;
+
+        joinType      : 'INNER'
+                      | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+                      | 'CROSS'
+                      | 'NATURAL'
+                      ;
 
         source        : ( query
                         | values
@@ -107,10 +116,6 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
                         | LP source RP
                         | tableRef )
                         ( alias names? )? useIndex? // TODO not every alt allows 'useIndex'
-                      ;
-
-        joinType      : ( 'INNER' | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'? | 'CROSS' | 'NATURAL' )? 'JOIN'
-                      | COMMA
                       ;
 
     where         : 'WHERE' term ;
@@ -199,10 +204,10 @@ subterm       : subterm CONCAT subterm # SubtermConcat
               ;
 
 predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term # PredicateCompare
-              | ( TILDE1 | TILDE2 | TILDE3 | TILDE4 ) term # PredicateMatch
+              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) term # PredicateMatch
               | 'IS' 'NOT'? 'NULL' # PredicateIsNULL
               | 'IS' 'NOT'? bool # PredicateIsBool
-              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term  # PredicateIsDistinct // TODO should this be 'subterm'?
+              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term  # PredicateIsDistinct // TODO should this be in 'subterm'?
             //| 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP // TODO where to put 'quantified'?
               | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP # PredicateIsType
               | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
@@ -337,10 +342,10 @@ RSHIFT   : '>>' ; // bitwise shift right
 // TILDE     : '~' ; // bitwise NOT
 // https://www.postgresql.org/docs/current/functions-matching.html
 // POSIX Regular Expressions
-TILDE1   : '~' ; // match regex case sensitive
-TILDE2   : '~*' ; // match regex case insensitive
-TILDE3   : '!~' ; // not match regex case sensitive
-TILDE4   : '!~*' ; // not match regex case insensitive
+MATCH1   : '~' ; // match regex case sensitive
+MATCH2   : '~*' ; // match regex case insensitive
+MATCH3   : '!~' ; // not match regex case sensitive
+MATCH4   : '!~*' ; // not match regex case insensitive
 
 DOT      : '.' ;
 TYPECAST : '::' ;
@@ -355,7 +360,6 @@ Blob     : 'X' QUOTED ;
 Name     : 'U&'? '"' ( ~'"' | '""' )* '"' ;
 
 ID       : '`' ( ~'`' | '``' )* '`'
-//         | ALPHA ALPHANUM*
          | ALPHA ( ALPHA | DIGIT )*
          ;
 
@@ -377,7 +381,6 @@ fragment QUOTED   : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT    : [0-9] ;
 fragment HEX      : [0-9A-F] ;
 fragment ALPHA    : [A-Z_] ;
-//fragment ALPHANUM : [A-Z_0-9] ;
 fragment EXPO     : 'E' [-+]? DIGIT+ ;
 
 ERROR : . ;

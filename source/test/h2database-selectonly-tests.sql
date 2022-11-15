@@ -734,8 +734,6 @@ select a.id from test a inner join test b on a.id > b.id and b.id < 3 group by a
 select * from system_range(1, 3) t1 inner join system_range(2, 3) t2 inner join system_range(1, 2) t3 on t3.x=t2.x on t1.x=t2.x;
 SELECT * FROM PARENT P LEFT OUTER JOIN CHILD C ON C.PARENTID=P.ID;
 select a.i from t1 a inner join (select a.i from t2 a inner join (select i from t3) b on a.i=b.i) b on a.i=b.i;
-select a.i from t1 a inner join (select a.i from t2 a inner join (select i from t3) b on a.i=b.i) b on a.i=b.i;
-select * from one;
 select * from two;
 select * from one natural join two left join two three on
 one.id=three.id left join one four on two.id=four.id where three.val
