@@ -83,8 +83,8 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
-    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP refs RP )?
-                  | term alias?
+    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP refs RP )?  # ItemWildcard
+                  | term alias?                                         # ItemColumn
                   ;
 
         alias         : 'AS'? name ;
