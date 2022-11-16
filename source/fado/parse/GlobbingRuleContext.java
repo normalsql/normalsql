@@ -162,4 +162,6 @@ extends
         WritableToken start = (WritableToken) getStart();
         start.setText( text );
     }
+
+    public String toString() { return getText(); }
 }

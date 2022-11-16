@@ -27,7 +27,8 @@ public class Voyager
 //		parser.addParseListener( listener );
 		GenericSQLParser.ParseContext parse = parser.parse();
 		VoyagerVisitor visitor = new VoyagerVisitor();
-		visitor.visit( parse );
+		Work work = visitor.visit( parse );
+		System.out.println( work );
 
 	}
 
