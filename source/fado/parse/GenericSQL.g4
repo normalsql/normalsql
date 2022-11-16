@@ -179,17 +179,17 @@ term          : 'NOT' term                                                    # 
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
+              | subterm TYPECAST id                                                               # SubtermTypeCast
+              | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
               | subterm CARET subterm                                                             # SubtermCaret
               | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
               | subterm ( PLUS | MINUS ) subterm                                                  # SubtermAddition
               | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
-              | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
+              | subterm predicate                                                                 # SubtermPredicate
               | LP term RP DOT name                                                               # SubtermFieldReference
               | query                                                                             # SubtermQuery
-              | subterm predicate                                                                 # SubtermPredicate
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
               | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        # SubtermCaseSearch
-              | subterm TYPECAST id                                                               # SubtermTypeCast
               | array                                                                             # SubtermArray
               | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                      # SubtermCast
               | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )?                        # SubtermTime
