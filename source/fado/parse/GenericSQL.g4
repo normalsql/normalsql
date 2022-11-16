@@ -172,11 +172,10 @@ terms         : term ( COMMA term )* ;
 term          : 'NOT' term                                                    # TermNOT
               | term 'AND' term                                               # TermAND
               | term 'OR' term                                                # TermOR
-              // TODO where to put 'quantified'?
-              | ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP  # TermQuantified
+              | 'EXISTS' LP query RP                                          # TermEXISTS
+              | 'UNIQUE' LP query RP                                          # TermUNIQUE
               | 'INTERSECTS' LP subterm COMMA subterm RP                      # TermIntersects
               | subterm                                                       # TermSubterm
-//              | LP term? RP # TermNested
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
@@ -205,14 +204,12 @@ subterm       : subterm CONCAT subterm                                          
               | 'ROW'? LP terms? RP ( DOT name )?                                                 # SubtermRow
               ;
 
-predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) term                            # PredicateCompare
-              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) term                                   # PredicateMatch
+predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                         # PredicateCompare
+              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
               | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
               | 'IS' 'NOT'? bool                                                             # PredicateIsBool
-               // TODO should this be in 'subterm'?
-              | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                           # PredicateIsDistinct
-              // TODO where to put 'quantified'?
-            //| 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' | 'EXISTS' | 'UNIQUE' ) LP query RP
+              | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateIsDistinct
+              | 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' ) LP query RP         # PredicateQuantified
               | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
               | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
               | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
