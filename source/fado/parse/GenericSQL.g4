@@ -179,7 +179,7 @@ term          : 'NOT' term                                                    # 
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
-              | subterm TYPECAST id                                                               # SubtermTypeCast
+              | subterm ( TYPECAST id index* )+                                               # SubtermTypeCast
               | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
               | subterm CARET subterm                                                             # SubtermCaret
               | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
@@ -265,7 +265,7 @@ value         : real
 
 // Types
 real          : ( MINUS | PLUS )? Real ;
-decimal       : ( MINUS | PLUS )? Decimal ;
+decimal       : ( MINUS | PLUS )? Decimal 'L'? ;
 string        : String+ | unicode | national | blob ;
 unicode       : Unicode String* ( 'UESCAPE' String )? ;
 national      : National String* ;
@@ -301,8 +301,11 @@ uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
 withTies      : 'WITH' 'TIES' ;
 withWithout   : 'WITH' | 'WITHOUT' ;
 
-refs          : ref ( COMMA ref )* ;
-ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name ; // TODO: add _ROWID_ ?
+refs          : ref ( COMMA ref ) * ;
+ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name index* ; // TODO: add _ROWID_ ?
+index         : LS ( decimal | slice )? RS ;
+slice         : lo=nth? COLON hi=nth? ;
+nth           : decimal | 'NULL' ;
 tableRef      : (( database=name DOT )? schema=name DOT )? table=name ;
 names         : LP name ( COMMA name )* RP ;
 name          : id  | Name ( 'UESCAPE' String )?;
@@ -364,7 +367,7 @@ ID       : '`' ( ~'`' | '``' )* '`'
          | ALPHA ( ALPHA | DIGIT )*
          ;
 
-Decimal  : DIGIT+ 'L'?;
+Decimal  : DIGIT+ ;
 // matches "0.e1" or ".0e1", but not ".e1"
 Real     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) EXPO? ;
 Hexadecimal : '0x' HEX+ 'L'?;
