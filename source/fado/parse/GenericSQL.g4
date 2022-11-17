@@ -59,13 +59,13 @@ statement     : ( delete | insert | merge | update | query ) SEMI? ;
 
 delete        : 'DELETE' ; // TODO
 
-insert        : 'INSERT' into ( LP refs RP )? ( values | select ) ; // TODO
+insert        : 'INSERT' into ( LP columnRefs RP )? ( values | select ) ; // TODO
 
 merge         : 'MERGE' ; // TODO
 
-update        : 'UPDATE' ref 'SET' setter ( COMMA setter )* where? ;
+update        : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
 
-    setter        : ref EQ value ;
+    setter        : columnRef EQ value ;
 
 query         : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
 
@@ -83,7 +83,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
-    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP refs RP )?  # ItemWildcard
+    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP columnRefs RP )?  # ItemWildcard
                   | term alias?                                         # ItemColumn
                   ;
 
@@ -91,7 +91,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
-    into          : 'INTO' refs ;
+    into          : 'INTO' columnRefs ;
 
     join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' names )?  # JoinTwo
                   | join COMMA join                                            # JoinOldStyle
@@ -163,7 +163,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     unnest        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
-    columnSpec    : ( name | ref ) id EQ ( array | term ) ; // TODO: just use 'ref'?
+    columnSpec    : ( name | columnRef ) id EQ ( array | term ) ; // TODO: just use 'ref'?
 
     useIndex      : 'USE' 'INDEX' ids ;
 
@@ -179,24 +179,24 @@ term          : 'NOT' term                                                    # 
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
-              | subterm ( TYPECAST id index* )+                                               # SubtermTypeCast
+              | subterm ( TYPECAST id index* )+                                                   # SubtermTypeCast
               | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
               | subterm CARET subterm                                                             # SubtermCaret
               | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
               | subterm ( PLUS | MINUS ) subterm                                                  # SubtermAddition
               | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
               | subterm predicate                                                                 # SubtermPredicate
-              | LP term RP DOT name                                                               # SubtermFieldReference
+              | LP term RP DOT name                                                               # SubtermFieldRef
               | query                                                                             # SubtermQuery
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
               | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        # SubtermCaseSearch
               | array                                                                             # SubtermArray
               | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                      # SubtermCast
               | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )?                        # SubtermTime
-              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref                                          # SubtermSequence
+              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                    # SubtermSequence
               | function                                                                          # SubtermFunction
               | value                                                                             # SubtermValue
-              | ref                                                                               # SubtermRef
+              | columnRef                                                                         # SubtermColumnRef
 //              | term 'COLLATE' id # TermCollate TODO
 //              | sequenceValueExpression TODO
 //              | arrayElementReference TODO
@@ -301,8 +301,8 @@ uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
 withTies      : 'WITH' 'TIES' ;
 withWithout   : 'WITH' | 'WITHOUT' ;
 
-refs          : ref ( COMMA ref ) * ;
-ref           : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name index* ; // TODO: add _ROWID_ ?
+columnRefs    : columnRef ( COMMA columnRef ) * ;
+columnRef     : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name index* ; // TODO: add _ROWID_ ?
 index         : LS ( decimal | slice )? RS ;
 slice         : lo=nth? COLON hi=nth? ;
 nth           : decimal | 'NULL' ;
