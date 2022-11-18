@@ -1,7 +1,5 @@
 SELECT
-    id, course_title
+    id abc, course_title XYZ
 FROM Course c
 WHERE number BETWEEN 100 AND 200
-  AND 250 BETWEEN number AND 300
-  AND 350 BETWEEN 301 AND number
-  AND 450 BETWEEN number AND number
+  AND 450 BETWEEN number AND number AND 10 > id

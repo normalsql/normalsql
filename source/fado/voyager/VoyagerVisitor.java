@@ -1,5 +1,7 @@
 package fado.voyager;
 
+import fado.meta.Param;
+import fado.meta.RSColumn;
 import fado.parse.GenericSQLBaseVisitor;
 import fado.parse.GenericSQLParser.*;
 
@@ -9,8 +11,15 @@ import java.util.Stack;
 class Work
 {
 	public Select root;
+	public String originalSQL;
+	// Copied from the PreparedStatement's metadata
+	public ArrayList<Param> paramList = new ArrayList<>();
+	// Copied from the PreparedStatement's metadata
+	public ArrayList<RSColumn> columns = new ArrayList<>();
+	public String preparedSQL;
 }
 
+// TODO extends ArrayList
 class Select
 {
 	public ArrayList<Item> items = new ArrayList<>();
@@ -22,12 +31,13 @@ class Item
 {
 	public boolean wildcard;
 	public TableRef tableRef;
-	public Ref ref;
+	public ColumnRef columnRef;
+	public String alias;
 }
 
-class Ref
+class ColumnRef
 {
-	public Ref( RefContext context )
+	public ColumnRef( ColumnRefContext context )
 	{
 		database = context.database != null ? context.database.getTrimmedText() : null ;
 		schema = context.schema != null ? context.schema.getTrimmedText() : null ;
@@ -63,68 +73,185 @@ class Source
 
 abstract class Predicate< T extends PredicateContext >
 {
+	public final static Class COL = SubtermColumnRefContext.class;
+	public final static Class VAL = SubtermValueContext.class;
+
+
 	public T context;
+	public SubtermContext parent;
 
 	public Predicate( T context )
 	{
 		this.context = context;
+		parent = (SubtermContext) context.parent;
 	}
 
+	abstract public boolean isMatched();
 }
+
+class Compare extends Predicate< PredicateCompareContext >
+{
+	public enum Match
+	{
+		COL_VAL( COL, VAL ),
+		VAL_COL( VAL, COL ),
+		NotMatched( null, null );
+
+		public final Class left;
+		public final Class right;
+		Match( Class left, Class right )
+		{
+			this.left = left; this.right = right;
+		}
+
+		public static Match match( SubtermContext left, SubtermContext right )
+		{
+			for( Match p : values() )
+			{
+				if( left.getClass() == p.left && right.getClass() == p.right ) return p;
+			}
+			return NotMatched;
+		}
+	}
+
+	public final SubtermContext left;
+	public final SubtermContext right;
+	public String leftText;
+	public String rightText;
+	public Param param;
+	public String clazz;
+	public final Match match;
+
+	public Compare( PredicateCompareContext context )
+	{
+		super( context );
+		left = (SubtermContext) context.parent.getChild( 0 );
+		right = context.subterm();
+		match = Match.match( left, right );
+
+		if( !isMatched() ) return;
+
+		switch( match )
+		{
+			case VAL_COL:
+				leftText= left.getTrimmedText();
+				rightText = ((SubtermColumnRefContext) right).columnRef().column.getTrimmedText();
+				break;
+			case COL_VAL:
+				leftText = ((SubtermColumnRefContext) left).columnRef().column.getTrimmedText();
+				rightText = right.getTrimmedText();
+				break;
+			default:
+				break;
+		}
+	}
+
+	@Override
+	public boolean isMatched()
+	{
+		return match != Match.NotMatched;
+	}
+}
+
 class Between extends Predicate< PredicateBETWEENContext >
 {
+	public enum Match
+	{
+		COL_VAL_VAL( COL, VAL, VAL ),  // eg 'column BETWEEN 0 AND 10'
+//		COL_COL_VAL( COL, COL, VAL ),  // eg 'column BETWEEN low AND 10'
+//		COL_VAL_COL( COL, VAL, COL ),  // eg 'column BETWEEN 0 AND high'
+		VAL_COL_COL( VAL, COL, COL ),  // eg '5 BETWEEN low AND high'
+//		VAL_COL_VAL( VAL, COL, VAL ),  // eg '5 BETWEEN low AND 10'
+//		VAL_VAL_COL( VAL, VAL, COL ),  // eg '5 BETWEEN 0 AND high'
+//		VAL_VAL_VAL( VAL, VAL, VAL ),  // eg '5 BETWEEN 0 AND 10'
+		NotMatched( null, null, null );
+
+		public final Class left;
+		public final Class low;
+		public final Class high;
+
+		public final boolean isLeftVAL() { return left == VAL; }
+		public final boolean isLowVAL() { return low == VAL; }
+		public final boolean isHighVAL() { return high == VAL; }
+
+		Match( Class left, Class low, Class high )
+		{
+			this.left = left;
+			this.low = low;
+			this.high = high;
+		}
+
+		public static Match match( SubtermContext left, SubtermContext low, SubtermContext high )
+		{
+			for( Match p : values() )
+			{
+				if( left.getClass() == p.left && low.getClass() == p.low && high.getClass() == p.high ) return p;
+			}
+			return NotMatched;
+		}
+	}
+
+	public Match match;
+	public SubtermContext left;
+	public SubtermContext low;
+	public SubtermContext high;
+	public String leftText;
+	public String lowText;
+	public String highText;
+	public Param leftParam;
+	public Param lowParam;
+	public Param highParam;
+	public String clazz;
+
 	public Between( PredicateBETWEENContext context )
 	{
 		super( context );
+		left = (SubtermContext) context.parent.getChild( 0 );
+		low = context.subterm( 0 );
+		high = context.subterm( 1 );
+		match = Match.match( left, low, high );
+
+		if( !isMatched() ) return;
+
+		if( match.isLeftVAL() )
+		{
+			leftText = left.getTrimmedText();
+		}
+		else
+		{
+			leftText = ((SubtermColumnRefContext) left).columnRef().column.getTrimmedText();
+		}
+
+		if( match.isLowVAL() )
+		{
+			lowText = low.getTrimmedText();
+		}
+		else
+		{
+			lowText = ((SubtermColumnRefContext) low).columnRef().column.getTrimmedText();
+		}
+
+		if( match.isHighVAL() )
+		{
+			highText = high.getTrimmedText();
+		}
+		else
+		{
+			highText = ((SubtermColumnRefContext) high).columnRef().column.getTrimmedText();
+		}
 	}
 
-	public enum Params
+	@Override
+	public boolean isMatched()
 	{
-		LowHigh,     // isLeftBetween( low, high )     eg 'value BETWEEN 0 AND 10'
-		High,        // isLeftBetweenLowAnd( high )    eg 'value BETWEEN low AND 10'
-		Low,         // isLeftBetweenAndHigh( low )    eg 'value BETWEEN 0 AND high'
-		Left,        // isBetweenLowAndHigh( left )    eg '5 BETWEEN low AND high'
-		LeftHigh,    // isBetweenLowAnd( left, high )  eg '5 BETWEEN low AND 10'
-		LeftLow,     // isBetweenAndHigh( left, low )  eg '5 BETWEEN 0 AND high'
-		LeftLowHigh, // isBetween( left, low, high )   eg '5 BETWEEN 0 AND 10'
-		NotMatched
+		return match != Match.NotMatched;
 	}
-
-	public Params params = Params.NotMatched;
-
-	public Params match()
-	{
-		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
-		SubtermContext low = context.subterm( 0 );
-		SubtermContext high = context.subterm( 1 );
-
-		boolean leftIsValue = left instanceof SubtermValueContext;
-		boolean leftIsRef   = left instanceof SubtermRefContext;
-		boolean lowIsValue  = low  instanceof SubtermValueContext;
-		boolean lowIsRef    = low  instanceof SubtermRefContext;
-		boolean highIsValue = high instanceof SubtermValueContext;
-		boolean highIsRef   = high instanceof SubtermRefContext;
-
-		     if( leftIsRef   && lowIsValue && highIsValue ) params = Params.LowHigh;
-		else if( leftIsRef   && lowIsRef   && highIsValue ) params = Params.High;
-		else if( leftIsRef   && lowIsValue && highIsRef   ) params = Params.Low;
-		else if( leftIsValue && lowIsRef   && highIsRef   ) params = Params.Left;
-		else if( leftIsValue && lowIsRef   && highIsValue ) params = Params.LeftHigh;
-		else if( leftIsValue && lowIsValue && highIsRef   ) params = Params.LeftLow;
-		else if( leftIsValue && lowIsValue && highIsValue ) params = Params.LeftLowHigh;
-
-		return params;
-	}
-
-//	public String value() { return left.getTrimmedText(); }
-//	public String low() { return right.get( 0 ).getTrimmedText(); }
-//	public String high() { return right.get( 1 ).getTrimmedText(); }
 }
 
 public class
 	VoyagerVisitor
 extends
-	GenericSQLBaseVisitor< Work >
+	GenericSQLBaseVisitor< Work > // TODO change to <Select>
 {
 	Stack<Select> stack;
 	Work work;
@@ -170,10 +297,11 @@ extends
 	{
 		Item item = new Item();
 		item.wildcard = false;
-		RefContext rc = context.findFirst( RefContext.class, "term/subterm/ref" );
+		ColumnRefContext rc = context.findFirst( ColumnRefContext.class, "term/subterm/columnRef" );
 		if( rc != null )
 		{
-			item.ref = new Ref( rc );
+			item.columnRef = new ColumnRef( rc );
+			item.alias = context.findFirstString( "alias/name" );
 			stack.peek().items.add( item );
 		}
 		return super.visitItemColumn( context );
@@ -195,17 +323,22 @@ extends
 		return super.visitSource( context );
 	}
 
-//	@Override
-//	public Work visitSubtermPredicate( SubtermPredicateContext ctx )
-//	{
-//		return super.visitSubtermPredicate( ctx );
-//	}
+	@Override
+	public Work visitPredicateCompare( PredicateCompareContext ctx )
+	{
+		Compare compare = new Compare( ctx );
+		if( compare.isMatched() )
+		{
+			stack.peek().predicates.add( compare );
+		}
+		return super.visitPredicateCompare( ctx );
+	}
 
 	@Override
 	public Work visitPredicateBETWEEN( PredicateBETWEENContext ctx )
 	{
 		Between between = new Between( ctx );
-		if( between.match() != Between.Params.NotMatched )
+		if( between.isMatched() )
 		{
 			stack.peek().predicates.add( between );
 		}

@@ -7,7 +7,7 @@
 */
 package fado.meta;
 
-import fado.parse.GenericSQLParser.RefContext;
+import fado.parse.GenericSQLParser.ColumnRefContext;
 import fado.parse.GenericSQLParser.ItemContext;
 
 public class Item
@@ -20,7 +20,7 @@ public class Item
 	public Item( ItemContext ic )
 	{
 		this.ic = ic;
-		RefContext rc = ic.findFirst( RefContext.class, "**/ref" );
+		ColumnRefContext rc = ic.findFirst( ColumnRefContext.class, "**/columnRef" );
 		if( rc != null )
 		{
 			// TODO get last 'name' in list
