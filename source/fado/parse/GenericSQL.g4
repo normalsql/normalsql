@@ -84,7 +84,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
     distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
     item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP columnRefs RP )?  # ItemWildcard
-                  | term alias?                                         # ItemColumn
+                  | term alias?                                               # ItemColumn
                   ;
 
         alias         : 'AS'? name ;
@@ -204,7 +204,7 @@ subterm       : subterm CONCAT subterm                                          
               | 'ROW'? LP terms? RP ( DOT name )?                                                 # SubtermRow
               ;
 
-predicate     : ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                         # PredicateCompare
+predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
               | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
               | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
               | 'IS' 'NOT'? bool                                                             # PredicateIsBool
