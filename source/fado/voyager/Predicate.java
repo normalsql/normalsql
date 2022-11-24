@@ -1,6 +1,5 @@
 package fado.voyager;
 
-import fado.parse.GenericSQLParser;
 import fado.parse.GenericSQLParser.SubtermContext;
 import fado.parse.GenericSQLParser.SubtermValueContext;
 import fado.parse.GenericSQLParser.SubtermColumnRefContext;

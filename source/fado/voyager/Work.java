@@ -16,10 +16,11 @@ public class Work
 	public ArrayList<RSColumn> columns = new ArrayList<>();
 	// All the terms (matched to params) in one flattened list.
 	public ArrayList<Predicate> predicates = new ArrayList<>();
+	public ArrayList<Accessor> accessors = new ArrayList<>();
 
 	public HashMap<String, Object> asMap()
 	{
-		HashMap<String, Object>  bug = new HashMap<>();
+		HashMap<String, Object> bug = new HashMap<>();
 		try
 		{
 			Field[] fields = getClass().getFields();

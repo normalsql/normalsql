@@ -2,7 +2,6 @@ package fado.voyager;
 
 public class Param
 {
-	// TODO: nth might be redundant
 	public int nth;
 	public int type;
 	public String typeName;

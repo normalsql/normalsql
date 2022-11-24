@@ -10,7 +10,6 @@ package fado.voyager;
 
 public class RSColumn
 {
-	// TODO: nth might be redundant
 	public int nth;
 	public String name;
 	// JDBC driver's capitalization of alias

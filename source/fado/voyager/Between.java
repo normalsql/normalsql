@@ -1,11 +1,7 @@
 package fado.voyager;
 
 import fado.parse.GenericSQLParser.SubtermContext;
-import fado.parse.GenericSQLParser.SubtermValueContext;
-import fado.parse.GenericSQLParser.SubtermColumnRefContext;
-import fado.parse.GenericSQLParser.PredicateContext;
 import fado.parse.GenericSQLParser.PredicateBETWEENContext;
-import fado.parse.GenericSQLParser.NameContext;
 
 public class Between extends Predicate<PredicateBETWEENContext>
 {
@@ -63,10 +59,6 @@ public class Between extends Predicate<PredicateBETWEENContext>
 	public String leftText;
 	public String lowText;
 	public String highText;
-	public Param leftParam;
-	public Param lowParam;
-	public Param highParam;
-	public String clazz;
 
 	public Between( PredicateBETWEENContext context )
 	{
@@ -81,33 +73,6 @@ public class Between extends Predicate<PredicateBETWEENContext>
 		leftText = ( VAL.isInstance( left ) ? left : getNameContext( left ) ).getTrimmedText();
 		lowText = ( VAL.isInstance( low ) ? low : getNameContext( low ) ).getTrimmedText();
 		highText = ( VAL.isInstance( high ) ? high : getNameContext( high ) ).getTrimmedText();
-
-//		if( match.isLeftVAL() )
-//		{
-//			leftText = left.getTrimmedText();
-//		}
-//		else
-//		{
-//			leftText = ( (GenericSQLParser.SubtermColumnRefContext) left ).columnRef().column.getTrimmedText();
-//		}
-//
-//		if( match.isLowVAL() )
-//		{
-//			lowText = low.getTrimmedText();
-//		}
-//		else
-//		{
-//			lowText = ( (GenericSQLParser.SubtermColumnRefContext) low ).columnRef().column.getTrimmedText();
-//		}
-//
-//		if( match.isHighVAL() )
-//		{
-//			highText = high.getTrimmedText();
-//		}
-//		else
-//		{
-//			highText = ( (GenericSQLParser.SubtermColumnRefContext) high ).columnRef().column.getTrimmedText();
-//		}
 	}
 
 	@Override

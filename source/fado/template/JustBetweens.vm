@@ -1,171 +1,86 @@
+## TODO add null check here
+package ${packageName};
 
-##$tada.groovy
-###foreach( $p in $params )
-##    $p.typeName
-##    $p.clazz
-###end
-###foreach( $pred in $predicates )
-##    $pred.gorp
-##    $pred.leftText
-##    $pred.match
-###end
+import java.sql.*;
+import javax.sql.DataSource;
+import java.math.BigDecimal;
 
-#### TODO add null check here
-##package ${packageName};
-##
-##import java.sql.*;
-##import javax.sql.DataSource;
-##import java.math.BigDecimal;
-##
-##public class
-##	${className}
-##{
-####	private PreparedStatement __ps = null;
-####	public final String __preparedSQL =
-#####foreach( $line in $preparedSQL.split('\n') )
-###### add back each '\n', then concat each line with '+', then end with ';'
-####		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
-#####end
-####	public final String __printfSQL =
-#####foreach( $line in $printfSQL.split('\n') )
-###### add back each '\n' (as %n), then concat each line with '+', then end with ';'
-####		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
-#####end
-####
-####	/**
-####		Pass a Connection. You are responsible for closing that Connection.
-####		${className} is a wrapper for a PreparedStatement, not a Connection.
-####	**/
-####	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
-####		throws SQLException
-####	{
-####		__ps = connection.prepareStatement( __preparedSQL, resultSetType, resultSetConcurrency );
-####	}
-####
-####	public ${className}( Connection connection )
-####		throws SQLException
-####	{
-####		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-####	}
-####
-####	/**
-####		Pass a DataSource. You are responsible for closing that DataSource.
-####		${className} is a wrapper for a PreparedStatement, not a Connection.
-####	**/
-####	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
-####		throws SQLException
-####	{
-####		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
-####	}
-####
-####	public ${className}( DataSource dataSource )
-####		throws SQLException
-####	{
-####		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-####	}
-##
-##	public final ${className}ResultSet execute()
-##		throws SQLException
-##	{
-#set( $nth = 0 )
-#foreach( $pred in $predicates )
-	#set( $match = $pred.match )
-	#if( $Comparison.isInstance( $pred ))
-		#set( $nth = $nth + 1 )
-		#set( $type = $helper.toMethodType( $pred.param.type ))
-		#set( $op = $pred.opText )
-		#if( $match == "VAL_COL" )
-			#set( $method = $helper.toMethodName( $pred.rightText ))
-			__ps.set${type}( ${nth}, get${op}${method}() );
-		#elseif( $match == "COL_VAL" )
-			#set( $method = $helper.toMethodName( $pred.leftText ))
-			__ps.set${type}( ${nth}, get${method}${op}() );
+public class
+	${className}
+{
+	private PreparedStatement __ps = null;
+	public final String __preparedSQL =
+		## add back each '\n', then concat each line with '+', then end with ';'
+		#foreach( $line in $preparedSQL.split('\n') )
+		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
 		#end
-	#elseif( $Between.isInstance( $pred ))
-		#if( $match == "VAL_COL_COL" )
-			#set( $type = $helper.toMethodType( $pred.leftParam.type ))
-			#set( $lowMethod = $helper.toMethodName( $pred.lowText ))
-			#set( $highMethod = $helper.toMethodName( $pred.highText ))
-			#set( $nth = $nth + 1 )
-			__ps.set${type}( ${nth}, getBetween${lowMethod}And${highMethod}() );
-		#elseif( $match == "COL_VAL_VAL" )
-			#set( $type = $helper.toMethodType( $pred.lowParam.type ))
-			#set( $method = $helper.toMethodName( $pred.leftText ))
-			#set( $nth = $nth + 1 )
-			__ps.set${type}( ${nth}, getBetween${method}Low() );
-			#set( $nth = $nth + 1 )
-			__ps.set${type}( ${nth}, getBetween${method}High() );
+	public final String __printfSQL =
+		## add back each '\n' (as %n), then concat each line with '+', then end with ';'
+		#foreach( $line in $printfSQL.split('\n') )
+		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
 		#end
-	#elseif( $IN.isInstance( $pred ))
-##		#foreach( $abc in $pred.literals )
-##			#set( $nth = $nth + 1 )
-##		__ps.set${type}( ${nth}, get${method}( $foreach.count ));
-##		#end
-	#end
-#end
 
+	/**
+		Pass a Connection. You are responsible for closing that Connection.
+		${className} is a wrapper for a PreparedStatement, not a Connection.
+	**/
+	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
+		throws SQLException
+	{
+		__ps = connection.prepareStatement( __preparedSQL, resultSetType, resultSetConcurrency );
 	}
 
-#foreach( $term in $predicates )
-	#set( $match = $pred.match )
-	#set( $codeList = $helper.convertToCodeList( $term ))
+	public ${className}( Connection connection )
+		throws SQLException
+	{
+		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
 
-#if( $Comparison.isInstance( $term ))
-	#set( $type = $helper.toMethodType( $pred.param.type ))
-	#set( $op = $pred.opText )
-	#if( $match == "VAL_COL" )
-		#set( $method = $helper.toMethodName( $pred.rightText ))
-		#set( $var = $helper.toVariableName( $pred.rightText ))
-		private ${type} _${var} = $codeList[0];
-		public void set${op}${method}( ${type} ${var} ) { _${var} = ${var}; }
-		public ${type} get${op}${method}() { return _${var}; }
-	#elseif( $match == "COL_VAL" )
-		#set( $method = $helper.toMethodName( $pred.leftText ))
-		#set( $var = $helper.toVariableName( $pred.rightText ))
-		private ${type} _${var} = $codeList[0];
-		public void set${method}${op}( ${type} ${var} ) { _${var} = ${var}; }
-		public ${type} get${method}${op}() { return _${var}; }
-	#end
+	/**
+		Pass a DataSource. You are responsible for closing that DataSource.
+		${className} is a wrapper for a PreparedStatement, not a Connection.
+	**/
+	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+		throws SQLException
+	{
+		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
+	}
 
-##    private ${type} _${var} = $codeList[0];
-##	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
-##	public ${type} get${method}() { return _${var}; }
+	public ${className}( DataSource dataSource )
+		throws SQLException
+	{
+		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+	}
 
-#elseif( $Between.isInstance( $term ))
-	BETWEEN MATCH ${term.match}
+	public final ${className}ResultSet execute()
+		throws SQLException
+	{
+        #foreach( $a in $accessors )
+        __ps.set${a.clazz}( ${a.nth}, ${a.getter}() );
+        #end
 
-	private ${type} _${var}Left = $codeList[0];
-	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
-	public ${type} get${method}Left() { return _${var}Left; }
+        ResultSet rs = null;
+        if( __ps.execute() )
+        {
+            rs = __ps.getResultSet();
+        }
+        ${className}ResultSet result = new ${className}ResultSet( rs );
+        return result;
+    }
 
-	private ${type} _${var}Right = $codeList[1];
-	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
-	public ${type} get${method}Right() { return _${var}Right; }
+    #foreach( $a in $accessors )
+    private ${a.clazz} _${a.variable} = ${a.value};
+    public void ${a.setter}( ${a.clazz} ${a.variable} ) { _${a.variable} = ${a.variable}; }
+    public ${a.clazz} ${a.getter}() { return _${a.variable}; }
 
-#elseif( $IN.isInstance( $term ))
-	private ${type}[] _${var}List = new ${type}[] {
-		$helper.join( ", ", $codeList )
-	};
+    #end
 
-#end
-#end
-
-####	public String toString()
-####	{
-####		return String.format( __printfSQL
-#####foreach( $term in $predicates )
-####	#set( $method = $helper.toMethodName( $term.columnName ))
-####	#if( $Comparison.isInstance( $term ))
-####			, get${method}()
-####	#elseif( $Between.isInstance( $term ))
-####	        , get${method}Left()
-####			, get${method}Right()
-####	#elseif( $IN.isInstance( $term ))
-####		#foreach( $abc in $term.literals )
-####			, get${method}( $foreach.count )
-####		#end
-####	#end
-#####end
-####		));
-####	}
-##}
+	public String toString()
+	{
+		return String.format( __printfSQL
+            #foreach( $a in $accessors )
+            , ${a.getter}()
+            #end
+		);
+	}
+}

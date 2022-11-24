@@ -27,8 +27,6 @@ import java.util.List;
 
 public class Voyager
 {
-	public String groovy = "emperor";
-
 	public static void main( String[] args )
 		throws Exception
 	{
@@ -63,49 +61,66 @@ public class Voyager
 
 		processPreparedStatement( conn, work );
 		Iterator<Param> i = work.params.iterator();
-		// TODO gather predicates first, recursive
+
+		// TODO remove flat list, recurse
 		for( Predicate p : work.root.predicates )
 		{
 			work.predicates.add( p );
 		}
 
+		AccessorFactory factory = new AccessorFactory();
 		for( Predicate p : work.predicates )
 		{
 			switch( p )
 			{
 				case Comparison c:
-					c.param = i.next();
-//					c.clazz = c.param.clazz;
+				{
+					Accessor a = factory.create( c, c.value, c.column );
+					work.accessors.add( a );
 					break;
-
+				}
 				case Between b:
+				{
 					switch( b.match )
 					{
 						case COL_VAL_VAL:
-							b.lowParam = i.next();
-							b.highParam = i.next();
-							b.clazz = b.lowParam.clazz;
+						{
+							Accessor low = factory.create( b, b.lowText, b.leftText, "low" );
+							work.accessors.add( low );
+
+							Accessor high = factory.create( b, b.highText, b.leftText, "high" );
+							work.accessors.add( high );
 							break;
+						}
 						case VAL_COL_COL:
-							b.leftParam = i.next();
-							b.clazz = b.leftParam.clazz;
+						{
+							Accessor high = factory.create( b, b.leftText, "between", b.lowText, "and", b.highText );
+							work.accessors.add( high );
 							break;
-						default: break;
+						}
+						default:
+							break;
 					}
 					break;
+				}
 				default: break;
 			}
 		}
 
-		// TODO throw exception if not null
-		System.out.println( "i.hasNext() " + i.hasNext() );
+		for( int nth = 0; nth < work.params.size(); nth++ )
+		{
+			Accessor a = work.accessors.get( nth );
+			Param p = work.params.get( nth );
+			a.param = p;
+			a.nth = p.nth;
+			a.clazz = p.clazz.substring( p.clazz.lastIndexOf( "." ) + 1 );
+		}
 
 		matchItemsToColumns( work.root.items, work.columns );
 
 		merge( work );
 
 		System.out.println( work );
-
 	}
 
 	public static void processPreparedStatement( Connection conn, Work work )
@@ -188,21 +203,13 @@ public class Voyager
 			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
 			engine.init();
 
-			// Specific to template
-			HashMap<String, Object> parentMap = new HashMap<>();
-			parentMap.put( "Comparison", Comparison.class );
-			parentMap.put( "Between", Between.class );
-//			parentMap.put( "IN", IN.class );
-			parentMap.put( "helper", JavaHelper.class );
 			// TODO change to 'now', use same Date for all artifacts
-			parentMap.put( "date", new Date() );
-			VelocityContext parentContext = new VelocityContext( parentMap );
-
-			// Related to statement
 			HashMap<String, Object> childMap = work.asMap();
+			childMap.put( "date", new Date() );
+			childMap.put( "className", "Bonkers" );
+			childMap.put( "packageName", "beepbeepp" );
 
-			VelocityContext childContext = new VelocityContext( childMap, parentContext );
-			childContext.put( "tada", new Voyager() );
+			VelocityContext childContext = new VelocityContext( childMap );
 
 			// TODO: Just one template instance
 //			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );

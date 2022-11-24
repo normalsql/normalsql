@@ -19,7 +19,7 @@ import static java.sql.Types.*;
 public class
 JavaHelper
 {
-	public static boolean isAllUpperCase( String s ) 
+	public static boolean isAllUpperCase( String s )
 	{
 		for( char c : s.toCharArray() ) 
 		{
@@ -33,9 +33,14 @@ JavaHelper
 	
 	// BIGPONY => BIGPONY
 	// bigPony => BigPony
+	// id => ID
 	public static String toMethodName( String name )
 	{
-		if( !JavaHelper.isAllUpperCase( name ))
+		if( "id".equalsIgnoreCase( name ))
+		{
+			name = "ID";
+		}
+		else if( !JavaHelper.isAllUpperCase( name ))
 		{
 			name = toUpperCase( name.charAt( 0 ) ) + name.substring( 1 );
 		}
@@ -44,9 +49,14 @@ JavaHelper
 	
 	// BIGPONY => bigpony
 	// BigPony => bigPony
+	// ID => id
 	public static String toVariableName( String name )
 	{
-		if( JavaHelper.isAllUpperCase( name ))
+		if( "id".equalsIgnoreCase( name ))
+		{
+			name = "id";
+		}
+		else if( JavaHelper.isAllUpperCase( name ))
 		{
 			name = name.toLowerCase();
 		}
@@ -57,6 +67,7 @@ JavaHelper
 		return name;
 	}
 
+	// TODO dedupe wrt toVariableType
 	public static String toMethodType( int sqlType )
 	{
 		String result = null;
@@ -153,7 +164,6 @@ JavaHelper
 			default:
 				result = "unknown SQL Type: " + sqlType;
 				throw new IllegalArgumentException( result );
-
 		}
 		return result;
 	}
@@ -216,7 +226,6 @@ JavaHelper
 			case LONGNVARCHAR:
 				result = "String";
 				break;
-
 			case NUMERIC:
 				result = "java.math.BigDecimal";
 				break;

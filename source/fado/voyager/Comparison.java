@@ -48,10 +48,9 @@ public class Comparison extends Predicate<PredicateCompareContext>
 
 	public final SubtermContext left;
 	public final SubtermContext right;
-	public String leftText;
-	public String rightText;
+	public String column;
+	public String value;
 	public String opText;
-	public Param param;
 	public Match match;
 
 	public Comparison( PredicateCompareContext context )
@@ -67,14 +66,12 @@ public class Comparison extends Predicate<PredicateCompareContext>
 		switch( match )
 		{
 			case VAL_COL:
-				leftText = left.getTrimmedText();
-//				rightText = ( (GenericSQLParser.SubtermColumnRefContext) right ).columnRef().column.getTrimmedText();
-				rightText = getNameContext( right ).getTrimmedText();
+				column = getNameContext( right ).getTrimmedText();
+				value = left.getTrimmedText();
 				break;
 			case COL_VAL:
-//				leftText = ( (GenericSQLParser.SubtermColumnRefContext) left ).columnRef().column.getTrimmedText();
-				leftText = getNameContext( left ).getTrimmedText();
-				rightText = right.getTrimmedText();
+				column = getNameContext( left ).getTrimmedText();
+				value = right.getTrimmedText();
 				break;
 			default:
 				break;
