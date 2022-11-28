@@ -186,7 +186,9 @@ subterm       : subterm CONCAT subterm                                          
               | subterm ( PLUS | MINUS ) subterm                                                  # SubtermAddition
               | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
               | subterm predicate                                                                 # SubtermPredicate
-              | LP term RP DOT name                                                               # SubtermFieldRef
+              | LP RP                                                                             # SubtermEmpty
+              | LP terms RP DOT name                                                              # SubtermFieldRef
+              | LP terms RP                                                                       # SubtermNested
               | query                                                                             # SubtermQuery
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
               | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        # SubtermCaseSearch
@@ -200,8 +202,7 @@ subterm       : subterm CONCAT subterm                                          
 //              | term 'COLLATE' id # TermCollate TODO
 //              | sequenceValueExpression TODO
 //              | arrayElementReference TODO
-              | LP RP                                                                             # SubtermEmpty
-              | 'ROW'? LP terms? RP ( DOT name )?                                                 # SubtermRow
+              | 'ROW' LP terms? RP                                                # SubtermRow
               ;
 
 predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
@@ -209,7 +210,6 @@ predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm         
               | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
               | 'IS' 'NOT'? bool                                                             # PredicateIsBool
               | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateIsDistinct
-              | 'IS' 'NOT'? 'DISTINCT' 'FROM' ( 'ALL' | 'ANY' | 'SOME' ) LP query RP         # PredicateQuantified
               | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
               | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
               | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
@@ -234,6 +234,7 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
                 ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? withWithout 'COUNT' ))? RP withinGroup? filter? over?
               | 'STRING_AGG' LP term COMMA string orderBy RP
               | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
+//              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
               | id LP ( STAR | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
               | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
               | id LP id 'FROM' id String RP
