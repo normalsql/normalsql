@@ -1,10 +1,11 @@
 package fado.voyager;
 
+import fado.parse.GenericSQLParser.ValueContext;
+
 public class Accessor
 {
-	// hold onto parents to ease debugging
-	public Predicate predicate;
-	public Param param;
+	Param param;
+	ValueContext context;
 
 	public int nth;
 	public String variable;
@@ -17,6 +18,7 @@ public class Accessor
 	public String toString()
 	{
 		return "Accessor{" +
+			"context='" + context + '\'' +
 			"nth='" + nth + '\'' +
 			", variable='" + variable + '\'' +
 			", value='" + value + '\'' +

@@ -70,6 +70,8 @@ public class FadoNested
 //			)
 //		);
 		work.printfSQL = work.tokens.getText();
+
+
 		System.out.println( work.printfSQL );
 
 		SelectTemplate template = new SelectTemplate();

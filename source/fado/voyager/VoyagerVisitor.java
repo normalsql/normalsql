@@ -9,37 +9,39 @@ import java.util.Stack;
 public class
 	VoyagerVisitor
 extends
-	GenericSQLBaseVisitor< Work > // TODO change to <Select>
+	GenericSQLBaseVisitor< Void >
 {
-	Stack<Select> stack;
-	Work work;
+	ArrayList<Predicate> predicates;
 
-//	public <T> T last( List< T > list )
-//	{
-//		if( list == null ) return null;
-//		if( list.isEmpty() ) return null;
-//		return list.get( list.size() - 1 );
-//	}
+	Stack<Statement> stack;
+	Statement root;
 
-	public Work visitParse( ParseContext context )
+	@Override
+	public Void visitParse( ParseContext context )
 	{
+		predicates = new ArrayList<>();
 		stack = new Stack();
-		work = new Work();
+		root = new Statement();
+		stack.add( root );
+
 		super.visitParse( context );
-		return work;
+		return null;
 	}
 
-	public Work visitSelect( SelectContext context )
+	@Override
+	public Void visitSelect( SelectContext context )
 	{
-		stack.push( new Select() );
 //		System.out.println( ctx.getText() );
+		stack.push( new Select() );
 		super.visitSelect( context );
-		Select select = stack.pop();
-		work.root = select;
-		return work;
+		Statement child = stack.pop();
+		Statement parent = stack.peek();
+		parent.add( child );
+		return null;
 	}
 
-	public Work visitItemWildcard( ItemWildcardContext context )
+	@Override
+	public Void visitItemWildcard( ItemWildcardContext context )
 	{
 		Item item = new Item();
 		item.wildcard = true;
@@ -48,11 +50,14 @@ extends
 			item.tableRef = new TableRef( context.tableRef() );
 		}
 		stack.peek().items.add( item );
-		return super.visitItemWildcard( context );
+//		return super.visitItemWildcard( context );
+		return null;
 	}
 
-	public Work visitItemColumn( ItemColumnContext context )
+	@Override
+	public Void visitItemColumn( ItemColumnContext context )
 	{
+		// TODO only use columnRef if alias not found? Cuz we want all columns, right?
 		Item item = new Item();
 		item.wildcard = false;
 		ColumnRefContext rc = context.findFirst( ColumnRefContext.class, "term/subterm/columnRef" );
@@ -62,11 +67,14 @@ extends
 			item.alias = context.findFirstString( "alias/name" );
 			stack.peek().items.add( item );
 		}
-		return super.visitItemColumn( context );
+//		return super.visitItemColumn( context );
+		super.visitItemColumn( context );
+		return null;
 	}
 
+	// TODO verify this is needed
 	@Override
-	public Work visitSource( SourceContext context )
+	public Void visitSource( SourceContext context )
 	{
 		if( context.tableRef() != null )
 		{
@@ -76,30 +84,40 @@ extends
 			{
 				source.alias = context.alias().name().getTrimmedText();
 			}
-			stack.peek().tables.add( source );
+			stack.peek().sources.add( source );
 		}
 		return super.visitSource( context );
 	}
 
 	@Override
-	public Work visitPredicateCompare( PredicateCompareContext ctx )
+	public Void visitPredicateCompare( PredicateCompareContext ctx )
 	{
 		Comparison comparison = new Comparison( ctx );
 		if( comparison.isMatched() )
 		{
 			stack.peek().predicates.add( comparison );
+			predicates.add( comparison );
 		}
-		return super.visitPredicateCompare( ctx );
+		else
+		{
+			super.visitPredicateCompare( ctx );
+		}
+		return null;
 	}
 
 	@Override
-	public Work visitPredicateBETWEEN( PredicateBETWEENContext ctx )
+	public Void visitPredicateBETWEEN( PredicateBETWEENContext ctx )
 	{
 		Between between = new Between( ctx );
 		if( between.isMatched() )
 		{
 			stack.peek().predicates.add( between );
+			predicates.add( between );
 		}
-		return super.visitPredicateBETWEEN( ctx );
+		else
+		{
+			super.visitPredicateBETWEEN( ctx );
+		}
+		return null;
 	}
 }

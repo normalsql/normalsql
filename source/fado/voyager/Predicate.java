@@ -23,8 +23,8 @@ public abstract class Predicate<T extends PredicateContext>
 
 	abstract public boolean isMatched();
 
-	public NameContext getNameContext( SubtermContext subterm )
-	{
-		return ( (SubtermColumnRefContext) subterm ).columnRef().column;
-	}
+//	public NameContext getColumnNameContext( SubtermContext subterm )
+//	{
+//		return ( (SubtermColumnRefContext) subterm ).columnRef().column;
+//	}
 }

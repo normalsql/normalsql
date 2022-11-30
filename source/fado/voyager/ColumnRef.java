@@ -2,6 +2,7 @@ package fado.voyager;
 
 import fado.parse.GenericSQLParser;
 
+// TODO rename to TableColumnRef, to better distinquish from RSColumn?
 public class ColumnRef
 {
 	public ColumnRef( GenericSQLParser.ColumnRefContext context )

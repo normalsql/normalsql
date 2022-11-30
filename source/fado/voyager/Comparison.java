@@ -46,32 +46,30 @@ public class Comparison extends Predicate<PredicateCompareContext>
 		operatorMap.put( "&&", "OVERLAP" );
 	}
 
-	public final SubtermContext left;
-	public final SubtermContext right;
-	public String column;
-	public String value;
-	public String opText;
+	public SubtermContext value;
+	public SubtermContext column;
+	public String op;
 	public Match match;
 
 	public Comparison( PredicateCompareContext context )
 	{
 		super( context );
-		left = (SubtermContext) context.parent.getChild( 0 );
-		right = context.subterm();
+		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
+		SubtermContext right = context.subterm();
 		match = Match.match( left, right );
 
 		if( !isMatched() ) return;
 
-		opText = operatorMap.get( context.op.getText() );
+		op = operatorMap.get( context.op.getText() );
 		switch( match )
 		{
 			case VAL_COL:
-				column = getNameContext( right ).getTrimmedText();
-				value = left.getTrimmedText();
+				value = left;
+				column = right;
 				break;
 			case COL_VAL:
-				column = getNameContext( left ).getTrimmedText();
-				value = right.getTrimmedText();
+				value = right;
+				column = left;
 				break;
 			default:
 				break;

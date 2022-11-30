@@ -53,26 +53,19 @@ public class Between extends Predicate<PredicateBETWEENContext>
 	}
 
 	public Match match;
-	public SubtermContext left;
+	public SubtermContext test;
 	public SubtermContext low;
 	public SubtermContext high;
-	public String leftText;
-	public String lowText;
-	public String highText;
 
 	public Between( PredicateBETWEENContext context )
 	{
 		super( context );
-		left = (SubtermContext) context.parent.getChild( 0 );
+		test = (SubtermContext) context.parent.getChild( 0 );
 		low = context.subterm( 0 );
 		high = context.subterm( 1 );
-		match = Match.match( left, low, high );
+		match = Match.match( test, low, high );
 
 		if( !isMatched() ) return;
-
-		leftText = ( VAL.isInstance( left ) ? left : getNameContext( left ) ).getTrimmedText();
-		lowText = ( VAL.isInstance( low ) ? low : getNameContext( low ) ).getTrimmedText();
-		highText = ( VAL.isInstance( high ) ? high : getNameContext( high ) ).getTrimmedText();
 	}
 
 	@Override

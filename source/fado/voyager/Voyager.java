@@ -2,6 +2,8 @@ package fado.voyager;
 
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
+import fado.parse.GenericSQLParser.*;
+import fado.parse.GenericSQLParser.SubtermValueContext;
 import fado.parse.GenericSQLParser.ValueContext;
 import fado.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
@@ -30,7 +32,6 @@ public class Voyager
 	public static void main( String[] args )
 		throws Exception
 	{
-
 		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
 
 		String originalSQL = new String( Files.readAllBytes( sourceFile ));
@@ -41,32 +42,13 @@ public class Voyager
 		GenericSQLParser parser = new GenericSQLParser( tokens );
 		GenericSQLParser.ParseContext parse = parser.parse();
 		VoyagerVisitor visitor = new VoyagerVisitor();
-		Work work = visitor.visit( parse );
+
+		Work work = new Work();
 		work.originalSQL = originalSQL;
 
-		for( Predicate p : work.root.predicates )
-		{
-			List<ValueContext> dork = p.parent.find( ValueContext.class, "**/value" );
-			for( ValueContext d : dork )
-			{
-				d.setStartTokenText( "?" );
-			}
-		}
-
-		work.preparedSQL = tokens.getText();
-
-		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
-		Connection conn = DriverManager.getConnection( url, "sa", null );
-//		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
-
-		processPreparedStatement( conn, work );
-		Iterator<Param> i = work.params.iterator();
-
-		// TODO remove flat list, recurse
-		for( Predicate p : work.root.predicates )
-		{
-			work.predicates.add( p );
-		}
+		visitor.visit( parse );
+		work.root = visitor.root;
+		work.predicates = visitor.predicates;
 
 		AccessorFactory factory = new AccessorFactory();
 		for( Predicate p : work.predicates )
@@ -75,7 +57,8 @@ public class Voyager
 			{
 				case Comparison c:
 				{
-					Accessor a = factory.create( c, c.value, c.column );
+					String column = getColumn( c.column );
+					Accessor a = factory.create( c.value, column );
 					work.accessors.add( a );
 					break;
 				}
@@ -85,16 +68,19 @@ public class Voyager
 					{
 						case COL_VAL_VAL:
 						{
-							Accessor low = factory.create( b, b.lowText, b.leftText, "low" );
+							String column = getColumn( b.test );
+							Accessor low = factory.create( b.low, column, "low" );
 							work.accessors.add( low );
 
-							Accessor high = factory.create( b, b.highText, b.leftText, "high" );
+							Accessor high = factory.create( b.high, column, "high" );
 							work.accessors.add( high );
 							break;
 						}
 						case VAL_COL_COL:
 						{
-							Accessor high = factory.create( b, b.leftText, "between", b.lowText, "and", b.highText );
+							String columnLow = getColumn( b.low );
+							String columnHigh = getColumn( b.high );
+							Accessor high = factory.create( b.test, "between", columnLow, "and", columnHigh );
 							work.accessors.add( high );
 							break;
 						}
@@ -107,6 +93,19 @@ public class Voyager
 			}
 		}
 
+		for( Accessor a : work.accessors )
+		{
+			a.context.setStartTokenText( "?" );
+		}
+
+		work.preparedSQL = tokens.getText();
+
+		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+		Connection conn = DriverManager.getConnection( url, "sa", null );
+//		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
+
+		processPreparedStatement( conn, work );
+
 		for( int nth = 0; nth < work.params.size(); nth++ )
 		{
 			Accessor a = work.accessors.get( nth );
@@ -116,11 +115,24 @@ public class Voyager
 			a.clazz = p.clazz.substring( p.clazz.lastIndexOf( "." ) + 1 );
 		}
 
+		for( Accessor a : work.accessors )
+		{
+			String text = JavaHelper.toPrintfConverter( a.param.type );
+			a.context.setStartTokenText( text );
+		}
+
+		work.printfSQL = tokens.getText();
+
 		matchItemsToColumns( work.root.items, work.columns );
 
 		merge( work );
 
 		System.out.println( work );
+	}
+
+	public static String getColumn( SubtermContext b )
+	{
+		return ( (SubtermColumnRefContext) b ).columnRef().column.getTrimmedText();
 	}
 
 	public static void processPreparedStatement( Connection conn, Work work )

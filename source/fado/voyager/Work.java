@@ -6,15 +6,17 @@ import java.util.HashMap;
 
 public class Work
 {
-	public Select root;
+	public Statement root;
 	public String originalSQL;
 	public String preparedSQL;
+	public String printfSQL;
 
 	// Copied from the PreparedStatement's metadata
 	public ArrayList<Param> params = new ArrayList<>();
 	// Copied from the PreparedStatement's metadata
 	public ArrayList<RSColumn> columns = new ArrayList<>();
-	// All the terms (matched to params) in one flattened list.
+
+	// All the (matched) predicates in one flattened list.
 	public ArrayList<Predicate> predicates = new ArrayList<>();
 	public ArrayList<Accessor> accessors = new ArrayList<>();
 

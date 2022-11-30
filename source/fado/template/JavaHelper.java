@@ -267,6 +267,7 @@ JavaHelper
 		return result;
 	}
 
+	// TODO change to Types enum
 	public static String toPrintfConverter( int sqlType )
 	{
 		String result = null;
