@@ -10,9 +10,9 @@ public class AccessorFactory
 	public Accessor create( SubtermContext context, String... method )
 	{
 		Accessor a = new Accessor();
-//		a.predicate = predicate;
 		a.context = ((SubtermValueContext) context).value();
-		a.value = a.context.getTrimmedText();
+		a.text = a.context.getText();
+		a.trimmed = a.context.getTrimmedText();
 		a.variable = toVariableCase( method );
 		a.getter = "get" + toMethodCase( method );
 		a.setter = "set" + toMethodCase( method );;

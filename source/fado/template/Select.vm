@@ -1,21 +1,17 @@
 ## Fado's SELECT Statement Template for Java & JDBC
 ##
 ## Copyright 2022, 2014, 2011, 2010 Jason Osgood
-## 
+##
 ## Template Parameters:
 ##
-##     Comparison - reference to Comparison.class
-##     Between - reference to Between.class
-##     IN - reference to IN.class
-##     helper - Capitalization and type casting methods.
 ##     date - current timestamp
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     preparedSQL - prepared SQL statement (containg '?' params)
-##     printfSQL - like preparedSQL, but for printf
-##     conditionList - terms from prepared SQL as List<fado.Condition>
+##     preparedSQL - prepared statement version of originalSQL
+##     printfSQL - printf version of originalSQL, for debugging
+##     accessors - List<Accessor>, meta data for getters and setters
 /**
 * ${className}.java   ${date}
 *
@@ -45,16 +41,18 @@ public class
 	${className}
 {
 	private PreparedStatement __ps = null;
+
+    ## add back each '\n', then concat each line with '+', then end with ';'
 	public final String __preparedSQL =
-#foreach( $line in $preparedSQL.split('\n') )
-## add back each '\n', then concat each line with '+', then end with ';'
+		#foreach( $line in $preparedSQL.split('\n') )
 		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
-#end
+		#end
+
+    ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 	public final String __printfSQL =
-#foreach( $line in $printfSQL.split('\n') )
-## add back each '\n' (as %n), then concat each line with '+', then end with ';'
+		#foreach( $line in $printfSQL.split('\n') )
 		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
-#end
+		#end
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -91,99 +89,32 @@ public class
 	public final ${className}ResultSet execute()
 		throws SQLException
 	{
-#set( $nth = 0 )
-#foreach( $term in $conditionList )
-	#set( $method = $helper.toMethodName( $term.columnName ))
-	#set( $type = $helper.toMethodType( $term.column.type ))
-	#if( $Comparison.isInstance( $term ))
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}() );
-	#elseif( $Between.isInstance( $term ))
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}Left() );
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}Right() );
-	#elseif( $IN.isInstance( $term ))
-		#foreach( $abc in $term.literals )
-			#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}( $foreach.count ));
-		#end
-	#end
-#end
+        #foreach( $a in $accessors )
+        __ps.set${a.clazz}( ${a.nth}, ${a.getter}() );
+        #end
 
-		ResultSet rs = null;
-		if( __ps.execute() )
-		{
-			rs = __ps.getResultSet();
-		}
-		${className}ResultSet result = new ${className}ResultSet( rs );
-		return result;
-	}
+        ResultSet rs = null;
+        if( __ps.execute() )
+        {
+            rs = __ps.getResultSet();
+        }
+        ${className}ResultSet result = new ${className}ResultSet( rs );
+        return result;
+    }
 
-#foreach( $term in $conditionList )
-#set( $method = $helper.toMethodName( $term.columnName ))
-#set( $var = $helper.toVariableName( $term.columnName ))
-#set( $type = $helper.toVariableType( $term.column.type ))
-#set( $codeList = $helper.convertToCodeList( $term ))
+    #foreach( $a in $accessors )
+    private ${a.clazz} _${a.variable} = ${a.asCode};
+    public void ${a.setter}( ${a.clazz} ${a.variable} ) { _${a.variable} = ${a.variable}; }
+    public ${a.clazz} ${a.getter}() { return _${a.variable}; }
 
-#if( $Comparison.isInstance( $term ))
-	private ${type} _${var} = $codeList[0];
-	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
-	public ${type} get${method}() { return _${var}; }
-
-#elseif( $Between.isInstance( $term ))
-	private ${type} _${var}Left = $codeList[0];
-	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
-	public ${type} get${method}Left() { return _${var}Left; }
-
-	private ${type} _${var}Right = $codeList[1];
-	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
-	public ${type} get${method}Right() { return _${var}Right; }
-
-#elseif( $IN.isInstance( $term ))
-	private ${type}[] _${var}List = new ${type}[] {
-		$helper.join( ", ", $codeList )
-	};
-	private int _${var}Count = 0;
-	public void add${method}Param( ${type} ${var} )
-	{
-		if( _${var}Count == _${var}List.length )
-		{
-			throw new IndexOutOfBoundsException( "IN term parameter array only has room for: " + _${var}List.length );
-		}
-		int count = _${var}Count;
-
-		// Parameter array get filled to the right, so there are no holes
-		for( int i = count; count < _${var}List.length; count++ )
-		{
-			_${var}List[i] = ${var};
-		}
-		_${var}Count++;
-	}
-
-	public ${type} get${method}( int nth )
-	{
-		return _${var}List[ nth ];
-	}
-#end
-#end
+    #end
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-#foreach( $term in $conditionList )
-	#set( $method = $helper.toMethodName( $term.columnName ))
-	#if( $Comparison.isInstance( $term ))
-			, get${method}()
-	#elseif( $Between.isInstance( $term ))
-	        , get${method}Left()
-			, get${method}Right()
-	#elseif( $IN.isInstance( $term ))
-		#foreach( $abc in $term.literals )
-			, get${method}( $foreach.count )
-		#end
-	#end
-#end
-		));
+            #foreach( $a in $accessors )
+            , ${a.getter}()
+            #end
+		);
 	}
 }

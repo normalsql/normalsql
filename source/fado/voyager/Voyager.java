@@ -32,7 +32,8 @@ public class Voyager
 	public static void main( String[] args )
 		throws Exception
 	{
-		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
+//		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
+		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
 
 		String originalSQL = new String( Files.readAllBytes( sourceFile ));
 
@@ -44,6 +45,9 @@ public class Voyager
 		VoyagerVisitor visitor = new VoyagerVisitor();
 
 		Work work = new Work();
+		work.packageName = "beepbeepp";
+		work.className = "Bonkers";
+		work.sourceFile = sourceFile;
 		work.originalSQL = originalSQL;
 
 		visitor.visit( parse );
@@ -218,14 +222,11 @@ public class Voyager
 			// TODO change to 'now', use same Date for all artifacts
 			HashMap<String, Object> childMap = work.asMap();
 			childMap.put( "date", new Date() );
-			childMap.put( "className", "Bonkers" );
-			childMap.put( "packageName", "beepbeepp" );
 
 			VelocityContext childContext = new VelocityContext( childMap );
 
 			// TODO: Just one template instance
-//			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
-			Template selectTemplate = engine.getTemplate( "fado/template/JustBetweens.vm" );
+			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
 			selectTemplate.merge( childContext, writer );
 //			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
 //			resultSetTemplate.merge( childContext, writer );

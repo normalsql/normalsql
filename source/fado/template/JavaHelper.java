@@ -267,7 +267,7 @@ JavaHelper
 		return result;
 	}
 
-	// TODO change to Types enum
+	// TODO change to Types enum?
 	public static String toPrintfConverter( int sqlType )
 	{
 		String result = null;
@@ -599,13 +599,13 @@ JavaHelper
 			return column.preferredName + " (" + column.name + ")";
 	}
 
-	public static String join( CharSequence delimiter, CharSequence... elements )
-	{
-		return String.join( delimiter, elements );
-	}
-
-	public static String join( CharSequence delimiter, Iterable<? extends CharSequence> elements )
-	{
-		return String.join( delimiter, elements );
-	}
+//	public static String join( CharSequence delimiter, CharSequence... elements )
+//	{
+//		return String.join( delimiter, elements );
+//	}
+//
+//	public static String join( CharSequence delimiter, Iterable<? extends CharSequence> elements )
+//	{
+//		return String.join( delimiter, elements );
+//	}
 }
