@@ -3,8 +3,6 @@ package fado.voyager;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.GenericSQLParser.*;
-import fado.parse.GenericSQLParser.SubtermValueContext;
-import fado.parse.GenericSQLParser.ValueContext;
 import fado.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -22,10 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 
 public class Voyager
 {
@@ -63,7 +59,7 @@ public class Voyager
 				{
 					String column = getColumn( c.column );
 					Accessor a = factory.create( c.value, column );
-					work.accessors.add( a );
+					work.statementAccessors.add( a );
 					break;
 				}
 				case Between b:
@@ -74,10 +70,10 @@ public class Voyager
 						{
 							String column = getColumn( b.test );
 							Accessor low = factory.create( b.low, column, "low" );
-							work.accessors.add( low );
+							work.statementAccessors.add( low );
 
 							Accessor high = factory.create( b.high, column, "high" );
-							work.accessors.add( high );
+							work.statementAccessors.add( high );
 							break;
 						}
 						case VAL_COL_COL:
@@ -85,7 +81,7 @@ public class Voyager
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
 							Accessor high = factory.create( b.test, "between", columnLow, "and", columnHigh );
-							work.accessors.add( high );
+							work.statementAccessors.add( high );
 							break;
 						}
 						default:
@@ -97,7 +93,7 @@ public class Voyager
 			}
 		}
 
-		for( Accessor a : work.accessors )
+		for( Accessor a : work.statementAccessors )
 		{
 			a.context.setStartTokenText( "?" );
 		}
@@ -112,14 +108,15 @@ public class Voyager
 
 		for( int nth = 0; nth < work.params.size(); nth++ )
 		{
-			Accessor a = work.accessors.get( nth );
+			Accessor a = work.statementAccessors.get( nth );
 			Param p = work.params.get( nth );
 			a.param = p;
 			a.nth = p.nth;
-			a.clazz = p.clazz.substring( p.clazz.lastIndexOf( "." ) + 1 );
+			a.className = p.className;
+			a.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
 		}
 
-		for( Accessor a : work.accessors )
+		for( Accessor a : work.statementAccessors )
 		{
 			String text = JavaHelper.toPrintfConverter( a.param.type );
 			a.context.setStartTokenText( text );
@@ -127,7 +124,8 @@ public class Voyager
 
 		work.printfSQL = tokens.getText();
 
-		matchItemsToColumns( work.root.items, work.columns );
+		// TODO support unions, multiple statements, and such
+		work.resultSetAccessors = matchItemsToColumns( work.root.get(0).items, work.columns );
 
 		merge( work );
 
@@ -156,21 +154,25 @@ public class Voyager
 			param.scaled = pmd.getScale( nth );
 			param.precision = pmd.getPrecision( nth );
 			param.mode = pmd.getParameterMode( nth );
-			param.clazz = pmd.getParameterClassName( nth );
+			param.className = pmd.getParameterClassName( nth );
 			work.params.add( param );
 		}
 
 		ResultSetMetaData md = ps.getMetaData();
+		// TODO: dedupe resultset columns
 		for( int nth = 1; nth <= md.getColumnCount(); nth++ )
 		{
 			RSColumn column = new RSColumn();
 			column.nth = nth;
+			column.catalog = md.getCatalogName( nth );
+			column.schema = md.getSchemaName( nth );
+			column.table = md.getTableName( nth );
 			column.name = md.getColumnName( nth );
 			column.label = md.getColumnLabel( nth );
 			column.type = md.getColumnType( nth );
 			column.typeName = md.getColumnTypeName( nth );
 			column.isNullable = md.isNullable( nth );
-			column.clazz = md.getColumnClassName( nth );
+			column.className = md.getColumnClassName( nth );
 			work.columns.add( column );
 		}
 	}
@@ -181,29 +183,48 @@ public class Voyager
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	static void matchItemsToColumns( List<Item> items, List<RSColumn> columns )
+	static List<Accessor> matchItemsToColumns( List<Item> items, List<RSColumn> columns )
 	{
-		Iterator<Item> itemIterator = items.iterator();
-		String preferred = null;
+		ArrayList<Accessor> accessors = new ArrayList<>();
 
-		outer:
 		for( RSColumn column : columns )
 		{
-			while( preferred == null )
+			// TODO reference to parent Item
+			Accessor a = new Accessor();
+			a.nth = column.nth;
+			a.column = column;
+			String name = column.name;
+			String label = column.label;
+			// TODO also match to catalog, schema, table
+			// TODO resolve best match
+			for( Item item : items )
 			{
-				if( !itemIterator.hasNext() ) break outer;
-				Item item = itemIterator.next();
-				preferred = item.alias != null ? item.alias : item.columnRef.column;
+				if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.alias ) )
+				{
+					label = item.alias;
+					a.source = item.context.getText();
+					break;
+				}
+				else if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.name ) )
+				{
+					label = item.name;
+					a.source = item.context.getText();
+					break;
+				}
 			}
 
-			if( preferred.equalsIgnoreCase( column.label ) || preferred.equalsIgnoreCase( column.name ))
-			{
-				column.preferredName = preferred;
-				preferred = null;
-			}
+			a.variable = AccessorFactory.toVariableCase( label );
+			a.getter = "get" + AccessorFactory.toMethodCase( label );
+			a.setter = "set" + AccessorFactory.toMethodCase( label );
+			a.className = column.className;
+			a.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
+			a.sqlType = column.type;
+
+			accessors.add( a );
 		}
-	}
 
+		return accessors;
+	}
 
 	public static void merge( Work work ) throws IOException
 	{
@@ -228,8 +249,8 @@ public class Voyager
 			// TODO: Just one template instance
 			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
 			selectTemplate.merge( childContext, writer );
-//			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
-//			resultSetTemplate.merge( childContext, writer );
+			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
+			resultSetTemplate.merge( childContext, writer );
 		}
 	}
 

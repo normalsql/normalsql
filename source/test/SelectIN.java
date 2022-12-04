@@ -3,7 +3,6 @@ package test;
 import fado.Dumper;
 import fado.voyager.*;
 import java.sql.*;
-import java.util.ArrayList;
 
 public class SelectIN
 {
@@ -43,7 +42,7 @@ public class SelectIN
 			param.scaled = pmd.getScale( nth );
 			param.precision = pmd.getPrecision( nth );
 			param.mode = pmd.getParameterMode( nth );
-			param.clazz = pmd.getParameterClassName( nth );
+			param.className = pmd.getParameterClassName( nth );
 			System.out.println( param );
 //			work.params.add( param );
 		}
@@ -58,7 +57,7 @@ public class SelectIN
 			column.type = md.getColumnType( nth );
 			column.typeName = md.getColumnTypeName( nth );
 			column.isNullable = md.isNullable( nth );
-			column.clazz = md.getColumnClassName( nth );
+			column.className = md.getColumnClassName( nth );
 			System.out.println( column );
 //			work.columns.add( column );
 		}

@@ -6,7 +6,7 @@ public class Param
 	public int type;
 	public String typeName;
 	public int isNullable;
-	public String clazz;
+	public String className;
 	public boolean isSigned;
 	public int scaled;
 	public int precision;
@@ -19,7 +19,7 @@ public class Param
 			"type=" + type +
 			", typeName='" + typeName + '\'' +
 			", isNullable=" + isNullable +
-			", clazz='" + clazz + '\'' +
+			", clazz='" + className + '\'' +
 			", isSigned=" + isSigned +
 			", scaled=" + scaled +
 			", precision=" + precision +

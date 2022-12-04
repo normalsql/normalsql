@@ -11,27 +11,13 @@ package fado.voyager;
 public class RSColumn
 {
 	public int nth;
+	public String catalog;
+	public String schema;
+	public String table;
 	public String name;
-	// JDBC driver's capitalization of alias
 	public String label;
-	// Developer's preferred capitalization of alias from original SQL source
-	public String preferredName;
 	public int type;
 	public String typeName;
 	public int isNullable;
-	public String clazz;
-
-	@Override
-	public String toString()
-	{
-		return "RSColumn{" +
-			"name='" + name + '\'' +
-			", label='" + label + '\'' +
-			", preferredName='" + preferredName + '\'' +
-			", type=" + type +
-			", typeName='" + typeName + '\'' +
-			", isNullable=" + isNullable +
-			", clazz='" + clazz + '\'' +
-			'}';
-	}
+	public String className;
 }

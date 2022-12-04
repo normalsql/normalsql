@@ -11,7 +11,7 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     accessors - List<Accessor>, meta data for getters and setters
+##     statementAccessors - List<Accessor>, meta data for getters and setters
 /**
 * ${className}.java   ${date}
 *
@@ -89,8 +89,8 @@ public class
 	public final ${className}ResultSet execute()
 		throws SQLException
 	{
-        #foreach( $a in $accessors )
-        __ps.set${a.clazz}( ${a.nth}, ${a.getter}() );
+        #foreach( $a in $statementAccessors )
+        __ps.set${a.classShortName}( ${a.nth}, ${a.getter}() );
         #end
 
         ResultSet rs = null;
@@ -102,17 +102,17 @@ public class
         return result;
     }
 
-    #foreach( $a in $accessors )
-    private ${a.clazz} _${a.variable} = ${a.asCode};
-    public void ${a.setter}( ${a.clazz} ${a.variable} ) { _${a.variable} = ${a.variable}; }
-    public ${a.clazz} ${a.getter}() { return _${a.variable}; }
+    #foreach( $a in $statementAccessors )
+    private ${a.classShortName} _${a.variable} = ${a.asCode};
+    public void ${a.setter}( ${a.classShortName} ${a.variable} ) { _${a.variable} = ${a.variable}; }
+    public ${a.classShortName} ${a.getter}() { return _${a.variable}; }
 
     #end
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $a in $accessors )
+            #foreach( $a in $statementAccessors )
             , ${a.getter}()
             #end
 		);

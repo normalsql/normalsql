@@ -4,7 +4,6 @@
 ##
 ## Template Parameters:
 ##
-##     helper - Capitalization and type casting methods.
 ##     date - current timestamp
 ##     packageName - target Java package name as String
 ##     className - target Java class name as String
@@ -12,7 +11,7 @@
 ##     originalSQL - original unparsed SQL
 ##     printfSQL - like preparedSQL, but for printf
 ##     sourceFile - name of original .sql file
-##     columnList - terms from prepared SQL as List<fado.Condition>
+##     resultSetAccessors - List<Accessor>, meta data for getters and setters
 /**
 * ${className}ResultSet.java   ${date}
 *
@@ -87,15 +86,13 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
-#foreach( $column in $columnList )
-	#set( $method = $helper.toMethodName( $column.preferredName ))
-	#set( $var = $helper.toVariableName( $column.preferredName ))
-	#set( $type = $helper.toVariableType( $column.type ))
-			_${var} = rs.get${method}( ${foreach.count} );
-#if( $column.isNullable )
-			_${var}_wasNULL = !rs.wasNull();
-#end
-#end
+			#foreach( $a in $resultSetAccessors )
+			_${a.variable} = rs.get${a.classShortName}( ${a.nth} );
+			#if( $a.isNullable )
+			_${a.variable}_wasNull = !rs.wasNull();
+			#end
+
+			#end
 		}
 		return success;
 	}
@@ -134,22 +131,18 @@ public class
 		}
 		return result;
 	}
-	
-#foreach( $column in $columnList )
-#set( $method = $helper.toMethodName( $column.preferredName ))
-#set( $var = $helper.toVariableName( $column.preferredName ))
-#set( $type = $helper.toVariableType( $column.type ))
-#set( $type = $helper.toVariableType( $column.type ))
-#set( $javadoc = $helper.toNameAndAlias( $column ))
-	private ${type} _${var} = ${helper.getInitializerValue( $column.type )};
-	/** column ${javadoc} **/
-	public ${type} get${method}() { return _${var}; }
-#if( $column.isNullable )
-	private boolean _${var}_wasNULL = false;
-	/** returns true if column ${javadoc} was NULL **/
-	public boolean was${method}NULL() { return _${var}_wasNULL; }
-#end
-#end
+
+	#foreach( $a in $resultSetAccessors )
+	private ${a.classShortName} _${a.variable} = ${a.initial};
+	/** column ${a.source} **/
+	public ${a.classShortName} ${a.getter}() { return _${a.variable}; }
+	#if( $a.isNullable )
+	private boolean _${a.variable}_wasNull = false;
+	/** returns true if column ${a.source} was NULL **/
+	public boolean ${a.getter}WasNull() { return _${a.variable}_wasNULL; }
+	#end
+
+	#end
 
 	public String toString()
 	{
@@ -161,12 +154,16 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", \n" );
-#foreach( $column in $columnList )
-#set( $method = $helper.toMethodName( $column.preferredName ))
-		sb.append( "${method}: " );
-		sb.append( get${method}() );
+		#foreach( $a in $resultSetAccessors )
+		sb.append( "${a.variable}: " );
+		sb.append( ${a.getter}() );
+		#if( $a.isNullable )
+		sb.append( "(was null: " );
+		sb.append( ${a.getter}WasNull() );
+		sb.append( ")" );
+		#end
 		sb.append( ", \n" );
-#end
+		#end
 		return sb.toString();
 	}
 }

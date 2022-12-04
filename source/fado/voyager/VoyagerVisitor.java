@@ -31,7 +31,6 @@ extends
 	@Override
 	public Void visitSelect( SelectContext context )
 	{
-//		System.out.println( ctx.getText() );
 		stack.push( new Select() );
 		super.visitSelect( context );
 		Statement child = stack.pop();
@@ -40,34 +39,35 @@ extends
 		return null;
 	}
 
-	@Override
-	public Void visitItemWildcard( ItemWildcardContext context )
-	{
-		Item item = new Item();
-		item.wildcard = true;
-		if( context.tableRef() != null )
-		{
-			item.tableRef = new TableRef( context.tableRef() );
-		}
-		stack.peek().items.add( item );
-//		return super.visitItemWildcard( context );
-		return null;
-	}
+//	@Override
+//	public Void visitItemWildcard( ItemWildcardContext context )
+//	{
+//		Item item = new Item();
+//		item.context = context;
+//		item.wildcard = true;
+//		if( context.tableRef() != null )
+//		{
+//			item.tableRef = new TableRef( context.tableRef() );
+//		}
+//		stack.peek().items.add( item );
+////		return super.visitItemWildcard( context );
+//		return null;
+//	}
 
 	@Override
 	public Void visitItemColumn( ItemColumnContext context )
 	{
-		// TODO only use columnRef if alias not found? Cuz we want all columns, right?
 		Item item = new Item();
+		item.context = context;
 		item.wildcard = false;
 		ColumnRefContext rc = context.findFirst( ColumnRefContext.class, "term/subterm/columnRef" );
 		if( rc != null )
 		{
 			item.columnRef = new ColumnRef( rc );
+			item.name = item.columnRef.column;
 			item.alias = context.findFirstString( "alias/name" );
 			stack.peek().items.add( item );
 		}
-//		return super.visitItemColumn( context );
 		super.visitItemColumn( context );
 		return null;
 	}
