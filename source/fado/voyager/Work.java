@@ -10,16 +10,18 @@ public class Work
 {
 	Statement root;
 
-	// Copied from the PreparedStatement's metadata
-	ArrayList<Param> params = new ArrayList<>();
 	// All the (matched) predicates in one flattened list.
 	ArrayList<Predicate> predicates = new ArrayList<>();
 
-    // Meta data used to be used by templates
+	// Parameters copied from PreparedStatement's metadata
+	ArrayList<Param> params = new ArrayList<>();
+	// Columns copied from ResultSet's metadata
 	public ArrayList<RSColumn> columns = new ArrayList<>();
+
+	public Path sourceFile;
+	public Path targetFile;
 	public String packageName;
 	public String className;
-	public Path sourceFile;
 	public String originalSQL;
 	public String preparedSQL;
 	public String printfSQL;

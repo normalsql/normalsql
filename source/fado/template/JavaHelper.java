@@ -7,15 +7,11 @@
 */
 package fado.template;
 
-import fado.meta.Term;
-import fado.meta.RSColumn;
-
-import java.util.ArrayList;
-import java.util.List;
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 import static java.sql.Types.*;
 
+// TODO merge AccessorFactory and JavaHelper
 public class
 JavaHelper
 {
@@ -368,17 +364,17 @@ JavaHelper
 		return result;
 	}
 
-	public static List<String> convertToCodeList( Term term )
-	{
-//		int type = term.column.type;
-		ArrayList<String> codeList = new ArrayList<>();
-//		for( String value : term.valueList )
-//		{
-//			String code = convertToCode( type, value );
-//			codeList.add( code );
-//		}
-		return codeList;
-	}
+//	public static List<String> convertToCodeList( Term term )
+//	{
+////		int type = term.column.type;
+//		ArrayList<String> codeList = new ArrayList<>();
+////		for( String value : term.valueList )
+////		{
+////			String code = convertToCode( type, value );
+////			codeList.add( code );
+////		}
+//		return codeList;
+//	}
 
 //	public static String convertToCode( Condition condition )
 //	{
@@ -590,22 +586,4 @@ JavaHelper
 		}
 		return result;
 	}
-
-	public static String toNameAndAlias( RSColumn column )
-	{
-		if( column.preferredName.equalsIgnoreCase( column.name ))
-			return column.preferredName;
-		else
-			return column.preferredName + " (" + column.name + ")";
-	}
-
-//	public static String join( CharSequence delimiter, CharSequence... elements )
-//	{
-//		return String.join( delimiter, elements );
-//	}
-//
-//	public static String join( CharSequence delimiter, Iterable<? extends CharSequence> elements )
-//	{
-//		return String.join( delimiter, elements );
-//	}
 }

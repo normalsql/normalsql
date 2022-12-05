@@ -8,7 +8,8 @@ import java.util.*;
 import java.util.Date;
 
 
-import fado.meta.Work;
+import fado.voyager.Voyager;
+import fado.voyager.Work;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -19,11 +20,6 @@ import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-
-
-import static fado.parse.GenericSQLParser.RULE_select;
-import static fado.parse.GenericSQLParser.RULE_insert;
-import static fado.parse.GenericSQLParser.RULE_update;
 
 public class
 	Fado
@@ -158,7 +154,7 @@ public class
 								work.packageName = packageName;
 								work.className = className;
 
-								FadoNested.process( work );
+								new Voyager().process( work );
 							}
 
 						}
@@ -226,106 +222,6 @@ public class
 //		}
 //		statement.setFields( fields );
 //	}
-
-	public File generate( Template template, Map map, File targetRoot, String name )
-		throws Exception
-	{
-		VelocityContext context = new VelocityContext( map );
-		File targetFile = new File( targetRoot, name + ".java" );
-		FileWriter writer = new FileWriter( targetFile );
-		template.merge( context, writer );
-		writer.flush();
-		writer.close();
-
-		return targetFile;
-	}
-
-
-//	public File generateSelect( SelectFadoStatement statement, File targetRoot, String name )
-//		throws Exception
-//	{
-//		VelocityContext context = new VelocityContext();
-//		context.put( "packageName", statement.getPackage() );
-//		context.put( "className", statement.getName() );
-//		context.put( "sql", statement.getRetooledSQL() );
-//		context.put( "conditions", statement.getConditions() );
-//		context.put( "date", new Date() );
-//		context.put( "originalfile", statement.getOriginalFileName() );
-//		context.put( "originallines", statement.getOriginalLines() );
-//
-//		File targetFile = new File( targetRoot, name + ".java" );
-//		FileWriter writer = new FileWriter( targetFile );
-//		_selectTemplate.merge( context, writer );
-//		writer.flush();
-//		writer.close();
-//
-//		return targetFile;
-//	}
-//
-//	public File generateResultSet( SelectFadoStatement statement, File targetRoot, String name )
-//		throws Exception
-//	{
-//		VelocityContext context = new VelocityContext();
-//		context.put( "packageName", statement.getPackage() );
-//		context.put( "className", statement.getName() );
-//		context.put( "sql", statement.getRetooledSQL() );
-//		context.put( "columns", statement.getFinalColumns() );
-//		context.put( "date", new Date() );
-//		context.put( "originalfile", statement.getOriginalFileName() );
-//		context.put( "originallines", statement.getOriginalLines() );
-//
-//		File targetFile = new File( targetRoot, name + "ResultSet.java" );
-//		FileWriter writer = new FileWriter( targetFile );
-//		_resultSetTemplate.merge( context, writer );
-//		writer.flush();
-//		writer.close();
-//
-//		return targetFile;
-//	}
-
-//	public File generateInsert( InsertFadoStatement statement, File targetRoot, String name )
-//		throws Exception
-//	{
-//		VelocityContext context = new VelocityContext();
-//		context.put( "packageName", statement.getPackage() );
-//		context.put( "className", statement.getName() );
-//		context.put( "sql", statement.getRetooledSQL() );
-//		context.put( "fields", statement.getFields() );
-//		context.put( "date", new Date() );
-//		context.put( "originalfile", statement.getOriginalFileName() );
-//		context.put( "originallines", statement.getOriginalLines() );
-//
-//		File targetFile = new File( targetRoot, name + ".java" );
-//		FileWriter writer = new FileWriter( targetFile );
-//		_insertTemplate.merge( context, writer );
-//		writer.flush();
-//		writer.close();
-//
-//		return targetFile;
-//	}
-//
-//	public File generateUpdate( UpdateFadoStatement statement, File targetRoot, String name )
-//		throws Exception
-//	{
-//		VelocityContext context = new VelocityContext();
-//		context.put( "packageName", statement.getPackage() );
-//		context.put( "className", statement.getName() );
-//		context.put( "sql", statement.getRetooledSQL() );
-//		context.put( "fields", statement.getFields() );
-//		context.put( "conditions", statement.getConditions() );
-//		context.put( "date", new Date() );
-//		context.put( "originalfile", statement.getOriginalFileName() );
-//		context.put( "originallines", statement.getOriginalLines() );
-//
-//		File targetFile = new File( targetRoot, name + ".java" );
-//		FileWriter writer = new FileWriter( targetFile );
-//		_updateTemplate.merge( context, writer );
-//		writer.flush();
-//		writer.close();
-//
-//		return targetFile;
-//	}
-
 
 
 }

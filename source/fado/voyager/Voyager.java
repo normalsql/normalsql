@@ -13,9 +13,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,21 +28,30 @@ public class Voyager
 	{
 //		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
 		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
+		Path targetFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescrX.java" );
 
-		String originalSQL = new String( Files.readAllBytes( sourceFile ));
+		Work work = new Work();
+		work.packageName = "beepbeepp";
+		work.className = "Bonkers";
+		work.sourceFile = sourceFile;
+		work.targetFile = targetFile;
 
-		CharStream chars = CharStreams.fromString( originalSQL );
+		new Voyager().process( work );
+	}
+
+	public void process( Work work )
+		throws IOException, SQLException
+	{
+		String originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
+		work.originalSQL = originalSQL;
+
+		CharStream chars = CharStreams.fromString( work.originalSQL );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
 		GenericSQLParser.ParseContext parse = parser.parse();
 		VoyagerVisitor visitor = new VoyagerVisitor();
 
-		Work work = new Work();
-		work.packageName = "beepbeepp";
-		work.className = "Bonkers";
-		work.sourceFile = sourceFile;
-		work.originalSQL = originalSQL;
 
 		visitor.visit( parse );
 		work.root = visitor.root;
@@ -57,6 +64,7 @@ public class Voyager
 			{
 				case Comparison c:
 				{
+					// TODO add operator to method signature
 					String column = getColumn( c.column );
 					Accessor a = factory.create( c.value, column );
 					work.statementAccessors.add( a );
@@ -249,9 +257,24 @@ public class Voyager
 			// TODO: Just one template instance
 			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
 			selectTemplate.merge( childContext, writer );
-			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
-			resultSetTemplate.merge( childContext, writer );
+//			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
+//			resultSetTemplate.merge( childContext, writer );
 		}
 	}
+
+
+	public File generate( Template template, Map map, File targetRoot, String name )
+		throws Exception
+	{
+		VelocityContext context = new VelocityContext( map );
+		File targetFile = new File( targetRoot, name + ".java" );
+		FileWriter writer = new FileWriter( targetFile );
+		template.merge( context, writer );
+		writer.flush();
+		writer.close();
+
+		return targetFile;
+	}
+
 
 }

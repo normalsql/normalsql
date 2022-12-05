@@ -5,6 +5,7 @@ import fado.parse.GenericSQLParser.*;
 /**
  * Using a Factory in anticipation of a Strategy.
  */
+// TODO merge AccessorFactory and JavaHelper
 public class AccessorFactory
 {
 	public Accessor create( SubtermContext context, String... method )
