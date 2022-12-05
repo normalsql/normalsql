@@ -51,7 +51,7 @@ public class
     ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 	public final String __printfSQL =
 		#foreach( $line in $printfSQL.split('\n') )
-		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
+		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
 		#end
 
 	/**
@@ -102,6 +102,7 @@ public class
         return result;
     }
 
+	// TODO add null check to setters (when !isnullable)
     #foreach( $a in $statementAccessors )
     private ${a.classShortName} _${a.variable} = ${a.asCode};
     public void ${a.setter}( ${a.classShortName} ${a.variable} ) { _${a.variable} = ${a.variable}; }
