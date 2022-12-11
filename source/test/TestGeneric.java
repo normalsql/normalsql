@@ -1,8 +1,8 @@
 package test;
 
-import fado.parse.GenericSQLLexer;
-import fado.parse.GenericSQLParser;
-import fado.parse.GenericSQLParser.ParseContext;
+import normalsql.parse.NormalSQLLexer;
+import normalsql.parse.NormalSQLParser;
+import normalsql.parse.NormalSQLParser.ParseContext;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ TestGeneric
 	{
 
 //		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/h2database/h2/src/test/org/h2/test/scripts" );
-		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/fado/source/test/" );
+		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql/source/test/" );
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
 			{
@@ -146,9 +146,9 @@ TestGeneric
 	public void parse( Path sourceFile, int nth, String sql )
 	{
 		CharStream chars = CharStreams.fromString( sql );
-		GenericSQLLexer lexer = new GenericSQLLexer( chars );
+		NormalSQLLexer lexer = new NormalSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		GenericSQLParser parser = new GenericSQLParser( tokens );
+		NormalSQLParser parser = new NormalSQLParser( tokens );
 //		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {

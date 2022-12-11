@@ -26,7 +26,7 @@ class Table
 		return columnMap.get( name.toLowerCase() );
 	}
 }
-// TODO move methods to main Fado.java
+// TODO move methods to main Main.java
 public class MetaData
 {
 	public static void main( String[] args )

@@ -1,6 +1,6 @@
 #!/bin/bash
 rm -rf build
 mkdir build
-mkdir build/fado
-cp -r ../classes/ build/fado/
-jar cvf build/fado-a001.jar -C build/fado .
+mkdir build/normalsql
+cp -r ../classes/ build/normalsql/
+jar cvf build/normalsql-a001.jar -C build/normalsql .

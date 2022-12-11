@@ -1,0 +1,544 @@
+## Main's SELECT Statement Template
+## 
+## Template Parameters:
+## 
+## packageName - target Java package name as String
+## className - target Java class name as String
+## sql - lines of retooled SQL statement as List<String>
+## columns - columns found in source SQL as List<normalsql.meta.Column>
+## terms - terms found in source SQL as List<normalsql.meta.Term>
+## date - Main's timestamp
+/**
+
+${className}.java   ${date}
+  
+Generated using NormalSQL's Select template. Original SQL:
+    
+#foreach( $line in $originallines )
+$line
+#end
+
+@see ${originalfile}
+  
+
+**/
+
+package ${packageName};
+
+import java.io.StringWriter;
+import java.io.PrintWriter;
+import java.sql.*;
+import java.util.Iterator;
+import java.math.BigDecimal;
+
+public class 
+	${className}
+implements 
+	Iterable<${className}.Row>, Iterator<${className}.Row>
+{
+	protected Connection __connection = null;
+
+	public ${className}( Connection connection )
+	{
+		__connection = connection;
+	}
+	
+	protected PreparedStatement __prepared = null;
+
+	protected final PreparedStatement getPreparedStatement()
+		throws SQLException
+	{
+		if( __prepared == null )
+		{
+			String sql = getSQL();
+			int scrolling = getScrolling();
+			int concurrency = getConcurrency();
+			__prepared = __connection.prepareStatement( sql, scrolling, concurrency );
+
+		}
+		return __prepared;
+	}
+
+	protected boolean __executed = false;
+	
+	public final boolean execute()
+		throws SQLException
+	{
+		boolean success = false;
+		if( !__executed )
+		{
+			__executed = true;
+			PreparedStatement statement = getPreparedStatement();
+			setParameters( statement );
+			success = statement.execute();
+			if( success )
+			{
+				__resultSet = statement.getResultSet();
+			}
+		}
+		return success;
+	}
+
+	/**
+	 * Done with current response (ResultSet), clears this instance, prior to reuse.
+	 * 
+	 * @throws SQLException
+	 */
+	public void close()
+		throws SQLException
+	{
+		getNextRow( false );
+		if( __resultSet != null )
+		{
+			__resultSet.close();
+			__resultSet = null;
+		}
+		__executed = false;
+		
+	}
+
+	protected ResultSet __resultSet = null;
+
+	public final ResultSet getResultSet()
+	{
+		return __resultSet;
+	}
+	
+	private int __scrolling = ResultSet.TYPE_SCROLL_SENSITIVE;
+	
+	public void setScrolling( int scrolling )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__scrolling = scrolling;
+	}
+	
+	public final boolean hasNextRow()
+		throws SQLException
+	{
+		execute();
+		
+		boolean success = false;
+		if( __resultSet != null )
+		{
+			success = __resultSet.next();
+			getNextRow( success );
+
+		}
+		return success;
+	}
+	
+	public int count()
+	{
+		int result = 0;
+		try
+		{
+			execute();
+			ResultSet rs = getResultSet();
+			int current = rs.getRow();
+			if( rs.last() )
+			{
+				result = rs.getRow();
+				if( current == 0 )
+				{
+					rs.beforeFirst();
+				}
+				else
+				{
+					rs.absolute( current );
+				}
+			}
+				
+		}
+		catch( SQLException e )
+		{
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public void getNextRow( boolean success )
+		throws SQLException
+	{
+		if( success )
+		{
+			ResultSet rs = getResultSet();
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = rs.get${column.TypedMethod}( "${column.NameAsMethod}" );
+#end
+		}
+		else
+		{
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = ${column.InitializerValue};
+#end
+		}
+	}
+	
+#foreach( $column in $columns )
+	private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+
+	public ${column.JavaType} get${column.NameAsMethod}()
+	{
+		return _${column.NameAsVariable};
+	}	
+
+	public void set${column.NameAsMethod}( ${column.JavaType} ${column.NameAsVariable} )
+		throws SQLException
+	{
+		if( __inserting || __updating )
+		{
+			_${column.NameAsVariable} = ${column.NameAsVariable};
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+
+#end
+
+	private boolean __inserting = false;
+	
+	/**
+	 * Tries to start inserting mode. Throws SQLException if 
+	 * 
+	 * @throws SQLException
+	 */
+	public void startInsert()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__inserting = true;
+
+#foreach( $column in $columns )
+			_${column.NameAsVariable} = ${column.InitializerValue};
+#end
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
+	public void finishInsert()
+		throws SQLException
+	{
+		if( __inserting )
+		{
+			__inserting = false;
+			
+			ResultSet rs = getResultSet();
+			rs.moveToInsertRow();
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
+			rs.insertRow();
+			rs.moveToCurrentRow();
+			rs.next();
+			getNextRow( true );
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	}
+	
+	
+	private boolean __updating = false;
+	
+	public void startUpdating()
+		throws SQLException
+	{
+		execute();
+		ResultSet rs = getResultSet();
+		int concurrency = rs.getConcurrency();
+		if( concurrency == ResultSet.CONCUR_UPDATABLE )
+		{
+			__updating = true;
+		}
+		else
+		{
+			throw new SQLException( "ResultSet not updatable." );
+		}
+	}
+	
+	public void finishUpdating()
+		throws SQLException
+	{
+		if( __updating )
+		{
+			__updating = false;
+			ResultSet rs = getResultSet();
+			
+#foreach( $column in $columns )
+			rs.update${column.TypedMethod}( "${column.NameAsMethod}", _${column.NameAsVariable} );
+#end
+
+			rs.updateRow();
+		}
+		else
+		{
+			throw new SQLException( "call startInset() before finishInsert()" );
+		}
+	
+	}
+
+#foreach( $term in $terms )
+##
+#if( $term.isComparison() )
+
+	public ${term.JavaType} _${term.NameAsVariable}Param = $term.getValueAsCode();
+	
+	public void set${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
+	{
+		_${term.NameAsVariable}Param = ${term.NameAsVariable};
+	}
+	
+	public ${term.JavaType} get${term.NameAsMethod}Param()
+	{
+		return _${term.NameAsVariable}Param;
+	}
+
+#elseif( $term.isLIKE() )
+
+	public ${term.JavaType} _${term.NameAsVariable}Param = $term.getValueAsCode();
+	
+	public void set${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
+	{
+		_${term.NameAsVariable}Param = ${term.NameAsVariable};
+	}
+	
+	public ${term.JavaType} get${term.NameAsMethod}Param()
+	{
+		return _${term.NameAsVariable}Param;
+	}
+
+#elseif( $term.isIN() )
+	private ${term.JavaType}[] _${term.NameAsVariable}List = new ${term.JavaType}[] { $term.getValueAsCode() };
+	private int _${term.NameAsVariable}Count = 0;
+	public void add${term.NameAsMethod}Param( ${term.JavaType} ${term.NameAsVariable} )
+	{
+		if( _${term.NameAsVariable}Count == _${term.NameAsVariable}List.length )
+		{
+			throw new IndexOutOfBoundsException( "IN term parameter array only has room for: " + _${term.NameAsVariable}List.length );
+		}
+		int count = _${term.NameAsVariable}Count;
+		
+		// Parameter array get filled to the right, so there are no holes
+		for( int i = count; count < _${term.NameAsVariable}List.length; count++ )
+		{
+			_${term.NameAsVariable}List[i] = ${term.NameAsVariable};
+		}
+		_${term.NameAsVariable}Count++;
+	}
+	
+	public ${term.JavaType} get${term.NameAsMethod}Param( int nth )
+	{
+		return _${term.NameAsVariable}List[ nth ];
+	}
+	
+#elseif( $term.isBETWEEN() )
+
+	public ${term.JavaType} _${term.NameAsVariable}LeftParam = $term.getLeftAsCode();
+	
+	public void set${term.NameAsMethod}LeftParam( ${term.JavaType} ${term.NameAsVariable} )
+	{
+		_${term.NameAsVariable}LeftParam = ${term.NameAsVariable};
+	}
+	
+	public ${term.JavaType} get${term.NameAsMethod}LeftParam()
+	{
+		return _${term.NameAsVariable}LeftParam;
+	}
+
+	public ${term.JavaType} _${term.NameAsVariable}RightParam = $term.getRightAsCode();
+	
+	public void set${term.NameAsMethod}RightParam( ${term.JavaType} ${term.NameAsVariable} )
+	{
+		_${term.NameAsVariable}RightParam = ${term.NameAsVariable};
+	}
+	
+	public ${term.JavaType} get${term.NameAsMethod}RightParam()
+	{
+		return _${term.NameAsVariable}RightParam;
+	}
+#end
+#end
+
+	private static String __sql = null;
+	
+	public String getSQL()
+	{
+		if( __sql == null )
+		{
+			StringWriter writer = new StringWriter();
+			PrintWriter w = new PrintWriter( writer );
+#foreach( $line in $sql )
+			w.println( "$line" );
+#end
+			w.close();
+			__sql = writer.toString();
+		}
+		return __sql;
+	}
+	
+	protected void setParameters( PreparedStatement prepared )
+		throws SQLException
+	{
+#set( $nth = 0 )
+#foreach( $term in $terms )
+##
+#if( $term.isComparison() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param() );
+##
+#elseif( $term.isLIKE() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param() );
+##
+#elseif( $term.isIN() )
+##
+#set( $size = $term.getValues().size() - 1 )
+##
+#foreach( $abc in [0..$size] )
+#set( $nth = $nth + 1 )
+		prepared.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}Param( ${abc} ));
+#end
+##
+#elseif( $term.isBETWEEN() )
+##
+#set( $nth = $nth + 1 )
+		prepared.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}LeftParam() );
+#set( $nth = $nth + 1 )
+		prepared.set${term.TypedMethod}( ${nth}, get${term.NameAsMethod}RightParam() );
+##
+#end
+#end
+	}
+
+	public String toString()
+	{
+		String result = getSQL();
+##
+#foreach( $term in $terms )
+##
+#if( $term.isIN() )
+##
+#set( $size = $term.getValues().size() - 1 )
+#foreach( $abc in [0..$size] )
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}Param( ${abc} )));
+#end
+##
+#elseif( $term.isBETWEEN() )
+##
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}LeftParam() ));
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}RightParam() ));
+#elseif( $term.isComparison() || $term.isLIKE() )
+		result = result.replaceFirst( "\\?", quotifyString( get${term.NameAsMethod}Param() ));
+#end
+#end
+		return result;
+	}
+	
+	private String quotifyString( Object value )
+	{
+		if( value instanceof String )
+		{
+			return "'" + value.toString() + "'";
+		}
+		else
+		{
+			return value.toString();
+		}
+	}
+
+
+	public class Row
+	{
+#foreach( $column in $columns )
+		private ${column.JavaType} _${column.NameAsVariable} = ${column.InitializerValue};
+	
+		public ${column.JavaType} get${column.NameAsMethod}()
+		{
+			return _${column.NameAsVariable};
+		}	
+		
+#end
+	}
+
+	private Row __row = null;
+
+	public boolean hasNext() 
+	{
+//		if( __row != null ) return true;
+		try 
+		{
+			boolean next = hasNextRow();
+			if( next )
+			{
+				__row = new Row();
+#foreach( $column in $columns )
+				__row._${column.NameAsVariable} = _${column.NameAsVariable};
+#end
+			}
+			return next;
+		} 
+		catch( SQLException e ) 
+		{
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public ${className}.Row next()
+	{
+		Row row = __row;
+		__row = null;
+		return row;
+	}
+	
+	public void remove() 
+	{
+		throw new UnsupportedOperationException();
+	}
+
+	public Iterator<${className}.Row> iterator() {
+		return this;
+	}
+	
+		public int getScrolling()
+	{
+		return __scrolling;
+	}
+	
+	private int __concurrency = ResultSet.CONCUR_UPDATABLE;
+	
+	public void setConcurrency( int concurrency )
+	{
+		try
+		{
+			close();
+		}
+		catch( Exception e ) {}
+		__concurrency = concurrency;
+	}
+	
+	public int getConcurrency()
+	{
+		return __concurrency;
+	}
+	
+	
+}

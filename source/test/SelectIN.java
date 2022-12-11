@@ -1,7 +1,7 @@
 package test;
 
-import fado.meta.Column;
-import fado.meta.Param;
+import normalsql.meta.Column;
+import normalsql.meta.Param;
 import spare.Dumper;
 
 import java.sql.*;

@@ -38,7 +38,7 @@ ID Generators
 	Detect identity columns for inserts, updates
 use better timestamp in generated files
 have generated files' javadoc reference each other?
-add Fado's revision to generated files
+add NormalSQL's revision to generated files
 	
 Figure out something for transactions 
 	maybe nothing, just use JDBC
@@ -83,7 +83,7 @@ Compare SQL strategies, pros/cons
 			JOINs suck
 			complicated queries revert to SQL/HQL
 			tough to debug
-	Fado generator
+	NormalSQL generator
 		pros
 			ease of use, typesafe wrappers
 			great for read-only, e.g. report engines
