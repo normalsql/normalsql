@@ -5,17 +5,17 @@ import joptsimple.OptionSet;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 
 // TODO: validate
 // TODO: print help
+// TODO option for template to use
 public class FadoOptions
 {
 	public FadoOptions()
 	{
 	}
 
-	public FadoOptions( Properties props )
+	public FadoOptions( PropertiesConfig props )
 	{
 		if( props == null )
 		{
@@ -36,7 +36,7 @@ public class FadoOptions
 
 	String _filename = "fado";
 
-	Properties _props = new Properties();
+	PropertiesConfig _props = new PropertiesConfig();
 
 	OptionSet _options = null;
 
@@ -121,7 +121,7 @@ public class FadoOptions
 			if( file != null ) 
 			{
 				FileReader reader = new FileReader( file );
-				_props = Properties.load( reader );
+				_props = PropertiesConfig.load( reader );
 				_props.setURL( file.toURL() );
 			}
 		}

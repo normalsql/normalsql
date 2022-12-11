@@ -1,4 +1,4 @@
-package fado;
+package spare;
 
 import java.io.OutputStream;
 import java.io.PrintStream;

@@ -2,11 +2,10 @@ package test;
 
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
+import fado.parse.GenericSQLParser.ParseContext;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -179,6 +178,6 @@ TestGeneric
 
 		} );
 
-		GenericSQLParser.ParseContext result = parser.parse();
+		ParseContext result = parser.parse();
 	}
 }

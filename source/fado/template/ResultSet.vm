@@ -1,20 +1,19 @@
-## Fado's SELECT ResultSet Template for Java & JDBC
+## Fado's ResultSet Template for Java & JDBC
 ## 
 ## Copyright 2022, 2014, 2011, 2010 Jason Osgood
 ##
 ## Template Parameters:
 ##
-##     helper - Capitalization and type casting methods.
 ##     date - current timestamp
 ##     packageName - target Java package name as String
-##     className - target Java class name as String
+##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     printfSQL - like preparedSQL, but for printf
 ##     sourceFile - name of original .sql file
-##     columnList - conditions from prepared SQL as List<fado.Condition>
+##     resultSetProperties - List<Property>, meta data for getters and setters
 /**
-* ${className}ResultSet.java   ${date}
+* ${resultSetClassName}.java ${date}
 *
 * Generated using Fado's ResultSet.vm template.
 *
@@ -29,11 +28,11 @@ import java.sql.*;
 import java.math.BigDecimal;
 
 public class 
-	${className}ResultSet
+	${resultSetClassName}
 {
 	private ResultSet __resultSet = null;
 
-	public ${className}ResultSet( ResultSet resultSet )
+	public ${resultSetClassName}( ResultSet resultSet )
 	{
 		__resultSet = resultSet;
 	}
@@ -87,15 +86,13 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
-#foreach( $column in $columnList )
-	#set( $method = $helper.toMethodName( $column.preferredName ))
-	#set( $var = $helper.toVariableName( $column.preferredName ))
-	#set( $type = $helper.toVariableType( $column.type ))
-			_${var} = rs.get${method}( ${foreach.count} );
-#if( $column.isNullable )
-			_${var}_wasNULL = !rs.wasNull();
-#end
-#end
+			#foreach( $p in $resultSetProperties )
+			_${p.variable} = rs.get${p.classShortName}( ${p.nth} );
+			#if( $a.isNullable )
+			_${p.variable}_wasNull = !rs.wasNull();
+			#end
+
+			#end
 		}
 		return success;
 	}
@@ -134,23 +131,20 @@ public class
 		}
 		return result;
 	}
-	
-#foreach( $column in $columnList )
-#set( $method = $helper.toMethodName( $column.preferredName ))
-#set( $var = $helper.toVariableName( $column.preferredName ))
-#set( $type = $helper.toVariableType( $column.type ))
-#set( $type = $helper.toVariableType( $column.type ))
-#set( $javadoc = $helper.toNameAndAlias( $column ))
-	private ${type} _${var} = ${helper.getInitializerValue( $column.type )};
-	/** column ${javadoc} **/
-	public ${type} get${method}() { return _${var}; }
-#if( $column.isNullable )
-	private boolean _${var}_wasNULL = false;
-	/** returns true if column ${javadoc} was NULL **/
-	public boolean was${method}NULL() { return _${var}_wasNULL; }
-#end
-#end
 
+	#foreach( $p in $resultSetProperties )
+	private ${p.classShortName} _${p.variable} = ${p.initial};
+	/** column "${p.source}" **/
+	public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
+	#if( $p.isNullable )
+	private boolean _${p.variable}_wasNull = false;
+	/** returns true if column "${p.source}" was NULL **/
+	public boolean ${p.getter}WasNull() { return _${p.variable}_wasNull; }
+	#end
+
+	#end
+
+	// TODO switch from StringBuilder to printf
 	public String toString()
 	{
 		if( getResultSet() == null )
@@ -161,12 +155,16 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", \n" );
-#foreach( $column in $columnList )
-#set( $method = $helper.toMethodName( $column.preferredName ))
-		sb.append( "${method}: " );
-		sb.append( get${method}() );
+		#foreach( $p in $resultSetProperties )
+		sb.append( "${p.variable}: " );
+		sb.append( ${p.getter}() );
+		#if( $p.isNullable )
+		sb.append( "(was null: " );
+		sb.append( ${p.getter}WasNull() );
+		sb.append( ")" );
+		#end
 		sb.append( ", \n" );
-#end
+		#end
 		return sb.toString();
 	}
 }

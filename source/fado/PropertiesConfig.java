@@ -1,16 +1,6 @@
 package fado;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,16 +21,15 @@ import java.util.Map;
  * 
  * Writing out the properties file "pretty prints" the data.
  * 
- * @author osgood_j
- * 
+ *
  */
 
-public class Properties
+public class PropertiesConfig
 {
 	ArrayList<Line> lines = null;
 	HashMap<String, Line> map = null;
 
-	public Properties()
+	public PropertiesConfig()
 	{
 		clear();
 	}
@@ -178,28 +167,28 @@ public class Properties
 		}
 	}
 
-	public static Properties load( String filename ) throws IOException
+	public static PropertiesConfig load( String filename ) throws IOException
 	{
-		ClassLoader loader = Properties.class.getClassLoader();
+		ClassLoader loader = PropertiesConfig.class.getClassLoader();
 		URL url = loader.getResource( filename + ".properties" );
 		if( url != null )
 		{
 			InputStream in = url.openStream();
 			InputStreamReader reader = new InputStreamReader( in );
-			Properties props = load( reader );
+			PropertiesConfig props = load( reader );
 			props._url = url;
 			return props;
 		}
 		throw new FileNotFoundException( filename );
 	}
 	
-	public static Properties load( File file ) 
+	public static PropertiesConfig load( File file )
 		throws IOException
 	{
 		if( file.exists() ) 
 		{
 			FileReader reader = new FileReader( file );
-			Properties props = load( reader );
+			PropertiesConfig props = load( reader );
 			props._url = file.toURL();
 			return props;
 		}
@@ -207,14 +196,14 @@ public class Properties
 	
 	}
 
-	public static Properties load( Reader reader ) throws IOException
+	public static PropertiesConfig load( Reader reader ) throws IOException
 	{
 		if( reader == null ) 
 		{
 			throw new NullPointerException( "reader" );
 		}
 		
-		Properties props = new Properties();
+		PropertiesConfig props = new PropertiesConfig();
 		BufferedReader buffer = new BufferedReader( reader );
 		while( true )
 		{

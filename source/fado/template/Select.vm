@@ -1,25 +1,25 @@
 ## Fado's SELECT Statement Template for Java & JDBC
 ##
 ## Copyright 2022, 2014, 2011, 2010 Jason Osgood
-## 
+##
 ## Template Parameters:
 ##
-##     Comparison - reference to Comparison.class
-##     Between - reference to Between.class
-##     IN - reference to IN.class
-##     helper - Capitalization and type casting methods.
 ##     date - current timestamp
 ##     packageName - target Java package name as String
-##     className - target Java class name as String
+##     statementClassName - target Java class name for PreparedStatement wrapper as String
+##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     preparedSQL - prepared SQL statement (containg '?' params)
-##     printfSQL - like preparedSQL, but for printf
-##     conditionList - conditions from prepared SQL as List<fado.Condition>
+##     preparedSQL - prepared statement version of originalSQL
+##     printfSQL - printf version of originalSQL, for debugging
+##     statementProperties - List<Property>, meta data for getters and setters
 /**
-* ${className}.java   ${date}
+* ${resultSetClassName}.java ${date}
 *
-* Generated using Fado's Select.vm template. Original SQL:
+## TODO put actual filename and its timestamp here.
+* Generated using Fado's Select.vm template.
+*
+* Original SQL:
 *
 ## TODO: Should this be a JavaDoc @snippet?
 * <pre>
@@ -30,6 +30,7 @@
 * }
 * </pre>
 *
+## TODO add timestamp
 * @see ${sourceFile}
 *
 **/
@@ -42,31 +43,33 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class
-	${className}
+	${statementClassName}
 {
 	private PreparedStatement __ps = null;
+
+    ## add back each '\n', then concat each line with '+', then end with ';'
 	public final String __preparedSQL =
-#foreach( $line in $preparedSQL.split('\n') )
-## add back each '\n', then concat each line with '+', then end with ';'
+		#foreach( $line in $preparedSQL.split('\n') )
 		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
-#end
+		#end
+
+    ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 	public final String __printfSQL =
-#foreach( $line in $printfSQL.split('\n') )
-## add back each '\n' (as %n), then concat each line with '+', then end with ';'
-		"${line}#if($foreach.hasNext)%n#end"#if($foreach.hasNext)+ #else; #end
-#end
+		#foreach( $line in $printfSQL.split('\n') )
+		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		#end
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
-		${className} is a wrapper for a PreparedStatement, not a Connection.
+		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
 	**/
-	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
+	public ${statementClassName}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
 		__ps = connection.prepareStatement( __preparedSQL, resultSetType, resultSetConcurrency );
 	}
 
-	public ${className}( Connection connection )
+	public ${statementClassName}( Connection connection )
 		throws SQLException
 	{
 		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
@@ -74,116 +77,50 @@ public class
 
 	/**
 		Pass a DataSource. You are responsible for closing that DataSource.
-		${className} is a wrapper for a PreparedStatement, not a Connection.
+		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
 	**/
-	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+	public ${statementClassName}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
 		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
 	}
 
-	public ${className}( DataSource dataSource )
+	public ${statementClassName}( DataSource dataSource )
 		throws SQLException
 	{
 		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 	}
 
-	public final ${className}ResultSet execute()
+	public final ${resultSetClassName} execute()
 		throws SQLException
 	{
-#set( $nth = 0 )
-#foreach( $condition in $conditionList )
-	#set( $method = $helper.toMethodName( $condition.columnName ))
-	#set( $type = $helper.toMethodType( $condition.column.type ))
-	#if( $Comparison.isInstance( $condition ))
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}() );
-	#elseif( $Between.isInstance( $condition ))
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}Left() );
-		#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}Right() );
-	#elseif( $IN.isInstance( $condition ))
-		#foreach( $abc in $condition.literals )
-			#set( $nth = $nth + 1 )
-		__ps.set${type}( ${nth}, get${method}( $foreach.count ));
-		#end
-	#end
-#end
+        #foreach( $p in $statementProperties )
+        __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
+        #end
 
-		ResultSet rs = null;
-		if( __ps.execute() )
-		{
-			rs = __ps.getResultSet();
-		}
-		${className}ResultSet result = new ${className}ResultSet( rs );
-		return result;
-	}
+        ResultSet rs = null;
+        if( __ps.execute() )
+        {
+            rs = __ps.getResultSet();
+        }
+		${resultSetClassName} result = new ${resultSetClassName}( rs );
+        return result;
+    }
 
-#foreach( $condition in $conditionList )
-#set( $method = $helper.toMethodName( $condition.columnName ))
-#set( $var = $helper.toVariableName( $condition.columnName ))
-#set( $type = $helper.toVariableType( $condition.column.type ))
-#set( $codeList = $helper.convertToCodeList( $condition ))
+	// TODO add null check to setters (when !isnullable)
+    #foreach( $p in $statementProperties )
+    private ${p.classShortName} _${p.variable} = ${p.asCode};
+    public void ${p.setter}( ${p.classShortName} ${p.variable} ) { _${p.variable} = ${p.variable}; }
+    public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
 
-#if( $Comparison.isInstance( $condition ))
-	private ${type} _${var} = $codeList[0];
-	public void set${method}( ${type} ${var} ) { _${var} = ${var}; }
-	public ${type} get${method}() { return _${var}; }
-
-#elseif( $Between.isInstance( $condition ))
-	private ${type} _${var}Left = $codeList[0];
-	public void set${method}Left( ${type} ${var} ) { _${var}Left = ${var}; }
-	public ${type} get${method}Left() { return _${var}Left; }
-
-	private ${type} _${var}Right = $codeList[1];
-	public void set${method}Right( ${type} ${var} ) { _${var}Right = ${var}; }
-	public ${type} get${method}Right() { return _${var}Right; }
-
-#elseif( $IN.isInstance( $condition ))
-	private ${type}[] _${var}List = new ${type}[] {
-		$helper.join( ", ", $codeList )
-	};
-	private int _${var}Count = 0;
-	public void add${method}Param( ${type} ${var} )
-	{
-		if( _${var}Count == _${var}List.length )
-		{
-			throw new IndexOutOfBoundsException( "IN condition parameter array only has room for: " + _${var}List.length );
-		}
-		int count = _${var}Count;
-
-		// Parameter array get filled to the right, so there are no holes
-		for( int i = count; count < _${var}List.length; count++ )
-		{
-			_${var}List[i] = ${var};
-		}
-		_${var}Count++;
-	}
-
-	public ${type} get${method}( int nth )
-	{
-		return _${var}List[ nth ];
-	}
-#end
-#end
+    #end
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-#foreach( $condition in $conditionList )
-	#set( $method = $helper.toMethodName( $condition.columnName ))
-	#if( $Comparison.isInstance( $condition ))
-			, get${method}()
-	#elseif( $Between.isInstance( $condition ))
-	        , get${method}Left()
-			, get${method}Right()
-	#elseif( $IN.isInstance( $condition ))
-		#foreach( $abc in $condition.literals )
-			, get${method}( $foreach.count )
-		#end
-	#end
-#end
-		));
+            #foreach( $p in $statementProperties )
+            , ${p.getter}()
+            #end
+		);
 	}
 }
