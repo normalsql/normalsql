@@ -6,14 +6,15 @@
 ##
 ##     date - current timestamp
 ##     packageName - target Java package name as String
-##     className - target Java class name as String
+##     statementClassName - target Java class name for PreparedStatement wrapper as String
+##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     statementAccessors - List<Accessor>, meta data for getters and setters
+##     statementProperties - List<Property>, meta data for getters and setters
 /**
-* ${className}.java   ${date}
+* ${resultSetClassName}.java ${date}
 *
 * Generated using Fado's Select.vm template. Original SQL:
 *
@@ -38,7 +39,7 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class
-	${className}
+	${statementClassName}
 {
 	private PreparedStatement __ps = null;
 
@@ -56,15 +57,15 @@ public class
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
-		${className} is a wrapper for a PreparedStatement, not a Connection.
+		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
 	**/
-	public ${className}( Connection connection, int resultSetType, int resultSetConcurrency )
+	public ${statementClassName}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
 		__ps = connection.prepareStatement( __preparedSQL, resultSetType, resultSetConcurrency );
 	}
 
-	public ${className}( Connection connection )
+	public ${statementClassName}( Connection connection )
 		throws SQLException
 	{
 		this( connection, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
@@ -72,25 +73,25 @@ public class
 
 	/**
 		Pass a DataSource. You are responsible for closing that DataSource.
-		${className} is a wrapper for a PreparedStatement, not a Connection.
+		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
 	**/
-	public ${className}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
+	public ${statementClassName}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
 		this( dataSource.getConnection(), resultSetType, resultSetConcurrency );
 	}
 
-	public ${className}( DataSource dataSource )
+	public ${statementClassName}( DataSource dataSource )
 		throws SQLException
 	{
 		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 	}
 
-	public final ${className}ResultSet execute()
+	public final ${resultSetClassName} execute()
 		throws SQLException
 	{
-        #foreach( $a in $statementAccessors )
-        __ps.set${a.classShortName}( ${a.nth}, ${a.getter}() );
+        #foreach( $p in $statementProperties )
+        __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
         #end
 
         ResultSet rs = null;
@@ -98,23 +99,23 @@ public class
         {
             rs = __ps.getResultSet();
         }
-        ${className}ResultSet result = new ${className}ResultSet( rs );
+		${resultSetClassName} result = new ${resultSetClassName}( rs );
         return result;
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $a in $statementAccessors )
-    private ${a.classShortName} _${a.variable} = ${a.asCode};
-    public void ${a.setter}( ${a.classShortName} ${a.variable} ) { _${a.variable} = ${a.variable}; }
-    public ${a.classShortName} ${a.getter}() { return _${a.variable}; }
+    #foreach( $p in $statementProperties )
+    private ${p.classShortName} _${p.variable} = ${p.asCode};
+    public void ${p.setter}( ${p.classShortName} ${p.variable} ) { _${p.variable} = ${p.variable}; }
+    public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
 
     #end
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $a in $statementAccessors )
-            , ${a.getter}()
+            #foreach( $p in $statementProperties )
+            , ${p.getter}()
             #end
 		);
 	}

@@ -1,4 +1,4 @@
-package fado.voyager;
+package fado;
 
 import fado.parse.GenericSQLParser.*;
 
@@ -8,17 +8,17 @@ import fado.parse.GenericSQLParser.*;
 // TODO merge AccessorFactory and JavaHelper
 public class AccessorFactory
 {
-	public Accessor create( SubtermContext context, String... method )
+	public Property create( SubtermContext context, String... method )
 	{
-		Accessor a = new Accessor();
-		a.context = ((SubtermValueContext) context).value();
+		Property prop = new Property();
+		prop.context = ((SubtermValueContext) context).value();
 		// TODO fix this to include all tokens, incl. whitespace
-		a.source = a.context.getText();
-		a.trimmed = a.context.getTrimmedText();
-		a.variable = toVariableCase( method );
-		a.getter = "get" + toMethodCase( method );
-		a.setter = "set" + toMethodCase( method );
-		return a;
+		prop.source = prop.context.getText();
+		prop.trimmed = prop.context.getTrimmedText();
+		prop.variable = toVariableCase( method );
+		prop.getter = "get" + toMethodCase( method );
+		prop.setter = "set" + toMethodCase( method );
+		return prop;
 	}
 
 	// TODO remove invalid chars (eg spaces), toUpper, toLower, toCapitals, recognize abbreviations (eg "ID"), to snake_case

@@ -1,6 +1,4 @@
-package fado.voyager;
-
-import java.util.ArrayList;
+package fado.meta;
 
 public class Select extends Statement
 {

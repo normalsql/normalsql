@@ -1,4 +1,4 @@
-## Fado's SELECT ResultSet Template for Java & JDBC
+## Fado's ResultSet Template for Java & JDBC
 ## 
 ## Copyright 2022, 2014, 2011, 2010 Jason Osgood
 ##
@@ -6,14 +6,14 @@
 ##
 ##     date - current timestamp
 ##     packageName - target Java package name as String
-##     className - target Java class name as String
+##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     printfSQL - like preparedSQL, but for printf
 ##     sourceFile - name of original .sql file
-##     resultSetAccessors - List<Accessor>, meta data for getters and setters
+##     resultSetProperties - List<Property>, meta data for getters and setters
 /**
-* ${className}ResultSet.java   ${date}
+* ${resultSetClassName}.java ${date}
 *
 * Generated using Fado's ResultSet.vm template.
 *
@@ -28,11 +28,11 @@ import java.sql.*;
 import java.math.BigDecimal;
 
 public class 
-	${className}ResultSet
+	${resultSetClassName}
 {
 	private ResultSet __resultSet = null;
 
-	public ${className}ResultSet( ResultSet resultSet )
+	public ${resultSetClassName}( ResultSet resultSet )
 	{
 		__resultSet = resultSet;
 	}
@@ -86,10 +86,10 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
-			#foreach( $a in $resultSetAccessors )
-			_${a.variable} = rs.get${a.classShortName}( ${a.nth} );
+			#foreach( $p in $resultSetProperties )
+			_${p.variable} = rs.get${p.classShortName}( ${p.nth} );
 			#if( $a.isNullable )
-			_${a.variable}_wasNull = !rs.wasNull();
+			_${p.variable}_wasNull = !rs.wasNull();
 			#end
 
 			#end
@@ -132,18 +132,19 @@ public class
 		return result;
 	}
 
-	#foreach( $a in $resultSetAccessors )
-	private ${a.classShortName} _${a.variable} = ${a.initial};
-	/** column ${a.source} **/
-	public ${a.classShortName} ${a.getter}() { return _${a.variable}; }
-	#if( $a.isNullable )
-	private boolean _${a.variable}_wasNull = false;
-	/** returns true if column ${a.source} was NULL **/
-	public boolean ${a.getter}WasNull() { return _${a.variable}_wasNULL; }
+	#foreach( $p in $resultSetProperties )
+	private ${p.classShortName} _${p.variable} = ${p.initial};
+	/** column "${p.source}" **/
+	public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
+	#if( $p.isNullable )
+	private boolean _${p.variable}_wasNull = false;
+	/** returns true if column "${p.source}" was NULL **/
+	public boolean ${p.getter}WasNull() { return _${p.variable}_wasNull; }
 	#end
 
 	#end
 
+	// TODO switch from StringBuilder to printf
 	public String toString()
 	{
 		if( getResultSet() == null )
@@ -154,12 +155,12 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", \n" );
-		#foreach( $a in $resultSetAccessors )
-		sb.append( "${a.variable}: " );
-		sb.append( ${a.getter}() );
-		#if( $a.isNullable )
+		#foreach( $p in $resultSetProperties )
+		sb.append( "${p.variable}: " );
+		sb.append( ${p.getter}() );
+		#if( $p.isNullable )
 		sb.append( "(was null: " );
-		sb.append( ${a.getter}WasNull() );
+		sb.append( ${p.getter}WasNull() );
 		sb.append( ")" );
 		#end
 		sb.append( ", \n" );

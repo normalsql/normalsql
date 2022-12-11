@@ -42,7 +42,7 @@ add Fado's revision to generated files
 	
 Figure out something for transactions 
 	maybe nothing, just use JDBC
-Better strategy for converting SQL column names into Java variables/accessors
+Better strategy for converting SQL column names into Java variables/properties
 	Capitalizer, or alias list, or...
 
 Different templates for different types of SELECT

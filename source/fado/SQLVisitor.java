@@ -1,5 +1,6 @@
-package fado.voyager;
+package fado;
 
+import fado.meta.*;
 import fado.parse.GenericSQLBaseVisitor;
 import fado.parse.GenericSQLParser.*;
 
@@ -7,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 public class
-	VoyagerVisitor
+	SQLVisitor
 extends
-	GenericSQLBaseVisitor< Void >
+	GenericSQLBaseVisitor<Void>
 {
 	ArrayList<Predicate> predicates;
 
@@ -63,7 +64,7 @@ extends
 		ColumnRefContext rc = context.findFirst( ColumnRefContext.class, "term/subterm/columnRef" );
 		if( rc != null )
 		{
-			item.columnRef = new ColumnRef( rc );
+			item.columnRef = new TableColumnRef( rc );
 			item.name = item.columnRef.column;
 			item.alias = context.findFirstString( "alias/name" );
 			stack.peek().items.add( item );

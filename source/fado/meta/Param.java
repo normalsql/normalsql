@@ -1,5 +1,8 @@
-package fado.voyager;
+package fado.meta;
 
+/**
+ * PreparedStatement parameter.
+ */
 public class Param
 {
 	public int nth;

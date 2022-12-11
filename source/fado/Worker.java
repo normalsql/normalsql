@@ -1,5 +1,6 @@
-package fado.voyager;
+package fado;
 
+import fado.meta.*;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
 import fado.parse.GenericSQLParser.*;
@@ -21,22 +22,47 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-public class Voyager
+public class Worker
 {
+	Connection _conn;
+	VelocityEngine _engine;
+	Template _selectTemplate;
+	Template _resultSetTemplate;
+
+
+
 	public static void main( String[] args )
 		throws Exception
 	{
+		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+		Connection conn = DriverManager.getConnection( url, "sa", null );
+//		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
+
 //		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
 		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
 		Path targetFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescrX.java" );
 
 		Work work = new Work();
 		work.packageName = "beepbeepp";
-		work.className = "Bonkers";
+		work.statementClassName = "Bonkers";
 		work.sourceFile = sourceFile;
-		work.targetFile = targetFile;
 
-		new Voyager().process( work );
+		new Worker( conn ).process( work );
+	}
+
+	public Worker( Connection conn )
+	{
+		_conn = conn;
+
+		// TODO: This will have to be moved to common place, maybe into superclass
+		_engine = new VelocityEngine();
+		_engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+		_engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
+		_engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
+		_engine.init();
+
+		_selectTemplate = _engine.getTemplate( "fado/template/Select.vm" );
+		_resultSetTemplate = _engine.getTemplate( "fado/template/ResultSet.vm" );
 	}
 
 	public void process( Work work )
@@ -45,13 +71,13 @@ public class Voyager
 		String originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
 		work.originalSQL = originalSQL;
 
+		// TODO reuse one instance of ANTLR?
 		CharStream chars = CharStreams.fromString( work.originalSQL );
 		GenericSQLLexer lexer = new GenericSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		GenericSQLParser parser = new GenericSQLParser( tokens );
 		GenericSQLParser.ParseContext parse = parser.parse();
-		VoyagerVisitor visitor = new VoyagerVisitor();
-
+		SQLVisitor visitor = new SQLVisitor();
 
 		visitor.visit( parse );
 		work.root = visitor.root;
@@ -66,8 +92,8 @@ public class Voyager
 				{
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Accessor a = factory.create( c.value, column );
-					work.statementAccessors.add( a );
+					Property prop = factory.create( c.value, column );
+					work.statementProperties.add( prop );
 					break;
 				}
 				case Between b:
@@ -77,19 +103,19 @@ public class Voyager
 						case COL_VAL_VAL:
 						{
 							String column = getColumn( b.test );
-							Accessor low = factory.create( b.low, column, "low" );
-							work.statementAccessors.add( low );
+							Property low = factory.create( b.low, column, "low" );
+							work.statementProperties.add( low );
 
-							Accessor high = factory.create( b.high, column, "high" );
-							work.statementAccessors.add( high );
+							Property high = factory.create( b.high, column, "high" );
+							work.statementProperties.add( high );
 							break;
 						}
 						case VAL_COL_COL:
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Accessor high = factory.create( b.test, "between", columnLow, "and", columnHigh );
-							work.statementAccessors.add( high );
+							Property high = factory.create( b.test, "between", columnLow, "and", columnHigh );
+							work.statementProperties.add( high );
 							break;
 						}
 						default:
@@ -101,39 +127,35 @@ public class Voyager
 			}
 		}
 
-		for( Accessor a : work.statementAccessors )
+		for( Property prop : work.statementProperties )
 		{
-			a.context.setStartTokenText( "?" );
+			prop.context.setStartTokenText( "?" );
 		}
 
 		work.preparedSQL = tokens.getText();
 
-		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
-		Connection conn = DriverManager.getConnection( url, "sa", null );
-//		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
-
-		processPreparedStatement( conn, work );
+		processPreparedStatement( _conn, work );
 
 		for( int nth = 0; nth < work.params.size(); nth++ )
 		{
-			Accessor a = work.statementAccessors.get( nth );
+			Property prop = work.statementProperties.get( nth );
 			Param p = work.params.get( nth );
-			a.param = p;
-			a.nth = p.nth;
-			a.className = p.className;
-			a.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
+			prop.param = p;
+			prop.nth = p.nth;
+			prop.className = p.className;
+			prop.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
 		}
 
-		for( Accessor a : work.statementAccessors )
+		for( Property prop : work.statementProperties )
 		{
-			String text = JavaHelper.toPrintfConverter( a.param.type );
-			a.context.setStartTokenText( text );
+			String text = JavaHelper.toPrintfConverter( prop.param.type );
+			prop.context.setStartTokenText( text );
 		}
 
 		work.printfSQL = tokens.getText();
 
 		// TODO support unions, multiple statements, and such
-		work.resultSetAccessors = matchItemsToColumns( work.root.get(0).items, work.columns );
+		work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
 
 		merge( work );
 
@@ -145,7 +167,7 @@ public class Voyager
 		return ( (SubtermColumnRefContext) b ).columnRef().column.getTrimmedText();
 	}
 
-	public static void processPreparedStatement( Connection conn, Work work )
+	public void processPreparedStatement( Connection conn, Work work )
 		throws SQLException
 	{
 		PreparedStatement ps = conn.prepareStatement( work.preparedSQL );
@@ -170,7 +192,7 @@ public class Voyager
 		// TODO: dedupe resultset columns
 		for( int nth = 1; nth <= md.getColumnCount(); nth++ )
 		{
-			RSColumn column = new RSColumn();
+			Column column = new Column();
 			column.nth = nth;
 			column.catalog = md.getCatalogName( nth );
 			column.schema = md.getSchemaName( nth );
@@ -191,16 +213,16 @@ public class Voyager
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	static List<Accessor> matchItemsToColumns( List<Item> items, List<RSColumn> columns )
+	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
 	{
-		ArrayList<Accessor> accessors = new ArrayList<>();
+		ArrayList<Property> properties = new ArrayList<>();
 
-		for( RSColumn column : columns )
+		for( Column column : columns )
 		{
 			// TODO reference to parent Item
-			Accessor a = new Accessor();
-			a.nth = column.nth;
-			a.column = column;
+			Property prop = new Property();
+			prop.nth = column.nth;
+			prop.column = column;
 			String name = column.name;
 			String label = column.label;
 			// TODO also match to catalog, schema, table
@@ -210,71 +232,54 @@ public class Voyager
 				if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.alias ) )
 				{
 					label = item.alias;
-					a.source = item.context.getText();
+					prop.source = item.context.getText();
 					break;
 				}
 				else if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.name ) )
 				{
 					label = item.name;
-					a.source = item.context.getText();
+					prop.source = item.context.getText();
 					break;
 				}
 			}
 
-			a.variable = AccessorFactory.toVariableCase( label );
-			a.getter = "get" + AccessorFactory.toMethodCase( label );
-			a.setter = "set" + AccessorFactory.toMethodCase( label );
-			a.className = column.className;
-			a.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
-			a.sqlType = column.type;
+			prop.variable = AccessorFactory.toVariableCase( label );
+			prop.getter = "get" + AccessorFactory.toMethodCase( label );
+			prop.setter = "set" + AccessorFactory.toMethodCase( label );
+			prop.className = column.className;
+			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
+			prop.sqlType = column.type;
 
-			accessors.add( a );
+			properties.add( prop );
 		}
 
-		return accessors;
+		return properties;
 	}
 
-	public static void merge( Work work ) throws IOException
+	public void merge( Work work ) throws IOException
 	{
+		HashMap<String, Object> childMap = work.asMap();
+		// TODO change to 'now', use same Date for all artifacts
+		childMap.put( "date", new Date() );
+
+		VelocityContext vc = new VelocityContext( childMap );
+
+		generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
+		generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+	}
+
+	public void generate( Template template, VelocityContext vc, Path targetDir, String name )
+		throws IOException
+	{
+		// TODO property for generated file name (incl extension)
+		Path targetFile = targetDir.resolve( name + ".java" );
 		try (
-			OutputStreamWriter osw = new OutputStreamWriter( System.out );
-			BufferedWriter writer = new BufferedWriter( osw );
+			FileWriter writer = new FileWriter( targetFile.toFile() );
+//			BufferedWriter writer = new BufferedWriter( osw );
 		)
 		{
-			// TODO: This will have to be moved to common place, maybe into superclass
-			VelocityEngine engine = new VelocityEngine();
-			engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-			engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-			engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
-			engine.init();
-
-			// TODO change to 'now', use same Date for all artifacts
-			HashMap<String, Object> childMap = work.asMap();
-			childMap.put( "date", new Date() );
-
-			VelocityContext childContext = new VelocityContext( childMap );
-
-			// TODO: Just one template instance
-			Template selectTemplate = engine.getTemplate( "fado/template/Select.vm" );
-			selectTemplate.merge( childContext, writer );
-//			Template resultSetTemplate = engine.getTemplate( "fado/template/ResultSet.vm" );
-//			resultSetTemplate.merge( childContext, writer );
+			template.merge( vc, writer );
+			writer.flush();
 		}
 	}
-
-
-	public File generate( Template template, Map map, File targetRoot, String name )
-		throws Exception
-	{
-		VelocityContext context = new VelocityContext( map );
-		File targetFile = new File( targetRoot, name + ".java" );
-		FileWriter writer = new FileWriter( targetFile );
-		template.merge( context, writer );
-		writer.flush();
-		writer.close();
-
-		return targetFile;
-	}
-
-
 }

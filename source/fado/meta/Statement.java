@@ -1,4 +1,4 @@
-package fado.voyager;
+package fado.meta;
 
 import java.util.ArrayList;
 

@@ -1,7 +1,9 @@
 package test;
 
-import fado.Dumper;
-import fado.voyager.*;
+import fado.meta.Param;
+import fado.meta.Column;
+import spare.Dumper;
+
 import java.sql.*;
 
 public class SelectIN
@@ -50,7 +52,7 @@ public class SelectIN
 		ResultSetMetaData md = ps.getMetaData();
 		for( int nth = 1; nth <= md.getColumnCount(); nth++ )
 		{
-			RSColumn column = new RSColumn();
+			Column column = new Column();
 			column.nth = nth;
 			column.name = md.getColumnName( nth );
 			column.label = md.getColumnLabel( nth );

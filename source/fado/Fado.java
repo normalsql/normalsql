@@ -4,21 +4,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
-import java.util.*;
-import java.util.Date;
-
-
-import fado.voyager.Voyager;
-import fado.voyager.Work;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 
 public class
@@ -41,15 +26,11 @@ public class
 		System.out.println( "done" );
 	}
 
-	Template _selectTemplate = null;
-	Template _resultSetTemplate = null;
-	Template _insertTemplate = null;
-	Template _updateTemplate = null;
 	Connection _conn = null;
 
 //	boolean _onlyParse = false;
 
-	public void init( Properties props )
+	public void init( PropertiesConfig props )
 		throws Exception
 	{
 		FadoOptions options = new FadoOptions( props );
@@ -65,36 +46,30 @@ public class
 //		if( !_onlyParse )
 		{
 			String driver = options.getDriver();
-			if( driver != null )
+			if( driver == null )
 			{
-				Class.forName( driver );
+				throw new NullPointerException( "JDBC driver class name cannot be null" );
 			}
+
+			Class.forName( driver );
 			String username = options.getUsername();
 			String password = options.getPassword();
-//			String url = options.getUrl();
-//			if( url != null )
-//			{
-//				_conn = DriverManager.getConnection( url, username, password );
-//			}
-//			// TODO: verify database, eg 'SELECT 1'
-//			Statement s = _conn.createStatement();
-//			if( s.execute("SELECT 1" ))
-//			{
-//				ResultSet rs = s.getResultSet();
-//				System.out.println( rs );
-//			}
+			String url = options.getUrl();
+			if( url == null )
+			{
+				throw new NullPointerException( "JDBC url cannot be null" );
+			}
 
-//			Velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-//			Velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-//			Velocity.init();
-//
-//			_selectTemplate = Velocity.getTemplate( "fado/template/Select.vm" );
-//			_resultSetTemplate = Velocity.getTemplate( "fado/template/ResultSet.vm" );
-//			_insertTemplate = Velocity.getTemplate( "fado/template/Insert.vm" );
-//			_updateTemplate = Velocity.getTemplate( "fado/template/Update.vm" );
+			_conn = DriverManager.getConnection( url, username, password );
+
+			// TODO is this best way to confirm JDBC config?
+			Statement s = _conn.createStatement();
+			if( s.execute( "SELECT 1" ))
+			{
+				ResultSet rs = s.getResultSet();
+				System.out.println( rs );
+			}
 		}
-
-//			throw new FileNotFoundException( msg );
 
 		// TODO verify source exists
 		Path source = Paths.get( "/Users/jasonosgood/Projects/fado/test" );
@@ -150,11 +125,12 @@ public class
 							{
 								Work work = new Work();
 								work.sourceFile = sourceFile;
-								work.targetFile = targetFile;
+								work.targetDir = targetDir;
 								work.packageName = packageName;
-								work.className = className;
+								work.statementClassName = className;
+								work.resultSetClassName = className + "ResultSet";
 
-								new Voyager().process( work );
+								new Worker( _conn ).process( work );
 							}
 
 						}
@@ -175,53 +151,4 @@ public class
 
 	// TODO: Create command line option for this? eg. for a clean build operation
 	private boolean _alwaysOverwrite = true;
-
-//						System.out.println( "parsing " + sourceFile );
-//						System.out.println( "generating " + targetFile + " (" + sourceFile + ")" );
-//					System.out.println( targetFile + " is current" );
-//				System.out.println( "error processing : " + sourceFile );
-
-
-//	private void extractInsert( GlobbingRuleContext insertNode, InsertFadoStatement statement )
-//		throws Exception
-//	{
-//		if( _onlyParse ) return;
-//		GlobbingRuleContext tableRef = insertNode.findFirst( "into/tableRef" );
-//		String databaseName = tableRef.findFirstString( "databaseName" );
-//		String tableName = tableRef.findFirstString( "**/tableName" );
-//		String alias = null;
-//		Table table = new Table( databaseName, tableName, alias );
-//		statement.addTable( table );
-//
-//		ArrayList<Field> fields = new ArrayList<Field>();
-//		List<GlobbingRuleContext> list = insertNode.findContexts( "columnList/columnName" );
-//		for( GlobbingRuleContext item : list )
-//		{
-//			String name = item.getText();
-//			fields.add( new Field( name ) );
-//		}
-//
-//		List<GlobbingRuleContext> literals = insertNode.findContexts( "values/literal" );
-//
-//		if( fields.size() != literals.size() )
-//		{
-//			throw new Exception( "mismatch, fields: " + fields.size() + ", literals: " + literals.size() );
-//		}
-//
-//		int nth = 0;
-//		for( GlobbingRuleContext node : literals )
-//		{
-//			String literal = node.getText();
-//			literal = trimQuotes( literal );
-//
-//			node.convertToInputParam();
-//
-//			Field field = fields.get( nth );
-//			field.setLiteral( literal );
-//			nth++;
-//		}
-//		statement.setFields( fields );
-//	}
-
-
 }

@@ -2,6 +2,7 @@ package test;
 
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
+import fado.parse.GenericSQLParser.ParseContext;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
@@ -179,6 +180,6 @@ TestGeneric
 
 		} );
 
-		GenericSQLParser.ParseContext result = parser.parse();
+		ParseContext result = parser.parse();
 	}
 }

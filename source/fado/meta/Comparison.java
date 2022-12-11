@@ -1,4 +1,4 @@
-package fado.voyager;
+package fado.meta;
 
 import fado.parse.GenericSQLParser.SubtermContext;
 import fado.parse.GenericSQLParser.PredicateCompareContext;

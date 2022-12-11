@@ -6,9 +6,12 @@
  Represents a ResultSet's result column. Result columns correspond to SELECT query items.
  RSColumns are not TColumns.
 */
-package fado.voyager;
+package fado.meta;
 
-public class RSColumn
+/**
+ * ResultSet column.
+ */
+public class Column
 {
 	public int nth;
 	public String catalog;
