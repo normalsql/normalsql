@@ -18,6 +18,12 @@ import static java.sql.Types.*;
 public class
 	JavaHelper
 {
+	public JavaHelper()
+	{
+
+	}
+
+	// TODO separate factory methods for Statement and ResultSet properties
 	public Property create( SubtermContext context, String... method )
 	{
 		Property prop = new Property();
@@ -294,10 +300,6 @@ public class
 	/**
 	 * Convert value to an appropriate Java code value/instance declaration. Used by
 	 * code generating templates.
-	 *
-	 * @param sqlType
-	 * @param value
-	 * @return
 	 */
 	// TODO: Add 'value' to Exception messages
 	public String convertToCode( int sqlType, String value )

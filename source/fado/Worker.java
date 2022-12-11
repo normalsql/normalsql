@@ -32,28 +32,7 @@ public class Worker
 	VelocityEngine _engine;
 	Template _selectTemplate;
 	Template _resultSetTemplate;
-	JavaHelper helper;
-
-
-
-	public static void main( String[] args )
-		throws Exception
-	{
-		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
-		Connection conn = DriverManager.getConnection( url, "sa", null );
-//		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
-
-//		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
-		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
-//		Path targetFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescrX.java" );
-
-		Work work = new Work();
-		work.packageName = "beepbeepp";
-		work.statementClassName = "Bonkers";
-		work.sourceFile = sourceFile;
-
-		new Worker( conn ).process( work );
-	}
+	JavaHelper _helper;
 
 	public Worker( Connection conn )
 	{
@@ -68,8 +47,7 @@ public class Worker
 
 		_selectTemplate = _engine.getTemplate( "fado/template/Select.vm" );
 		_resultSetTemplate = _engine.getTemplate( "fado/template/ResultSet.vm" );
-		helper = new JavaHelper();
-
+		_helper = new JavaHelper();
 	}
 
 	public void process( Work work )
@@ -89,7 +67,7 @@ public class Worker
 		work.root = visitor.root;
 		work.predicates = visitor.predicates;
 
-		for( Predicate p : work.predicates )
+		for( var p : work.predicates )
 		{
 			switch( p )
 			{
@@ -97,7 +75,7 @@ public class Worker
 				{
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = helper.create( c.value, column );
+					Property prop = _helper.create( c.value, column );
 					work.statementProperties.add( prop );
 					break;
 				}
@@ -108,10 +86,10 @@ public class Worker
 						case COL_VAL_VAL:
 						{
 							String column = getColumn( b.test );
-							Property low = helper.create( b.low, column, "low" );
+							Property low = _helper.create( b.low, column, "low" );
 							work.statementProperties.add( low );
 
-							Property high = helper.create( b.high, column, "high" );
+							Property high = _helper.create( b.high, column, "high" );
 							work.statementProperties.add( high );
 							break;
 						}
@@ -119,7 +97,7 @@ public class Worker
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Property high = helper.create( b.test, "between", columnLow, "and", columnHigh );
+							Property high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
 							work.statementProperties.add( high );
 							break;
 						}
@@ -149,14 +127,14 @@ public class Worker
 			prop.nth = p.nth;
 			prop.className = p.className;
 			prop.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
-			prop.asCode = helper.convertToCode( p.type, prop.trimmed );
+			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
 
 
 		}
 
 		for( Property prop : work.statementProperties )
 		{
-			String text = helper.toPrintfConverter( prop.param.type );
+			String text = _helper.toPrintfConverter( prop.param.type );
 			prop.context.setStartTokenText( text );
 		}
 
@@ -251,13 +229,13 @@ public class Worker
 				}
 			}
 
-			prop.variable = helper.toVariableCase( label );
-			prop.getter = "get" + helper.toMethodCase( label );
-			prop.setter = "set" + helper.toMethodCase( label );
+			prop.variable = _helper.toVariableCase( label );
+			prop.getter = "get" + _helper.toMethodCase( label );
+			prop.setter = "set" + _helper.toMethodCase( label );
 			prop.className = column.className;
 			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
 			prop.sqlType = column.type;
-			prop.initial = helper.getInitializerValue( column.type );
+			prop.initial = _helper.getInitializerValue( column.type );
 
 
 			properties.add( prop );
@@ -284,8 +262,7 @@ public class Worker
 		// TODO property for generated file name (incl extension)
 		Path targetFile = targetDir.resolve( name + ".java" );
 		try (
-			FileWriter writer = new FileWriter( targetFile.toFile() );
-//			BufferedWriter writer = new BufferedWriter( osw );
+			FileWriter writer = new FileWriter( targetFile.toFile() )
 		)
 		{
 			template.merge( vc, writer );
