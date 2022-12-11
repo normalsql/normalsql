@@ -1,7 +1,7 @@
 package fado.meta;
 
-import fado.parse.GenericSQLParser.SubtermContext;
 import fado.parse.GenericSQLParser.PredicateCompareContext;
+import fado.parse.GenericSQLParser.SubtermContext;
 
 import java.util.HashMap;
 

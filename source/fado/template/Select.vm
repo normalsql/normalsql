@@ -16,7 +16,10 @@
 /**
 * ${resultSetClassName}.java ${date}
 *
-* Generated using Fado's Select.vm template. Original SQL:
+## TODO put actual filename and its timestamp here.
+* Generated using Fado's Select.vm template.
+*
+* Original SQL:
 *
 ## TODO: Should this be a JavaDoc @snippet?
 * <pre>
@@ -27,6 +30,7 @@
 * }
 * </pre>
 *
+## TODO add timestamp
 * @see ${sourceFile}
 *
 **/

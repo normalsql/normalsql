@@ -1,15 +1,15 @@
 package fado;
 
+import fado.meta.Column;
 import fado.meta.Param;
 import fado.meta.Predicate;
-import fado.meta.Column;
 import fado.meta.Statement;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Represents the work of processing one (1) SQL source file.

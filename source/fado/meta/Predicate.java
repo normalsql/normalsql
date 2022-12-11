@@ -1,9 +1,9 @@
 package fado.meta;
 
+import fado.parse.GenericSQLParser.PredicateContext;
+import fado.parse.GenericSQLParser.SubtermColumnRefContext;
 import fado.parse.GenericSQLParser.SubtermContext;
 import fado.parse.GenericSQLParser.SubtermValueContext;
-import fado.parse.GenericSQLParser.SubtermColumnRefContext;
-import fado.parse.GenericSQLParser.PredicateContext;
 
 public abstract class Predicate<T extends PredicateContext>
 {

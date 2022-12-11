@@ -3,7 +3,8 @@ package fado;
 import fado.meta.*;
 import fado.parse.GenericSQLLexer;
 import fado.parse.GenericSQLParser;
-import fado.parse.GenericSQLParser.*;
+import fado.parse.GenericSQLParser.SubtermColumnRefContext;
+import fado.parse.GenericSQLParser.SubtermContext;
 import fado.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -14,13 +15,16 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-import java.io.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 public class Worker
 {
@@ -28,6 +32,7 @@ public class Worker
 	VelocityEngine _engine;
 	Template _selectTemplate;
 	Template _resultSetTemplate;
+	JavaHelper helper;
 
 
 
@@ -40,7 +45,7 @@ public class Worker
 
 //		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseTestBetweens.sql" );
 		Path sourceFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescr.sql" );
-		Path targetFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescrX.java" );
+//		Path targetFile = Paths.get( "/Users/jasonosgood/Projects/fado/test/SelectCourseDescrX.java" );
 
 		Work work = new Work();
 		work.packageName = "beepbeepp";
@@ -63,13 +68,14 @@ public class Worker
 
 		_selectTemplate = _engine.getTemplate( "fado/template/Select.vm" );
 		_resultSetTemplate = _engine.getTemplate( "fado/template/ResultSet.vm" );
+		helper = new JavaHelper();
+
 	}
 
 	public void process( Work work )
 		throws IOException, SQLException
 	{
-		String originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
-		work.originalSQL = originalSQL;
+		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
 
 		// TODO reuse one instance of ANTLR?
 		CharStream chars = CharStreams.fromString( work.originalSQL );
@@ -83,7 +89,6 @@ public class Worker
 		work.root = visitor.root;
 		work.predicates = visitor.predicates;
 
-		AccessorFactory factory = new AccessorFactory();
 		for( Predicate p : work.predicates )
 		{
 			switch( p )
@@ -92,7 +97,7 @@ public class Worker
 				{
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = factory.create( c.value, column );
+					Property prop = helper.create( c.value, column );
 					work.statementProperties.add( prop );
 					break;
 				}
@@ -103,10 +108,10 @@ public class Worker
 						case COL_VAL_VAL:
 						{
 							String column = getColumn( b.test );
-							Property low = factory.create( b.low, column, "low" );
+							Property low = helper.create( b.low, column, "low" );
 							work.statementProperties.add( low );
 
-							Property high = factory.create( b.high, column, "high" );
+							Property high = helper.create( b.high, column, "high" );
 							work.statementProperties.add( high );
 							break;
 						}
@@ -114,7 +119,7 @@ public class Worker
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Property high = factory.create( b.test, "between", columnLow, "and", columnHigh );
+							Property high = helper.create( b.test, "between", columnLow, "and", columnHigh );
 							work.statementProperties.add( high );
 							break;
 						}
@@ -144,11 +149,14 @@ public class Worker
 			prop.nth = p.nth;
 			prop.className = p.className;
 			prop.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
+			prop.asCode = helper.convertToCode( p.type, prop.trimmed );
+
+
 		}
 
 		for( Property prop : work.statementProperties )
 		{
-			String text = JavaHelper.toPrintfConverter( prop.param.type );
+			String text = helper.toPrintfConverter( prop.param.type );
 			prop.context.setStartTokenText( text );
 		}
 
@@ -243,12 +251,14 @@ public class Worker
 				}
 			}
 
-			prop.variable = AccessorFactory.toVariableCase( label );
-			prop.getter = "get" + AccessorFactory.toMethodCase( label );
-			prop.setter = "set" + AccessorFactory.toMethodCase( label );
+			prop.variable = helper.toVariableCase( label );
+			prop.getter = "get" + helper.toMethodCase( label );
+			prop.setter = "set" + helper.toMethodCase( label );
 			prop.className = column.className;
 			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
 			prop.sqlType = column.type;
+			prop.initial = helper.getInitializerValue( column.type );
+
 
 			properties.add( prop );
 		}

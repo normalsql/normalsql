@@ -1,7 +1,7 @@
 package fado.meta;
 
-import fado.parse.GenericSQLParser.SubtermContext;
 import fado.parse.GenericSQLParser.PredicateBETWEENContext;
+import fado.parse.GenericSQLParser.SubtermContext;
 
 public class Between extends Predicate<PredicateBETWEENContext>
 {

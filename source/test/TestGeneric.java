@@ -6,8 +6,6 @@ import fado.parse.GenericSQLParser.ParseContext;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;

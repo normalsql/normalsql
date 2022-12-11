@@ -1,9 +1,8 @@
 package fado;
 
-import fado.meta.Param;
 import fado.meta.Column;
+import fado.meta.Param;
 import fado.parse.GenericSQLParser.ValueContext;
-import fado.template.JavaHelper;
 
 /**
  * Property represents a class instance variable for code generation. aka JavaBean.
@@ -15,11 +14,19 @@ import fado.template.JavaHelper;
 
 public class Property
 {
-	Column column;
-	Param param;
-	ValueContext context;
+	public Column column;
+	public Param param;
+	public ValueContext context;
 
+	// Index scrapped from JDBC metadata
 	public int nth;
+	// SQL data type, scrapped from JDBC metadata
+	public int sqlType;
+	// Full class name scrapped from JDBC metadata
+	public String className;
+	// Shortened class name for use by templates
+	public String classShortName;
+
 	// Name of local variable instance
 	public String variable;
 	// Copy of clause from source code
@@ -30,21 +37,11 @@ public class Property
 	public String getter;
 	// Generated setter method
 	public String setter;
-	// Full class name scrapped from JDBC metadata
-	public String className;
-	// Shortened class name for us by templates
-	public String classShortName;
-	// SQL data type, scrapped from JDBC metadata
-	public int sqlType;
 
-	// Used by PreparedStatement templates
-	public String getAsCode() {
-		return JavaHelper.convertToCode( param.type, trimmed );
-	};
+	// Used by PreparedStatement templates. Syntax conversion of value from SQL to Java.
+	public String asCode;
 	// Used by ResultSet templates. To specify variable default initial value.
-	public String getInitial() {
-		return JavaHelper.getInitializerValue( sqlType );
-	};
+	public String initial;
 
 	@Override
 	public String toString()

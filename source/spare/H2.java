@@ -1,8 +1,8 @@
 package spare;
 
-import java.io.File;
-
 import org.h2.tools.Server;
+
+import java.io.File;
 
 public class H2
 {

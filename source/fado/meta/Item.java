@@ -1,6 +1,6 @@
 package fado.meta;
 
-import fado.parse.GenericSQLParser.*;
+import fado.parse.GenericSQLParser.ItemContext;
 
 /**
  * SELECT Statement item. Specified in the query's source code. Later matched with
