@@ -1,14 +1,13 @@
-/*
- Main - GloggingRuleContext.java
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
 
- Copyright 2022, 2014, 2011, 2010 Jason Osgood
+/*
+ NormalSQL - GlobbingRuleContext.java
 
  Custom RuleContext superclass. Used by SQL parser grammar.
 
  Inlines globbing path expressions. Alternative to ANTLR's stock separate XPath
  query expression thing.
-
- TODO: Add find*String globbing methods to eliminate .getText() in client code.
 
  Utility methods (removing quotes, setText), because I don't know where else to put them.
 

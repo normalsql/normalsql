@@ -1,8 +1,12 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.ColumnRefContext;
 
-public class TableColumnRef
+public class
+	TableColumnRef
 {
 	public TableColumnRef( ColumnRefContext context )
 	{
@@ -16,15 +20,4 @@ public class TableColumnRef
 	public String schema;
 	public String table;
 	public String column;
-
-	@Override
-	public String toString()
-	{
-		return "TableColumnRef{" +
-			"database='" + database + '\'' +
-			", schema='" + schema + '\'' +
-			", table='" + table + '\'' +
-			", column='" + column + '\'' +
-			'}';
-	}
 }

@@ -1,9 +1,15 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateBETWEENContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
-public class Between extends Predicate<PredicateBETWEENContext>
+public class
+	Between
+extends
+	Predicate<PredicateBETWEENContext>
 {
 	public enum Match
 	{

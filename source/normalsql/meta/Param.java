@@ -1,3 +1,6 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 package normalsql.meta;
 
 /**
@@ -14,19 +17,4 @@ public class Param
 	public int scaled;
 	public int precision;
 	public int mode;
-
-	@Override
-	public String toString()
-	{
-		return "Param{" +
-			"type=" + type +
-			", typeName='" + typeName + '\'' +
-			", isNullable=" + isNullable +
-			", clazz='" + className + '\'' +
-			", isSigned=" + isSigned +
-			", scaled=" + scaled +
-			", precision=" + precision +
-			", mode=" + mode +
-			'}';
-	}
 }

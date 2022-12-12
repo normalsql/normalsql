@@ -1,3 +1,6 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateCompareContext;
@@ -5,7 +8,10 @@ import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
 
-public class Comparison extends Predicate<PredicateCompareContext>
+public class
+	Comparison
+extends
+	Predicate<PredicateCompareContext>
 {
 	public enum Match
 	{

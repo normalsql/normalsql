@@ -1,3 +1,6 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 package normalsql;
 
 import normalsql.meta.*;
@@ -128,8 +131,6 @@ public class Worker
 			prop.className = p.className;
 			prop.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
 			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
-
-
 		}
 
 		for( Property prop : work.statementProperties )
@@ -236,7 +237,6 @@ public class Worker
 			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
 			prop.sqlType = column.type;
 			prop.initial = _helper.getInitializerValue( column.type );
-
 
 			properties.add( prop );
 		}

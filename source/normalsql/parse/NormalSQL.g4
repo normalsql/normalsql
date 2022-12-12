@@ -1,10 +1,8 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 /*
- NormalSQL.g4, for ANTLR 4.x
-
- Copyright 2022, 2014, 2011, 2010 Jason Osgood
-
- Generic SQL DML grammar.
-
+ NormalSQL.g4, SQL DML grammar for ANTLR 4.x
 */
 
 grammar NormalSQL;

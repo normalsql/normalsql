@@ -1,17 +1,13 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 /*
- Main - Result.java
-
- Copyright 2022, 2014, 2011, 2010 Jason Osgood
-
- Represents a ResultSet's result column. Result columns correspond to SELECT query items.
- RSColumns are not TColumns.
+ Represents a ResultSet's result column. Columns correspond to the items of a SELECT query.
 */
 package normalsql.meta;
 
-/**
- * ResultSet column.
- */
-public class Column
+public class
+	Column
 {
 	public int nth;
 	public String catalog;

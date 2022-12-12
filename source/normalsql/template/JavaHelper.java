@@ -1,9 +1,10 @@
+// Copyright 2010-2022 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  NormalSQL - JavaHelper.java
 
- Copyright 2022, 2014, 2011, 2010 Jason Osgood
-
- Capitalization and type conversions methods.
+ Capitalization, type conversions, and misc helper methods.
 */
 package normalsql.template;
 
