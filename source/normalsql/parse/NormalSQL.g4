@@ -383,7 +383,7 @@ Spaces   : [ \t\r\n] -> channel( HIDDEN ) ;
 fragment QUOTED   : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT    : [0-9] ;
 fragment HEX      : [0-9A-F] ;
-fragment ALPHA    : [A-Z_] ;
+fragment ALPHA    : [A-Z_$@#] ;
 fragment EXPO     : 'E' [-+]? DIGIT+ ;
 
 ERROR : . ;
