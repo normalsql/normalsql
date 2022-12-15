@@ -46,6 +46,19 @@ import java.util.HashSet;
         if( !Character.isAlphabetic( text1.charAt( text1.length() - 1 ))) return false;
         if( !Character.isAlphabetic( text1.charAt( 0 ))) return false;
         String text = text1.toUpperCase();
+        // SQL reserved keywords
+        switch( text )
+        {
+            case "NULL":
+            case "TRUE":
+            case "FALSE":
+            case "WHERE":
+            case "HAVING":
+            case "QUALIFY":
+                return false;
+            default:
+                break;
+        }
         boolean contains = keywords().contains( text );
         return contains;
     }
@@ -91,7 +104,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     into          : 'INTO' columnRefs ;
 
-    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' names )?  # JoinTwo
+    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' ids )?  # JoinTwo
                   | join COMMA join                                            # JoinOldStyle
                   | source                                                     # JoinSource
                   | LP join RP                                                 # JoinNested
@@ -113,7 +126,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 //                        | 'XMLTABLE' // TODO
                         | LP source RP
                         | tableRef )
-                        ( alias names? )?
+                        ( alias ids? )?
                         useIndex? // TODO which alts allow 'useIndex'?
                       ;
 
@@ -125,9 +138,9 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     windows       : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
 
-        windowAlias   : name 'AS' window ;
+        windowAlias   : id 'AS' window ;
 
-        window        : name | LP name? partitionBy? orderBy? windowFrame? RP ;
+        window        : id | LP id? partitionBy? orderBy? windowFrame? RP ;
 
             partitionBy   : 'PARTITION' 'BY' terms ;
 
@@ -161,7 +174,12 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     unnest        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
-    columnSpec    : ( name | columnRef ) id EQ ( array | term ) ; // TODO: just use 'ref'?
+//    columnSpec    : ( id | columnRef ) id EQ ( array | term ) ;
+    columnSpec    : id ( dataType | domainRef ) EQ ( array | row ) ;
+
+    dataType : 'NULL' | keyword+ ; // TODO dataTypes
+
+    row      : term ; // TODO row value expression
 
     useIndex      : 'USE' 'INDEX' ids ;
 
@@ -177,7 +195,7 @@ term          : 'NOT' term                                                    # 
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
-              | subterm ( TYPECAST id index* )+                                                   # SubtermTypeCast
+              | subterm ( TYPECAST keyword index* )+                                                   # SubtermTypeCast
               | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
               | subterm CARET subterm                                                             # SubtermCaret
               | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
@@ -185,7 +203,7 @@ subterm       : subterm CONCAT subterm                                          
               | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
               | subterm predicate                                                                 # SubtermPredicate
               | LP RP                                                                             # SubtermEmpty
-              | LP terms RP DOT name                                                              # SubtermFieldRef
+              | LP terms RP DOT id                                                              # SubtermFieldRef
               | LP terms RP                                                                       # SubtermNested
               | query                                                                             # SubtermQuery
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
@@ -203,40 +221,42 @@ subterm       : subterm CONCAT subterm                                          
               | 'ROW' LP terms? RP                                                # SubtermRow
               ;
 
-predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
-              | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
-              | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
-              | 'IS' 'NOT'? bool                                                             # PredicateIsBool
-              | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateIsDistinct
-              | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
-              | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
-              | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-              | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
-              | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLIKE
-              | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateREGEXP
-              ;
+    predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
+                  | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+                  | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
+                  | 'IS' 'NOT'? bool                                                             # PredicateIsBool
+                  | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateIsDistinct
+                  | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
+                  | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
+                  | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+                  | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
+                  | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLIKE
+                  | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateREGEXP
+                  ;
 
-type          : 'ROW' LP name type ( COMMA name type )* RP
-              | type 'ARRAY' ( LS decimal RS )?
-              | id+ ( LP decimal ( COMMA decimal )? RP id* )?
-              ;
+    type          : 'ROW' LP id type ( COMMA id type )* RP
+                  | type 'ARRAY' ( LS decimal RS )?
+                  | keyword+ ( LP decimal ( COMMA decimal )? RP keyword* )?
+                  ;
 
 array         : 'ARRAY' LS terms? RS ;
 
 function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
               | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
-              | 'JSON_OBJECTAGG' LP jsonKeys onNull? uniqueKeys? RP filter? over?
+              | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
               | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
-              | 'EXTRACT' LP id 'FROM' term RP
+              | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
               | 'LISTAGG' LP allDistinct? term COMMA string
-                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' string? withWithout 'COUNT' ))? RP withinGroup? filter? over?
+//                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+                ( 'ON' 'OVERFLOW' 'ERROR' )?
+                RP withinGroup? filter? over?
               | 'STRING_AGG' LP term COMMA string orderBy RP
               | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
 //              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
-              | id LP ( STAR | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
-              | id LP allDistinct? ( value | name ) orderBy RP ( LS term RS )? filter? over?
-              | id LP id 'FROM' id String RP
-              | '{fn' id LP terms? RP '}' //  ODBC style
+              | '{fn' function '}' //  ODBC style
+              | keyword LP ( STAR | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
+              | keyword LP allDistinct? term orderBy RP ( LS term RS )? filter? over?
+//              | keyword LP id 'FROM' id SingleQ RP
               // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
               // | ID DOT ID LP terms? RP // T-SQL?
               ;
@@ -247,9 +267,16 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
 
     over          : 'OVER' window ;
 
+domainRef     : ( schema=id DOT )? domain=id DOT ;
+tableRef      : (( schema=id DOT )? domain=id DOT )? table=id ;
+columnRefs    : columnRef ( COMMA columnRef ) * ;
+columnRef     : ((( schema=id DOT )? domain=id DOT )? table=id DOT )? column=id index* ;
+index         : LS ( term | slice )? RS ;
+slice         : lo=term? COLON hi=term? ;
+
 value         : real
               | decimal
-              | string
+              | Blob
               | Hexadecimal
               | bool
               | 'NULL'
@@ -265,15 +292,11 @@ value         : real
 // Types
 real          : ( MINUS | PLUS )? Real ;
 decimal       : ( MINUS | PLUS )? Decimal 'L'? ;
-string        : String+ | unicode | national | blob ;
-unicode       : Unicode String* ( 'UESCAPE' String )? ;
-national      : National String* ;
-blob          : Blob String* ;
 bool          : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-time          : ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? String? ;
-date          : 'DATE' String ;
-dateODBC      : ( '{d' | '{t' | '{ts' ) String '}' ;
-interval      : 'INTERVAL' term id ( 'TO' id )? ;
+date          : 'DATE' string ;
+dateODBC      : ( '{d' | '{t' | '{ts' ) string '}' ;
+time          : ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string? ;
+interval      : 'INTERVAL' string ( keyword ( 'TO' keyword )? )? ;
 //interval : 'INTERVAL' expression timeSpan ;
 //timeSpan      : 'EPOCH'
 //              | 'YEAR' ( 'TO' 'MONTH' )?
@@ -283,10 +306,23 @@ interval      : 'INTERVAL' term id ( 'TO' id )? ;
 //              | 'MINUTE' ( 'TO' 'SECOND' )?
 //              | 'SECOND'
 //              ;
+
 jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
-jsonObject    : 'JSON_OBJECT' LP jsonKeys? onNull? uniqueKeys? formatJson? RP ;
-jsonKeys      : jsonKey ( COMMA jsonKey )* ;
-jsonKey       : ( string | name ) COLON term | 'KEY'? ( string | name ) 'VALUE' term ;
+jsonObject    : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
+
+    jsonPairs     : jsonPair ( COMMA jsonPair )* ;
+
+    jsonPair      : jsonKey COLON term
+                  | 'KEY'? jsonKey 'VALUE' term
+                  ;
+
+    jsonKey       : 'NULL' | string | keyword ;
+
+ids      : LP id ( COMMA id )* RP ;
+id       : string | name ;
+string   : STRING+ | 'U&' STRING+ ( 'UESCAPE' STRING )? | ( 'N' | 'E' ) STRING+ ;
+name     : NAME+ | 'U&' NAME+ ( 'UESCAPE' STRING )? | keyword ;
+keyword  : Keyword | { isKeyword( getCurrentToken() ) }? . ;
 
 // DRY
 allDistinct   : 'ALL' | 'DISTINCT' ;
@@ -299,17 +335,6 @@ timeZone      : 'TIME' 'ZONE' ;
 uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
 withTies      : 'WITH' 'TIES' ;
 withWithout   : 'WITH' | 'WITHOUT' ;
-
-columnRefs    : columnRef ( COMMA columnRef ) * ;
-columnRef     : ((( database=name DOT )? schema=name DOT )? table=name DOT )? column=name index* ; // TODO: add _ROWID_ ?
-index         : LS ( decimal | slice )? RS ;
-slice         : lo=nth? COLON hi=nth? ;
-nth           : decimal | 'NULL' ;
-tableRef      : (( database=name DOT )? schema=name DOT )? table=name ;
-names         : LP name ( COMMA name )* RP ;
-name          : id  | Name ( 'UESCAPE' String )?;
-ids           : LP id ( COMMA id )* RP ;
-id            : ID | { isKeyword( getCurrentToken() ) }? . ;
 
 // Tokens
 LP       : '(' ;
@@ -355,24 +380,21 @@ TYPECAST : '::' ;
 COLON    : ':' ;
 //QUESTION : '?' ;
 
-String   : QUOTED ;
-National : [NE] QUOTED ;
-Unicode  : 'U&' QUOTED ;
-// Blob        : 'X' ( HEX HEX )+ ; TODO: this rule collides with ID, dunno why
-Blob     : 'X' QUOTED ;
-Name     : 'U&'? '"' ( ~'"' | '""' )* '"' ;
+STRING    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+NAME      : '"' ( ~'"' | '""' )* '"' ;
+//NAME     : '"' ( '""' | ~ [\u0000"] )* '"' ; TODO Why does this variation work? Is it better?
+//Backtick     : '`' ( ~'`' | '``' )* '`' ;
+//Dollars      : '$$' .*? '$$' ;
+Blob     : 'X' BLOB ( [ ] BLOB )*;
 
-ID       : '`' ( ~'`' | '``' )* '`'
-         | ALPHA ( ALPHA | DIGIT )*
-         ;
-
+Keyword  : ALPHA ( ALPHA | DIGIT )* ;
 Decimal  : DIGIT+ ;
 // matches "0.e1" or ".0e1", but not ".e1"
 Real     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) EXPO? ;
 Hexadecimal : '0x' HEX+ 'L'?;
 
 // TODO verify 'Variable' rule
-Variable : [:@$] ID
+Variable : [:@$] Keyword
          | '?' DIGIT*
          ;
 
@@ -380,10 +402,10 @@ Comment  : '--' ~[\r\n]* -> channel( HIDDEN ) ;
 Block    : '/*' .*? '*/' -> channel( HIDDEN ) ;
 Spaces   : [ \t\r\n] -> channel( HIDDEN ) ;
 
-fragment QUOTED   : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 fragment DIGIT    : [0-9] ;
 fragment HEX      : [0-9A-F] ;
 fragment ALPHA    : [A-Z_$@#] ;
 fragment EXPO     : 'E' [-+]? DIGIT+ ;
+fragment BLOB      : '\'' ( HEX HEX [ ]? )* '\'' ;
 
 ERROR : . ;
