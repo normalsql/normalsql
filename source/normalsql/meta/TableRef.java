@@ -10,12 +10,12 @@ public class
 {
 	public TableRef( TableRefContext context )
 	{
-		database = context.database != null ? context.database.getTrimmedText() : null;
 		schema = context.schema != null ? context.schema.getTrimmedText() : null;
+		domain = context.domain != null ? context.domain.getTrimmedText() : null;
 		table = context.table != null ? context.table.getTrimmedText() : null;
 	}
 
-	public String database;
 	public String schema;
+	public String domain;
 	public String table;
 }

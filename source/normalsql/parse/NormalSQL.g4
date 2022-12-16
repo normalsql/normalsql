@@ -46,47 +46,52 @@ import java.util.HashSet;
         if( !Character.isAlphabetic( text1.charAt( text1.length() - 1 ))) return false;
         if( !Character.isAlphabetic( text1.charAt( 0 ))) return false;
         String text = text1.toUpperCase();
-        // SQL reserved keywords
-        switch( text )
-        {
-            case "NULL":
-            case "TRUE":
-            case "FALSE":
-            case "WHERE":
-            case "HAVING":
-            case "QUALIFY":
-                return false;
-            default:
-                break;
-        }
+//        // SQL reserved keywords
+//        switch( text )
+//        {
+//            case "NULL":
+//            case "TRUE":
+//            case "FALSE":
+//            case "WHERE":
+//            case "HAVING":
+//            case "QUALIFY":
+//                return false;
+//            default:
+//                break;
+//        }
         boolean contains = keywords().contains( text );
         return contains;
     }
 }
 
-parse   : statement* EOF ;
+parse         : statement | ( statement SEMICOLON+ )* EOF ;
 
-statement     : ( delete | insert | merge | update | query ) SEMI? ;
+statement     : delete | insert | merge | update | query ;
 
 delete        : 'DELETE' ; // TODO
 
-insert        : 'INSERT' into ( LP columnRefs RP )? ( values | select ) ; // TODO
+insert        : 'INSERT' into refs? ( values | select ) ; // TODO
 
 merge         : 'MERGE' ; // TODO
 
-update        : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
+update        : 'UPDATE' ref 'SET' setter ( COMMA setter )* where? ;
 
-    setter        : columnRef EQ value ;
+    setter        : ref EQ value ;
 
 query         : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
 
 rows          : select
               | 'TABLE' tableRef // orderBy? offset? fetch?
               | values // orderBy? offset? fetch?
+              | with
               | LP query RP
               ;
 
 values        : 'VALUES' terms ;
+
+with          : 'WITH' 'RECURSIVE'? cte ( COMMA cte )* statement ;
+
+    cte           : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP ;
 
 select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM' join )?
                 where? groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate?
@@ -94,17 +99,17 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     distinct      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
-    item          : (( tableRef DOT )? STAR ) ( 'EXCEPT' LP columnRefs RP )?  # ItemWildcard
-                  | term alias?                                               # ItemColumn
+    item          : (( tableRef PERIOD )? ASTERISK ) ( 'EXCEPT' refs )?  # ItemTable
+                  | term alias?                                          # ItemColumn
                   ;
 
-        alias         : 'AS'? name ;
+        alias         : 'AS'? id ;
 
     top           : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
-    into          : 'INTO' columnRefs ;
+    into          : 'INTO' tableRef ;
 
-    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' ids )?  # JoinTwo
+    join          : join joinType? 'JOIN' join ( 'ON' term | 'USING' refs )?  # JoinTwo
                   | join COMMA join                                            # JoinOldStyle
                   | source                                                     # JoinSource
                   | LP join RP                                                 # JoinNested
@@ -126,7 +131,7 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 //                        | 'XMLTABLE' // TODO
                         | LP source RP
                         | tableRef )
-                        ( alias ids? )?
+                        ( alias refs? )?
                         useIndex? // TODO which alts allow 'useIndex'?
                       ;
 
@@ -174,14 +179,13 @@ select        : 'SELECT' distinct? top? ( item ( COMMA item )* )? into? ( 'FROM'
 
     unnest        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
-//    columnSpec    : ( id | columnRef ) id EQ ( array | term ) ;
     columnSpec    : id ( dataType | domainRef ) EQ ( array | row ) ;
 
-    dataType : 'NULL' | keyword+ ; // TODO dataTypes
+        dataType      : 'NULL' | keyword+ ; // TODO dataTypes
 
-    row      : term ; // TODO row value expression
+        row           : term ; // TODO row value expression
 
-    useIndex      : 'USE' 'INDEX' ids ;
+    useIndex      : 'USE' 'INDEX' refs ;
 
 terms         : term ( COMMA term )* ;
 
@@ -195,15 +199,15 @@ term          : 'NOT' term                                                    # 
               ;
 
 subterm       : subterm CONCAT subterm                                                            # SubtermConcat
-              | subterm ( TYPECAST keyword index* )+                                                   # SubtermTypeCast
+              | subterm ( TYPECAST keyword index* )+                                              # SubtermTypeCast
               | ( PLUS | MINUS ) subterm                                                          # SubtermUnary
-              | subterm CARET subterm                                                             # SubtermCaret
-              | subterm ( STAR | DIVIDE | MODULO ) subterm                                        # SubtermMultiplication
-              | subterm ( PLUS | MINUS ) subterm                                                  # SubtermAddition
-              | subterm ( LSHIFT | RSHIFT | AMP | PIPE ) subterm                                  # SubtermBitwise
+              | subterm CIRCUMFLEX subterm                                                        # SubtermPower
+              | subterm ( ASTERISK | SOLIDUS | PERCENT ) subterm                                  # SubtermProduct
+              | subterm ( PLUS | MINUS ) subterm                                                  # SubtermSum
+              | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                        # SubtermBitwise
               | subterm predicate                                                                 # SubtermPredicate
               | LP RP                                                                             # SubtermEmpty
-              | LP terms RP DOT id                                                              # SubtermFieldRef
+              | LP terms RP PERIOD id                                                             # SubtermFieldRef
               | LP terms RP                                                                       # SubtermNested
               | query                                                                             # SubtermQuery
               | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'  # SubtermCaseSimple
@@ -211,23 +215,23 @@ subterm       : subterm CONCAT subterm                                          
               | array                                                                             # SubtermArray
               | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                      # SubtermCast
               | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ) )?                        # SubtermTime
-              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                    # SubtermSequence
+              | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref                                          # SubtermSequence
+              | 'ROW' LP terms? RP                                                                # SubtermRow
               | function                                                                          # SubtermFunction
               | value                                                                             # SubtermValue
-              | columnRef                                                                         # SubtermColumnRef
+              | ref                                                                               # SubtermRef
 //              | term 'COLLATE' id # TermCollate TODO
 //              | sequenceValueExpression TODO
 //              | arrayElementReference TODO
-              | 'ROW' LP terms? RP                                                # SubtermRow
               ;
 
     predicate     : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
                   | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
-                  | 'IS' 'NOT'? 'NULL'                                                           # PredicateIsNULL
-                  | 'IS' 'NOT'? bool                                                             # PredicateIsBool
-                  | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateIsDistinct
-                  | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateIsType
-                  | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateIsJSON
+                  | 'IS' 'NOT'? 'NULL'                                                           # PredicateNull
+                  | 'IS' 'NOT'? truth                                                            # PredicateTruth
+                  | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+                  | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateType
+                  | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateJSON
                   | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
                   | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
                   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLIKE
@@ -235,11 +239,11 @@ subterm       : subterm CONCAT subterm                                          
                   ;
 
     type          : 'ROW' LP id type ( COMMA id type )* RP
-                  | type 'ARRAY' ( LS decimal RS )?
-                  | keyword+ ( LP decimal ( COMMA decimal )? RP keyword* )?
+                  | type 'ARRAY' ( LB Decimal RB )?
+                  | keyword+ ( LP Decimal ( COMMA Decimal )? RP keyword* )?
                   ;
 
-array         : 'ARRAY' LS terms? RS ;
+array         : 'ARRAY' LB terms? RB ;
 
 function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
               | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
@@ -254,8 +258,8 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
               | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
 //              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
               | '{fn' function '}' //  ODBC style
-              | keyword LP ( STAR | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
-              | keyword LP allDistinct? term orderBy RP ( LS term RS )? filter? over?
+              | keyword LP ( ASTERISK | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
+              | keyword LP allDistinct? term orderBy RP ( LB term RB )? filter? over?
 //              | keyword LP id 'FROM' id SingleQ RP
               // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
               // | ID DOT ID LP terms? RP // T-SQL?
@@ -267,35 +271,24 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
 
     over          : 'OVER' window ;
 
-domainRef     : ( schema=id DOT )? domain=id DOT ;
-tableRef      : (( schema=id DOT )? domain=id DOT )? table=id ;
-columnRefs    : columnRef ( COMMA columnRef ) * ;
-columnRef     : ((( schema=id DOT )? domain=id DOT )? table=id DOT )? column=id index* ;
-index         : LS ( term | slice )? RS ;
-slice         : lo=term? COLON hi=term? ;
-
-value         : real
-              | decimal
+value         : Decimal
+              | Real
+              | Bytes
               | Blob
-              | Hexadecimal
-              | bool
+              | truth
               | 'NULL'
-              | date
-              | dateODBC
-              | time
+              | 'DATE' string
+              | ( '{d' | '{t' | '{ts' ) string '}'
+              | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
               | interval
               | jsonObject
               | jsonArray
+              | Parameter
               | Variable
+              | string
               ;
 
-// Types
-real          : ( MINUS | PLUS )? Real ;
-decimal       : ( MINUS | PLUS )? Decimal 'L'? ;
-bool          : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
-date          : 'DATE' string ;
-dateODBC      : ( '{d' | '{t' | '{ts' ) string '}' ;
-time          : ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string? ;
+truth         : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
 interval      : 'INTERVAL' string ( keyword ( 'TO' keyword )? )? ;
 //interval : 'INTERVAL' expression timeSpan ;
 //timeSpan      : 'EPOCH'
@@ -308,21 +301,25 @@ interval      : 'INTERVAL' string ( keyword ( 'TO' keyword )? )? ;
 //              ;
 
 jsonArray     : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
+
 jsonObject    : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
 
     jsonPairs     : jsonPair ( COMMA jsonPair )* ;
 
-    jsonPair      : jsonKey COLON term
-                  | 'KEY'? jsonKey 'VALUE' term
-                  ;
+    jsonPair      : jsonKey COLON term | 'KEY'? jsonKey 'VALUE' term ;
 
     jsonKey       : 'NULL' | string | keyword ;
 
-ids      : LP id ( COMMA id )* RP ;
-id       : string | name ;
-string   : STRING+ | 'U&' STRING+ ( 'UESCAPE' STRING )? | ( 'N' | 'E' ) STRING+ ;
-name     : NAME+ | 'U&' NAME+ ( 'UESCAPE' STRING )? | keyword ;
-keyword  : Keyword | { isKeyword( getCurrentToken() ) }? . ;
+refs       :  LP ref ( COMMA ref )* RP ;
+ref        : ((( schema=id PERIOD )? domain=id PERIOD )? table=id PERIOD )? column=id index* ;
+tableRef   : (( schema=id PERIOD )? domain=id PERIOD )? table=id ;
+domainRef  : ( schema=id PERIOD )? domain=id PERIOD ;
+index      : LB ( term | term? COLON term? )? RB ;
+
+// TODO string prefixes upper case only
+string     : String+ | 'U&' String+ ( uescape String )? | ( 'N' | 'E' ) String+ ;
+id         : ID+ | 'U&' ID+ ( uescape String )? | keyword ;
+keyword    : Keyword | { isKeyword( getCurrentToken() ) }? . ;
 
 // DRY
 allDistinct   : 'ALL' | 'DISTINCT' ;
@@ -332,40 +329,74 @@ onNull        : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 respectIgnore : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 rowRows       : 'ROW' | 'ROWS' ;
 timeZone      : 'TIME' 'ZONE' ;
+uescape       : 'UESCAPE' ;
 uniqueKeys    : withWithout 'UNIQUE' 'KEYS' ;
 withTies      : 'WITH' 'TIES' ;
 withWithout   : 'WITH' | 'WITHOUT' ;
 
-// Tokens
-LP       : '(' ;
-RP       : ')' ;
-LS       : '[' ;
-RS       : ']' ;
-COMMA    : ',' ;
-SEMI     : ';' ;
+String     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+ID         : '"' ( ~'"' | '""' )* '"' ;
+//ID     : '"' ( '""' | ~ [\u0000"] )* '"' ; TODO Why does this variation work? Is it better?
+//Backtick     : '`' ( ~'`' | '``' )* '`' ;
+//Dollars      : '$$' .*? '$$' ;
+//TODO square bracket identifiers
+Blob       : 'X' BLOB ( [ ] BLOB )*;
+fragment
+BLOB       : '\'' ( HEX HEX [ ]? )* '\'' ;
 
-PLUS     : '+' ;
-MINUS    : '-' ;
-DIVIDE   : '/' ;
-STAR     : '*' ; // multiplication
-MODULO   : '%' ;
-CARET    : '^' ; // exponent
+Parameter  : '?' DIGIT* ;
+Variable   : '@' [A-Z_$@#0-9]* // T-SQL?
+           | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
+           | ':' '"' ( ~'"' | '""' )* '"' // Postgres?
+           ;
+Keyword    : [A-Z_#] [A-Z_#$@0-9]* ;
+Decimal    : DIGIT+ 'L'?;
+// matches "0.e1" or ".0e1", but not ".e1"
+Real       : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? ;
+Bytes      : '0x' HEX+ ;
+
+fragment
+DIGIT      : [0-9] ;
+fragment
+HEX        : [A-F0-9] ;
+
+Comment    : '--' ~[\r\n]* -> channel( HIDDEN ) ;
+Block      : '/*' .*? '*/' -> channel( HIDDEN ) ;
+Spaces     : [ \t\r\n] -> channel( HIDDEN ) ;
+
+LP         : '(' ;
+RP         : ')' ;
+LB         : '[' ;
+RB         : ']' ;
+COMMA      : ',' ;
+PERIOD     : '.' ;
+COLON      : ':' ;
+SEMICOLON  : ';' ;
+
+PLUS       : '+' ;
+MINUS      : '-' ;
+SOLIDUS    : '/' ;
+ASTERISK   : '*' ; // multiplication
+PERCENT    : '%' ;
+CIRCUMFLEX : '^' ; // exponent
 //AT       : '@' ; // absolute value
 //BANG     : '!' ; // factorial
+//QUESTION : '?' ;
 
-EQ       : '=' | ':=' ;
-NEQ      : '<>' | '!=' ;
-LT       : '<' ;
-LTE      : '<=' ;
-GT       : '>' ;
-GTE      : '>=' ;
-OVERLAP  : '&&' ;
+EQ         : '='  | ':=' ;
+NEQ        : '<>' | '!=' ;
+LT         : '<'  ;
+LTE        : '<=' ;
+GT         : '>'  ;
+GTE        : '>=' ;
+OVERLAP    : '&&' ;
 
-CONCAT   : '||' ; // concatenation
-AMP      : '&'  ; // bitwise AND
-PIPE     : '|'  ; // bitwise XOR
-LSHIFT   : '<<' ; // bitwise shift left
-RSHIFT   : '>>' ; // bitwise shift right
+TYPECAST   : '::' ;
+CONCAT     : '||' ; // concatenation
+AMPERSAND  : '&'  ; // bitwise AND
+VERTICAL   : '|'  ; // bitwise XOR
+SHIFTL     : '<<' ; // bitwise shift left
+SHIFTR     : '>>' ; // bitwise shift right
 //POUND    : '#'  ; // bitwise XOR
 // TILDE     : '~' ; // bitwise NOT
 // https://www.postgresql.org/docs/current/functions-matching.html
@@ -375,37 +406,4 @@ MATCH2   : '~*' ; // match regex case insensitive
 MATCH3   : '!~' ; // not match regex case sensitive
 MATCH4   : '!~*' ; // not match regex case insensitive
 
-DOT      : '.' ;
-TYPECAST : '::' ;
-COLON    : ':' ;
-//QUESTION : '?' ;
-
-STRING    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
-NAME      : '"' ( ~'"' | '""' )* '"' ;
-//NAME     : '"' ( '""' | ~ [\u0000"] )* '"' ; TODO Why does this variation work? Is it better?
-//Backtick     : '`' ( ~'`' | '``' )* '`' ;
-//Dollars      : '$$' .*? '$$' ;
-Blob     : 'X' BLOB ( [ ] BLOB )*;
-
-Keyword  : ALPHA ( ALPHA | DIGIT )* ;
-Decimal  : DIGIT+ ;
-// matches "0.e1" or ".0e1", but not ".e1"
-Real     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) EXPO? ;
-Hexadecimal : '0x' HEX+ 'L'?;
-
-// TODO verify 'Variable' rule
-Variable : [:@$] Keyword
-         | '?' DIGIT*
-         ;
-
-Comment  : '--' ~[\r\n]* -> channel( HIDDEN ) ;
-Block    : '/*' .*? '*/' -> channel( HIDDEN ) ;
-Spaces   : [ \t\r\n] -> channel( HIDDEN ) ;
-
-fragment DIGIT    : [0-9] ;
-fragment HEX      : [0-9A-F] ;
-fragment ALPHA    : [A-Z_$@#] ;
-fragment EXPO     : 'E' [-+]? DIGIT+ ;
-fragment BLOB      : '\'' ( HEX HEX [ ]? )* '\'' ;
-
-ERROR : . ;
+ERROR      : . ;

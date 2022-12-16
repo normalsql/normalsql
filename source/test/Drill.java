@@ -12,7 +12,11 @@ public class Drill
 	public static void main( String... args )
 	{
 		String sql =
-			"SELECT;"
+//			"SELECT _ROWID_ S1, TEST._ROWID_ S2, PUBLIC.TEST._ROWID_ S3, SCRIPT.PUBLIC.TEST._ROWID_ S4,\n" +
+//				"    \"_ROWID_\" U1, TEST.\"_ROWID_\" U2, PUBLIC.TEST.\"_ROWID_\" U3, SCRIPT.PUBLIC.TEST.\"_ROWID_\" U4\n" +
+//				"    FROM TEST;"
+			"select {fn TIMESTAMPADD(SQL_TSI_DAY, 1, {ts '2011-10-20 20:30:40.001'})};"
+//			"select date '+0011-01-01';"
 			;
 		System.out.println( sql.length() );
 		System.out.println( sql.charAt( sql.length() - 1 ));

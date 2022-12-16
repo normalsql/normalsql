@@ -64,7 +64,7 @@ extends
 		Item item = new Item();
 		item.context = context;
 		item.wildcard = false;
-		ColumnRefContext rc = context.findFirst( ColumnRefContext.class, "term/subterm/columnRef" );
+		RefContext rc = context.findFirst( RefContext.class, "term/subterm/ref" );
 		if( rc != null )
 		{
 			item.columnRef = new TableColumnRef( rc );
@@ -86,7 +86,7 @@ extends
 			source.tableRef = new TableRef( context.tableRef() );
 			if( context.alias() != null )
 			{
-				source.alias = context.alias().name().getTrimmedText();
+//				source.alias = context.alias().name().getTrimmedText();
 			}
 			stack.peek().sources.add( source );
 		}

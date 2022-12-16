@@ -7,7 +7,7 @@ import normalsql.meta.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ParseContext;
-import normalsql.parse.NormalSQLParser.SubtermColumnRefContext;
+import normalsql.parse.NormalSQLParser.SubtermRefContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
@@ -57,6 +57,8 @@ public class Worker
 		throws IOException, SQLException
 	{
 		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
+
+		// TODO attempt running statement before parsing
 
 		// TODO reuse one instance of ANTLR?
 		CharStream chars = CharStreams.fromString( work.originalSQL );
@@ -146,12 +148,14 @@ public class Worker
 
 		merge( work );
 
-		System.out.println( work );
+		// TODO "run trip" test, verify new PreparedStatement.toString() is same as original source
+
+		System.out.println( work.sourceFile + " processed" );
 	}
 
 	public static String getColumn( SubtermContext b )
 	{
-		return ( (SubtermColumnRefContext) b ).columnRef().column.getTrimmedText();
+		return ( (SubtermRefContext) b ).ref().column.getTrimmedText();
 	}
 
 	public void processPreparedStatement( Connection conn, Work work )

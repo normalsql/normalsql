@@ -91,6 +91,7 @@ public class
 
 	public void crawl( Path sourceRoot, Path targetRoot )
 	{
+		Worker worker = new Worker( _conn );
 		try
 		{
 			Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
@@ -137,7 +138,7 @@ public class
 								work.statementClassName = className;
 								work.resultSetClassName = className + "ResultSet";
 
-								new Worker( _conn ).process( work );
+								worker.process( work );
 							}
 
 						}
