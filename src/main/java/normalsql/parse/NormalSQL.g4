@@ -250,12 +250,12 @@ function      : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? ter
               | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
               | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
               | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
-              | 'LISTAGG' LP allDistinct? term COMMA string
+              | 'LISTAGG' LP allDistinct? subterm COMMA subterm
 //                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
                 ( 'ON' 'OVERFLOW' 'ERROR' )?
                 RP withinGroup? filter? over?
-              | 'STRING_AGG' LP term COMMA string orderBy RP
-              | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
+              | 'STRING_AGG' LP subterm COMMA subterm orderBy RP
+              | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' subterm )? RP filter?
 //              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
               | '{fn' function '}' //  ODBC style
               | keyword LP ( ASTERISK | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
