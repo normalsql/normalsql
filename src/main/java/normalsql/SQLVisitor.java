@@ -15,7 +15,7 @@ public class
 extends
 	NormalSQLBaseVisitor<Void>
 {
-	ArrayList<Predicate> predicates;
+	ArrayList<Predicate<?>> predicates;
 
 	Stack<Statement> stack;
 	Statement root;
@@ -24,7 +24,7 @@ extends
 	public Void visitParse( ParseContext context )
 	{
 		predicates = new ArrayList<>();
-		stack = new Stack();
+		stack = new Stack<>();
 		root = new Statement();
 		stack.add( root );
 

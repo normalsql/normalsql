@@ -98,7 +98,8 @@ extends
             {
                 boolean wildcard = "*".equals( spot );
                 GlobbingRuleContext child = (GlobbingRuleContext) temp;
-                boolean match = child.getRuleName().equals( spot );
+//                boolean match = child.getRuleName().equals( spot );
+                boolean match = false;
                 if( wildcard || match )
                 {
                     if( nth + 1 < query.size() )
