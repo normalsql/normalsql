@@ -55,8 +55,6 @@ extends
 		low = context.subterm( 0 );
 		high = context.subterm( 1 );
 		match = Match.match( test, low, high );
-
-		if( !isMatched() ) return;
 	}
 
 	@Override

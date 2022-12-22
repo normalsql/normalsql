@@ -16,9 +16,9 @@ public class Item
 {
 	public ItemContext context;
 
-	public boolean wildcard;
-	public TableRef tableRef;
-	public TableColumnRef columnRef;
+//	public boolean wildcard;
+//	public TableRef tableRef;
+//	public TableColumnRef columnRef;
 	public String name;
 	public String alias;
 }

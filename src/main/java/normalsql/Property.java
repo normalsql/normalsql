@@ -15,7 +15,8 @@ import normalsql.parse.NormalSQLParser.ValueContext;
 
 // TODO Maybe split into Statement and ResultSet specific subclasses.
 
-public class Property
+public class
+	Property
 {
 	public Column column;
 	public Param param;

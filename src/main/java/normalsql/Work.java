@@ -26,7 +26,7 @@ public class Work
 	Statement root;
 
 	// All the (matched) predicates in one flattened list.
-	ArrayList<Predicate> predicates = new ArrayList<>();
+	ArrayList<Predicate<?>> predicates = new ArrayList<>();
 
 	// Parameters copied from PreparedStatement's metadata
 	ArrayList<Param> params = new ArrayList<>();

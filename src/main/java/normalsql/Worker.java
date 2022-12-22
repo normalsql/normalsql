@@ -41,11 +41,12 @@ public class Worker
 	{
 		_conn = conn;
 
-		// TODO: This will have to be moved to common place, maybe into superclass
 		_engine = new VelocityEngine();
 		_engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
+		// TODO verify this works with jar
 		_engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
 		_engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
+//		_engine.setProperty( "class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader" );
 		_engine.init();
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
@@ -67,6 +68,8 @@ public class Worker
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ParseContext parse = parser.parse();
 		SQLVisitor visitor = new SQLVisitor();
+		visitor.parser = parser;
+		visitor.tokens = tokens;
 
 		visitor.visit( parse );
 		work.root = visitor.root;
@@ -148,7 +151,7 @@ public class Worker
 
 		merge( work );
 
-		// TODO "run trip" test, verify new PreparedStatement.toString() is same as original source
+		// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
 		System.out.println( work.sourceFile + " processed" );
 	}
@@ -223,13 +226,13 @@ public class Worker
 				if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.alias ) )
 				{
 					label = item.alias;
-					prop.source = item.context.getText();
+//					prop.source = item.context.getText();
 					break;
 				}
 				else if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.name ) )
 				{
 					label = item.name;
-					prop.source = item.context.getText();
+//					prop.source = item.context.getText();
 					break;
 				}
 			}

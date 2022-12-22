@@ -6,8 +6,13 @@ package normalsql;
 import normalsql.meta.*;
 import normalsql.parse.NormalSQLBaseVisitor;
 import normalsql.parse.NormalSQLParser.*;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Stack;
 
 public class
@@ -15,10 +20,14 @@ public class
 extends
 	NormalSQLBaseVisitor<Void>
 {
+	public Parser parser;
+	public CommonTokenStream tokens;
 	ArrayList<Predicate<?>> predicates;
 
 	Stack<Statement> stack;
 	Statement root;
+
+
 
 	@Override
 	public Void visitParse( ParseContext context )
@@ -43,6 +52,7 @@ extends
 		return null;
 	}
 
+	// TODO populate Work with table's columns (scrapped from metadata)
 //	@Override
 //	public Void visitItemWildcard( ItemWildcardContext context )
 //	{
@@ -63,35 +73,32 @@ extends
 	{
 		Item item = new Item();
 		item.context = context;
-		item.wildcard = false;
-		RefContext rc = context.findFirst( RefContext.class, "term/subterm/ref" );
-		if( rc != null )
+		item.name = tokens.getText( context.term() );
+		if( context.alias() != null )
 		{
-			item.columnRef = new TableColumnRef( rc );
-			item.name = item.columnRef.column;
-			item.alias = context.findFirstString( "alias/name" );
-			stack.peek().items.add( item );
+			item.alias = context.alias().id().getTrimmedText();
 		}
+		stack.peek().items.add( item );
 		super.visitItemColumn( context );
 		return null;
 	}
 
 	// TODO verify this is needed
-	@Override
-	public Void visitSource( SourceContext context )
-	{
-		if( context.tableRef() != null )
-		{
-			Source source = new Source();
-			source.tableRef = new TableRef( context.tableRef() );
-			if( context.alias() != null )
-			{
-//				source.alias = context.alias().name().getTrimmedText();
-			}
-			stack.peek().sources.add( source );
-		}
-		return super.visitSource( context );
-	}
+//	@Override
+//	public Void visitSource( SourceContext context )
+//	{
+//		if( context.tableRef() != null )
+//		{
+//			Source source = new Source();
+//			source.tableRef = new TableRef( context.tableRef() );
+//			if( context.alias() != null )
+//			{
+////				source.alias = context.alias().name().getTrimmedText();
+//			}
+//			stack.peek().sources.add( source );
+//		}
+//		return super.visitSource( context );
+//	}
 
 	@Override
 	public Void visitPredicateCompare( PredicateCompareContext ctx )

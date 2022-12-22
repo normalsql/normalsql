@@ -30,7 +30,7 @@ public class
 		Property prop = new Property();
 		prop.context = ((SubtermValueContext) context).value();
 		// TODO fix this to include all tokens, incl. whitespace
-		prop.source = prop.context.getText();
+//		prop.source = prop.context.getText();
 		prop.trimmed = prop.context.getTrimmedText();
 		prop.variable = toVariableCase( method );
 		prop.getter = "get" + toMethodCase( method );
