@@ -25,7 +25,9 @@ $line
   
 **/
 
+#if( $packageName )
 package ${packageName};
+#end
 
 import java.sql.*;
 import javax.sql.DataSource;
