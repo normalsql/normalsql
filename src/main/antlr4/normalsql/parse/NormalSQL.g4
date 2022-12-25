@@ -84,10 +84,10 @@ query
    : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
 
 rows
-   : select
-   | with
-   | 'TABLE' tableRef // orderBy? offset? fetch?
+   : with
    | values // orderBy? offset? fetch?
+   | select
+   | 'TABLE' tableRef // orderBy? offset? fetch?
    | LP query RP
    ;
 
@@ -274,7 +274,6 @@ subterm
 predicate
    : op = ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm # PredicateCompare
    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm # PredicateMatch
-   | 'IS' 'NOT'? 'NULL' # PredicateNull
    | 'IS' 'NOT'? truth # PredicateTruth
    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # PredicateDistinct
    | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP # PredicateType
@@ -329,7 +328,6 @@ value
    | Bytes
    | Blob
    | truth
-   | 'NULL'
    | 'DATE' String
    | ( '{d' | '{t' | '{ts' ) String '}'
    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? String?
@@ -342,7 +340,7 @@ value
    ;
 
 truth
-   : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+   : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
    : 'INTERVAL' String (keyword ( 'TO' keyword )? )?
