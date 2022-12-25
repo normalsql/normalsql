@@ -11,8 +11,8 @@ grammar NormalSQL;
 
 options 
 { 
-    contextSuperClass = normalsql.parse.GlobbingRuleContext; 
-    caseInsensitive = true; 
+    contextSuperClass=normalsql.parse.GlobbingRuleContext; 
+    caseInsensitive=true; 
 }
 @ parser :: header
 {
@@ -20,20 +20,20 @@ import java.util.HashSet;
 }
 @ parser :: members
 {
-	HashSet<String> __keywords = keywords();
+	HashSet<String> __keywords=keywords();
 
 	public HashSet<String> keywords()
 	{
-		HashSet<String> words = new HashSet<>();
+		HashSet<String> words=new HashSet<>();
 		// Skip first literal
-		for( int nth = 1; nth < _LITERAL_NAMES.length; nth++ )
+		for( int nth=1; nth < _LITERAL_NAMES.length; nth++ )
 		{
-			String symbol = _SYMBOLIC_NAMES[ nth ];
+			String symbol=_SYMBOLIC_NAMES[ nth ];
 			// Keywords are literals without a matching symbol
 			if( symbol == null )
 			{
-				String keyword = _LITERAL_NAMES[ nth ];
-				keyword = keyword.substring( 1, keyword.length() - 1 );
+				String keyword=_LITERAL_NAMES[ nth ];
+				keyword=keyword.substring( 1, keyword.length() - 1 );
 				if( Character.isLetter( keyword.charAt( 0 )))
 				{
 					words.add( keyword );
@@ -45,11 +45,11 @@ import java.util.HashSet;
 
     public boolean isKeyword( Token t )
     {
-        String text1 = t.getText();
+        String text1=t.getText();
         if( !Character.isAlphabetic( text1.charAt( text1.length() - 1 ))) return false;
         if( !Character.isAlphabetic( text1.charAt( 0 ))) return false;
-        String text = text1.toUpperCase();
-        boolean contains = keywords().contains( text );
+        String text=text1.toUpperCase();
+        boolean contains=keywords().contains( text );
         return contains;
     }
 }
@@ -188,8 +188,7 @@ select
                        ;
 
     qualify
-       : 'QUALIFY' term
-       ;
+       : 'QUALIFY' term ;
 
     orderBy
        : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
@@ -258,7 +257,7 @@ subterm
    | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                          # SubtermCaseSearch
    | array                                                                               # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                        # SubtermCast
-   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | String ))?                           # SubtermTime
+   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?                           # SubtermTime
    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref                                            # SubtermSequence
    | 'ROW' LP terms? RP                                                                                       # SubtermRow
    | function                                                                                       # SubtermFunction
@@ -272,7 +271,7 @@ subterm
 // TODO subrule for dialect assignment operators
 // TODO subrule for dialect & custom comparison operators?
 predicate
-   : op = ( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm # PredicateCompare
+   : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm # PredicateCompare
    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm # PredicateMatch
    | 'IS' 'NOT'? truth # PredicateTruth
    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # PredicateDistinct
@@ -280,8 +279,8 @@ predicate
    | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys? # PredicateJSON
    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
    | 'NOT'? 'IN' LP ( query | terms )? RP # PredicateIN
-   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' String )? # PredicateLIKE
-   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' String )? # PredicateREGEXP
+   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )? # PredicateLIKE
+   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )? # PredicateREGEXP
    ;
 
 type
@@ -328,22 +327,22 @@ value
    | Bytes
    | Blob
    | truth
-   | 'DATE' String
-   | ( '{d' | '{t' | '{ts' ) String '}'
-   | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? String?
+   | 'DATE' string
+   | ( '{d' | '{t' | '{ts' ) string '}'
+   | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
    | interval
    | jsonObject
    | jsonArray
    | Parameter
    | Variable
-   | String
+   | string
    ;
 
 truth
    : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
-   : 'INTERVAL' String (keyword ( 'TO' keyword )? )?
+   : 'INTERVAL' string (keyword ( 'TO' keyword )? )?
    ;
    //interval : 'INTERVAL' expression timeSpan ;
    //timeSpan      : 'EPOCH'
@@ -370,19 +369,19 @@ jsonObject
            ;
 
             jsonKey
-               : 'NULL' | String | keyword ;
+               : 'NULL' | string | keyword ;
 
 refs
    : LP ref ( COMMA ref )* RP ;
 
 ref
-   : ((( schema = id PERIOD )? domain = id PERIOD )? table = id PERIOD )? column = id index* ;
+   : ((( schema=id PERIOD )? domain=id PERIOD )? table=id PERIOD )? column=id index* ;
 
 tableRef
-   : (( schema = id PERIOD )? domain = id PERIOD )? table = id ;
+   : (( schema=id PERIOD )? domain=id PERIOD )? table=id ;
 
 domainRef
-   : ( schema = id PERIOD )? domain = id PERIOD ;
+   : ( schema=id PERIOD )? domain=id PERIOD ;
 
 index
    : LB ( term | term? ':' term? )? RB ;
@@ -402,7 +401,7 @@ id
    ;
 
    uescape
-      : 'UESCAPE' STRING ;
+      : 'UESCAPE' string ;
 
 keyword
    : Keyword
