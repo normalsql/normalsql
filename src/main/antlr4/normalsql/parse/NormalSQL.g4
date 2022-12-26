@@ -112,103 +112,105 @@ select
       | term alias?                                                     # ItemColumn
       ;
 
-    alias : 'AS'? id ;
+   alias : 'AS'? id ;
 
-    top
-       : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
+   top
+      : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
-    into
-       : 'INTO' tableRef ;
+   into
+      : 'INTO' tableRef ;
 
-    join
-       : join joinType? 'JOIN' join ( 'ON' term | 'USING' refs )?        # JoinTwo
-       | join COMMA join                                                 # JoinOldStyle
-       | source                                                          # JoinSource
-       | LP join RP                                                      # JoinNested
-       ;
+   join
+      : join joinType? 'JOIN' join ( 'ON' term | 'USING' refs )?        # JoinTwo
+      | join COMMA join                                                 # JoinOldStyle
+      | source                                                          # JoinSource
+      | LP join RP                                                      # JoinNested
+      ;
 
-        joinType
-           : 'INNER'
-           | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
-           | 'CROSS'
-           | 'NATURAL'
-           ;
+      joinType
+         : 'INNER'
+         | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+         | 'CROSS'
+         | 'NATURAL'
+         ;
 
-        source
-           : ( query
-             | values
-             | function
-             | unnest
-             | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
-             | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
-             | 'JSON_TABLE' // TODO
-             | 'XMLTABLE' // TODO
-             | LP source RP
-             | tableRef
-             )
-             ( alias refs? )? useIndex? // TODO which alts allow 'useIndex'?
-           ;
+      source
+         :
+         ( query
+         | values
+         | function
+         | unnest
+         | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
+         | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
+         | 'JSON_TABLE' // TODO
+         | 'XMLTABLE' // TODO
+         | LP source RP
+         | tableRef
+         )
+         ( alias refs? )? useIndex? // TODO which alts allow 'useIndex'?
+         ;
 
-    where
-       : 'WHERE' term ;
+   where
+      : 'WHERE' term ;
 
-    groupBy
-       : 'GROUP' 'BY' terms? ;
+   groupBy
+      : 'GROUP' 'BY' terms? ;
 
-    having
-       : 'HAVING' terms ;
+   having
+      : 'HAVING' terms ;
 
-    windows
-       : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
+   windows
+      : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
 
-        windowAlias
-           : id 'AS' window ;
+      windowAlias
+         : id 'AS' window ;
 
-            window
-               : id
-               | LP id? partitionBy? orderBy? windowFrame? RP
+         window
+            : id
+            | LP id? partitionBy? orderBy? windowFrame? RP
+            ;
+
+            partitionBy
+               : 'PARTITION' 'BY' terms ;
+
+            windowFrame
+               : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                 ( preceding | 'BETWEEN' following 'AND' following )
+                 ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
                ;
 
-                partitionBy
-                   : 'PARTITION' 'BY' terms ;
+               preceding
+                  : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+                  | 'CURRENT' 'ROW'
+                  ;
 
-                windowFrame
-                   : ( 'RANGE' | 'ROWS' | 'GROUPS' ) ( preceding | 'BETWEEN' following 'AND' following )
-                     ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-                   ;
+                  following
+                     : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+                     | preceding
+                     ;
 
-                    preceding
-                       : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-                       | 'CURRENT' 'ROW'
-                       ;
+   qualify
+      : 'QUALIFY' term ;
 
-                    following
-                       : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-                       | preceding
-                       ;
+   orderBy
+      : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
 
-    qualify
-       : 'QUALIFY' term ;
+      orderByItem
+         : term ( ' ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
 
-    orderBy
-       : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
-
-        orderByItem
-           : term ( ' ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
-
-    offset
+   offset
        : 'OFFSET' term rowRows? ;
 
-    fetch
+   fetch
        : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
-    limit
+   limit
        : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
 
-    forUpdate
+   forUpdate
        : 'FOR' 'UPDATE' ;
 
-    unnest
+   unnest
        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
 columnSpec
@@ -241,12 +243,10 @@ term
 subterm
    : subterm '||' subterm                                                         # SubtermConcat
    | subterm ( '::' keyword index* )+                                                         # SubtermTypeCast
-//   | ( PLUS | MINUS ) subterm                                                                       # SubtermUnary
-   | SIGN subterm                                                                       # SubtermUnary
+   | ( '+' | '-' ) subterm                                                                       # SubtermUnary
    | subterm '^' subterm                                                                       # SubtermPower
    | subterm ( '*' | '/' | '%' ) subterm                                             # SubtermProduct
-//   | subterm ( PLUS | MINUS ) subterm                                                         # SubtermSum
-   | subterm SIGN subterm                                                         # SubtermSum
+   | subterm ( '+' | '-' ) subterm                                                         # SubtermSum
    | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                             # SubtermBitwise
    | subterm predicate                                                                       # SubtermPredicate
    | LP RP                                                                                     # SubtermEmpty
@@ -393,8 +393,8 @@ string
    ;
 
 id
-   : Id
-   | UnicodeId uescape?
+   : ID
+   | UnicodeID uescape?
    | Backticks
    | Dollars
    | keyword
@@ -444,28 +444,25 @@ Keyword
 String
    : STRING+ ;
 
-UnicodeString // options { caseInsensitive=false; }
+UnicodeString
    : 'U&' STRING+ ;
 
-NationalString // options { caseInsensitive=false; }
+NationalString
    : [NE] STRING+ ;
 
 fragment STRING
    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-Id
-   : ID ;
-
-UnicodeId // options { caseInsensitive=false; }
+UnicodeID
    : 'U&' ID ;
 
-fragment ID
+//TODO square bracket identifiers
+ID
    : '"' ( ~'"' | '""' )* '"' ;
    //ID     : '"' ( '""' | ~ [\u0000"] )* '"' ; TODO Why does this variation work? Is it better?
 
 Dollars
   : '$$' .*? '$$' ;
-   //TODO square bracket identifiers
 
 Backticks
    : '`' ( ~'`' | '``' )* '`' ;
@@ -498,17 +495,17 @@ fragment DIGIT
 Variable
    : '@' [A-Z_$@#0-9]* // T-SQL?
    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-   | ':' '"' ( ~'"' | '""' )* '"' // Postgres?
+   | ':' ID // Postgres?
    ;
 
 Comment
-   : '--' ~ [\r\n]* -> channel( HIDDEN ) ;
+   : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
 
 Block
-   : '/*' .*? '*/' -> channel( HIDDEN ) ;
+   : '/*' ( Block | . )*? '*/' -> channel( HIDDEN ) ;
 
 Spaces
-   : [ \t\r\n] -> channel ( HIDDEN ) ;
+   : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
 LP       : '(' ;
 RP       : ')' ;
@@ -516,9 +513,6 @@ LB       : '[' ;
 RB       : ']' ;
 COMMA    : ',' ;
 PERIOD   : '.' ;
-//PLUS     : '+' ;
-//MINUS    : '-' ;
-SIGN     : [+-] ;
 WILDCARD : '*' ;
 
 // TODO add isAssign for dialects (for symantec predicate)
@@ -533,10 +527,6 @@ AMPERSAND : '&' ;
 VERTICAL : '|' ;
 SHIFTL   : '<<' ; // bitwise shift left
 SHIFTR   : '>>' ; // bitwise shift right
-   //POUND    : '#'  ; // bitwise XOR
-   // TILDE     : '~' ; // bitwise NOT
-   // https://www.postgresql.org/docs/current/functions-matching.html
-   // POSIX Regular Expressions
 
 // TODO replace w/ isOperator (for symantec predicate)
 MATCH1 : '~' ; // match regex case sensitive
