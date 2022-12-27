@@ -46,7 +46,8 @@ TestGeneric
 	{
 
 //		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/h2database/h2/src/test/org/h2/test/scripts" );
-		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql/source/test/" );
+		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql/src/main/java/test/" );
+
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
 			{

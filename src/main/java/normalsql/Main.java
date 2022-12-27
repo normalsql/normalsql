@@ -137,10 +137,8 @@ public class
 								work.packageName = packageName;
 								work.statementClassName = className;
 								work.resultSetClassName = className + "ResultSet";
-
 								worker.process( work );
 							}
-
 						}
 						catch( Exception ioe )
 						{

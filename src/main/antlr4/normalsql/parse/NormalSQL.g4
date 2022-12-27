@@ -1,8 +1,5 @@
 // Copyright 2010-2022 Jason Osgood
-
-
 // SPDX-License-Identifier: Apache-2.0
-
 
 /*
  NormalSQL.g4, SQL DML grammar for ANTLR 4.x
@@ -101,7 +98,7 @@ values
    : 'VALUES' terms ;
 
 select
-   : 'SELECT' distinct? top? ( item ( COMMA item )* COMMA? )? into? ( 'FROM' join ) ? where?
+   : 'SELECT' distinct? top? ( item ( COMMA item )* COMMA? )? into? ( 'FROM' join )? where?
       groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate? ;
 
    distinct
@@ -109,7 +106,7 @@ select
 
    item
       : (( tableRef DOT )? WILDCARD )  ( 'EXCEPT' columnRefs )?  # ItemTableRef
-      | term  alias?                              # ItemColumn
+      | term  alias?                                             # ItemColumn
       ;
 
    alias : 'AS'? id ;

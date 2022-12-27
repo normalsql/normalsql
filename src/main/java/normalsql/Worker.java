@@ -45,8 +45,8 @@ public class Worker
 		_engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
 		// TODO verify this works with jar
 		_engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-		_engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
 //		_engine.setProperty( "class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader" );
+		_engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
 		_engine.init();
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
@@ -158,7 +158,7 @@ public class Worker
 
 	public static String getColumn( SubtermContext b )
 	{
-		return ( (SubtermRefContext) b ).ref().column.getTrimmedText();
+		return ( (SubtermRefContext) b ).columnRef().column.getTrimmedText();
 	}
 
 	public void processPreparedStatement( Connection conn, Work work )

@@ -3,12 +3,12 @@
 
 package normalsql.meta;
 
-import normalsql.parse.NormalSQLParser.RefContext;
+import normalsql.parse.NormalSQLParser.ColumnRefContext;
 
 public class
 	TableColumnRef
 {
-	public TableColumnRef( RefContext context )
+	public TableColumnRef( ColumnRefContext context )
 	{
 		domain = context.domain != null ? context.domain.getTrimmedText() : null;
 		schema = context.schema != null ? context.schema.getTrimmedText() : null;

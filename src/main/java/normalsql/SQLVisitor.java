@@ -8,7 +8,7 @@ import normalsql.parse.NormalSQLBaseVisitor;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import java.util.ArrayList;
@@ -26,8 +26,6 @@ extends
 
 	Stack<Statement> stack;
 	Statement root;
-
-
 
 	@Override
 	public Void visitParse( ParseContext context )
@@ -73,6 +71,7 @@ extends
 	{
 		Item item = new Item();
 		item.context = context;
+		item.source = tokens.getText( context );
 		item.name = tokens.getText( context.term() );
 		if( context.alias() != null )
 		{
