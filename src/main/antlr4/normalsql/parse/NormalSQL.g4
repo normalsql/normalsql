@@ -69,16 +69,16 @@ delete
    : 'DELETE' ; // TODO
    
 insert
-   : 'INSERT' into refs? ( values | select ) ; // TODO
+   : 'INSERT' into columnRefs? ( values | select ) ; // TODO
    
 merge
    : 'MERGE' ; // TODO
    
 update
-   : 'UPDATE' ref 'SET' setter ( COMMA setter )* where? ;
+   : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
 
    setter
-       : ref EQ value ;
+       : columnRef EQ value ;
 
 query
    : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
@@ -108,8 +108,8 @@ select
       : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
    item
-      : (( tableRef PERIOD )? WILDCARD )  ( 'EXCEPT' refs )?            # ItemTable
-      | term alias?                                                     # ItemColumn
+      : (( tableRef DOT )? WILDCARD )  ( 'EXCEPT' columnRefs )?  # ItemTableRef
+      | term  alias?                              # ItemColumn
       ;
 
    alias : 'AS'? id ;
@@ -121,7 +121,7 @@ select
       : 'INTO' tableRef ;
 
    join
-      : join joinType? 'JOIN' join ( 'ON' term | 'USING' refs )?        # JoinTwo
+      : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinTwo
       | join COMMA join                                                 # JoinOldStyle
       | source                                                          # JoinSource
       | LP join RP                                                      # JoinNested
@@ -147,7 +147,7 @@ select
          | LP source RP
          | tableRef
          )
-         ( alias refs? )? useIndex? // TODO which alts allow 'useIndex'?
+         ( alias columnRefs? )? useIndex? // TODO which alts allow 'useIndex'?
          ;
 
    where
@@ -196,7 +196,7 @@ select
       : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
 
       orderByItem
-         : term ( ' ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
+         : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
 
    offset
        : 'OFFSET' term rowRows? ;
@@ -225,7 +225,7 @@ row
    : term ; // TODO row value expression
    
 useIndex
-   : 'USE' 'INDEX' refs ;
+   : 'USE' 'INDEX' columnRefs ;
 
 terms
    : term ( COMMA term )* ;
@@ -243,14 +243,14 @@ term
 subterm
    : subterm '||' subterm                                                         # SubtermConcat
    | subterm ( '::' keyword index* )+                                                         # SubtermTypeCast
-   | ( '+' | '-' ) subterm                                                                       # SubtermUnary
+   | ( '+' | '-' | '~' ) subterm                                                                       # SubtermUnary
    | subterm '^' subterm                                                                       # SubtermPower
    | subterm ( '*' | '/' | '%' ) subterm                                             # SubtermProduct
    | subterm ( '+' | '-' ) subterm                                                         # SubtermSum
    | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                             # SubtermBitwise
    | subterm predicate                                                                       # SubtermPredicate
    | LP RP                                                                                     # SubtermEmpty
-   | LP terms RP PERIOD id                                                                        # SubtermFieldRef
+   | LP terms RP DOT id                                                                        # SubtermFieldRef
    | LP terms RP                                                                                       # SubtermNested
    | query                                                                                       # SubtermQuery
    | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'    # SubtermCaseSimple
@@ -258,11 +258,11 @@ subterm
    | array                                                                               # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                        # SubtermCast
    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?                           # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' ref                                            # SubtermSequence
+   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                            # SubtermSequence
    | 'ROW' LP terms? RP                                                                                       # SubtermRow
    | function                                                                                       # SubtermFunction
    | value                                                                                       # SubtermValue
-   | ref                                                                                       # SubtermRef
+   | columnRef                                                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
@@ -371,25 +371,25 @@ jsonObject
             jsonKey
                : 'NULL' | string | keyword ;
 
-refs
-   : LP ref ( COMMA ref )* RP ;
+columnRefs
+   : LP columnRef ( COMMA columnRef )* RP ;
 
-ref
-   : ((( schema=id PERIOD )? domain=id PERIOD )? table=id PERIOD )? column=id index* ;
+columnRef
+   : ((( schema=id DOT )? domain=id DOT )? table=id DOT )? column=id index* ;
 
 tableRef
-   : (( schema=id PERIOD )? domain=id PERIOD )? table=id ;
+   : (( schema=id DOT )? domain=id DOT )? table=id ;
 
 domainRef
-   : ( schema=id PERIOD )? domain=id PERIOD ;
+   : ( schema=id DOT )? domain=id DOT ;
 
 index
    : LB ( term | term? ':' term? )? RB ;
 
 string
-   : String
-   | UnicodeString uescape?
-   | NationalString
+   : String+
+   | UnicodeString String* uescape?
+   | NationalString String*
    ;
 
 id
@@ -441,17 +441,15 @@ withWithout
 Keyword
    : [A-Z_#] [A-Z_#$@0-9]* ;
 
-String
-   : STRING+ ;
-
 UnicodeString
-   : 'U&' STRING+ ;
+   : 'U&' String ;
 
 NationalString
-   : [NE] STRING+ ;
+   : [NE] String ;
 
-fragment STRING
+String
    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+//   : '\'' ('\\'. | '\'\'' | ~('\'' | '\\'))* '\'' ;
 
 UnicodeID
    : 'U&' ID ;
@@ -512,7 +510,7 @@ RP       : ')' ;
 LB       : '[' ;
 RB       : ']' ;
 COMMA    : ',' ;
-PERIOD   : '.' ;
+DOT   : '.' ;
 WILDCARD : '*' ;
 
 // TODO add isAssign for dialects (for symantec predicate)
