@@ -241,28 +241,28 @@ term
    ;
 
 subterm
-   : subterm '||' subterm                                                         # SubtermConcat
-   | subterm ( '::' keyword index* )+                                                         # SubtermTypeCast
-   | ( '+' | '-' | '~' ) subterm                                                                       # SubtermUnary
-   | subterm '^' subterm                                                                       # SubtermPower
-   | subterm ( '*' | '/' | '%' ) subterm                                             # SubtermProduct
-   | subterm ( '+' | '-' ) subterm                                                         # SubtermSum
-   | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                             # SubtermBitwise
-   | subterm predicate                                                                       # SubtermPredicate
-   | LP RP                                                                                     # SubtermEmpty
-   | LP terms RP DOT id                                                                        # SubtermFieldRef
-   | LP terms RP                                                                                       # SubtermNested
-   | query                                                                                       # SubtermQuery
+   : subterm '||' subterm                                                                # SubtermBinary
+   | subterm ( '::' keyword index* )+                                                    # SubtermTypeCast
+   | ( '+' | '-' | '~' ) subterm                                                         # SubtermUnary
+   | <assoc=right> subterm '^' subterm                                                   # SubtermBinary
+   | subterm ( '*' | '/' | '%' ) subterm                                                 # SubtermBinary
+   | subterm ( '+' | '-' ) subterm                                                       # SubtermBinary
+   | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                          # SubtermBinary
+   | subterm predicate                                                                   # SubtermPredicate
+   | LP RP                                                                               # SubtermEmpty
+   | LP terms RP DOT id                                                                  # SubtermFieldRef
+   | LP terms RP                                                                         # SubtermNested
+   | query                                                                               # SubtermQuery
    | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'    # SubtermCaseSimple
    | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                          # SubtermCaseSearch
    | array                                                                               # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                        # SubtermCast
    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?                           # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                            # SubtermSequence
-   | 'ROW' LP terms? RP                                                                                       # SubtermRow
-   | function                                                                                       # SubtermFunction
-   | value                                                                                       # SubtermValue
-   | columnRef                                                                                       # SubtermRef
+   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                      # SubtermSequence
+   | 'ROW' LP terms? RP                                                                  # SubtermRow
+   | function                                                                            # SubtermFunction
+   | value                                                                               # SubtermValue
+   | columnRef                                                                           # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
@@ -282,6 +282,13 @@ predicate
    | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )? # PredicateLIKE
    | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )? # PredicateREGEXP
    ;
+
+// TODO might have to be in lexer
+//comparison
+//   : '=' | '>' | '<' | '<=' | '>=' | '<>' | '!='
+////   | '!>' | '!<'
+////   | { isComparison( ... ) }
+//   ;
 
 type
    : 'ROW' LP id type ( COMMA id type )* RP
