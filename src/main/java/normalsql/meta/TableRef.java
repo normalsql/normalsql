@@ -10,12 +10,12 @@ public class
 {
 	public TableRef( TableRefContext context )
 	{
+		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
 		schema = context.schema != null ? context.schema.getTrimmedText() : null;
-		domain = context.domain != null ? context.domain.getTrimmedText() : null;
 		table = context.table != null ? context.table.getTrimmedText() : null;
 	}
 
+	public String catalog;
 	public String schema;
-	public String domain;
 	public String table;
 }

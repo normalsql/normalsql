@@ -75,38 +75,52 @@ update
    : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
 
    setter
-       : columnRef EQ value ;
+      : columnRef EQ value ;
 
 query
-   : rows (( 'UNION' 'ALL'? | 'EXCEPT' | 'INTERSECT' | 'MINUS' ) allDistinct? rows )* ;
-
-rows
-   : with
-   | values // orderBy? offset? fetch?
-   | select
-   | 'TABLE' tableRef // orderBy? offset? fetch?
+   : values
+   | 'WITH' 'RECURSIVE'? cte ( COMMA cte )* query
+   | select clauses
+   | query 'UNION' allDistinct? query clauses
+   | query 'EXCEPT' allDistinct? query clauses
+   | query 'MINUS' allDistinct? query clauses
+   | query 'INTERSECT' allDistinct? query clauses
+   | 'TABLE' tableRef
    | LP query RP
    ;
 
-    with
-       : 'WITH' 'RECURSIVE'? cte ( COMMA cte )* statement ;
+   cte
+      : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP ;
 
-        cte
-           : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP ;
+   clauses
+      : ( orderBy | offset | fetch | limit | forUpdate )* ; // TODO move forUpdate to query's select subrule? ditto fetch?
+
+      offset
+         : 'OFFSET' term rowRows? ;
+
+      fetch
+         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
+
+      limit
+         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+
+      forUpdate
+         : 'FOR' 'UPDATE' ;
 
 values
    : 'VALUES' terms ;
 
 select
-   : 'SELECT' distinct? top? ( item ( COMMA item )* COMMA? )? into? ( 'FROM' join )? where?
-      groupBy? having? windows? qualify? orderBy? offset? fetch? limit? forUpdate? ;
+   : 'SELECT' distinct? top? ( item ( COMMA item )* COMMA? )? into?
+      ( 'FROM' join )? where? groupBy? having? windows? qualify?
+   ;
 
    distinct
       : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
    item
-      : (( tableRef DOT )? WILDCARD )  ( 'EXCEPT' columnRefs )?  # ItemTableRef
-      | term  alias?                                             # ItemColumn
+      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
+      | term alias?                                              # ItemColumn
       ;
 
    alias : 'AS'? id ;
@@ -134,7 +148,6 @@ select
       source
          :
          ( query
-         | values
          | function
          | unnest
          | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
@@ -195,23 +208,11 @@ select
       orderByItem
          : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
 
-   offset
-       : 'OFFSET' term rowRows? ;
-
-   fetch
-       : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
-
-   limit
-       : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
-
-   forUpdate
-       : 'FOR' 'UPDATE' ;
-
    unnest
        : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
 columnSpec
-   : id ( dataType | domainRef ) EQ ( array | row ) ;
+   : id ( dataType | schemaRef ) EQ ( array | row ) ;
 
 dataType
    : 'NULL'
@@ -359,7 +360,7 @@ interval
    //              ;
    
 jsonArray
-   : 'JSON_ARRAY' LP ( terms | LP rows RP )? formatJson? onNull? RP ;
+   : 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP ;
 
 jsonObject
    : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
@@ -379,13 +380,13 @@ columnRefs
    : LP columnRef ( COMMA columnRef )* RP ;
 
 columnRef
-   : ((( schema=id DOT )? domain=id DOT )? table=id DOT )? column=id index* ;
+   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? column=id index* ;
 
 tableRef
-   : (( schema=id DOT )? domain=id DOT )? table=id ;
+   : (( catalog=id DOT )? schema=id DOT )? table=id ;
 
-domainRef
-   : ( schema=id DOT )? domain=id DOT ;
+schemaRef
+   : ( catalog=id DOT )? schema=id DOT ;
 
 index
    : LB ( term | term? ':' term? )? RB ;

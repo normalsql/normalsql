@@ -1,0 +1,1 @@
+SELECT customerName, state FROM customers WHERE country = 'USA'

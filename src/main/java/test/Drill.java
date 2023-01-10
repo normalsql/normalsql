@@ -13,13 +13,8 @@ public class Drill
 	public static void main( String... args )
 	{
 		String sql =
-//			"SELECT _ROWID_ S1, TEST._ROWID_ S2, PUBLIC.TEST._ROWID_ S3, SCRIPT.PUBLIC.TEST._ROWID_ S4,\n" +
-//				"    \"_ROWID_\" U1, TEST.\"_ROWID_\" U2, PUBLIC.TEST.\"_ROWID_\" U3, SCRIPT.PUBLIC.TEST.\"_ROWID_\" U4\n" +
-//				"    FROM TEST;"
-//			"select {fn TIMESTAMPADD(SQL_TSI_DAY, 1, {ts '2011-10-20 20:30:40.001'})};"
-//			"select a as \"apple\", 1, true, 1 between 0 and 2, max( 1, 2, 3 ), 1 + 2 from test;"
-			"SELECT NOT 0;"
-//			"select date '+0011-01-01';"
+
+			"SELECT ID FROM TEST FETCH NEXT ROW ONLY LIMIT 1;"
 			;
 		CharStream chars = CharStreams.fromString( sql );
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
