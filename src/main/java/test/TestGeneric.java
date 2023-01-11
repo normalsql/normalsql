@@ -67,7 +67,6 @@ TestGeneric
 				}
 
 				public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs)
-					throws IOException
 				{
 					String full = dir.toString();
 					return full.contains( "skip" ) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;

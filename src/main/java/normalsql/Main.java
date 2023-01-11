@@ -79,8 +79,11 @@ public class
 		}
 
 		// TODO verify source exists
-		Path source = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
-		Path target = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
+		// TODO pull source & target from command line options
+		Path source = Paths.get( "" ).toAbsolutePath();
+		Path target = source;
+//		Path source = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
+//		Path target = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
 		crawl( source, target );
 
 		if( _conn != null )
