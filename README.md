@@ -1,10 +1,11 @@
 # NormalSQL
 
-Use the full power of SQL. No impedance mismatches, no object/relation mapping,
-no abstraction layer, no special syntax.
+Tranforms your normal SQL *as-is* into simple type-safe application source
+code. 
 
-NormalSQL compiles your SQL *as-is* into simple typesafe application source
-code. There are no runtime dependencies.
+No object/relation mapping, no impedance mismatches, no abstraction layer, no N+1 lazy initialization, no special syntax, and no runtime dependencies.
+
+Just your application and your normal SQL.
 
 ## Example
 
