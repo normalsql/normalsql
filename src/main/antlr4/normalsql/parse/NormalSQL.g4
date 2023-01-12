@@ -9,7 +9,7 @@ grammar NormalSQL;
 options 
 { 
     contextSuperClass=normalsql.parse.GlobbingRuleContext; 
-    caseInsensitive=true; 
+    caseInsensitive=true;
 }
 @ parser :: header
 {
@@ -81,10 +81,10 @@ query
    : values
    | 'WITH' 'RECURSIVE'? cte ( COMMA cte )* query
    | select clauses
-   | query 'UNION' allDistinct? query clauses
-   | query 'EXCEPT' allDistinct? query clauses
-   | query 'MINUS' allDistinct? query clauses
-   | query 'INTERSECT' allDistinct? query clauses
+   // Duplicate code because of combo of set operator precedence and left-recursion
+   | query ( 'INTERSECT' | 'MINUS' ) allDistinct? query clauses
+   | query ( 'UNION' | 'EXCEPT' ) allDistinct? query clauses
+   | query 'MULTISET' allDistinct? query clauses
    | 'TABLE' tableRef
    | LP query RP
    ;
@@ -146,18 +146,17 @@ select
          ;
 
       source
-         :
-         ( query
-         | function
-         | unnest
-         | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
-         | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
-         | 'JSON_TABLE' // TODO
-         | 'XMLTABLE' // TODO
-         | LP source RP
-         | tableRef
-         )
-         ( alias columnRefs? )? useIndex? // TODO which alts allow 'useIndex'?
+         : ( query
+           | function
+           | unnest
+           | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
+           | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
+           | 'JSON_TABLE' // TODO
+           | 'XMLTABLE' // TODO
+           | LP source RP
+           | tableRef
+           )
+           ( alias columnRefs? )? useIndex? // TODO which alts allow 'useIndex'?
          ;
 
    where
@@ -232,53 +231,63 @@ term
    : 'NOT' term                                # TermNOT
    | term 'AND' term                           # TermAND
    | term 'OR' term                            # TermOR
+//  TODO  | term ( 'OR' || '||' ) term                      # TermOR
    | 'EXISTS' LP query RP                      # TermEXISTS
    | 'UNIQUE' LP query RP                      # TermUNIQUE
    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
    | subterm                                   # TermSubterm
+// TODO assignment operators go here ?
    ;
 
 subterm
-   : subterm '||' subterm                                                                # SubtermBinary
-   | subterm ( '::' keyword index* )+                                                    # SubtermTypeCast
-   | ( '+' | '-' | '~' ) subterm                                                         # SubtermUnary
-   | <assoc=right> subterm '^' subterm                                                   # SubtermBinary
-   | subterm ( '*' | '/' | '%' ) subterm                                                 # SubtermBinary
-   | subterm ( '+' | '-' ) subterm                                                       # SubtermBinary
-   | subterm ( SHIFTL | SHIFTR | AMPERSAND | VERTICAL ) subterm                          # SubtermBinary
-   | subterm predicate                                                                   # SubtermPredicate
-   | LP RP                                                                               # SubtermEmpty
-   | LP terms RP DOT id                                                                  # SubtermFieldRef
-   | LP terms RP                                                                         # SubtermNested
-   | query                                                                               # SubtermQuery
-   | 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'    # SubtermCaseSimple
-   | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                          # SubtermCaseSearch
-   | array                                                                               # SubtermArray
-   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                                        # SubtermCast
-   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?                           # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                                      # SubtermSequence
-   | 'ROW' LP terms? RP                                                                  # SubtermRow
-   | function                                                                            # SubtermFunction
-   | value                                                                               # SubtermValue
-   | columnRef                                                                           # SubtermRef
+   : subterm ( '::' keyword index* )+                                # SubtermScope
+   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+   | <assoc=right> subterm '^' subterm                               # SubtermBinary
+   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
+   // TODO '||' can be either string concatenation or logical OR
+   | subterm '||' subterm                                            # SubtermBinary
+   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
+   | subterm '&' subterm                                             # SubtermBinary
+   | subterm '|' subterm                                             # SubtermBinary
+   | subterm predicate                                               # SubtermPredicate
+   | LP RP                                                           # SubtermEmpty
+   | LP terms RP DOT id                                              # SubtermFieldRef
+   | LP terms RP                                                     # SubtermNested
+   | query                                                           # SubtermQuery
+   | case                                                            # SubtermCase
+   | array                                                           # SubtermArray
+   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
+   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
+   | 'ROW' LP terms? RP                                              # SubtermRow
+   | function                                                        # SubtermFunction
+   | value                                                           # SubtermValue
+   | columnRef                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
    ;
 
-// TODO subrule for dialect assignment operators
+   case
+      : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # SubtermCaseSimple
+      | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
+      ;
+
+// TODO remove 'op' from PredicateCompare
 // TODO subrule for dialect & custom comparison operators?
 predicate
-   : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm # PredicateCompare
-   | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm # PredicateMatch
-   | 'IS' 'NOT'? truth # PredicateTruth
-   | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # PredicateDistinct
-   | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP # PredicateType
-   | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys? # PredicateJSON
-   | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
-   | 'NOT'? 'IN' LP ( query | terms )? RP # PredicateIN
-   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )? # PredicateLIKE
-   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )? # PredicateREGEXP
+   : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
+   | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+   | 'IS' 'NOT'? truth                                                            # PredicateTruth
+   | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+   | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
+   | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateJSON
+   | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+   | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
+   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateMatch
+   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateMatch
    ;
 
 // TODO might have to be in lexer
@@ -518,7 +527,6 @@ COMMA    : ',' ;
 DOT   : '.' ;
 WILDCARD : '*' ;
 
-// TODO add isAssign for dialects (for symantec predicate)
 EQ       : '=' | ':=' ;
 NEQ      : '<>' | '!=' ;
 LT       : '<' ;
@@ -526,10 +534,8 @@ LTE      : '<=' ;
 GT       : '>' ;
 GTE      : '>=' ;
 OVERLAP  : '&&' ;
-AMPERSAND : '&' ;
-VERTICAL : '|' ;
-SHIFTL   : '<<' ; // bitwise shift left
-SHIFTR   : '>>' ; // bitwise shift right
+// TODO add isAssign for dialects (for symantec predicate)
+//ASSIGN   : ':=' ;
 
 // TODO replace w/ isOperator (for symantec predicate)
 MATCH1 : '~' ; // match regex case sensitive
