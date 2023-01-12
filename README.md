@@ -1,38 +1,35 @@
-# NormalSQL
-Embrace the SQL-first development workflow.
+# NormalSQL - a SQL-first workflow
 
-Develop SQL in your favorite database manager (eg DBeaver). Use that SQL as-is. NormalSQL 
-transforms your SQL into typesafe application source code.
+Develop your normal SQL using your favorite database manager (eg DBeaver). Leverage 
+the full expressiveness of SQL. CTEs, nested queries, JOINs, PIVOTs, etc.
 
-You can now leverage the full expressiveness of SQL. Nested 
-queries, JOINs, Common Table Expressions, PIVOTs, functions... Everything. No 
-limitations.
+NormalSQL compiles your SQL *as-is* into typesafe application source code. There are 
+no object/relation mappings, abstraction layers, or special syntax.
 
 NormalSQL has no runtime dependencies. All application source code is
-generated at compiled time. There are no blackboxes, no magic. You are in complete
-control.
+generated at compiled time.
 
 ## Example
-Starting with SelectForSale.sql
+Starting with this simple query [`SelectForSale.sql`](doc/example/SelectForSale.sql):
+```sql
+SELECT id, make, model, year 
+  FROM automobiles 
+ WHERE style = 'coupe' 
+   AND odometer < 100000;
+```
+NormalSQL finds the columns `id`, `make`, `model`, `year` and *matches* the predicates 
+`style = 'coupe'`, `odometer < 100000`.
+Each predicate's literal value is replaced with a parameter `?`, creating 
+this prepared statement.
+```sql
+SELECT id, make, model, year 
+  FROM automobiles 
+ WHERE style = ? 
+   AND odometer < ?;
+```
+Classes [`SelectForSale.java`](doc/example/SelectForSale.java) and [`SelectForSaleResultSet.java`](doc/example/SelectForSaleResultSet.java) are generated. Here's pseudo-code of the result, showing the typesafe accessors.
 
-    SELECT id, make, model, year 
-    FROM automobiles 
-    WHERE style = 'coupe' AND odometer < 100000;
-
-NormalSQL finds the columns 'id', 'make', 'model', and 'year' as well as
-the predicates for 'style' and 'odometer'.
-
-For every matched predicate, its literal value is replaced with a parameter,
-creating a prepared statement.
-
-    SELECT id, make, model, year 
-    FROM automobiles 
-    WHERE style = ? AND odometer < ?;
-
-Lastly, the classes SelectForSale and SelectForSaleResultSet are generated,
-with typesafe accessors.
-
-    // pseudo-code
+```java   
     class SelectForSale 
     {
         void setStyle( String style )
@@ -48,9 +45,9 @@ with typesafe accessors.
         String getModel()
         Integer getYear()
     }
-
-Your application will look something like this
-
+```
+Your application will look something like this:
+```java
     Connection conn = DriverManager.getConnection( ... );
 
     SelectForSale select = new SelectForSale( conn );
@@ -67,9 +64,9 @@ Your application will look something like this
     }
     rs.close();
     select.close();
+```
 
-Usage
---
+## Usage
 
 NormalSQL uses metadata to infer data types of columns and predicates. It requires a live
 running instance of the target database(s) during processing.
@@ -78,22 +75,20 @@ For future, depending on feedback, NormalSQL may also support inferring data typ
 statement queries, when the target database is not available during processing. This method
 cannot be as precise as using metadata, but may be sufficient and a bit more convenient.
 
-Command Line
---
+### Command Line
 
 Optionally specify .properties.
 Optionally specify initial source directory.
 
-Maven Plugin
---
+### Maven Plugin
 
-Configuration
---
+TODO
 
-Use normalsql.properties to configure processing. Place in the working directory, in the source directory,
+### Configuration
+
+Use `normalsql.properties` to configure processing. Place in the working directory, in the source directory,
 or specify via command line.
-
-Properties
+```properties
 
     description = MySQL driver for localhost
     driver = com.mysql.cj.jdbc.Driver
@@ -103,6 +98,7 @@ password =
 source = .
 target = .
 package = .
+```
 
 Future: templates.
 Future: strategy for naming accessors.
@@ -112,8 +108,7 @@ Source directory. NormalSQL will recurse thru subdirectories.
 Target directory. Like the Java compiler does with packages, will mirror the directory structure
 of the source directory.
 
-Theory of Operation
---
+### Theory of Operation
 
 NormalSQL is very simple:
 
@@ -122,8 +117,7 @@ NormalSQL is very simple:
 * Infer data types
 * generate source code
 
-Parse
----
+#### Parse
 
 NormalSQL supports SQL:2016 DML statements (SELECT, INSERT, UPDATE, etc), including JOINs,
 Common Table Expressions, and such. It accommodates the syntax of popular
@@ -133,18 +127,15 @@ All query statements are transformed into prepared statements (see example above
 database then does its
 own parsing, validation, etc.
 
-
-
-Find Predicates
---
+#### Find Predicates
 
 All predicates are found. Not just those within the WHERE clause.
 
 Since the default values are copied from the source SQL, your application can
 pick and choose which parameters to override.
 
-Comparison Predicate
---
+##### Comparison Predicate
+
 NormalSQL can only match predicates when just the column name is used, either
 on the left or right side. Matched `abc < 10`. Not matched `abc - 10 < 0`.
 
