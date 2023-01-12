@@ -30,8 +30,8 @@ SELECT id, make, model, year
    AND odometer < ?;
 ```
 
-Classes [`SelectForSale.java`](doc/example/SelectForSale.java) and
-[`SelectForSaleResultSet.java`](doc/example/SelectForSaleResultSet.java) are
+Classes [SelectForSale.java](doc/example/SelectForSale.java) and
+[SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) are
 generated. Here's pseudo-code showing the typesafe accessors:
 
 ```java
