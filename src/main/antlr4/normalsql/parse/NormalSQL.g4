@@ -80,12 +80,12 @@ update
 query
    : values
    | 'WITH' 'RECURSIVE'? cte ( COMMA cte )* query
-   | select clauses
+   | select clauses?
+   | 'TABLE' tableRef clauses?
    // Duplicate code because of combo of set operator precedence and left-recursion
-   | query ( 'INTERSECT' | 'MINUS' ) allDistinct? query clauses
-   | query ( 'UNION' | 'EXCEPT' ) allDistinct? query clauses
-   | query 'MULTISET' allDistinct? query clauses
-   | 'TABLE' tableRef
+   | query ( 'INTERSECT' | 'MINUS' ) allDistinct? query clauses?
+   | query ( 'UNION' | 'EXCEPT' ) allDistinct? query clauses?
+   | query 'MULTISET' allDistinct? query clauses?
    | LP query RP
    ;
 
@@ -93,7 +93,7 @@ query
       : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP ;
 
    clauses
-      : ( orderBy | offset | fetch | limit | forUpdate )* ; // TODO move forUpdate to query's select subrule? ditto fetch?
+      : ( orderBy | offset | fetch | limit | forUpdate )+ ; // TODO move forUpdate to query's select subrule? ditto fetch?
 
       offset
          : 'OFFSET' term rowRows? ;
@@ -120,10 +120,8 @@ select
 
    item
       : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
-      | term alias?                                              # ItemColumn
+      | term ( 'AS'? id )?                                       # ItemColumn
       ;
-
-   alias : 'AS'? id ;
 
    top
       : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
@@ -134,7 +132,7 @@ select
    join
       : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinTwo
       | join COMMA join                                                 # JoinOldStyle
-      | source                                                          # JoinSource
+      | source ( 'AS'? id columnRefs? )?                                # JoinSource
       | LP join RP                                                      # JoinNested
       ;
 
@@ -156,7 +154,6 @@ select
            | LP source RP
            | tableRef
            )
-           ( alias columnRefs? )? useIndex? // TODO which alts allow 'useIndex'?
          ;
 
    where
@@ -221,9 +218,6 @@ dataType
 row
    : term ; // TODO row value expression
    
-useIndex
-   : 'USE' 'INDEX' columnRefs ;
-
 terms
    : term ( COMMA term )* ;
 
@@ -524,7 +518,7 @@ RP       : ')' ;
 LB       : '[' ;
 RB       : ']' ;
 COMMA    : ',' ;
-DOT   : '.' ;
+DOT      : '.' ;
 WILDCARD : '*' ;
 
 EQ       : '=' | ':=' ;
