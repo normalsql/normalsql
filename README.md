@@ -1,10 +1,10 @@
-# NormalSQL - a SQL-first workflow
+# NormalSQL: a SQL-first workflow
 
 Develop your normal SQL using your favorite database manager (eg DBeaver). Leverage 
 the full expressiveness of SQL. CTEs, nested queries, JOINs, PIVOTs, etc.
 
-NormalSQL compiles your SQL *as-is* into typesafe application source code. There are 
-no object/relation mappings, abstraction layers, or special syntax.
+NormalSQL compiles your SQL *as-is* into typesafe application source code. There is 
+no object/relation mapping, no abstraction layer, no special syntax.
 
 NormalSQL has no runtime dependencies. All application source code is
 generated at compiled time.
