@@ -73,9 +73,9 @@ extends
 		item.context = context;
 		item.source = tokens.getText( context );
 		item.name = tokens.getText( context.term() );
-		if( context.alias() != null )
+		if( context.id() != null )
 		{
-			item.alias = context.alias().id().getTrimmedText();
+			item.alias = context.id().getTrimmedText();
 		}
 		stack.peek().items.add( item );
 		super.visitItemColumn( context );
