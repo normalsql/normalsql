@@ -1,18 +1,34 @@
 # NormalSQL
 
-Tranforms your normal SQL *as-is* into simple type-safe application source
+Transforms your normal SQL into simple type-safe application source
 code. 
 
-No object/relation mapping, no impedance mismatches, no abstraction layer, no N+1 lazy initialization, no special syntax, and no runtime dependencies.
+NormalSQL has no:
 
-Just your application and your normal SQL.
+* object-relational mapping (ORM)
+* markup
+* annotations
+* impedance mismatches
+* leaky abstractions
+* abstraction layers
+* performance penalties
+* lazy initialization
+* N+1 queries
 
-## Example
 
-Starting with this simple query
-[`SelectForSale.sql`](doc/example/SelectForSale.sql):
+
+# Examples
+
+## Simple Wrappers
+
+Generate simple wrappers for 
+PreparedStatement and ResultSet.
+
+Start with this simple SELECT query
+[SelectForSale.sql](doc/example/SelectForSale.sql):
 
 ```sql
+-- Find cars by style and mileage 
 SELECT id, make, model, year 
   FROM automobiles 
  WHERE style = 'coupe' 
@@ -20,15 +36,19 @@ SELECT id, make, model, year
 ```
 
 NormalSQL finds the columns `id`, `make`, `model`, and `year`. Ditto the
-predicates `style = 'coupe'` and `odometer < 100000`. Each literal value is
-replaced with a parameter `?`, creating this prepared statement:
+predicates `style = 'coupe'` and `odometer < 100000`. Each predicate's literal
+value is replaced with a parameter `?`, creating this prepared statement:
 
 ```sql
+-- Find cars by style and mileage 
 SELECT id, make, model, year 
   FROM automobiles 
  WHERE style = ? 
    AND odometer < ?;
 ```
+
+Note how NormalSQL preserves the formatting and comments of your
+original SQL source code.
 
 Classes [SelectForSale.java](doc/example/SelectForSale.java) and
 [SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) are
@@ -55,7 +75,7 @@ class SelectForSaleResultSet
 }
 ```
 
-Your application will use those classes like this:
+Your application will use those classes something like this:
 
 ```java
 Connection conn = DriverManager.getConnection( ... );
@@ -76,7 +96,53 @@ rs.close();
 select.close();
 ```
 
-## Usage
+## POJO Example
+
+TODO Reusing [SelectForSale.sql](doc/example/SelectForSale.sql), 
+the generated ResultSet wrapper now creates a plain old Java object (POJO) 
+for each row.
+
+```
+class SelectForSalePOJO
+{
+    Integer getID()
+    String  getMake()
+    String  getModel()
+    Integer getYear()
+}
+
+class SelectForSaleResultSet
+implements Iterable<SelectForSalePOJO>
+{
+    …
+}
+```
+
+And your application will use `foreach` instead of `while`:
+
+```
+SelectForSaleResultSet rs = select.execute();
+for( SelectForSalePOJO pojo : rs )
+{
+    System.out.printf( 
+        "id %d, make %s, model %s, year %d", 
+        pojo.getID(), pojo.getMake(), pojo.getModel(), pojo.getYear() 
+    );
+}
+
+```
+
+## Example Project
+
+# Usage
+
+## Maven Plugin
+
+TODO
+
+## Command Line
+
+
 
 NormalSQL uses metadata to infer data types of columns and predicates. It
 requires a live running instance of the target database(s) during processing.
@@ -90,11 +156,8 @@ be sufficient and a bit more convenient.
 
 Optionally specify .properties. Optionally specify initial source directory.
 
-### Maven Plugin
 
-TODO
-
-### Configuration
+## Properties
 
 Use `normalsql.properties` to configure processing. Place in the working
 directory, in the source directory, or specify via command line.
@@ -117,16 +180,18 @@ Source directory. NormalSQL will recurse thru subdirectories.
 Target directory. Like the Java compiler does with packages, will mirror the
 directory structure of the source directory.
 
-### Theory of Operation
+extensions. file extensions to process. default is all.
+
+# Theory of Operation
 
 NormalSQL is very simple:
 
 * Parse SQL statement
 * Find predicates and columns
 * Infer data types
-* generate source code
+* Generate source code
 
-#### Parse
+## Parse
 
 NormalSQL supports SQL:2016 DML statements (SELECT, INSERT, UPDATE, etc),
 including JOINs, Common Table Expressions, and such. It accommodates the syntax
@@ -135,7 +200,7 @@ of popular dialects.
 All query statements are transformed into prepared statements (see example
 above). The target database then does its own parsing, validation, etc.
 
-#### Find Predicates
+## Find Predicates
 
 All predicates are found. Not just those within the WHERE clause.
 
@@ -254,12 +319,13 @@ debugging.
 
 # Grammar
 
-[`NormalSQL.g4`](/src/main/antlr4/normalsql/parse/NormalSQL.g4) is an 
+[NormalSQL.g4](/src/main/antlr4/normalsql/parse/NormalSQL.g4) is an 
 [ANTLR v4](https://github.com/antlr/antlr4) grammar. It 
 supports all DML statements from SQL-99 to SQL:2016.
 (Exceptions: No index query hints.)
 
-Its two goals are 1) find columns and predicates and 2) replace literals with parameters. 
+Its two functions are 1) find columns and predicates and 2) replace predicate literals 
+with parameters. 
 It preserves the entire input stream, including whitespace, comments, and formatting.
 
 Therefore, our grammar is permissive, accepting SQL source which may be rejected by the
@@ -293,14 +359,3 @@ port NormalSQL to other platforms.
 Standup a SQL Fiddle like public instance of NormalSQL, allowing people to casually try things out.
 
 
-# Comparison
-
-NormalSQL SQL -> Java
-
-ORMs Annotations Mappings -> Magic -> SQL Schemas HQL
-
-Abstraction Layers Java Fluent API -> Magic -> SQL
-
-Templates SQL -> Templates + Java -> SQL Mappings
-
-Active Record / LINQ Mappings Query Expression -> SQL
