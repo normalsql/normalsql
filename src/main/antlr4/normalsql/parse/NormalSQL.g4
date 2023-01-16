@@ -314,7 +314,8 @@ function
    //              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
    | '{fn' function '}' //  ODBC style
    | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
-   | keyword LP allDistinct? term orderBy RP ( LB term RB )? filter? over?
+   // TODO does this look like prototypical aggregation and window function?
+   | keyword LP allDistinct? term respectIgnore? orderBy? RP ( LB term RB )? filter? over?
    //              | keyword LP id 'FROM' id SingleQ RP
    // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
    // | ID DOT ID LP terms? RP // T-SQL?
