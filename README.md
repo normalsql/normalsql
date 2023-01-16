@@ -1,31 +1,12 @@
 # NormalSQL
 
-Transforms your normal SQL into simple type-safe application source
+Transform your normal SQL into simple type-safe application source
 code. 
 
-NormalSQL has no:
+## Quick Example
 
-* object-relational mapping (ORM)
-* markup
-* annotations
-* impedance mismatches
-* leaky abstractions
-* abstraction layers
-* performance penalties
-* lazy initialization
-* N+1 queries
-
-
-
-# Examples
-
-## Simple Wrappers
-
-Generate simple wrappers for 
-PreparedStatement and ResultSet.
-
-Start with this simple SELECT query
-[SelectForSale.sql](doc/example/SelectForSale.sql):
+We'll quickly compile a simple SELECT [SelectForSale.sql](doc/example/SelectForSale.sql) 
+into a prepared statement and resultset with type-safe accessors:
 
 ```sql
 -- Find cars by style and mileage 
@@ -35,9 +16,7 @@ SELECT id, make, model, year
    AND odometer < 100000;
 ```
 
-NormalSQL finds the columns `id`, `make`, `model`, and `year`. Ditto the
-predicates `style = 'coupe'` and `odometer < 100000`. Each predicate's literal
-value is replaced with a parameter `?`, creating this prepared statement:
+NormalSQL generates this prepared statement:
 
 ```sql
 -- Find cars by style and mileage 
@@ -47,14 +26,17 @@ SELECT id, make, model, year
    AND odometer < ?;
 ```
 
+NormalSQL found the predicates `style = 'coupe'` and `odometer < 100000` and
+replaced their literal values with parameter `?`.
+
 Note how NormalSQL preserves the formatting and comments of your
 original SQL source code.
 
-Classes [SelectForSale.java](doc/example/SelectForSale.java) and
-[SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) are
-generated. Here's pseudo-code showing the typesafe accessors:
+[SelectForSale.java](doc/example/SelectForSale.java) is the generated prepared 
+statement wrapper:
 
 ```java
+// pseudo-code
 class SelectForSale 
 {
     String _style = "coupe";
@@ -63,19 +45,33 @@ class SelectForSale
     Integer _odometer = 100000;
     void setOdometer( Integer odometer ) { _odometer = odometer; }
 
-    SelectForSaleResultSet execute() { … }
-}
+    SelectForSaleResultSet execute();
 
-class SelectForSaleResultSet
-{
-    Integer getID() 
-    String  getMake() 
-    String  getModel()
-    Integer getYear()
+    PreparedStatement getPreparedStatement();
 }
 ```
 
-Your application will use those classes something like this:
+NormalSQL found the columns `id`, `make`, `model`, and `year`, adding them
+to the SelectForSaleResultSet.Row inner class.
+[SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) is the 
+generated source:
+
+```java
+// pseudo-code
+class SelectForSaleResultSet implements Iterable<Row>
+{
+    // inner-class
+    class Row
+    {
+        Integer getID()
+        String  getMake()
+        String  getModel()
+        Integer getYear()
+    }
+}
+```
+
+Your application will use those wrappers something like this:
 
 ```java
 Connection conn = DriverManager.getConnection( ... );
@@ -85,52 +81,15 @@ select.setStyle( "sedan" );
 select.setOdometer( 90000 );
 
 SelectForSaleResultSet rs = select.execute();
-while( rs.hasNext() )
+for( SelectForSaleResultSet.Record record : rs )
 {
-    System.out.printf( 
-        "id %d, make %s, model %s, year %d", 
-        rs.getID(), rs.getMake(), rs.getModel(), rs.getYear() 
-    );
+    System.out.println( record.toJSON() );
 }
+
 rs.close();
 select.close();
 ```
 
-## POJO Example
-
-TODO Reusing [SelectForSale.sql](doc/example/SelectForSale.sql), 
-the generated ResultSet wrapper now creates a plain old Java object (POJO) 
-for each row.
-
-```
-class SelectForSalePOJO
-{
-    Integer getID()
-    String  getMake()
-    String  getModel()
-    Integer getYear()
-}
-
-class SelectForSaleResultSet
-implements Iterable<SelectForSalePOJO>
-{
-    …
-}
-```
-
-And your application will use `foreach` instead of `while`:
-
-```
-SelectForSaleResultSet rs = select.execute();
-for( SelectForSalePOJO pojo : rs )
-{
-    System.out.printf( 
-        "id %d, make %s, model %s, year %d", 
-        pojo.getID(), pojo.getMake(), pojo.getModel(), pojo.getYear() 
-    );
-}
-
-```
 
 ## Example Project
 
@@ -142,15 +101,10 @@ TODO
 
 ## Command Line
 
-
-
 NormalSQL uses metadata to infer data types of columns and predicates. It
 requires a live running instance of the target database(s) during processing.
 
-For future, depending on feedback, NormalSQL may also support inferring data
-types from the statement queries, when the target database is not available
-during processing. This method cannot be as precise as using metadata, but may
-be sufficient and a bit more convenient.
+
 
 ### Command Line
 
@@ -244,18 +198,16 @@ ANY Predicate
 Accepts an array of values, working like how you wish IN predicates would. Only
 supported by specific databases and JDBC drivers. (Future: list supported)
 
-    IN ( 1, 2, 3 )
+    ANY ( 1, 2, 3 )
 
 Becomes
 
-    IN ( ?, ?, ? )
+    ANY ( ? )
 
 And the generated accessors will be:
 
 Future: LIKE, REGEXP, Postgress Matches
 --
-
-Future releases.
 
 ### Find Columns
 
@@ -265,6 +217,8 @@ Column aliases are supported.
 
 When column names (or aliases) contain unsupported characters (like
 punctuation), a generic accessor is created, like `setColumn1(...)`. (Future.)
+
+Only the first instance of a duplicate column is used.
 
 ## Infers data types
 
