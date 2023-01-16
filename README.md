@@ -5,8 +5,7 @@ code.
 
 ## Quick Example
 
-We'll quickly compile a simple SELECT [SelectForSale.sql](doc/example/SelectForSale.sql) 
-into a prepared statement and resultset with type-safe accessors:
+Starting with the simple SELECT [SelectForSale.sql](doc/example/SelectForSale.sql):
 
 ```sql
 -- Find cars by style and mileage 
@@ -26,14 +25,9 @@ SELECT id, make, model, year
    AND odometer < ?;
 ```
 
-NormalSQL found the predicates `style = 'coupe'` and `odometer < 100000` and
-replaced their literal values with parameter `?`.
+The literals `'coupe'` and `100000` were automatically replaced with a parameter `?`.
 
-Note how NormalSQL preserves the formatting and comments of your
-original SQL source code.
-
-[SelectForSale.java](doc/example/SelectForSale.java) is the generated prepared 
-statement wrapper:
+The prepared statement is then wrapped in generated class [SelectForSale.java](doc/example/SelectForSale.java):
 
 ```java
 // pseudo-code
@@ -46,13 +40,11 @@ class SelectForSale
     void setOdometer( Integer odometer ) { _odometer = odometer; }
 
     SelectForSaleResultSet execute();
-
-    PreparedStatement getPreparedStatement();
 }
 ```
 
-NormalSQL found the columns `id`, `make`, `model`, and `year`, adding them
-to the SelectForSaleResultSet.Row inner class.
+Next, NormalSQL finds the columns `id`, `make`, `model`, and `year`. They are added to
+to the inner class Row.
 [SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) is the 
 generated source:
 
@@ -81,6 +73,7 @@ select.setStyle( "sedan" );
 select.setOdometer( 90000 );
 
 SelectForSaleResultSet rs = select.execute();
+
 for( SelectForSaleResultSet.Record record : rs )
 {
     System.out.println( record.toJSON() );
