@@ -1,7 +1,8 @@
 # NormalSQL
 
-Transform your normal SQL into simple type-safe application source
-code. 
+Transform your normal SQL into prepared statements and type-safe wrappers. 
+
+Generate prepared statements and type-safe wrappers from your normal SQL statements.
 
 ## Quick Example
 
@@ -74,9 +75,9 @@ select.setOdometer( 90000 );
 
 SelectForSaleResultSet rs = select.execute();
 
-for( SelectForSaleResultSet.Record record : rs )
+for( SelectForSaleResultSet.Row row : rs )
 {
-    System.out.println( record.toJSON() );
+    System.out.println( row.toJSON() );
 }
 
 rs.close();
