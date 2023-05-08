@@ -5,11 +5,27 @@ import org.apache.velocity.app.VelocityEngine;
 
 import java.io.StringWriter;
 
+/**
+ * <p>Example2 class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Example2
 {
+    /**
+     * <p>getName.</p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getName() { return "rooster"; }
     public   String gorp = "knopt";
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main( String args[] )
     {
         /* first, we init the runtime engine.  Defaults are fine. */

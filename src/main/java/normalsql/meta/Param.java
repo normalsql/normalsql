@@ -5,6 +5,9 @@ package normalsql.meta;
 
 /**
  * PreparedStatement parameter.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 public class Param
 {

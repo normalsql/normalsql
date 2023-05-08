@@ -3,6 +3,12 @@
 
 package normalsql.meta;
 
+/**
+ * <p>Select class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Select extends Statement
 {
 //	public ArrayList<Item> items = new ArrayList<>();

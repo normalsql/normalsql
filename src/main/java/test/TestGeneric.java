@@ -14,11 +14,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>TestGeneric class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 TestGeneric
 {
 	static int count = 0;
 
+	/**
+	 * <p>count.</p>
+	 */
 	static public void count()
 	{
 		count++;
@@ -26,11 +35,20 @@ TestGeneric
 
 	static int error = 0;
 
+	/**
+	 * <p>error.</p>
+	 */
 	static public void error()
 	{
 		error++;
 	}
 
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 * @throws java.lang.Exception if any.
+	 */
 	public static void main( String[] args ) throws Exception
 	{
 		TestGeneric app = new TestGeneric();
@@ -42,6 +60,11 @@ TestGeneric
 		String sql;
 		int line;
 	}
+	/**
+	 * <p>go.</p>
+	 *
+	 * @throws java.lang.Exception if any.
+	 */
 	public void go() throws Exception
 	{
 
@@ -146,6 +169,13 @@ TestGeneric
 	ArrayList<String> fails = new ArrayList<>();
 	String last = null;
 
+	/**
+	 * <p>parse.</p>
+	 *
+	 * @param sourceFile a {@link java.nio.file.Path} object
+	 * @param nth a int
+	 * @param sql a {@link java.lang.String} object
+	 */
 	public void parse( Path sourceFile, int nth, String sql )
 	{
 		CharStream chars = CharStreams.fromString( sql );

@@ -17,6 +17,8 @@ import java.util.List;
 /**
  * Represents the work of processing one (1) SQL source file.
  *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 
 // TODO support multiple statements
@@ -48,6 +50,11 @@ public class Work
 	// Velocity template.
 	//
 	// Only adds 'public' fields to resulting map.
+	/**
+	 * <p>asMap.</p>
+	 *
+	 * @return a {@link java.util.HashMap} object
+	 */
 	public HashMap<String, Object> asMap()
 	{
 		HashMap<String, Object> bug = new HashMap<>();

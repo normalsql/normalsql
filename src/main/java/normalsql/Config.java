@@ -11,27 +11,30 @@ import java.util.Map;
 
 /**
  * Very simple properties file. Preserves order of entries in file, including comments and blank lines.
- * 
- * Format of each line:
- * 
- * key = value # comment
- * 
- * If duplicate key is in file, a later key entry hides the prior entry. For example
- * 
- * fruit = apple fruit = banana
- * 
- * The "banana" is the value for key "fruit".
- * 
- * Writing out the properties file "pretty prints" the data.
- * 
  *
+ * Format of each line:
+ *
+ * key = value # comment
+ *
+ * If duplicate key is in file, a later key entry hides the prior entry. For example
+ *
+ * fruit = apple fruit = banana
+ *
+ * The "banana" is the value for key "fruit".
+ *
+ * Writing out the properties file "pretty prints" the data.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
-
 public class Config
 {
 	ArrayList<Line> lines = null;
 	HashMap<String, Line> map = null;
 
+	/**
+	 * <p>Constructor for Config.</p>
+	 */
 	public Config()
 	{
 		clear();
@@ -39,10 +42,23 @@ public class Config
 
 	private URL _url = null;
 	
+	/**
+	 * <p>setURL.</p>
+	 *
+	 * @param url a {@link java.net.URL} object
+	 */
 	public void setURL( URL url ) { _url = url; }
 	
+	/**
+	 * <p>getURL.</p>
+	 *
+	 * @return a {@link java.net.URL} object
+	 */
 	public URL getURL() { return _url; }
 	
+	/**
+	 * <p>clear.</p>
+	 */
 	public void clear()
 	{
 		lines = new ArrayList<>();
@@ -50,6 +66,12 @@ public class Config
 
 	}
 
+	/**
+	 * <p>set.</p>
+	 *
+	 * @param key a {@link java.lang.String} object
+	 * @param value a {@link java.lang.String} object
+	 */
 	public void set( String key, String value )
 	{
 		if( key == null )
@@ -74,11 +96,24 @@ public class Config
 		}
 	}
 
+	/**
+	 * <p>get.</p>
+	 *
+	 * @param key a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String get( String key )
 	{
 		return get( key, null );
 	}
 
+	/**
+	 * <p>get.</p>
+	 *
+	 * @param key a {@link java.lang.String} object
+	 * @param defaultValue a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String get( String key, String defaultValue )
 	{
 		if( key == null )
@@ -100,8 +135,9 @@ public class Config
 
 	/**
 	 * Feed in list of parameters which make up the compound key. Null parameters and empty strings are dropped.
-	 * 
-	 * @param args
+	 *
+	 * @param args a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
 	 */
 	public String getCompound( String... args )
 	{
@@ -109,6 +145,12 @@ public class Config
 		return get( key );
 	}
 
+	/**
+	 * <p>merge.</p>
+	 *
+	 * @param args a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String merge( String... args )
 	{
 		StringBuilder sb = new StringBuilder();
@@ -126,6 +168,11 @@ public class Config
 		return sb.toString();
 	}
 
+	/**
+	 * <p>remove.</p>
+	 *
+	 * @param key a {@link java.lang.String} object
+	 */
 	public void remove( String key )
 	{
 		if( key == null )
@@ -140,6 +187,11 @@ public class Config
 		}
 	}
 
+	/**
+	 * <p>isEmpty.</p>
+	 *
+	 * @return a boolean
+	 */
 	public boolean isEmpty()
 	{
 		return lines.isEmpty();
@@ -170,6 +222,13 @@ public class Config
 		}
 	}
 
+	/**
+	 * <p>load.</p>
+	 *
+	 * @param filename a {@link java.lang.String} object
+	 * @return a {@link normalsql.Config} object
+	 * @throws java.io.IOException if any.
+	 */
 	public static Config load( String filename ) throws IOException
 	{
 		ClassLoader loader = Config.class.getClassLoader();
@@ -185,6 +244,13 @@ public class Config
 		throw new FileNotFoundException( filename );
 	}
 	
+	/**
+	 * <p>load.</p>
+	 *
+	 * @param file a {@link java.io.File} object
+	 * @return a {@link normalsql.Config} object
+	 * @throws java.io.IOException if any.
+	 */
 	public static Config load( File file )
 		throws IOException
 	{
@@ -199,6 +265,13 @@ public class Config
 	
 	}
 
+	/**
+	 * <p>load.</p>
+	 *
+	 * @param reader a {@link java.io.Reader} object
+	 * @return a {@link normalsql.Config} object
+	 * @throws java.io.IOException if any.
+	 */
 	public static Config load( Reader reader ) throws IOException
 	{
 		if( reader == null ) 
@@ -241,6 +314,12 @@ public class Config
 		return props;
 	}
 
+	/**
+	 * <p>store.</p>
+	 *
+	 * @param writer a {@link java.io.Writer} object
+	 * @throws java.io.IOException if any.
+	 */
 	public void store( Writer writer ) throws IOException
 	{
 		PrintWriter pw = new PrintWriter( writer );
@@ -254,6 +333,11 @@ public class Config
 		writer.close();
 	}
 
+	/**
+	 * <p>toString.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toString()
 	{
 		StringWriter sw = new StringWriter();
@@ -268,6 +352,11 @@ public class Config
 		return sw.toString();
 	}
 
+	/**
+	 * <p>toProperties.</p>
+	 *
+	 * @return a {@link java.util.Properties} object
+	 */
 	public java.util.Properties toProperties()
 	{
 		java.util.Properties props = new java.util.Properties();
@@ -287,6 +376,11 @@ public class Config
 		return props;
 	}
 
+	/**
+	 * <p>fromProperties.</p>
+	 *
+	 * @param props a {@link java.util.Properties} object
+	 */
 	public void fromProperties( java.util.Properties props )
 	{
 		for( Map.Entry<Object, Object> entry : props.entrySet() )
@@ -297,6 +391,11 @@ public class Config
 		}
 	}
 
+	/**
+	 * <p>hashCode.</p>
+	 *
+	 * @return a int
+	 */
 	public int hashCode()
 	{
 		return map.hashCode();

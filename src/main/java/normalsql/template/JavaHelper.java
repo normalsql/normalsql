@@ -16,15 +16,31 @@ import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 import static java.sql.Types.*;
 
+/**
+ * <p>JavaHelper class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 	JavaHelper
 {
+	/**
+	 * <p>Constructor for JavaHelper.</p>
+	 */
 	public JavaHelper()
 	{
 
 	}
 
 	// TODO separate factory methods for Statement and ResultSet properties
+	/**
+	 * <p>create.</p>
+	 *
+	 * @param context a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
+	 * @param method a {@link java.lang.String} object
+	 * @return a {@link normalsql.Property} object
+	 */
 	public Property create( SubtermContext context, String... method )
 	{
 		Property prop = new Property();
@@ -40,16 +56,34 @@ public class
 
 	// TODO remove invalid chars (eg spaces), toUpper, toLower, toCapitals, recognize abbreviations (eg "ID"), to snake_case
 	// TODO refactor to Strategy pattern, to support other languages, idioms
+	/**
+	 * <p>toMethodCase.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toMethodCase( String... name )
 	{
 		return String.join( "", name );
 	}
 
+	/**
+	 * <p>toVariableCase.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toVariableCase( String... name )
 	{
 		return String.join( "_", name );
 	}
 
+	/**
+	 * <p>isAllUpperCase.</p>
+	 *
+	 * @param s a {@link java.lang.String} object
+	 * @return a boolean
+	 */
 	public boolean isAllUpperCase( String s )
 	{
 		for( char c : s.toCharArray() ) 
@@ -65,6 +99,12 @@ public class
 	// BIGPONY => BIGPONY
 	// bigPony => BigPony
 	// id => ID
+	/**
+	 * <p>toMethodName.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toMethodName( String name )
 	{
 		if( "id".equalsIgnoreCase( name ))
@@ -81,6 +121,12 @@ public class
 	// BIGPONY => bigpony
 	// BigPony => bigPony
 	// ID => id
+	/**
+	 * <p>toVariableName.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toVariableName( String name )
 	{
 		if( "id".equalsIgnoreCase( name ))
@@ -198,6 +244,12 @@ public class
 //	}
 
 	// TODO change to Types enum?
+	/**
+	 * <p>toPrintfConverter.</p>
+	 *
+	 * @param sqlType a int
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toPrintfConverter( int sqlType )
 	{
 		String result = null;
@@ -301,6 +353,10 @@ public class
 	/**
 	 * Convert value to an appropriate Java code value/instance declaration. Used by
 	 * code generating templates.
+	 *
+	 * @param sqlType a int
+	 * @param value a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
 	 */
 	// TODO: Add 'value' to Exception messages
 	public String convertToCode( int sqlType, String value )
@@ -396,6 +452,12 @@ public class
 		return code;
 	}
 
+	/**
+	 * <p>getInitializerValue.</p>
+	 *
+	 * @param sqlType a int
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getInitializerValue( int sqlType )
 	{
 		String result = null;

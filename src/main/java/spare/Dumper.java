@@ -10,27 +10,39 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 /**
- * Writes contents of a ResultSet to an outputstream. 
- * 
- * One row per line. Fields are tab delimited. Newlines and tabs within content
- * are escaped, eg '\n' and '\t'. 
- * 
- * First line contains names of columns. 
- * 
- * @author jasonosgood
+ * Writes contents of a ResultSet to an outputstream.
  *
+ * One row per line. Fields are tab delimited. Newlines and tabs within content
+ * are escaped, eg '\n' and '\t'.
+ *
+ * First line contains names of columns.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
-
 public class 
 	Dumper 
 {
 
+	/**
+	 * <p>dumpResultSet.</p>
+	 *
+	 * @param rs a ResultSet object
+	 * @throws java.sql.SQLException if any.
+	 */
 	public static void dumpResultSet( ResultSet rs ) 
 		throws SQLException
 	{
 		dumpResultSet( rs, System.out, false ); 
 	}	
 	
+	/**
+	 * <p>dumpResultSet.</p>
+	 *
+	 * @param rs a ResultSet object
+	 * @param out a {@link java.io.PrintStream} object
+	 * @throws java.sql.SQLException if any.
+	 */
 	public static void dumpResultSet( ResultSet rs, PrintStream out ) 
 			throws SQLException
 		{
@@ -38,15 +50,14 @@ public class
 		}	
 		
 	/**
-	 * Dumps ResultSet to OutpuStream. If reset = true and ResultSet type != TYPE_FORWARD_ONLY, 
+	 * Dumps ResultSet to OutpuStream. If reset = true and ResultSet type != TYPE_FORWARD_ONLY,
 	 * dump will start with first row and iterator will be reset to first row.
-	 * 
-	 * @param rs
-	 * @param out
-	 * @param reset
-	 * @throws SQLException
+	 *
+	 * @param rs a ResultSet object
+	 * @param out a {@link java.io.OutputStream} object
+	 * @param reset a boolean
+	 * @throws java.sql.SQLException
 	 */
-	
 	public static void dumpResultSet( ResultSet rs, OutputStream out, boolean reset ) 
 		throws SQLException
 	{

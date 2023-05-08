@@ -3,6 +3,12 @@
 
 package normalsql.meta;
 
+/**
+ * <p>Source class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Source
 {
 	public TableRef tableRef;

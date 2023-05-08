@@ -29,6 +29,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * <p>Worker class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Worker
 {
 	Connection _conn;
@@ -37,6 +43,11 @@ public class Worker
 	Template _resultSetTemplate;
 	JavaHelper _helper;
 
+	/**
+	 * <p>Constructor for Worker.</p>
+	 *
+	 * @param conn a Connection object
+	 */
 	public Worker( Connection conn )
 	{
 		_conn = conn;
@@ -54,6 +65,13 @@ public class Worker
 		_helper = new JavaHelper();
 	}
 
+	/**
+	 * <p>process.</p>
+	 *
+	 * @param work a {@link normalsql.Work} object
+	 * @throws java.io.IOException if any.
+	 * @throws SQLException if any.
+	 */
 	public void process( Work work )
 		throws IOException, SQLException
 	{
@@ -77,18 +95,20 @@ public class Worker
 
 		for( var p : work.predicates )
 		{
-			switch( p )
+			switch( p.getClass().getSimpleName() )
 			{
-				case Comparison c:
+				case "Comparison":
 				{
+					Comparison c = (Comparison) p;
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
 					Property prop = _helper.create( c.value, column );
 					work.statementProperties.add( prop );
 					break;
 				}
-				case Between b:
+				case "Between":
 				{
+					Between b = (Between) p;
 					switch( b.match )
 					{
 						case COL_VAL_VAL:
@@ -156,11 +176,24 @@ public class Worker
 		System.out.println( work.sourceFile + " processed" );
 	}
 
+	/**
+	 * <p>getColumn.</p>
+	 *
+	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public static String getColumn( SubtermContext b )
 	{
 		return ( (SubtermRefContext) b ).columnRef().column.getTrimmedText();
 	}
 
+	/**
+	 * <p>processPreparedStatement.</p>
+	 *
+	 * @param conn a Connection object
+	 * @param work a {@link normalsql.Work} object
+	 * @throws SQLException if any.
+	 */
 	public void processPreparedStatement( Connection conn, Work work )
 		throws SQLException
 	{
@@ -251,6 +284,12 @@ public class Worker
 		return properties;
 	}
 
+	/**
+	 * <p>merge.</p>
+	 *
+	 * @param work a {@link normalsql.Work} object
+	 * @throws java.io.IOException if any.
+	 */
 	public void merge( Work work ) throws IOException
 	{
 		HashMap<String, Object> childMap = work.asMap();
@@ -263,6 +302,15 @@ public class Worker
 		generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
 	}
 
+	/**
+	 * <p>generate.</p>
+	 *
+	 * @param template a {@link org.apache.velocity.Template} object
+	 * @param vc a {@link org.apache.velocity.VelocityContext} object
+	 * @param targetDir a {@link java.nio.file.Path} object
+	 * @param name a {@link java.lang.String} object
+	 * @throws java.io.IOException if any.
+	 */
 	public void generate( Template template, VelocityContext vc, Path targetDir, String name )
 		throws IOException
 	{

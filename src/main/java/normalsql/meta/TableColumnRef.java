@@ -5,9 +5,20 @@ package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.ColumnRefContext;
 
+/**
+ * <p>TableColumnRef class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 	TableColumnRef
 {
+	/**
+	 * <p>Constructor for TableColumnRef.</p>
+	 *
+	 * @param context a {@link normalsql.parse.NormalSQLParser.ColumnRefContext} object
+	 */
 	public TableColumnRef( ColumnRefContext context )
 	{
 		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;

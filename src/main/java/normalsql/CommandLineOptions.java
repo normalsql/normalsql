@@ -12,12 +12,26 @@ import java.io.FileReader;
 // TODO: validate
 // TODO: print help
 // TODO option for template to use
+/**
+ * <p>CommandLineOptions class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class CommandLineOptions
 {
+	/**
+	 * <p>Constructor for CommandLineOptions.</p>
+	 */
 	public CommandLineOptions()
 	{
 	}
 
+	/**
+	 * <p>Constructor for CommandLineOptions.</p>
+	 *
+	 * @param props a {@link normalsql.Config} object
+	 */
 	public CommandLineOptions( Config props )
 	{
 		if( props == null )
@@ -27,14 +41,23 @@ public class CommandLineOptions
 		_props = props;
 	}
 
+	/** Constant <code>DRIVER="driver"</code> */
 	public final static String DRIVER = "driver";
+	/** Constant <code>URL="url"</code> */
 	public final static String URL = "url";
+	/** Constant <code>USERNAME="username"</code> */
 	public final static String USERNAME = "username";
+	/** Constant <code>PASSWORD="password"</code> */
 	public final static String PASSWORD = "password";
+	/** Constant <code>PACKAGE="package"</code> */
 	public final static String PACKAGE = "package";
+	/** Constant <code>SOURCE="source"</code> */
 	public final static String SOURCE = "source";
+	/** Constant <code>TARGET="target"</code> */
 	public final static String TARGET = "target";
+	/** Constant <code>PROPERTY="property"</code> */
 	public final static String PROPERTY = "property";
+	/** Constant <code>ONLYPARSE="onlyparse"</code> */
 	public final static String ONLYPARSE = "onlyparse";
 
 	String _filename = "normalsql";
@@ -43,47 +66,92 @@ public class CommandLineOptions
 
 	OptionSet _options = null;
 
+	/**
+	 * <p>getDriver.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getDriver()
 	{
 		return coalesce( (String) _options.valueOf( DRIVER ), _props.get( DRIVER ) );
 	}
 
+	/**
+	 * <p>getUrl.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getUrl()
 	{
 		return coalesce( (String) _options.valueOf( URL ), _props.get( URL ) );
 	}
 
+	/**
+	 * <p>getUsername.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getUsername()
 	{
 		return coalesce( (String) _options.valueOf( USERNAME ), _props.get( USERNAME ), "" );
 	}
 
+	/**
+	 * <p>getPassword.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getPassword()
 	{
 		return coalesce( (String) _options.valueOf( PASSWORD ), _props.get( PASSWORD ), "" );
 	}
 
+	/**
+	 * <p>getSource.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getSource()
 	{
 		return coalesce( (String) _options.valueOf( SOURCE ), _props.get( SOURCE ), "." );
 	}
 
+	/**
+	 * <p>getPackage.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getPackage()
 	{
 		return coalesce( (String) _options.valueOf( PACKAGE ), _props.get( PACKAGE ), "" );
 	}
 
+	/**
+	 * <p>getTarget.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String getTarget()
 	{
 		return coalesce( (String) _options.valueOf( TARGET ), _props.get( TARGET ), "." );
 	}
 	
+	/**
+	 * <p>getOnlyParse.</p>
+	 *
+	 * @return a boolean
+	 */
 	public boolean getOnlyParse()
 	{
 		String onlyParse = coalesce( (String) _options.valueOf( ONLYPARSE ), _props.get( ONLYPARSE ), "false" );
 		return Boolean.valueOf( onlyParse );
 	}
 
+	/**
+	 * <p>parse.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public void parse( String[] args )
 	{
 		OptionParser parser = new OptionParser();
@@ -134,6 +202,12 @@ public class CommandLineOptions
 		}
 	}
 
+	/**
+	 * <p>coalesce.</p>
+	 *
+	 * @param values a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
 	public static String coalesce( String... values )
 	{
 		for( String value : values )
@@ -144,6 +218,11 @@ public class CommandLineOptions
 	}
 
 	// TODO report if .properties not found
+	/**
+	 * <p>toString.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();

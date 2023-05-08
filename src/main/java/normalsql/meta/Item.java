@@ -6,12 +6,14 @@ package normalsql.meta;
 import normalsql.parse.NormalSQLParser.ItemContext;
 
 /**
- SELECT statement item. Specified in the query's source code. Later matched with
- ResultSet Columns.
+ * SELECT statement item. Specified in the query's source code. Later matched with
+ * ResultSet Columns.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 
 // TODO Maybe split into TableRef (wildcard) and TableColumnRef variants
-
 public class Item
 {
 	public ItemContext context;

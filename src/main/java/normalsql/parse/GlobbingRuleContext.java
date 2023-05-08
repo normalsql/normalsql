@@ -20,23 +20,52 @@ import org.antlr.v4.runtime.WritableToken;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>GlobbingRuleContext class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
     GlobbingRuleContext
 extends
     ParserRuleContext
 {
+    /**
+     * <p>Constructor for GlobbingRuleContext.</p>
+     */
     public GlobbingRuleContext() { }
 
+    /**
+     * <p>Constructor for GlobbingRuleContext.</p>
+     *
+     * @param parent a {@link org.antlr.v4.runtime.ParserRuleContext} object
+     * @param invokingStateNumber a int
+     */
     public GlobbingRuleContext( ParserRuleContext parent, int invokingStateNumber )
     {
         super( parent, invokingStateNumber );
     }
 
+    /**
+     * <p>find.</p>
+     *
+     * @param query a {@link java.lang.String} object
+     * @return a {@link java.util.List} object
+     */
     public List<GlobbingRuleContext> find( String query )
     {
         return find( query, false );
     }
 
+    /**
+     * <p>find.</p>
+     *
+     * @param type a {@link java.lang.Class} object
+     * @param query a {@link java.lang.String} object
+     * @param <T> a T class
+     * @return a {@link java.util.List} object
+     */
     public <T extends GlobbingRuleContext> List<T> find( Class<? extends T> type, String query ) {
         List<GlobbingRuleContext> found = find( query );
         List<T> results = new ArrayList<>();
@@ -50,6 +79,14 @@ extends
         return results;
     }
 
+    /**
+     * <p>findFirst.</p>
+     *
+     * @param type a {@link java.lang.Class} object
+     * @param expression a {@link java.lang.String} object
+     * @param <T> a T class
+     * @return a T object
+     */
     public <T extends GlobbingRuleContext> T findFirst( Class<? extends T> type, String expression )
     {
         T result = null;
@@ -62,6 +99,13 @@ extends
     }
 
     // TODO: validate globbing query expression
+    /**
+     * <p>find.</p>
+     *
+     * @param query a {@link java.lang.String} object
+     * @param first a boolean
+     * @return a {@link java.util.List} object
+     */
     protected List<GlobbingRuleContext> find( String query, boolean first )
     {
         if( query == null )
@@ -121,6 +165,12 @@ extends
         }
     }
 
+    /**
+     * <p>findFirst.</p>
+     *
+     * @param expression a {@link java.lang.String} object
+     * @return a {@link normalsql.parse.GlobbingRuleContext} object
+     */
     public GlobbingRuleContext findFirst( String expression )
     {
         GlobbingRuleContext result = null;
@@ -132,12 +182,24 @@ extends
         return result;
     }
 
+    /**
+     * <p>findFirstString.</p>
+     *
+     * @param expression a {@link java.lang.String} object
+     * @return a {@link java.lang.String} object
+     */
     public String findFirstString( String expression )
     {
         GlobbingRuleContext first = findFirst( expression );
         return first != null ? first.getTrimmedText() : null;
     }
 
+    /**
+     * <p>trimQuotes.</p>
+     *
+     * @param text a {@link java.lang.String} object
+     * @return a {@link java.lang.String} object
+     */
     public String trimQuotes( String text )
     {
         if( text == null ) return null;
@@ -149,12 +211,22 @@ extends
         return text;
     }
 
+    /**
+     * <p>getTrimmedText.</p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getTrimmedText()
     {
         return trimQuotes( getText() );
     }
 
     // TODO: Handle unary numbers, eg -100
+    /**
+     * <p>setStartTokenText.</p>
+     *
+     * @param text a {@link java.lang.String} object
+     */
     public void setStartTokenText( String text )
     {
         // Replace text of first "visible" (non whitespace) token, then exit
@@ -162,5 +234,10 @@ extends
         start.setText( text );
     }
 
+    /**
+     * <p>toString.</p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String toString() { return getText(); }
 }

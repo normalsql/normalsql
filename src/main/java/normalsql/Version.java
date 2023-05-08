@@ -5,8 +5,15 @@ package normalsql;
 
 // TODO add build number
 
+/**
+ * <p>Version class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Version
 {
+	/** Constant <code>version="0.0.0"</code> */
 	public static final String
 	version = "0.0.0";
 }

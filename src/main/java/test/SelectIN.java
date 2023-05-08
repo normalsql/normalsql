@@ -9,8 +9,20 @@ import spare.Dumper;
 
 import java.sql.*;
 
+/**
+ * <p>SelectIN class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class SelectIN
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 * @throws java.lang.Exception if any.
+	 */
 	public static void main( String[] args )
 		throws Exception
 	{
@@ -30,6 +42,14 @@ public class SelectIN
 
 	}
 
+	/**
+	 * <p>processPreparedStatement.</p>
+	 *
+	 * @param conn a Connection object
+	 * @param preparedSQL a {@link java.lang.String} object
+	 * @return a PreparedStatement object
+	 * @throws SQLException if any.
+	 */
 	public static PreparedStatement processPreparedStatement( Connection conn, String preparedSQL )
 		throws SQLException
 	{

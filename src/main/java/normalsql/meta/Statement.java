@@ -7,6 +7,9 @@ import java.util.ArrayList;
 
 /**
  * Statements are lists containing child Statements. Simplifies recursion.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 public class
 	Statement
