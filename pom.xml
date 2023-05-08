@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>normalsql</groupId>
+    <groupId>org.normalsql</groupId>
     <artifactId>normalsql</artifactId>
     <version>0.0.0</version>
     <packaging>jar</packaging>
 
     <name>normalsql</name>
-    <description>Convert normal SQL queries to prepared statements with type-safe wrappers.</description>
+    <description>Compile SQL queries into type-safe PreparedStatements and ResultSets.</description>
     <url>https://normalsql.org</url>
 
     <licenses>
@@ -36,6 +36,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- TODO: pick an older JDK -->
         <maven.compiler.source>20</maven.compiler.source>
         <maven.compiler.target>20</maven.compiler.target>
         <antlr4.version>4.11.1</antlr4.version>
@@ -47,13 +48,7 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
-<!--            <scope>compile</scope>-->
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.antlr</groupId>-->
-<!--            <artifactId>antlr4-maven-plugin</artifactId>-->
-<!--            <version>${antlr4.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-engine-core</artifactId>
@@ -117,7 +112,6 @@
                 <configuration>
                     <target>20</target>
                     <source>20</source>
-                    <compilerArgs><args>--enable-preview</args></compilerArgs>
                 </configuration>
             </plugin>
 
@@ -135,6 +129,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -148,7 +143,15 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <!-- exclude ANTLR generated source code -->
+                    <excludePackageNames>*.parse</excludePackageNames>
+                    <quiet>true</quiet>
+                    <failOnWarnings>false</failOnWarnings>
+                    <failOnError>true</failOnError>
+                </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -160,58 +163,23 @@
                         <goals>
                             <goal>sign</goal>
                         </goals>
-                        <!--                        <configuration>-->
-                        <!--                            <gpgArguments>-->
-                        <!--                                <arg>&#45;&#45;pinentry-mode</arg>-->
-                        <!--                                <arg>loopback</arg>-->
-                        <!--                            </gpgArguments>-->
-                        <!--                        </configuration>-->
-
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
-                <!--                <executions>-->
-                <!--                    <execution>-->
-                <!--                        <id>default-deploy</id>-->
-                <!--                        <phase>deploy</phase>-->
-                <!--                        <goals>-->
-                <!--                            <goal>deploy</goal>-->
-                <!--                        </goals>-->
-                <!--                    </execution>-->
-                <!--                </executions>-->
-            </plugin>
 
-            <!--
+            <!-- https://help.sonatype.com/repomanager2/staging-releases/configuring-your-project-for-deployment -->
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.4.2</version>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.13</version>
+                <extensions>true</extensions>
                 <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>normalsql.Main</mainClass>
-                        </manifest>
-                        <manifestEntries>
-                            <Build-Time>${maven.build.timestamp}</Build-Time>
-                        </manifestEntries>
-                    </archive>
+                    <serverId>s01.oss.sonatype.org</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <!-- Set this to true and the release will automatically proceed and sync to Central Repository will follow  -->
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
-            -->
         </plugins>
     </build>
 
