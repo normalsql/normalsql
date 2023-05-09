@@ -1,54 +1,42 @@
-# NormalSQL
+## NormalSQL
 
-Compiles SQL into prepared statements with type-safe wrappers.
+Compile SQL statements into Java source code.
 
-NormalSQL is neither an object/relational mapper (eg Hibernate) or an 
-abstraction layer (eg JOOQ). Nor is it a template engine (eg JDBCTemplate,
-myBatis).
+NormalSQL is:
 
-NormalSQL is a SQL-first workflow. Resolving the database-to-application
-interface at *compile time* instead of runtime.
+* Not an object-relational mapper (eg Hibernate)
+* Not an abstraction layer (eg JOOQ)
+* Not a template engine (eg JDBCTemplate, myBatis)
 
-Start with normal SQL. Manage your SQL source code as simple files.
-Use your favorite SQL client (eg DBeaver, DataGrip). 
+### Most Simple Example
 
-Then NormalSQL generates the Java wrappers.
-
-### Simple Example
-
-Here's a simple example, to show the work flow.
-
-Start with SQL SELECT statement GetPeopleOlderThan.sql:
+Start with SelectPeopleOlderThan.sql:
 
 ```sql
 SELECT name FROM people WHERE age > 18
 ```
 
-Becomes this parameterized query string:
-
-```java
-"SELECT name FROM people WHERE age > ?"
-```
-
-Which is used in this generated PreparedStatement wrapper:
+NormalSQL generates SelectPeopleOlderThan.java and SelectPeopleOlderThanResultSet.java:
 
 ```java
 // pseudo-code
-class GetPeopleOlderThan 
+class SelectPeopleOlderThan 
 {
+	// The condition's literal has been replaced with a parameter
 	String _sql = "SELECT name FROM people WHERE age > ?";
+	
+	// The original literal is now that parameter's default value
     int _age = 18;
+	
+	// Condition's operand is used as suffix, eg 'GT' means 'greater than'
     void setAgeGT( int age ) { _age = age; }
     
     GetPeopleOlderThanResultSet execute() { ... }
 }
 ```
-
-Finally, it generates this ResultSet wrapper:
-
 ```java
 // pseudo-code
-class GetPeopleOlderThanResultSet implements Iterable<Row>
+class SelectPeopleOlderThanResultSet implements Iterable<Row>
 {
     // inner-class
     class Row
@@ -58,12 +46,13 @@ class GetPeopleOlderThanResultSet implements Iterable<Row>
 }
 ```
 
-Your application would look something like this:
+Your application will look something like this:
 
 ```java
 Connection conn = DriverManager.getConnection( ... );
 
 GetPeopleOlderThan select = new GetPeopleOlderThan( conn );
+
 select.setAgeGT( 21 );
 
 GetPeopleOlderThanResultSet rs = select.execute();
@@ -81,18 +70,16 @@ What could be easier?
 
 ### Benefits
 
-Fewer errors. As your SQL changes over time,
-NormalSQL leverages the Java compiler to catch and prevent errors.
+| Feature                 | Detail                                                                                                                                                                                            |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SQL-first workflow      | SQL now generates app source code. Instead of apps, DSLs, and mappings generating SQL.                                                                                                            |
+| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                                  |
+| Reduce errors           | &bull; Compile time (vs runtime) processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
+| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                                           |
+| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                                 |
 
-Delegate to DBAs. SQL source code can now be managed by domain experts,
-like DBAs and Business Analysts. 
 
-No runtime dependencies. There is no NormalSQL runtime. Use generated 
-source code as-is.
 
-Prevent SQL injection attacks. NormalSQL only uses Prepared Statements.
-
-Aid debugging. PreparedStatement toString() outputs the current query, for easy cut & paste into your SQL client. ResultSet toString() 
 
 ## Quick Example
 

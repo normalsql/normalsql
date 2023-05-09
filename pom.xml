@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>normalsql</name>
-    <description>Compile SQL queries into type-safe PreparedStatements and ResultSets.</description>
+    <description>Compile SQL statements into Java source code.</description>
     <url>https://normalsql.org</url>
 
     <licenses>
