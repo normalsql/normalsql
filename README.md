@@ -1,12 +1,20 @@
 ## NormalSQL
 
-Compile SQL statements into Java source code.
+Use normal SQL statements to generate app source code. 
 
-NormalSQL is:
+Remember Data Access Objects (DAOs)? The SQL was right there. How everything worked was obvious. No 
+black box, no runtime magic, no complicated rules or incantations.
 
-* Not an object-relational mapper (eg Hibernate)
-* Not an abstraction layer (eg JOOQ)
-* Not a template engine (eg JDBCTemplate, myBatis)
+Unfortunately, manually writing and maintaining DAOs was tedious and error prone. So DAOs rightly
+fell out of fashion. 
+
+But what if that process was automated and error free?
+
+That's exactly what NormalSQL does.
+
+NormalSQL uses normal SQL statements as-is. It parses those statements, identifies all the
+condition parameters and result columns, and code generates convenient wrappers.
+
 
 ### Most Simple Example
 
@@ -22,13 +30,13 @@ NormalSQL generates SelectPeopleOlderThan.java and SelectPeopleOlderThanResultSe
 // pseudo-code
 class SelectPeopleOlderThan 
 {
-	// The condition's literal has been replaced with a parameter
-	String _sql = "SELECT name FROM people WHERE age > ?";
+    // The condition's literal has been replaced with a parameter
+    String _sql = "SELECT name FROM people WHERE age > ?";
 	
-	// The original literal is now that parameter's default value
+    // The original literal is now that parameter's default value
     int _age = 18;
 	
-	// Condition's operand is used as suffix, eg 'GT' means 'greater than'
+    // Condition's operand is used as suffix, eg 'GT' means 'greater than'
     void setAgeGT( int age ) { _age = age; }
     
     GetPeopleOlderThanResultSet execute() { ... }
@@ -70,15 +78,22 @@ What could be easier?
 
 ### Benefits
 
-| Feature                 | Detail                                                                                                                                                                                            |
-|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SQL-first workflow      | SQL now generates app source code. Instead of apps, DSLs, and mappings generating SQL.                                                                                                            |
-| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                                  |
-| Reduce errors           | &bull; Compile time (vs runtime) processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
-| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                                           |
-| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                                 |
+| Feature                 | Detail                                                                                                                                                                               |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SQL-first workflow      | Use normal SQL to generate app source code. Instead of using mappings, DSLs, or templates to generate SQL.                                                                           |
+| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                     |
+| Reduce errors           | &bull; Compile time processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
+| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                              |
+| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                    |
 
 
+## SQL Support
+
+
+NormalSQL supports CTEs, JOINs, UNIONs and so forth.
+
+NormalSQL has initial support for multiple dialects of SQL. Like all third party SQL parsers,
+support will improve as NormalSQL matures.
 
 
 ## Quick Example
