@@ -8,8 +8,20 @@ import java.sql.DriverManager;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ * <p>FFS class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class FFS
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 * @throws java.lang.Exception if any.
+	 */
 	public static void main( String[] args ) throws Exception
 	{
 		Class.forName( "com.mysql.cj.jdbc.Driver" );

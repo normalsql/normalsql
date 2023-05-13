@@ -8,26 +8,37 @@ import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
 
+/**
+ * <p>Comparison class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 	Comparison
 extends
 	Predicate<PredicateCompareContext>
 {
+	/** comment */
 	public enum Match
 	{
 		COL_VAL( COL, VAL ),
 		VAL_COL( VAL, COL ),
 		NotMatched( null, null );
 
+		/** comment */
 		public final Class left;
+		/** comment */
 		public final Class right;
 
+		/** comment */
 		Match( Class left, Class right )
 		{
 			this.left = left;
 			this.right = right;
 		}
 
+		/** comment */
 		public static Match match( SubtermContext left, SubtermContext right )
 		{
 			for( Match p : values() )
@@ -38,6 +49,7 @@ extends
 		}
 	}
 
+	/** comment */
 	static HashMap<String, String> operatorMap = new HashMap<>();
 
 	static {
@@ -52,11 +64,20 @@ extends
 		operatorMap.put( "&&", "OVERLAP" );
 	}
 
+	/** comment */
 	public SubtermContext value;
+	/** comment */
 	public SubtermContext column;
+	/** comment */
 	public String op;
+	/** comment */
 	public Match match;
 
+	/**
+	 * <p>Constructor for Comparison.</p>
+	 *
+	 * @param context a {@link normalsql.parse.NormalSQLParser.PredicateCompareContext} object
+	 */
 	public Comparison( PredicateCompareContext context )
 	{
 		super( context );
@@ -82,6 +103,7 @@ extends
 		}
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public boolean isMatched()
 	{

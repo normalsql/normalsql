@@ -4,13 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>normalsql</groupId>
+    <groupId>org.normalsql</groupId>
     <artifactId>normalsql</artifactId>
     <version>0.0.0</version>
     <packaging>jar</packaging>
+
     <name>normalsql</name>
+    <description>Use SQL statements to generate app source code.</description>
     <url>https://normalsql.org</url>
-    <description>Named type-safe accessors for normal SQL.</description>
 
     <licenses>
         <license>
@@ -34,21 +35,19 @@
     </developers>
 
     <properties>
-        <maven.compiler.source>18</maven.compiler.source>
-        <maven.compiler.target>18</maven.compiler.target>
-<!--        <java.version>18</java.version>-->
-        <antlr4.version>4.11.1</antlr4.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- TODO: pick an older JDK -->
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
+        <antlr4.version>4.11.1</antlr4.version>
     </properties>
 
     <dependencies>
-
     <!-- runtime -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
-<!--            <scope>compile</scope>-->
         </dependency>
         <dependency>
             <groupId>org.apache.velocity</groupId>
@@ -90,53 +89,96 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
-                <configuration>
-                    <compilerArgs>--enable-preview</compilerArgs>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-maven-plugin</artifactId>
                 <version>${antlr4.version}</version>
-                <configuration>
-                    <visitor>true</visitor>
-                </configuration>
                 <executions>
                     <execution>
+                        <id>antlr</id>
                         <goals>
                             <goal>antlr4</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.4.2</version>
                 <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>normalsql.Main</mainClass>
-                        </manifest>
-                        <manifestEntries>
-                            <Build-Time>${maven.build.timestamp}</Build-Time>
-                        </manifestEntries>
-                    </archive>
+                    <visitor>true</visitor>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <target>20</target>
+                    <source>20</source>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- exclude ANTLR generated source code -->
+                    <excludePackageNames>*.parse</excludePackageNames>
+                    <quiet>true</quiet>
+                    <failOnWarnings>false</failOnWarnings>
+                    <failOnError>true</failOnError>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- https://help.sonatype.com/repomanager2/staging-releases/configuring-your-project-for-deployment -->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.13</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>s01.oss.sonatype.org</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <!-- Set this to true and the release will automatically proceed and sync to Central Repository will follow  -->
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>

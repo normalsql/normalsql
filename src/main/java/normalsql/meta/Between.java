@@ -7,7 +7,10 @@ import normalsql.parse.NormalSQLParser.PredicateBETWEENContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 /**
- * Needed bits from parse tree of a BETWEEN clause
+ * POJO holding the subterms of a BETWEEN predicate's parse tree.
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 public class
 	Between
@@ -15,41 +18,37 @@ extends
 	Predicate<PredicateBETWEENContext>
 {
 	/**
-	 * enum of clause patterns matched (recognized)
+	 * Variations which can be matched. Disabled variants kept for reference.
+	 * They might be supported in the future. If they'd be useful. Assuming a
+	 * legible code generation strategy is divined. (Suggestions encouraged.)
 	 */
 	public enum Match
 	{
-		/**
-		 * eg 'column BETWEEN 0 AND 10'
-		 */
+		/** eg 'column BETWEEN 0 AND 10' */
 		COL_VAL_VAL( COL, VAL, VAL ),
-//		COL_COL_VAL( COL, COL, VAL ),  // eg 'column BETWEEN low AND 10'
-//		COL_VAL_COL( COL, VAL, COL ),  // eg 'column BETWEEN 0 AND high'
-		/**
-		 * eg '5 BETWEEN low AND high'
-		 */
+
+//		COL_COL_VAL( COL, COL, VAL ),  /** eg 'left BETWEEN low AND 10' */
+//		COL_VAL_COL( COL, VAL, COL ),  /** eg 'left BETWEEN 0 AND high' */
+
+		/** eg '5 BETWEEN low AND high' */
 		VAL_COL_COL( VAL, COL, COL ),
-//		VAL_COL_VAL( VAL, COL, VAL ),  // eg '5 BETWEEN low AND 10'
-//		VAL_VAL_COL( VAL, VAL, COL ),  // eg '5 BETWEEN 0 AND high'
-//		VAL_VAL_VAL( VAL, VAL, VAL ),  // eg '5 BETWEEN 0 AND 10'
-		/**
-		 * no match
-		 */
+
+//		VAL_COL_VAL( VAL, COL, VAL ),  /** eg '5 BETWEEN low AND 10' */
+//		VAL_VAL_COL( VAL, VAL, COL ),  /** eg '5 BETWEEN 0 AND high' */
+//		VAL_VAL_VAL( VAL, VAL, VAL ),  /** eg '5 BETWEEN 0 AND 10' */
+
+		/** No match found. */
 		NotMatched( null, null, null );
 
-		/**
-		 * The Left.
-		 */
+		/** comment */
 		public final Class left;
-		/**
-		 * The Low.
-		 */
+		/** comment */
 		public final Class low;
-		/**
-		 * The High.
-		 */
+		/** comment */
 		public final Class high;
 
+
+		/** comment */
 		Match( Class left, Class low, Class high )
 		{
 			this.left = left;
@@ -57,14 +56,7 @@ extends
 			this.high = high;
 		}
 
-		/**
-		 * Match match.
-		 *
-		 * @param left the left
-		 * @param low  the low
-		 * @param high the high
-		 * @return the match
-		 */
+		/** comment */
 		public static Match match( SubtermContext left, SubtermContext low, SubtermContext high )
 		{
 			for( Match p : values() )
@@ -75,27 +67,19 @@ extends
 		}
 	}
 
-	/**
-	 * The Match.
-	 */
-	public final Match match;
-	/**
-	 * The Test.
-	 */
-	public final SubtermContext test;
-	/**
-	 * The Low.
-	 */
-	public final SubtermContext low;
-	/**
-	 * The High.
-	 */
-	public final SubtermContext high;
+	/** comment */
+	public Match match;
+	/** comment */
+	public SubtermContext test;
+	/** comment */
+	public SubtermContext low;
+	/** comment */
+	public SubtermContext high;
 
 	/**
-	 * Instantiates a new Between.
+	 * <p>Constructor for Between.</p>
 	 *
-	 * @param context the context
+	 * @param context a {@link normalsql.parse.NormalSQLParser.PredicateBETWEENContext} object
 	 */
 	public Between( PredicateBETWEENContext context )
 	{
@@ -106,6 +90,7 @@ extends
 		match = Match.match( test, low, high );
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public boolean isMatched()
 	{

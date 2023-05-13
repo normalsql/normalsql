@@ -4,8 +4,20 @@ import org.h2.tools.Server;
 
 import java.io.File;
 
+/**
+ * <p>H2 class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class H2
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 * @throws java.lang.Exception if any.
+	 */
 	public static void main( String[] args ) throws Exception
 	{
 		File file = new File( "." );
@@ -21,6 +33,9 @@ public class H2
 	private static boolean _tcpStarted = false;
 	private static boolean _webStarted = false;
 
+	/**
+	 * <p>start.</p>
+	 */
 	public static void start()
 	{
 		Server server = null;
@@ -58,6 +73,9 @@ public class H2
 		}
 	}
 
+	/**
+	 * <p>stop.</p>
+	 */
 	public static void stop()
 	{
 		Server server = null;

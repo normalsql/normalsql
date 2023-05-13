@@ -1,8 +1,100 @@
-# NormalSQL
+## NormalSQL
 
-Transform your normal SQL into prepared statements and type-safe wrappers. 
+Use normal SQL statements to generate app source code. 
 
-Generate prepared statements and type-safe wrappers from your normal SQL statements.
+Remember Data Access Objects (DAOs)? The SQL was right there. How everything worked was obvious. No 
+black box, no runtime magic, no complicated rules or incantations.
+
+Unfortunately, manually writing and maintaining DAOs was tedious and error prone. So DAOs rightly
+fell out of fashion. 
+
+But what if that process was automated and error free?
+
+That's exactly what NormalSQL does.
+
+NormalSQL uses normal SQL statements as-is. It parses those statements, identifies all the
+condition parameters and result columns, and code generates convenient wrappers.
+
+
+### Most Simple Example
+
+Start with SelectPeopleOlderThan.sql:
+
+```sql
+SELECT name FROM people WHERE age > 18
+```
+
+NormalSQL generates SelectPeopleOlderThan.java and SelectPeopleOlderThanResultSet.java:
+
+```java
+// pseudo-code
+class SelectPeopleOlderThan 
+{
+    // The condition's literal has been replaced with a parameter
+    String _sql = "SELECT name FROM people WHERE age > ?";
+	
+    // The original literal is now that parameter's default value
+    int _age = 18;
+	
+    // Condition's operand is used as suffix, eg 'GT' means 'greater than'
+    void setAgeGT( int age ) { _age = age; }
+    
+    GetPeopleOlderThanResultSet execute() { ... }
+}
+```
+```java
+// pseudo-code
+class SelectPeopleOlderThanResultSet implements Iterable<Row>
+{
+    // inner-class
+    class Row
+    {
+        String getName();
+    }
+}
+```
+
+Your application will look something like this:
+
+```java
+Connection conn = DriverManager.getConnection( ... );
+
+GetPeopleOlderThan select = new GetPeopleOlderThan( conn );
+
+select.setAgeGT( 21 );
+
+GetPeopleOlderThanResultSet rs = select.execute();
+
+for( GetPeopleOlderThanResultSet.Row row : rs )
+{
+    System.out.println( row.getName() );
+}
+
+rs.close();
+select.close();
+```
+
+What could be easier?
+
+### Benefits
+
+| Feature                 | Detail                                                                                                                                                                               |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SQL-first workflow      | Use normal SQL to generate app source code. Instead of using mappings, DSLs, or templates to generate SQL.                                                                           |
+| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                     |
+| Reduce errors           | &bull; Compile time processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
+| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                              |
+| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                    |
+
+
+## SQL Support
+
+
+NormalSQL supports CTEs, JOINs, UNIONs and so forth.
+
+NormalSQL has initial support for multiple dialects of SQL. Like all third party SQL parsers,
+support will improve as NormalSQL matures.
+
 
 ## Quick Example
 

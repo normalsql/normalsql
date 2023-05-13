@@ -5,9 +5,20 @@ package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.TableRefContext;
 
+/**
+ * <p>TableRef class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 	TableRef
 {
+	/**
+	 * <p>Constructor for TableRef.</p>
+	 *
+	 * @param context a {@link normalsql.parse.NormalSQLParser.TableRefContext} object
+	 */
 	public TableRef( TableRefContext context )
 	{
 		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;

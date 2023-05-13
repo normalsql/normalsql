@@ -13,9 +13,20 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 
+/**
+ * <p>Main class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class
 	Main
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public static void main( String[] args )
 	{
 		try
@@ -45,6 +56,12 @@ public class
 //	}
 
 	// TODO: If properties aren't found or defined, then onlyparse = true
+	/**
+	 * <p>init.</p>
+	 *
+	 * @param options a {@link normalsql.CommandLineOptions} object
+	 * @throws java.lang.Exception if any.
+	 */
 	public void init( CommandLineOptions options )
 		throws Exception
 	{
@@ -92,6 +109,12 @@ public class
 		}
 	}
 
+	/**
+	 * <p>crawl.</p>
+	 *
+	 * @param sourceRoot a {@link java.nio.file.Path} object
+	 * @param targetRoot a {@link java.nio.file.Path} object
+	 */
 	public void crawl( Path sourceRoot, Path targetRoot )
 	{
 		Worker worker = new Worker( _conn );

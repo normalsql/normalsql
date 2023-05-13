@@ -8,8 +8,19 @@ import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import org.antlr.v4.runtime.*;
 
+/**
+ * <p>Drill class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Drill
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args a {@link java.lang.String} object
+	 */
 	public static void main( String... args )
 	{
 		String sql =

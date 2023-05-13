@@ -20,18 +20,44 @@ class Table
 	public String name;
 	// TODO: replace Map with searching List, cuz Map is not case sensitive
 	private HashMap<String, Table.Column> columnMap = new HashMap<>();
+	/**
+	 * <p>addColumn.</p>
+	 *
+	 * @param c a {@link spare.Table.Column} object
+	 */
 	public void addColumn( Table.Column c )
 	{
 		columnMap.put( c.name.toLowerCase(), c );
 	}
+	/**
+	 * <p>getColumn.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @return a {@link spare.Table.Column} object
+	 */
 	public Table.Column getColumn( String name )
 	{
 		return columnMap.get( name.toLowerCase() );
 	}
 }
+
+
+/**
+ * <p>MetaData class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
+
 // TODO move methods to main Main.java
 public class MetaData
 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 * @throws java.lang.Exception if any.
+	 */
 	public static void main( String[] args )
 		throws Exception
 	{
@@ -41,6 +67,13 @@ public class MetaData
 		Map<String, Table> tableMap = getTablesAndColumns( conn );
 	}
 
+	/**
+	 * <p>getTablesAndColumns.</p>
+	 *
+	 * @param conn a Connection object
+	 * @return a {@link java.util.Map} object
+	 * @throws SQLException if any.
+	 */
 	public static Map<String, Table> getTablesAndColumns( Connection conn ) throws SQLException
 	{
 		HashMap<String, Table> tableMap = new HashMap<>();

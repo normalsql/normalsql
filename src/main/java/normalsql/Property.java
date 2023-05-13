@@ -11,10 +11,11 @@ import normalsql.parse.NormalSQLParser.ValueContext;
  * Property represents a class instance variable for code generation. aka JavaBean.
  * One Property for each PreparedStatement Param.
  *
+ * @author jasonosgood
+ * @version $Id: $Id
  */
 
 // TODO Maybe split into Statement and ResultSet specific subclasses.
-
 public class
 	Property
 {
@@ -47,6 +48,7 @@ public class
 	// Used by ResultSet templates. To specify variable default initial value.
 	public String initial;
 
+	/** {@inheritDoc} */
 	@Override
 	public String toString()
 	{
