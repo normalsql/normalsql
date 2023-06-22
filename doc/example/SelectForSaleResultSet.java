@@ -1,10 +1,10 @@
 
 /**
-* SelectForSaleResultSet.java Tue Jan 10 19:40:42 PST 2023
+* SelectForSaleResultSet.java Fri Apr 21 03:45:30 PDT 2023
 *
 * Generated using NormalSQL's ResultSet.vm template.
 *
-* @see /Users/jasonosgood/Projects/normalsql/example/SelectForSale.sql
+* @see /Users/jasonosgood/Projects/normalsql/doc/example/SelectForSale.sql
 *
 **/
 

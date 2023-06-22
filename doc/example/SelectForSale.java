@@ -1,6 +1,6 @@
 
 /**
-* SelectForSaleResultSet.java Tue Jan 10 19:40:42 PST 2023
+* SelectForSaleResultSet.java Fri Apr 21 03:45:30 PDT 2023
 *
 * Generated using NormalSQL's Select.vm template.
 *
@@ -10,11 +10,12 @@
 * {@code
 * SELECT id, make, model, year
 * FROM automobiles
-* WHERE style = 'coupe' AND odometer < 100000;
+* WHERE style = 'coupe'
+*   AND odometer < 100000;
 * }
 * </pre>
 *
-* @see /Users/jasonosgood/Projects/normalsql/example/SelectForSale.sql
+* @see /Users/jasonosgood/Projects/normalsql/doc/example/SelectForSale.sql
 *
 **/
 
@@ -31,12 +32,14 @@ public class
     	public final String __preparedSQL =
 		"SELECT id, make, model, year\n"+ 
 		"FROM automobiles\n"+ 
-		"WHERE style = ? AND odometer < ?;"; 
+		"WHERE style = 'coupe'\n"+ 
+		"  AND odometer < 100000;"; 
 
     	public final String __printfSQL =
 		"SELECT id, make, model, year\n"+ 
 		"FROM automobiles\n"+ 
-		"WHERE style = '%s' AND odometer < %d;"; 
+		"WHERE style = 'coupe'\n"+ 
+		"  AND odometer < 100000;"; 
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -73,8 +76,6 @@ public class
 	public final SelectForSaleResultSet execute()
 		throws SQLException
 	{
-        __ps.setString( 1, getstyle() );
-        __ps.setLong( 2, getodometer() );
 
         ResultSet rs = null;
         if( __ps.execute() )
@@ -86,20 +87,10 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    private String _style = "coupe";
-    public void setstyle( String style ) { _style = style; }
-    public String getstyle() { return _style; }
-
-    private Long _odometer = 100000L;
-    public void setodometer( Long odometer ) { _odometer = odometer; }
-    public Long getodometer() { return _odometer; }
-
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-            , getstyle()
-            , getodometer()
 		);
 	}
 }

@@ -1,47 +1,40 @@
 ## NormalSQL
 
-Use normal SQL statements to generate app source code. 
+NormalSQL parses normal SQL statements (SELECT, INSERT, etc), finds the parameters 
+and columns, and generates convenient wrappers.
 
-Remember Data Access Objects (DAOs)? The SQL was right there. How everything worked was obvious. No 
-black box, no runtime magic, no complicated rules or incantations.
-
-Unfortunately, manually writing and maintaining DAOs was tedious and error prone. So DAOs rightly
-fell out of fashion. 
-
-But what if that process was automated and error free?
-
-That's exactly what NormalSQL does.
-
-NormalSQL uses normal SQL statements as-is. It parses those statements, identifies all the
-condition parameters and result columns, and code generates convenient wrappers.
-
+NormalSQL defines the "SQL-first" workflow. Use normal SQL to generate application
+source code. There are no mappings, templates, or DSLs.
 
 ### Most Simple Example
 
-Start with SelectPeopleOlderThan.sql:
+Start with the file [SelectPeopleOlderThan.sql](doc/example/SelectPeopleOlderThan.sql) containing this query:
 
 ```sql
 SELECT name FROM people WHERE age > 18
 ```
 
-NormalSQL generates SelectPeopleOlderThan.java and SelectPeopleOlderThanResultSet.java:
+NormalSQL generates [SelectPeopleOlderThan.java](doc/example/SelectPeopleOlderThan.java) and [SelectPeopleOlderThanResultSet.java](doc/example/SelectPeopleOlderThanResultSet.java).
+
+The condition `age > 18` is converted into a prepared statement parameter.
 
 ```java
 // pseudo-code
 class SelectPeopleOlderThan 
 {
-    // The condition's literal has been replaced with a parameter
+    // Literal has been replaced with a parameter
     String _sql = "SELECT name FROM people WHERE age > ?";
 	
-    // The original literal is now that parameter's default value
+    // Original literal is used as the default value
     int _age = 18;
 	
-    // Condition's operand is used as suffix, eg 'GT' means 'greater than'
+    // 'Greater Than' (GT) operand is used as suffix
     void setAgeGT( int age ) { _age = age; }
     
     GetPeopleOlderThanResultSet execute() { ... }
 }
 ```
+The column `name` is converted into an accessor:
 ```java
 // pseudo-code
 class SelectPeopleOlderThanResultSet implements Iterable<Row>
@@ -76,6 +69,17 @@ select.close();
 
 What could be easier?
 
+
+## SQL Grammar Support
+
+NormalSQL supports SQL-92 thru SQL-2016. This includes CTEs, JOINs, UNIONs, functions, and so forth.
+
+NormalSQL has initial support for multiple dialects of SQL, including Postgress, MySQL, SQL Server, SQLite.
+
+The initial test harness started quite modest, but is growing rapidly. Like all third 
+party SQL parsers, support will improve as NormalSQL matures. Please submit
+any potential bugs and errors.
+
 ### Benefits
 
 | Feature                 | Detail                                                                                                                                                                               |
@@ -87,13 +91,6 @@ What could be easier?
 | Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                    |
 
 
-## SQL Support
-
-
-NormalSQL supports CTEs, JOINs, UNIONs and so forth.
-
-NormalSQL has initial support for multiple dialects of SQL. Like all third party SQL parsers,
-support will improve as NormalSQL matures.
 
 
 ## Quick Example
@@ -399,3 +396,19 @@ port NormalSQL to other platforms.
 Standup a SQL Fiddle like public instance of NormalSQL, allowing people to casually try things out.
 
 
+--
+
+
+Use normal SQL statements.
+
+Remember Data Access Objects (DAOs)? The SQL was right there. How everything worked was obvious. No
+black box, no runtime magic, no complicated rules or incantations.
+
+Unfortunately, manually writing and maintaining DAOs was tedious and error prone. So DAOs rightly
+fell out of fashion.
+
+But what if that process was automated and error free?
+
+That's exactly what NormalSQL does.
+
+Use normal SQL DML statements as-is to generate app source code.
