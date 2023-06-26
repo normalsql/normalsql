@@ -37,9 +37,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- TODO: pick an older JDK -->
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target>
-        <antlr4.version>4.11.1</antlr4.version>
+<!--        <maven.compiler.source>20</maven.compiler.source>-->
+<!--        <maven.compiler.target>20</maven.compiler.target>-->
+        <antlr4.version>4.12.0</antlr4.version>
     </properties>
 
     <dependencies>
@@ -110,8 +110,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <target>20</target>
-                    <source>20</source>
+                    <target>18</target>
+                    <source>18</source>
                 </configuration>
             </plugin>
 

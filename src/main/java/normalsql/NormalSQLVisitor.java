@@ -8,21 +8,18 @@ import normalsql.parse.NormalSQLBaseVisitor;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Stack;
 
 /**
- * <p>SQLVisitor class.</p>
+ * <p>NormalSQLVisitor class.</p>
  *
  * @author jasonosgood
  * @version $Id: $Id
  */
 public class
-	SQLVisitor
+NormalSQLVisitor
 extends
 	NormalSQLBaseVisitor<Void>
 {

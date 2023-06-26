@@ -17,11 +17,15 @@ import java.util.HashSet;
 }
 @ parser :: members
 {
-	HashSet<String> __keywords=keywords();
+//	HashSet<String> __keywords=keywords();
+	HashSet<String> __keywords;
 
 	public HashSet<String> keywords()
 	{
-		HashSet<String> words=new HashSet<>();
+	    if( __keywords == null )
+	    {
+		 __keywords=new HashSet<>();
+//		HashSet<String> words=new HashSet<>();
 		// Skip first literal
 		for( int nth=1; nth < _LITERAL_NAMES.length; nth++ )
 		{
@@ -33,19 +37,24 @@ import java.util.HashSet;
 				keyword=keyword.substring( 1, keyword.length() - 1 );
 				if( Character.isLetter( keyword.charAt( 0 )))
 				{
-					words.add( keyword );
+//					words.add( keyword );
+					__keywords.add( keyword );
 				}
 			}
 		}
-		return words;
+		}
+//		return words;
+		return __keywords;
 	}
 
     public boolean isKeyword( Token t )
     {
+
         String text1=t.getText();
         if( !Character.isAlphabetic( text1.charAt( text1.length() - 1 ))) return false;
         if( !Character.isAlphabetic( text1.charAt( 0 ))) return false;
         String text=text1.toUpperCase();
+        if( "NOT".equals( text )) return false;
         boolean contains=keywords().contains( text );
         return contains;
     }
@@ -119,8 +128,9 @@ select
       : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
    item
-      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
-      | term ( 'AS'? id )?                                       # ItemColumn
+      : term ( 'AS'? id )?                                       # ItemColumn
+//      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
+//      | term ( 'AS'? id )?                                       # ItemColumn
       ;
 
    top
@@ -222,43 +232,54 @@ terms
    : term ( COMMA term )* ;
 
 term
-   : 'NOT' term                                # TermNOT
+//   : /* subterm  */ value                                 # TermSubterm
+   : subterm                                  # TermSubterm
+   | 'NOT' term                                # TermNOT
+//   : 'NOT' term                                # TermNOT
    | term 'AND' term                           # TermAND
    | term 'OR' term                            # TermOR
-//  TODO  | term ( 'OR' || '||' ) term                      # TermOR
-   | 'EXISTS' LP query RP                      # TermEXISTS
-   | 'UNIQUE' LP query RP                      # TermUNIQUE
-   | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
-   | subterm                                   # TermSubterm
-// TODO assignment operators go here ?
+////  TODO  | term ( 'OR' || '||' ) term                      # TermOR
+//   | 'EXISTS' LP query RP                      # TermEXISTS
+//   | 'UNIQUE' LP query RP                      # TermUNIQUE
+//   | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
+////   | subterm                                   # TermSubterm
+//// TODO assignment operators go here ?
    ;
 
 subterm
-   : subterm ( '::' keyword index* )+                                # SubtermScope
-   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-   | <assoc=right> subterm '^' subterm                               # SubtermBinary
-   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-   // TODO '||' can be either string concatenation or logical OR
-   | subterm '||' subterm                                            # SubtermBinary
-   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-   | subterm '&' subterm                                             # SubtermBinary
-   | subterm '|' subterm                                             # SubtermBinary
-   | subterm predicate                                               # SubtermPredicate
-   | LP RP                                                           # SubtermEmpty
-   | LP terms RP DOT id                                              # SubtermFieldRef
-   | LP terms RP                                                     # SubtermNested
-   | query                                                           # SubtermQuery
-   | case                                                            # SubtermCase
-   | array                                                           # SubtermArray
-   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
-   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
-   | 'ROW' LP terms? RP                                              # SubtermRow
-   | function                                                        # SubtermFunction
-   | value                                                           # SubtermValue
-   | columnRef                                                       # SubtermRef
+     : columnRef                                                       # SubtermRef
+   | value # SubtermValue
+
+//   : value # SubtermValue
+//      | columnRef                                                       # SubtermRef
+
+//   |
+//   subterm ( '::' keyword index* )+                                # SubtermScope
+//   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+//   | <assoc=right> subterm '^' subterm                               # SubtermBinary
+//   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+//   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
+//   // TODO '||' can be either string concatenation or logical OR
+//   | subterm '||' subterm                                            # SubtermBinary
+//   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+//   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
+//   | subterm '&' subterm                                             # SubtermBinary
+//   | subterm '|' subterm                                             # SubtermBinary
+//   | subterm predicate                                               # SubtermPredicate
+//   | LP RP                                                           # SubtermEmpty
+//   | LP terms RP DOT id                                              # SubtermFieldRef
+//   | LP terms RP                                                     # SubtermNested
+//   | query                                                           # SubtermQuery
+//   | case                                                            # SubtermCase
+//   | array                                                           # SubtermArray
+//   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
+//   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+//   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
+//   | 'ROW' LP terms? RP                                              # SubtermRow
+//   | function                                                        # SubtermFunction
+
+//   | value                                                           # SubtermValue
+
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
@@ -385,6 +406,12 @@ columnRefs
 
 columnRef
    : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? column=id index* ;
+//   :  'UGH' ;
+//   : /* ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? */ id ;
+//    : { isKeyword( getCurrentToken() ) }? . ;
+//    : {false}? . ;
+
+//: ~( 'NOT' ) ;
 
 tableRef
    : (( catalog=id DOT )? schema=id DOT )? table=id ;

@@ -3,9 +3,8 @@
 
 package test;
 
-import normalsql.NormalSQLVisitor;
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
+import normalsql.parse.SqlBaseLexer;
+import normalsql.parse.SqlBaseParser;
 import org.antlr.v4.runtime.*;
 
 /**
@@ -14,24 +13,19 @@ import org.antlr.v4.runtime.*;
  * @author jasonosgood
  * @version $Id: $Id
  */
-public class Drill
+public class DrillSqlBase
 {
-	/**
-	 * <p>main.</p>
-	 *
-	 * @param args a {@link java.lang.String} object
-	 */
 	public static void main( String... args )
 	{
 		String sql =
 
-//			"SELECT ID FROM TEST FETCH NEXT ROW ONLY LIMIT 1;"
-			"SELECT NOT 0;"
+//			"SELECT ID FROM TEST LIMIT 1;"
+			"SELECT 'a' = any ( ? );"
 			;
 		CharStream chars = CharStreams.fromString( sql );
-		NormalSQLLexer lexer = new NormalSQLLexer( chars );
+		SqlBaseLexer lexer = new SqlBaseLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		NormalSQLParser parser = new NormalSQLParser( tokens );
+		SqlBaseParser parser = new SqlBaseParser( tokens );
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer,
@@ -46,11 +40,11 @@ public class Drill
 
 		} );
 
-		ParserRuleContext e = parser.parse();
-		NormalSQLVisitor visitor = new NormalSQLVisitor();
-		visitor.parser = parser;
-		visitor.tokens = tokens;
-		visitor.visit( e );
+		ParserRuleContext e = parser.statement();
+//		NormalSQLVisitor visitor = new NormalSQLVisitor();
+//		visitor.parser = parser;
+//		visitor.tokens = tokens;
+//		visitor.visit( e );
 
 
 		System.out.println( e.toStringTree( parser ) );

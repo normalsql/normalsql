@@ -21,10 +21,10 @@ public class
 	 */
 	public TableColumnRef( ColumnRefContext context )
 	{
-		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
-		schema = context.schema != null ? context.schema.getTrimmedText() : null;
-		table = context.table != null ? context.table.getTrimmedText() : null;
-		column = context.column != null ? context.column.getTrimmedText() : null;
+//		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
+//		schema = context.schema != null ? context.schema.getTrimmedText() : null;
+//		table = context.table != null ? context.table.getTrimmedText() : null;
+//		column = context.column != null ? context.column.getTrimmedText() : null;
 	}
 
 	public String catalog;

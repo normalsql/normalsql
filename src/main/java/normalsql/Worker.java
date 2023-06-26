@@ -7,7 +7,7 @@ import normalsql.meta.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ParseContext;
-import normalsql.parse.NormalSQLParser.SubtermRefContext;
+//import normalsql.parse.NormalSQLParser.SubtermRefContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
@@ -85,7 +85,7 @@ public class Worker
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ParseContext parse = parser.parse();
-		SQLVisitor visitor = new SQLVisitor();
+		NormalSQLVisitor visitor = new NormalSQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 
@@ -184,7 +184,8 @@ public class Worker
 	 */
 	public static String getColumn( SubtermContext b )
 	{
-		return ( (SubtermRefContext) b ).columnRef().column.getTrimmedText();
+//		return ( (SubtermRefContext) b ).columnRef().column.getTrimmedText();
+		return null;
 	}
 
 	/**
