@@ -17,6 +17,8 @@ import java.util.HashSet;
 }
 @ parser :: members
 {
+    public boolean topFlag = true;
+
 //	HashSet<String> __keywords=keywords();
 	HashSet<String> __keywords;
 
@@ -120,28 +122,27 @@ values
    : 'VALUES' terms ;
 
 select
-   : 'SELECT' distinct? top? ( item ( COMMA item )* COMMA? )? into?
+   : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
       ( 'FROM' join )? where? groupBy? having? windows? qualify?
    ;
 
-   distinct
+   quantifier
       : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
    item
-      : term ( 'AS'? id )?                                       # ItemColumn
-//      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
-//      | term ( 'AS'? id )?                                       # ItemColumn
+      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
+      | term ( 'AS'? id )?                                       # ItemColumn
       ;
 
    top
-      : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
+      : { topFlag }? 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
    into
       : 'INTO' tableRef ;
 
    join
-      : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinTwo
-      | join COMMA join                                                 # JoinOldStyle
+      : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinSQL92
+      | join COMMA join                                                 # JoinSQL89
       | source ( 'AS'? id columnRefs? )?                                # JoinSource
       | LP join RP                                                      # JoinNested
       ;
@@ -182,8 +183,8 @@ select
          : id 'AS' window ;
 
          window
-            : id
-            | LP id? partitionBy? orderBy? windowFrame? RP
+            : LP id? partitionBy? orderBy? windowFrame? RP
+            | id
             ;
 
             partitionBy
@@ -191,7 +192,7 @@ select
 
             windowFrame
                : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                 ( preceding | 'BETWEEN' following 'AND' following )
+                 ( preceding | 'BETWEEN' following 'AND' following ) // TODO: is 'following' AND 'following' correct?
                  ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
                ;
 
@@ -200,10 +201,10 @@ select
                   | 'CURRENT' 'ROW'
                   ;
 
-                  following
-                     : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-                     | preceding
-                     ;
+               following
+                  : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+                  | preceding
+                  ;
 
    qualify
       : 'QUALIFY' term ;
@@ -232,54 +233,44 @@ terms
    : term ( COMMA term )* ;
 
 term
-//   : /* subterm  */ value                                 # TermSubterm
-   : subterm                                  # TermSubterm
-   | 'NOT' term                                # TermNOT
-//   : 'NOT' term                                # TermNOT
+   : 'NOT' term                                # TermNOT
    | term 'AND' term                           # TermAND
    | term 'OR' term                            # TermOR
-////  TODO  | term ( 'OR' || '||' ) term                      # TermOR
-//   | 'EXISTS' LP query RP                      # TermEXISTS
-//   | 'UNIQUE' LP query RP                      # TermUNIQUE
-//   | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
-////   | subterm                                   # TermSubterm
-//// TODO assignment operators go here ?
+//  TODO  | term ( 'OR' || '||' ) term                      # TermOR
+   | 'EXISTS' LP query RP                      # TermEXISTS
+   | 'UNIQUE' LP query RP                      # TermUNIQUE
+   | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
+   | subterm                                   # TermSubterm
+// TODO assignment operators go here ?
    ;
 
 subterm
-     : columnRef                                                       # SubtermRef
+   : subterm ( '::' keyword index* )+                                # SubtermScope
+   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+   | <assoc=right> subterm '^' subterm                               # SubtermBinary
+   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
+   // TODO '||' can be either string concatenation or logical OR
+   | subterm '||' subterm                                            # SubtermBinary
+   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
+   | subterm '&' subterm                                             # SubtermBinary
+   | subterm '|' subterm                                             # SubtermBinary
+   | subterm predicate                                               # SubtermPredicate
+   | LP RP                                                           # SubtermEmpty
+   | LP terms RP DOT id                                              # SubtermFieldRef
+   | LP terms RP                                                     # SubtermNested
+   | query                                                           # SubtermQuery
+   | case                                                            # SubtermCase
+   | array                                                           # SubtermArray
+   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
+   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
+   | 'ROW' LP terms? RP                                              # SubtermRow
+   | 'ALL' subterm # PredicateQuantify
+   | function                                                        # SubtermFunction
    | value # SubtermValue
-
-//   : value # SubtermValue
-//      | columnRef                                                       # SubtermRef
-
-//   |
-//   subterm ( '::' keyword index* )+                                # SubtermScope
-//   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-//   | <assoc=right> subterm '^' subterm                               # SubtermBinary
-//   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-//   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-//   // TODO '||' can be either string concatenation or logical OR
-//   | subterm '||' subterm                                            # SubtermBinary
-//   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-//   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-//   | subterm '&' subterm                                             # SubtermBinary
-//   | subterm '|' subterm                                             # SubtermBinary
-//   | subterm predicate                                               # SubtermPredicate
-//   | LP RP                                                           # SubtermEmpty
-//   | LP terms RP DOT id                                              # SubtermFieldRef
-//   | LP terms RP                                                     # SubtermNested
-//   | query                                                           # SubtermQuery
-//   | case                                                            # SubtermCase
-//   | array                                                           # SubtermArray
-//   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
-//   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-//   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
-//   | 'ROW' LP terms? RP                                              # SubtermRow
-//   | function                                                        # SubtermFunction
-
-//   | value                                                           # SubtermValue
-
+   | columnRef                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
@@ -289,6 +280,17 @@ subterm
       : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # SubtermCaseSimple
       | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
       ;
+
+condition
+    : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) rhs
+    | 'NOT' condition
+    | 'EXISTS' LP query RP
+    | 'UNIQUE' /* nullsDistinct */  LP query RP
+    ;
+
+rhs
+    :
+    ;
 
 // TODO remove 'op' from PredicateCompare
 // TODO subrule for dialect & custom comparison operators?
@@ -301,8 +303,8 @@ predicate
    | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateJSON
    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
    | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
-   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateMatch
-   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateMatch
+   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
+   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
    ;
 
 // TODO might have to be in lexer
@@ -406,12 +408,6 @@ columnRefs
 
 columnRef
    : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? column=id index* ;
-//   :  'UGH' ;
-//   : /* ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? */ id ;
-//    : { isKeyword( getCurrentToken() ) }? . ;
-//    : {false}? . ;
-
-//: ~( 'NOT' ) ;
 
 tableRef
    : (( catalog=id DOT )? schema=id DOT )? table=id ;
