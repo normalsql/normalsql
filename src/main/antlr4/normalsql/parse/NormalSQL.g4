@@ -238,7 +238,7 @@ term
    | term 'OR' term                            # TermOR
 //  TODO  | term ( 'OR' || '||' ) term                      # TermOR
    | 'EXISTS' LP query RP                      # TermEXISTS
-   | 'UNIQUE' LP query RP                      # TermUNIQUE
+   | 'UNIQUE' /* nullsDistinct */  LP query RP                      # TermUNIQUE
    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
    | subterm                                   # TermSubterm
 // TODO assignment operators go here ?
@@ -267,7 +267,6 @@ subterm
    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
    | 'ROW' LP terms? RP                                              # SubtermRow
-   | 'ALL' subterm # PredicateQuantify
    | function                                                        # SubtermFunction
    | value # SubtermValue
    | columnRef                                                       # SubtermRef
@@ -281,26 +280,27 @@ subterm
       | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
       ;
 
-condition
-    : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) rhs
-    | 'NOT' condition
-    | 'EXISTS' LP query RP
-    | 'UNIQUE' /* nullsDistinct */  LP query RP
+compare
+    : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
+
+quantified
+    : ( 'ALL' | 'ANY' | 'SOME' ) LP ( query | array ) RP
     ;
 
-rhs
-    :
-    ;
+jsonType
+    : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 // TODO remove 'op' from PredicateCompare
 // TODO subrule for dialect & custom comparison operators?
+
 predicate
-   : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
+   : op=compare quantified # PredicateQuantified
+   | compare subterm                      # PredicateCompare
    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
    | 'IS' 'NOT'? truth                                                            # PredicateTruth
-   | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+   | 'IS' 'NOT'? 'DISTINCT' 'FROM' ( quantified | subterm )                                       # PredicateDistinct
    | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
-   | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateJSON
+   | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?  # PredicateJSON
    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
    | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
    | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
@@ -462,7 +462,7 @@ timeZone
    : 'TIME' 'ZONE' ;
 
 uniqueKeys
-   : withWithout 'UNIQUE' 'KEYS' ;
+   : withWithout? 'UNIQUE' 'KEYS' ;
 
 withTies
    : 'WITH' 'TIES' ;
