@@ -18,153 +18,117 @@ options
 {
     caseInsensitive=true;
 }
-tokens {
-    DELIMITER
+
+@ parser :: members
+{
+    public boolean topFlag = true;
+
+    public boolean isValidKeyword() { return false; }
 }
 
 singleStatement
     : statement ';'? EOF
     ;
 
-standaloneExpression
-    : expression EOF
-    ;
-
-standaloneRoutineBody
-    : routineBody EOF
-    ;
+//standaloneExpression
+//    : expression EOF
+//    ;
+//
+//standaloneRoutineBody
+//    : routineBody EOF
+//    ;
 
 statement
     : query                                                            #statementDefault
+    /*
     | USE schema=identifier                                            #use
     | USE catalog=identifier '.' schema=identifier                     #use
-    | CREATE SCHEMA (IF NOT EXISTS)? qualifiedName
-        (WITH properties)?                                             #createSchema
-    | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
-    | ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
-    | CREATE TABLE (IF NOT EXISTS)? qualifiedName columnAliases?
-        (COMMENT string)?
-        (WITH properties)? AS (query | '('query')')
-        (WITH (NO)? DATA)?                                             #createTableAsSelect
-    | CREATE TABLE (IF NOT EXISTS)? qualifiedName
-        '(' tableElement (',' tableElement)* ')'
-         (COMMENT string)?
-         (WITH properties)?                                            #createTable
-    | DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
-    | INSERT INTO qualifiedName columnAliases? query                   #insertInto
-    | DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
-    | TRUNCATE TABLE qualifiedName                                     #truncateTable
-    | ALTER TABLE (IF EXISTS)? from=qualifiedName
-        RENAME TO to=qualifiedName                                     #renameTable
-    | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier    #renameColumn
-    | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        DROP COLUMN (IF EXISTS)? column=qualifiedName                  #dropColumn
-    | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        ADD COLUMN (IF NOT EXISTS)? column=columnDefinition            #addColumn
-    | ANALYZE qualifiedName (WITH properties)?                         #analyze
-    | CREATE TYPE qualifiedName AS (
-        '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')'
-        | type)                                                        #createType
-    | CREATE (OR REPLACE)? VIEW qualifiedName
-            (SECURITY (DEFINER | INVOKER))? AS query                   #createView
-    | DROP VIEW (IF EXISTS)? qualifiedName                             #dropView
-    | CREATE MATERIALIZED VIEW (IF NOT EXISTS)? qualifiedName
-        (COMMENT string)?
-        (WITH properties)? AS (query | '('query')')                    #createMaterializedView
-    | DROP MATERIALIZED VIEW (IF EXISTS)? qualifiedName                #dropMaterializedView
-    | REFRESH MATERIALIZED VIEW qualifiedName WHERE booleanExpression  #refreshMaterializedView
-    | CREATE (OR REPLACE)? TEMPORARY? FUNCTION functionName=qualifiedName
-        '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')'
-        RETURNS returnType=type
-        (COMMENT string)?
-        routineCharacteristics routineBody                             #createFunction
-    | ALTER FUNCTION qualifiedName types?
-      alterRoutineCharacteristics                                      #alterFunction
-    | DROP TEMPORARY? FUNCTION (IF EXISTS)? qualifiedName types?       #dropFunction
-    | CALL qualifiedName '(' (callArgument (',' callArgument)*)? ')'   #call
-    | CREATE ROLE name=identifier
-        (WITH ADMIN grantor)?                                          #createRole
-    | DROP ROLE name=identifier                                        #dropRole
-    | GRANT
-        roles
-        TO principal (',' principal)*
-        (WITH ADMIN OPTION)?
-        (GRANTED BY grantor)?                                          #grantRoles
-    | REVOKE
-        (ADMIN OPTION FOR)?
-        roles
-        FROM principal (',' principal)*
-        (GRANTED BY grantor)?                                          #revokeRoles
+    | CREATE SCHEMA (IF NOT EXISTS)? qname (WITH properties)?                                             #createSchema
+    | DROP SCHEMA (IF EXISTS)? qname (CASCADE | RESTRICT)?     #dropSchema
+    | ALTER SCHEMA qname RENAME TO identifier                  #renameSchema
+    | CREATE TABLE (IF NOT EXISTS)? qname columnAliases? (COMMENT string)? (WITH properties)? AS (query | LP query RP ) (WITH (NO)? DATA)?                                             #createTableAsSelect
+    | CREATE TABLE (IF NOT EXISTS)? qname LP tableElement (',' tableElement)* RP (COMMENT string)? (WITH properties)?                                            #createTable
+    | DROP TABLE (IF EXISTS)? qname                            #dropTable
+    | INSERT INTO qname columnAliases? query                   #insertInto
+    | DELETE FROM qname (WHERE expression)?             #delete
+    | TRUNCATE TABLE qname                                     #truncateTable
+    | ALTER TABLE (IF EXISTS)? from=qname RENAME TO to=qname                                     #renameTable
+    | ALTER TABLE (IF EXISTS)? qname RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier    #renameColumn
+    | ALTER TABLE (IF EXISTS)? qname DROP COLUMN (IF EXISTS)? column=qname                  #dropColumn
+    | ALTER TABLE (IF EXISTS)? qname ADD COLUMN (IF NOT EXISTS)? column=columnDefinition            #addColumn
+    | ANALYZE qname (WITH properties)?                         #analyze
+    | CREATE TYPE qname AS ( LP sqlParameterDeclaration (',' sqlParameterDeclaration)* RP | type)                                                        #createType
+    | CREATE (OR REPLACE)? VIEW qname (SECURITY (DEFINER | INVOKER))? AS query                   #createView
+    | DROP VIEW (IF EXISTS)? qname                             #dropView
+    | CREATE MATERIALIZED VIEW (IF NOT EXISTS)? qname (COMMENT string)? (WITH properties)? AS (query | LP query RP )                    #createMaterializedView
+    | DROP MATERIALIZED VIEW (IF EXISTS)? qname                #dropMaterializedView
+    | REFRESH MATERIALIZED VIEW qname WHERE expression  #refreshMaterializedView
+    | CREATE (OR REPLACE)? TEMPORARY? FUNCTION functionName=qname LP (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? RP RETURNS returnType=type (COMMENT string)? routineCharacteristics routineBody                             #createFunction
+    | ALTER FUNCTION qname types? alterRoutineCharacteristics                                      #alterFunction
+    | DROP TEMPORARY? FUNCTION (IF EXISTS)? qname types?       #dropFunction
+    | CALL qname LP (callArgument (',' callArgument)*)? RP    #call
+    | CREATE ROLE identifier (WITH ADMIN grantor)?                                          #createRole
+    | DROP ROLE identifier                                        #dropRole
+    | GRANT roles TO principal (',' principal)* (WITH ADMIN OPTION)? (GRANTED BY grantor)?                                          #grantRoles
+    | REVOKE (ADMIN OPTION FOR)? roles FROM principal (',' principal)* (GRANTED BY grantor)?                                          #revokeRoles
     | SET ROLE (ALL | NONE | role=identifier)                          #setRole
-    | GRANT
-        (privilege (',' privilege)* | ALL PRIVILEGES)
-        ON TABLE? qualifiedName TO grantee=principal
-        (WITH GRANT OPTION)?                                           #grant
-    | REVOKE
-        (GRANT OPTION FOR)?
-        (privilege (',' privilege)* | ALL PRIVILEGES)
-        ON TABLE? qualifiedName FROM grantee=principal                #revoke
-    | SHOW GRANTS
-        (ON TABLE? qualifiedName)?                                     #showGrants
-    | EXPLAIN ANALYZE? VERBOSE?
-        ('(' explainOption (',' explainOption)* ')')? statement        #explain
-    | SHOW CREATE TABLE qualifiedName                                  #showCreateTable
-    | SHOW CREATE VIEW qualifiedName                                   #showCreateView
-    | SHOW CREATE MATERIALIZED VIEW qualifiedName                      #showCreateMaterializedView
-    | SHOW CREATE FUNCTION qualifiedName types?                        #showCreateFunction
-    | SHOW TABLES ((FROM | IN) qualifiedName)?
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showTables
-    | SHOW SCHEMAS ((FROM | IN) identifier)?
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSchemas
-    | SHOW CATALOGS
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showCatalogs
-    | SHOW COLUMNS (FROM | IN) qualifiedName                           #showColumns
-    | SHOW STATS FOR qualifiedName                                     #showStats
-    | SHOW STATS FOR '(' querySpecification ')'                        #showStatsForQuery
+    | GRANT (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname TO grantee=principal (WITH GRANT OPTION)?                                           #grant
+    | REVOKE (GRANT OPTION FOR)? (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname FROM grantee=principal                #revoke
+    | SHOW GRANTS (ON TABLE? qname)?                                     #showGrants
+    | EXPLAIN ANALYZE? VERBOSE? ( LP explainOption (',' explainOption)* RP )? statement        #explain
+    | SHOW CREATE TABLE qname                                  #showCreateTable
+    | SHOW CREATE VIEW qname                                   #showCreateView
+    | SHOW CREATE MATERIALIZED VIEW qname                      #showCreateMaterializedView
+    | SHOW CREATE FUNCTION qname types?                        #showCreateFunction
+    | SHOW TABLES ((FROM | IN) qname)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showTables
+    | SHOW SCHEMAS ((FROM | IN) identifier)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSchemas
+    | SHOW CATALOGS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showCatalogs
+    | SHOW COLUMNS (FROM | IN) qname                           #showColumns
+    | SHOW STATS FOR qname                                     #showStats
+    | SHOW STATS FOR LP select RP                         #showStatsForQuery
     | SHOW CURRENT? ROLES ((FROM | IN) identifier)?                    #showRoles
     | SHOW ROLE GRANTS ((FROM | IN) identifier)?                       #showRoleGrants
-    | DESCRIBE qualifiedName                                           #showColumns
-    | DESC qualifiedName                                               #showColumns
-    | SHOW FUNCTIONS
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showFunctions
-    | SHOW SESSION
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSession
-    | SET SESSION qualifiedName EQ expression                          #setSession
-    | RESET SESSION qualifiedName                                      #resetSession
+    | DESCRIBE qname                                           #showColumns
+    | DESC qname                                               #showColumns
+    | SHOW FUNCTIONS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showFunctions
+    | SHOW SESSION (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSession
+    | SET SESSION qname EQ expression                          #setSession
+    | RESET SESSION qname                                      #resetSession
     | START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
     | COMMIT WORK?                                                     #commit
     | ROLLBACK WORK?                                                   #rollback
     | PREPARE identifier FROM statement                                #prepare
     | DEALLOCATE PREPARE identifier                                    #deallocate
-    | EXECUTE identifier (USING expression (',' expression)*)?         #execute
+    | EXECUTE identifier ( USING expressions )?         #execute
     | DESCRIBE INPUT identifier                                        #describeInput
     | DESCRIBE OUTPUT identifier                                       #describeOutput
+    */
     ;
 
 query
-    :  with? queryNoWith
+    :  with? queryNoWith ('FOR' 'UPDATE' )?
     ;
 
 with
     : WITH RECURSIVE? namedQuery (',' namedQuery)*
     ;
 
+/*
 tableElement
     : columnDefinition
     | likeClause
     ;
 
-columnDefinition
-    : identifier type (NOT NULL)? (COMMENT string)? (WITH properties)?
-    ;
+    columnDefinition
+        : identifier type (NOT NULL)? (COMMENT string)? (WITH properties)?
+        ;
 
-likeClause
-    : LIKE qualifiedName (optionType=(INCLUDING | EXCLUDING) PROPERTIES)?
-    ;
+    likeClause
+        : LIKE qname ((INCLUDING | EXCLUDING) PROPERTIES)?
+        ;
 
 properties
-    : '(' property (',' property)* ')'
+    : LP property (',' property)* RP 
     ;
 
 property
@@ -194,18 +158,9 @@ alterRoutineCharacteristic
     ;
 
 routineBody
-    : returnStatement
-    | externalBodyReference
-    ;
-
-returnStatement
     : RETURN expression
+    | EXTERNAL (NAME externalRoutineName)?
     ;
-
-externalBodyReference
-    : EXTERNAL (NAME externalRoutineName)?
-    ;
-
 language
     : SQL
     | identifier
@@ -223,157 +178,225 @@ nullCallClause
 externalRoutineName
     : identifier
     ;
+*/
 
 queryNoWith:
-      queryTerm
-      (ORDER BY sortItem (',' sortItem)*)?
-      (OFFSET offset=INTEGER_VALUE (ROW | ROWS)?)?
-      ((LIMIT limit=(INTEGER_VALUE | ALL) | (FETCH FIRST fetchFirstNRows=INTEGER_VALUE ROWS ONLY))?)?
+    queryTerm
+    orderBy?
+    ( OFFSET INTEGER_VALUE (ROW | ROWS)?)?
+    ( FETCH ( FIRST | NEXT ) subterm? ( ROW | PERCENT? ROWS ) ( ONLY | WITH TIES ))?
+    ( LIMIT (subterm | ALL) )?
     ;
 
+    orderBy
+        : ORDER BY sortItem ( ',' sortItem )*
+        ;
+
+        sortItem
+            : term (ASC | DESC)? (NULLS (FIRST | LAST))?
+            ;
+
+//   clauses
+//      : ( orderBy | offset | fetch | limit | forUpdate )+ ; // TODO move forUpdate to query's select subrule? ditto fetch?
+//
+//      offset
+//         : 'OFFSET' term rowRows? ;
+//
+//      fetch
+//         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
+//
+//      limit
+//         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+
 queryTerm
-    : queryPrimary                                                             #queryTermDefault
-    | left=queryTerm operator=INTERSECT setQuantifier? right=queryTerm         #setOperation
-    | left=queryTerm operator=(UNION | EXCEPT) setQuantifier? right=queryTerm  #setOperation
+    : queryPrimary
+    | queryTerm INTERSECT quantifier? queryTerm
+    | queryTerm (UNION | EXCEPT) quantifier? queryTerm
     ;
 
 queryPrimary
-    : querySpecification                   #queryPrimaryDefault
-    | TABLE qualifiedName                  #table
-    | VALUES expression (',' expression)*  #inlineTable
-    | '(' queryNoWith  ')'                 #subquery
+    : select
+    | TABLE qname
+    | VALUES terms
+    | LP queryNoWith  RP // nested
     ;
 
-sortItem
-    : expression ordering=(ASC | DESC)? (NULLS nullOrdering=(FIRST | LAST))?
+select
+    : SELECT quantifier? top? ( item ( ',' item )* ','? )?
+      (FROM join (',' join)*)?
+      (WHERE term)?
+      groupBy?
+      (HAVING term)?
+      windows?
+      ('QUALIFY' term)?
     ;
 
-querySpecification
-    : SELECT setQuantifier? selectItem (',' selectItem)*
-      (FROM relation (',' relation)*)?
-      (WHERE where=booleanExpression)?
-      (GROUP BY groupBy)?
-      (HAVING having=booleanExpression)?
-    ;
+    top
+        : { topFlag }? 'TOP' ( number | LP term RP ) 'PERCENT'? ( WITH TIES )? ;
 
-groupBy
-    : setQuantifier? groupingElement (',' groupingElement)*
-    ;
+    groupBy
+        : GROUP BY quantifier? groupingElement (',' groupingElement)*
+        ;
 
-groupingElement
-    : groupingSet                                            #singleGroupingSet
-    | ROLLUP '(' (expression (',' expression)*)? ')'         #rollup
-    | CUBE '(' (expression (',' expression)*)? ')'           #cube
-    | GROUPING SETS '(' groupingSet (',' groupingSet)* ')'   #multipleGroupingSets
-    ;
+        groupingElement
+            : groupingSet
+            | ROLLUP LP terms? RP
+            | CUBE LP terms? RP
+            | GROUPING SETS LP groupingSet (',' groupingSet)* RP
+            ;
 
-groupingSet
-    : '(' (expression (',' expression)*)? ')'
-    | expression
-    ;
+            groupingSet
+                : LP terms? RP
+                | term
+                ;
+   windows
+      : 'WINDOW' windowAlias ( ',' windowAlias )* ;
+
+      windowAlias
+         : id 'AS' window ;
+
+         window
+            : LP id? partitionBy? orderBy? windowFrame? RP
+            | id
+            ;
+
+            partitionBy
+               : 'PARTITION' 'BY' terms ;
+
+    item
+        : ( qname '.' )? ASTERISK ( 'EXCEPT' LP qname ( ',' qname )* RP  )?
+        | term ( AS? id )?
+        ;
+
+        join
+            : join (( LEFT | RIGHT | FULL ) OUTER? )? JOIN join joinCriteria?
+            | join INNER JOIN join joinCriteria?
+            | join ( INNER | CROSS | NATURAL ) JOIN join
+            | source (AS? id columnAliases?)? ( TABLESAMPLE ( BERNOULLI | SYSTEM )? LP term RP  )?
+            | LP join RP
+            ;
+
+        joinCriteria
+            : ON term
+            | USING LP idNoReserved (',' idNoReserved)* RP
+            ;
 
 namedQuery
-    : name=identifier (columnAliases)? AS '(' query ')'
+    : idNoReserved columnAliases? AS LP query RP
     ;
 
-setQuantifier
-    : DISTINCT
+quantifier
+    : DISTINCT ( 'ON' LP terms? RP  )?
     | ALL
-    ;
-
-selectItem
-    : expression (AS? identifier)?  #selectSingle
-    | qualifiedName '.' ASTERISK    #selectAll
-    | ASTERISK                      #selectAll
-    ;
-
-relation
-    : left=relation
-      ( CROSS JOIN right=sampledRelation
-      | joinType JOIN rightRelation=relation joinCriteria
-      | NATURAL joinType JOIN right=sampledRelation
-      )                                           #joinRelation
-    | sampledRelation                             #relationDefault
-    ;
-
-joinType
-    : INNER?
-    | LEFT OUTER?
-    | RIGHT OUTER?
-    | FULL OUTER?
-    ;
-
-joinCriteria
-    : ON booleanExpression
-    | USING '(' identifier (',' identifier)* ')'
-    ;
-
-sampledRelation
-    : aliasedRelation (
-        TABLESAMPLE sampleType '(' percentage=expression ')'
-      )?
-    ;
-
-sampleType
-    : BERNOULLI
-    | SYSTEM
-    ;
-
-aliasedRelation
-    : relationPrimary (AS? identifier columnAliases?)?
+    | 'UNIQUE'
     ;
 
 columnAliases
-    : '(' identifier (',' identifier)* ')'
+    : LP qname (',' qname)* RP
     ;
 
-relationPrimary
-    : qualifiedName                                                   #tableName
-    | '(' query ')'                                                   #subqueryRelation
-    | UNNEST '(' expression (',' expression)* ')' (WITH ORDINALITY)?  #unnest
-    | LATERAL '(' query ')'                                           #lateral
-    | '(' relation ')'                                                #parenthesizedRelation
+source
+//    : queryPrimary
+    : queryNoWith
+    | function
+    | UNNEST LP terms? RP  (WITH ORDINALITY)?
+    | LP source RP // nested
+    | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( ',' columnSpec )* RP
+    | LATERAL LP query RP
+    | LP join RP   // TODO: dupe rule?
+    | qname
     ;
 
-expression
-    : booleanExpression
+    columnSpec
+       : idNoReserved ( type | qname ) EQ ( 'ARRAY' LB terms? RB | LP terms? RP  ) ;
+
+function
+    : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
+    | SUBSTRING LP subterm FROM subterm (FOR subterm)? RP // MySQL
+    | NORMALIZE LP subterm (',' normalForm)? RP // BigQuery
+    | EXTRACT LP idNoReserved FROM subterm RP // MySQL
+   | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
+//      | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
+//      | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
+
+   | '{fn' function '}' //  ODBC style
+    | id LP ASTERISK? RP  filter? over?
+    | id LP (quantifier? terms )? orderBy? onNull? RP  filter? /* (FROM (FIRST | LAST))? */ (nullTreatment? over)?
+//    | idOrAnyToken LP (quantifier? terms )? /* respectIgnore? */ orderBy? RP ( LB term RB )? filter? over?
+//   | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
     ;
 
-booleanExpression
-    : valueExpression predicate?             #predicated
-//    : valueExpression predicate[$valueExpression.ctx]?             #predicated
-    | NOT booleanExpression                                        #logicalNot
-    | left=booleanExpression operator=AND right=booleanExpression  #logicalBinary
-    | left=booleanExpression operator=OR right=booleanExpression   #logicalBinary
-    | 'UNIQUE' '(' statement ')' # uniques
+onNull
+   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
+
+terms
+    :
+//    LP terms RP  |
+    term ( ',' term )*
     ;
 
-// workaround for https://github.com/antlr/antlr4/issues/780
+term
+    : NOT term
+    | term AND term
+    | term OR term
+    | 'UNIQUE' LP statement RP
+//    | subterm predicate?
+    | subterm
+    ;
+
+subterm
+    : subterm AT timeZoneSpecifier
+    | (MINUS | PLUS) subterm
+    | subterm (ASTERISK | SLASH | '%' ) subterm
+    | subterm (PLUS | MINUS) subterm
+    | subterm CONCAT subterm
+    | subterm predicate
+    | LP terms RP ( '.' id )? // field reference
+    | LP terms? RP // nested
+    | case
+    | quantified LP query RP
+    | value
+    ;
+
+case
+    : CASE term ( WHEN ( terms | predicate ) THEN term )+ ( ELSE term )? END
+    | CASE ( WHEN terms THEN term )+ (ELSE term)? END
+    ;
+
 predicate
-//predicate[ParserRuleContext value]
-    : comparisonOperator right=valueExpression                            #comparison
-    | comparisonOperator comparisonQuantifier '(' query ')'               #quantifiedComparison
-    | NOT? BETWEEN lower=valueExpression AND upper=valueExpression        #between
-    | NOT? IN '(' expression (',' expression)* ')'                        #inList
-    | NOT? IN '(' query ')'                                               #inSubquery
-    | NOT? LIKE pattern=valueExpression (ESCAPE escape=valueExpression)?  #like
-    | IS NOT? NULL                                                        #nullPredicate
-    | IS NOT? booleanValue # isTrue
-    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
-//    | IS OF '(' type ')' #isof
-    | IS 'OF' '(' . ')' #isof
+    : op subterm
+//    | op quantified LP query RP
+    | NOT? BETWEEN ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm AND subterm
+    | NOT? IN LP terms? RP
+    | NOT? IN LP query RP
+    | NOT? ( LIKE | 'ILIKE' ) subterm (ESCAPE subterm)?
+    | NOT? 'REGEXP' subterm
+    | IS NOT? NULL
+    | IS NOT? booleanValue
+    | IS NOT? DISTINCT FROM subterm
+    | IS NOT? OF LP type RP
     ;
 
-valueExpression
-    : primaryExpression                                                                 #valueExpressionDefault
-    | valueExpression AT timeZoneSpecifier                                              #atTimeZone
-    | operator=(MINUS | PLUS) valueExpression                                           #arithmeticUnary
-    | left=valueExpression operator=(ASTERISK | SLASH | PERCENT) right=valueExpression  #arithmeticBinary
-    | left=valueExpression operator=(PLUS | MINUS) right=valueExpression                #arithmeticBinary
-    | left=valueExpression CONCAT right=valueExpression                                 #concatenation
-    ;
+    op
+        : EQ | NEQ | LT | LTE | GT | GTE | OVERLAP
+        ;
 
-primaryExpression
+/*
+    predicate
+       : op=( LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ) subterm                      # PredicateCompare
+       | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+       | 'IS' 'NOT'? truth                                                            # PredicateTruth
+       | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+       | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
+       | 'IS' 'NOT'? 'JSON' ( 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' )? uniqueKeys?  # PredicateJSON
+       | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+       | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
+       | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateMatch
+       | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateMatch
+       ;
+*/
+
+value
     : NULL                                                                                #nullLiteral
     | interval                                                                            #intervalLiteral
     | number                                                                              #numericLiteral
@@ -381,50 +404,38 @@ primaryExpression
     | string                                                                              #stringLiteral
     | BINARY_LITERAL                                                                      #binaryLiteral
     | '?'                                                                                 #parameter
-    | POSITION '(' valueExpression IN valueExpression ')'                                 #position
-    | '(' expression (',' expression)+ ')'                                                #rowConstructor
-    | ROW '(' expression (',' expression)* ')'                                            #rowConstructor
-    | qualifiedName '(' ASTERISK ')' filter? over?                                        #functionCall
-    | qualifiedName '(' (setQuantifier? expression (',' expression)*)?
-        (ORDER BY sortItem (',' sortItem)*)? ')' filter? (nullTreatment? over)?           #functionCall
-    | identifier '->' expression                                                          #lambda
-    | '(' (identifier (',' identifier)*)? ')' '->' expression                             #lambda
-    | '(' query ')'                                                                       #subqueryExpression
-    // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
-    | EXISTS '(' query ')'                                                                #exists
-    | CASE valueExpression whenClause+ (ELSE elseExpression=expression)? END              #simpleCase
-    | CASE whenClause+ (ELSE elseExpression=expression)? END                              #searchedCase
-    | CAST '(' expression AS type ')'                                                     #cast
-    | TRY_CAST '(' expression AS type ')'                                                 #cast
-    | ARRAY '[' (expression (',' expression)*)? ']'                                       #arrayConstructor
-    | value=primaryExpression '[' index=valueExpression ']'                               #subscript
-    | base=primaryExpression '.' fieldName=identifier                                     #dereference
+    | POSITION LP subterm IN subterm RP                                  #position
+    | LP term (',' term)+ RP                                                 #rowConstructor
+    | ROW LP terms RP                                             #rowConstructor
+    | LP (idNoReserved (',' idNoReserved)*)? RP  '->' term                             #lambda
+    | LP query RP                                                                        #subqueryExpression
+    | EXISTS LP query RP                                                                 #exists
+    | CAST LP term AS type RP                                                      #cast
+    | TRY_CAST LP term AS type RP                                                  #cast
+    | ARRAY '[' terms? ']'                                       #arrayConstructor
+    | value '[' subterm ']'                               #subscript
+    | value '.' idNoReserved                                     #dereference
     | DATE string #date
     | ( '{d' | '{t' | '{ts' ) string '}' #odbcDate
-    | ( TIME | TIMESTAMP ) ( ( WITH | 'WITHOUT' ) TIME 'ZONE' )? string #time
+    | ( TIME | TIMESTAMP ) ( ( WITH | WITHOUT ) TIME 'ZONE' )? string #time
+    | CURRENT_DATE                                                                   #specialDateTimeFunction
+    | CURRENT_TIME ( LP INTEGER_VALUE RP )?                                #specialDateTimeFunction
+    | CURRENT_TIMESTAMP ( LP INTEGER_VALUE RP )?                           #specialDateTimeFunction
+    | LOCALTIME ( LP INTEGER_VALUE RP )?                                   #specialDateTimeFunction
+    | LOCALTIMESTAMP ( LP INTEGER_VALUE RP )?                              #specialDateTimeFunction
+    | CURRENT_USER                                                                   #currentUser
+    | GROUPING LP (qname (',' qname)*)? RP                               #groupingOperation
+    | function # funky
+    | idNoReserved '->' term                                                          #lambda
 
-    | name=CURRENT_DATE                                                                   #specialDateTimeFunction
-    | name=CURRENT_TIME ('(' precision=INTEGER_VALUE ')')?                                #specialDateTimeFunction
-    | name=CURRENT_TIMESTAMP ('(' precision=INTEGER_VALUE ')')?                           #specialDateTimeFunction
-    | name=LOCALTIME ('(' precision=INTEGER_VALUE ')')?                                   #specialDateTimeFunction
-    | name=LOCALTIMESTAMP ('(' precision=INTEGER_VALUE ')')?                              #specialDateTimeFunction
-    | name=CURRENT_USER                                                                   #currentUser
-    | SUBSTRING '(' valueExpression FROM valueExpression (FOR valueExpression)? ')'       #substring
-    | NORMALIZE '(' valueExpression (',' normalForm)? ')'                                 #normalize
-    | EXTRACT '(' identifier FROM valueExpression ')'                                     #extract
-    | '(' expression ')'                                                                  #parenthesizedExpression
-    | GROUPING '(' (qualifiedName (',' qualifiedName)*)? ')'                              #groupingOperation
-    | qualifiedName # columnReference
-//    | identifier                                                                          #columnReference
     | Variable # Variable
-//        | identifier string                                                                   #typeConstructor
-//        | DOUBLE_PRECISION string                                                             #typeConstructor
-
+    | qname # columnReference
     ;
 
 string
-    : STRING                                #basicStringLiteral
-    | UNICODE_STRING (UESCAPE STRING)?      #unicodeStringLiteral
+    : STRING+
+    | UNICODE_STRING STRING* ( UESCAPE STRING )?
+    | NationalString STRING* ( UESCAPE STRING )?
     ;
 
 nullTreatment
@@ -433,15 +444,12 @@ nullTreatment
     ;
 
 timeZoneSpecifier
-    : TIME ZONE interval  #timeZoneInterval
-    | TIME ZONE string    #timeZoneString
+    : TIME ZONE interval
+    | TIME ZONE string
+    | 'LOCAL'
     ;
 
-comparisonOperator
-    : EQ | NEQ | LT | LTE | GT | GTE
-    ;
-
-comparisonQuantifier
+quantified
     : ALL | SOME | ANY
     ;
 
@@ -450,7 +458,7 @@ booleanValue
     ;
 
 interval
-    : INTERVAL sign=(PLUS | MINUS)? string from=intervalField (TO to=intervalField)?
+    : INTERVAL (PLUS | MINUS)? string from=intervalField (TO to=intervalField)?
     ;
 
 intervalField
@@ -462,70 +470,55 @@ normalForm
     ;
 
 types
-    : '(' (type (',' type)*)? ')'
+    : LP ( type ( ',' type )* )? RP
     ;
 
 type
     : type ARRAY
+    | DOUBLE PRECISION
     | ARRAY '<' type '>'
     | MAP '<' type ',' type '>'
-    | ROW '(' identifier type (',' identifier type)* ')'
-    | baseType ('(' typeParameter (',' typeParameter)* ')' baseType* )?
+    | ROW LP idNoReserved type ( ',' idNoReserved type )* RP
     | INTERVAL from=intervalField TO to=intervalField
+    | id+ ( LP typeParameter ( ',' typeParameter )* RP  id* )?
+    | timestamp
     ;
+
+    timestamp
+        : ( TIME | TIMESTAMP ) ( WITH | WITHOUT ) TIME ZONE
+        ;
 
 typeParameter
     : INTEGER_VALUE | type
     ;
 
-//baseType
-//    : TIME_WITH_TIME_ZONE
-//    | TIMESTAMP_WITH_TIME_ZONE
-//    | DOUBLE_PRECISION
-//    | qualifiedName
-//    ;
-
-baseType
-    : qualifiedName
-    ;
-
-whenClause
-    : WHEN ( expressions | predicate ) THEN expression
-    ;
-
-expressions
-    : expression ( ',' expression )*
-    ;
-
 filter
-    : FILTER '(' WHERE booleanExpression ')'
+    : FILTER LP WHERE term RP
     ;
 
 over
-    : OVER '('
-        (PARTITION BY partition+=expression (',' partition+=expression)*)?
-        (ORDER BY sortItem (',' sortItem)*)?
-        windowFrame?
-      ')'
+    : OVER
+    ( LP ( PARTITION BY terms )? orderBy? windowFrame? RP
+
+    | id )
     ;
 
-windowFrame
-    : frameType=RANGE start=frameBound
-    | frameType=ROWS start=frameBound
-    | frameType=GROUPS start=frameBound
-    | frameType=RANGE BETWEEN start=frameBound AND end=frameBound
-    | frameType=ROWS BETWEEN start=frameBound AND end=frameBound
-    | frameType=GROUPS BETWEEN start=frameBound AND end=frameBound
-    ;
+    windowFrame
+       : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+         ( preceding | 'BETWEEN' following 'AND' following )
+         ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+       ;
 
-frameBound
-    : UNBOUNDED boundType=PRECEDING                 #unboundedFrame
-    | UNBOUNDED boundType=FOLLOWING                 #unboundedFrame
-    | CURRENT ROW                                   #currentRowBound
-    | expression boundType=(PRECEDING | FOLLOWING)  #boundedFrame // expression should be unsignedLiteral
-    ;
+           preceding
+              : ( 'UNBOUNDED' | CATEGORY | term ) 'PRECEDING'
+              | 'CURRENT' 'ROW'
+              ;
 
-
+           following
+              : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+              | preceding
+              ;
+/*
 explainOption
     : FORMAT value=(TEXT | GRAPHVIZ | JSON)                 #explainFormat
     | TYPE value=(LOGICAL | DISTRIBUTED | VALIDATE | IO)    #explainType
@@ -535,7 +528,6 @@ transactionMode
     : ISOLATION LEVEL levelOfIsolation    #isolationLevel
     | READ accessMode=(ONLY | WRITE)      #transactionAccessMode
     ;
-
 levelOfIsolation
     : READ UNCOMMITTED                    #readUncommitted
     | READ COMMITTED                      #readCommitted
@@ -552,10 +544,6 @@ privilege
     : SELECT | DELETE | INSERT | identifier
     ;
 
-qualifiedName
-    : identifier ('.' identifier)*
-    ;
-
 grantor
     : CURRENT_USER          #currentUserGrantor
     | CURRENT_ROLE          #currentRoleGrantor
@@ -569,29 +557,43 @@ principal
     ;
 
 roles
-    : identifier (',' identifier)*
+    : identifier ( ',' identifier )*
     ;
 
-identifier
-    : IDENTIFIER             #unquotedIdentifier
-    | QUOTED_IDENTIFIER      #quotedIdentifier
-    | nonReserved            #unquotedIdentifier
-    | BACKQUOTED_IDENTIFIER  #backQuotedIdentifier
-    | DIGIT_IDENTIFIER       #digitIdentifier
+*/
+
+qname
+    : idNoReserved ( '.' idNoReserved )*
+    ;
+
+idNoReserved
+    : IDENTIFIER
+    | QUOTED_IDENTIFIER
+    | BACKQUOTED_IDENTIFIER
+    | DIGIT_IDENTIFIER
+    | { isValidKeyword() }? .
+    ;
+
+id
+    : IDENTIFIER
+    | QUOTED_IDENTIFIER
+    | BACKQUOTED_IDENTIFIER
+    | DIGIT_IDENTIFIER
+    | . // TODO: exclude punctuation tokens
     ;
 
 number
-    : DECIMAL_VALUE  #decimalLiteral
-    | DOUBLE_VALUE   #doubleLiteral
-    | INTEGER_VALUE  #integerLiteral
+    : DECIMAL_VALUE
+    | DOUBLE_VALUE
+    | INTEGER_VALUE
     ;
-
+/*
 nonReserved
     // IMPORTANT: this rule must only contain tokens. Nested rules are not supported. See SqlParser.exitNonReserved
     : ADD | ADMIN | ALL | ANALYZE | ANY | ARRAY | AS | ASC | AT
     | BERNOULLI
-    | CALL | CALLED | CASCADE | CATALOGS | COLUMN | COLUMNS | COMMENT | COMMIT | COMMITTED | CURRENT | CURRENT_ROLE
-    | DATA | DATE | DAY | DEFINER | DESC | DETERMINISTIC | DISTRIBUTED
+    | CALL | CALLED | CASCADE | CATALOGS | CATEGORY | COLUMN | COLUMNS | COMMENT | COMMIT | COMMITTED | CURRENT | CURRENT_ROLE
+    | DATA | DATE | DAY | DEFINER | DESC | DETERMINISTIC | DISTRIBUTED | DOUBLE
     | EXCLUDING | EXPLAIN | EXTERNAL
     | FETCH | FILTER | FIRST | FOLLOWING | FORMAT | FUNCTION | FUNCTIONS
     | GRANT | GRANTED | GRANTS | GRAPHVIZ | GROUPS
@@ -602,7 +604,7 @@ nonReserved
     | MAP | MATERIALIZED | MINUTE | MONTH
     | NAME | NFC | NFD | NFKC | NFKD | NO | NONE | NULLIF | NULLS
     | OFFSET | ONLY | OPTION | ORDINALITY | OUTPUT | OVER
-    | PARTITION | PARTITIONS | POSITION | PRECEDING | PRIVILEGES | PROPERTIES
+    | PARTITION | PARTITIONS | POSITION | PRECEDING | PRECISION | PRIVILEGES | PROPERTIES
     | RANGE | READ | REFRESH | RENAME | REPEATABLE | REPLACE | RESET | RESPECT | RESTRICT | RETURN | RETURNS | REVOKE | ROLE | ROLES | ROLLBACK | ROW | ROWS
     | SCHEMA | SCHEMAS | SECOND | SECURITY | SERIALIZABLE | SESSION | SET | SETS | SQL
     | SHOW | SOME | START | STATS | SUBSTRING | SYSTEM
@@ -613,7 +615,7 @@ nonReserved
     | YEAR
     | ZONE
     ;
-
+*/
 ADD: 'ADD';
 ADMIN: 'ADMIN';
 ALL: 'ALL';
@@ -634,6 +636,7 @@ CASCADE: 'CASCADE';
 CASE: 'CASE';
 CAST: 'CAST';
 CATALOGS: 'CATALOGS';
+CATEGORY: 'CATEGORY';
 COLUMN: 'COLUMN';
 COLUMNS: 'COLUMNS';
 COMMENT: 'COMMENT';
@@ -660,6 +663,7 @@ DESCRIBE: 'DESCRIBE';
 DETERMINISTIC: 'DETERMINISTIC';
 DISTINCT: 'DISTINCT';
 DISTRIBUTED: 'DISTRIBUTED';
+DOUBLE : 'DOUBLE';
 DROP: 'DROP';
 ELSE: 'ELSE';
 END: 'END';
@@ -723,6 +727,7 @@ MINUTE: 'MINUTE';
 MONTH: 'MONTH';
 NAME: 'NAME';
 NATURAL: 'NATURAL';
+NEXT : 'NEXT';
 NFC : 'NFC';
 NFD : 'NFD';
 NFKC : 'NFKC';
@@ -735,6 +740,7 @@ NULL: 'NULL';
 NULLIF: 'NULLIF';
 NULLS: 'NULLS';
 OFFSET: 'OFFSET';
+OF: 'OF';
 ON: 'ON';
 ONLY: 'ONLY';
 OPTION: 'OPTION';
@@ -746,9 +752,11 @@ OUTPUT: 'OUTPUT';
 OVER: 'OVER';
 PARTITION: 'PARTITION';
 PARTITIONS: 'PARTITIONS';
+PERCENT: 'PERCENT';
 POSITION: 'POSITION';
 PRECEDING: 'PRECEDING';
 PREPARE: 'PREPARE';
+PRECISION: 'PRECISION';
 PRIVILEGES: 'PRIVILEGES';
 PROPERTIES: 'PROPERTIES';
 RANGE: 'RANGE';
@@ -793,6 +801,7 @@ TABLESAMPLE: 'TABLESAMPLE';
 TEMPORARY: 'TEMPORARY';
 TEXT: 'TEXT';
 THEN: 'THEN';
+TIES: 'TIES';
 TIME: 'TIME';
 TIMESTAMP: 'TIMESTAMP';
 TO: 'TO';
@@ -816,6 +825,7 @@ VIEW: 'VIEW';
 WHEN: 'WHEN';
 WHERE: 'WHERE';
 WITH: 'WITH';
+WITHOUT: 'WITHOUT';
 WORK: 'WORK';
 WRITE: 'WRITE';
 YEAR: 'YEAR';
@@ -827,13 +837,18 @@ LT  : '<';
 LTE : '<=';
 GT  : '>';
 GTE : '>=';
+OVERLAP  : '&&' ;
 
 PLUS: '+';
 MINUS: '-';
 ASTERISK: '*';
 SLASH: '/';
-PERCENT: '%';
+//PERCENT: '%';
 CONCAT: '||';
+LP: '(' ;
+RP: ')' ;
+LB: '[' ;
+RB: ']' ;
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\''
@@ -842,6 +857,10 @@ STRING
 UNICODE_STRING
     : 'U&\'' ( ~'\'' | '\'\'' )* '\''
     ;
+
+NationalString
+   : [NE] STRING ;
+
 
 // Note: we allow any character inside the binary literal and validate
 // its a correct literal when the AST is being constructed. This
@@ -865,8 +884,9 @@ DOUBLE_VALUE
     ;
 
 IDENTIFIER
-    : (LETTER | '_') (LETTER | DIGIT | '_' | '@' | ':')*
-    ;
+   : [A-Z_#] [A-Z_#$@0-9]*
+//    : (LETTER | '_') (LETTER | DIGIT | '_' | '@' | ':')*
+   ;
 
 DIGIT_IDENTIFIER
     : DIGIT (LETTER | DIGIT | '_' | '@' | ':')+
@@ -878,18 +898,6 @@ QUOTED_IDENTIFIER
 
 BACKQUOTED_IDENTIFIER
     : '`' ( ~'`' | '``' )* '`'
-    ;
-
-//TIME_WITH_TIME_ZONE
-//    : 'TIME' WS 'WITH' WS 'TIME' WS 'ZONE'
-//    ;
-//
-//TIMESTAMP_WITH_TIME_ZONE
-//    : 'TIMESTAMP' WS 'WITH' WS 'TIME' WS 'ZONE'
-//    ;
-
-DOUBLE_PRECISION
-    : 'DOUBLE' WS 'PRECISION'
     ;
 
 Variable
