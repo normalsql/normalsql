@@ -259,8 +259,9 @@ subterm
    | subterm predicate                                               # SubtermPredicate
    | LP RP                                                           # SubtermEmpty
    | LP terms RP DOT id                                              # SubtermFieldRef
-   | LP terms RP                                                     # SubtermNested
+   | LP terms? RP                                                     # SubtermNested
    | query                                                           # SubtermQuery
+   | ( 'ALL' | 'ANY' | 'SOME' ) LP ( query | array ) RP              # SubtermQuantified
    | case                                                            # SubtermCase
    | array                                                           # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
@@ -280,25 +281,15 @@ subterm
       | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
       ;
 
-compare
-    : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
-
-quantified
-    : ( 'ALL' | 'ANY' | 'SOME' ) LP ( query | array ) RP
-    ;
-
 jsonType
     : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
-
-// TODO remove 'op' from PredicateCompare
-// TODO subrule for dialect & custom comparison operators?
 
 predicate
    : op=compare quantified # PredicateQuantified
    | compare subterm                      # PredicateCompare
    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
    | 'IS' 'NOT'? truth                                                            # PredicateTruth
-   | 'IS' 'NOT'? 'DISTINCT' 'FROM' ( quantified | subterm )                                       # PredicateDistinct
+   | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
    | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?  # PredicateJSON
    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
@@ -308,7 +299,7 @@ predicate
    ;
 
 // TODO might have to be in lexer
-//comparison
+//compare
 //   : '=' | '>' | '<' | '<=' | '>=' | '<>' | '!='
 ////   | '!>' | '!<'
 ////   | { isComparison( ... ) }
@@ -334,7 +325,6 @@ function
    ( 'ON' 'OVERFLOW' 'ERROR' )? RP withinGroup? filter? over?
    | 'STRING_AGG' LP subterm COMMA subterm orderBy RP
    | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' subterm )? RP filter?
-   //              | ( 'ALL' | 'ANY' | 'SOME' ) LP terms RP // "quantified"?
    | '{fn' function '}' //  ODBC style
    | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
    // TODO does this look like prototypical aggregation and window function?
