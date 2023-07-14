@@ -86,7 +86,7 @@ update
    : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
 
    setter
-      : columnRef EQ value ;
+      : columnRef EQ literal ;
 
 query
    : values
@@ -146,7 +146,10 @@ select
       | source ( 'AS'? id columnRefs? )?                                # JoinSource
       | LP join RP                                                      # JoinNested
       ;
-
+/*
+            : join (( LEFT | RIGHT | FULL ) OUTER? )? JOIN join joinCriteria?
+            | join ( INNER | CROSS | NATURAL ) JOIN join
+*/
       joinType
          : 'INNER'
          | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
@@ -257,7 +260,7 @@ subterm
    | subterm '&' subterm                                             # SubtermBinary
    | subterm '|' subterm                                             # SubtermBinary
    | subterm predicate                                               # SubtermPredicate
-   | LP RP                                                           # SubtermEmpty
+//   | LP RP                                                           # SubtermEmpty
    | LP terms RP DOT id                                              # SubtermFieldRef
    | LP terms? RP                                                     # SubtermNested
    | query                                                           # SubtermQuery
@@ -269,7 +272,7 @@ subterm
    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
    | 'ROW' LP terms? RP                                              # SubtermRow
    | function                                                        # SubtermFunction
-   | value # SubtermValue
+   | literal # SubtermValue
    | columnRef                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
@@ -285,8 +288,7 @@ jsonType
     : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 predicate
-   : op=compare quantified # PredicateQuantified
-   | compare subterm                      # PredicateCompare
+   : compare subterm                                                  # PredicateCompare
    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
    | 'IS' 'NOT'? truth                                                            # PredicateTruth
    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
@@ -298,6 +300,11 @@ predicate
    | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
    ;
 
+    compare
+        : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
+
+
+// TODO subrule for dialect & custom compare operators?
 // TODO might have to be in lexer
 //compare
 //   : '=' | '>' | '<' | '<=' | '>=' | '<>' | '!='
@@ -343,7 +350,7 @@ filter
 over
    : 'OVER' window ;
 
-value
+literal
    : Decimal
    | Real
    | Bytes
