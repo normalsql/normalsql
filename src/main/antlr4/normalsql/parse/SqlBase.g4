@@ -105,14 +105,6 @@ statement
     */
     ;
 
-query
-    :  with? queryNoWith ('FOR' 'UPDATE' )?
-    ;
-
-with
-    : WITH RECURSIVE? namedQuery (',' namedQuery)*
-    ;
-
 /*
 tableElement
     : columnDefinition
@@ -180,12 +172,17 @@ externalRoutineName
     ;
 */
 
-queryNoWith:
-    queryTerm
-    orderBy?
-    ( OFFSET INTEGER_VALUE (ROW | ROWS)?)?
-    ( FETCH ( FIRST | NEXT ) subterm? ( ROW | PERCENT? ROWS ) ( ONLY | WITH TIES ))?
-    ( LIMIT (subterm | ALL) )?
+query
+    :  with? queryNoWith ('FOR' 'UPDATE' )?
+    ;
+
+with
+    : WITH RECURSIVE? namedQuery (',' namedQuery)*
+    ;
+
+
+queryNoWith
+    : queryTerm orderBy? ( offset | fetch | limit )*
     ;
 
     orderBy
@@ -196,17 +193,20 @@ queryNoWith:
             : term (ASC | DESC)? (NULLS (FIRST | LAST))?
             ;
 
-//   clauses
-//      : ( orderBy | offset | fetch | limit | forUpdate )+ ; // TODO move forUpdate to query's select subrule? ditto fetch?
-//
-//      offset
-//         : 'OFFSET' term rowRows? ;
-//
-//      fetch
-//         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
-//
-//      limit
-//         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+  offset
+     : 'OFFSET' term (ROW | ROWS)? // NormalSQL
+//         : 'OFFSET' INTEGER_VALUE (ROW | ROWS)? // Presto
+     ;
+
+  fetch
+//         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) // NormalSQL
+     : 'FETCH' ( 'FIRST' | 'NEXT' ) subterm? ( ROW | PERCENT? ROWS ) ( ONLY | WITH TIES ) // Presto
+     ;
+
+  limit
+     : 'LIMIT' term (( 'OFFSET' | ',' ) term )? // NormalSQL
+//         : LIMIT ( subterm | ALL ) // Presto
+    ;
 
 queryTerm
     : queryPrimary
@@ -314,17 +314,43 @@ function
     : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
     | SUBSTRING LP subterm FROM subterm (FOR subterm)? RP // MySQL
     | NORMALIZE LP subterm (',' normalForm)? RP // BigQuery
-    | EXTRACT LP idNoReserved FROM subterm RP // MySQL
+    | EXTRACT LP intervalField FROM subterm RP // MySQL
    | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
+   | 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP
+   | 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP
 //      | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
 //      | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
-
    | '{fn' function '}' //  ODBC style
     | id LP ASTERISK? RP  filter? over?
-    | id LP (quantifier? terms )? orderBy? onNull? RP  filter? /* (FROM (FIRST | LAST))? */ (nullTreatment? over)?
-//    | idOrAnyToken LP (quantifier? terms )? /* respectIgnore? */ orderBy? RP ( LB term RB )? filter? over?
+    | id LP (quantifier? terms )? orderBy? onNull? RP withinGroup? filter? (FROM (FIRST | LAST))? (nullTreatment? over)?
+//    | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
 //   | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
+//    | idOrAnyToken LP (quantifier? terms )? /* respectIgnore? */ orderBy? RP ( LB term RB )? filter? over?
     ;
+
+
+    jsonPairs
+       : jsonPair ( ',' jsonPair )* ;
+
+        jsonPair
+           : jsonKey ':' term
+           | 'KEY'? jsonKey 'VALUE' term
+           ;
+
+            jsonKey
+                : 'NULL' | string | id ;
+
+    formatJson
+        : 'FORMAT' 'JSON' ;
+
+    uniqueKeys
+       : withWithout? 'UNIQUE' 'KEYS' ;
+
+withWithout
+   : 'WITH' | 'WITHOUT' ;
+
+withinGroup
+   : 'WITHIN' 'GROUP' LP orderBy RP ;
 
 onNull
    : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
@@ -346,15 +372,19 @@ term
 
 subterm
     : subterm AT timeZoneSpecifier
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname                  // column reference
     | (MINUS | PLUS) subterm
+    | <assoc=right> subterm '^' subterm // NormalSQL
     | subterm (ASTERISK | SLASH | '%' ) subterm
     | subterm (PLUS | MINUS) subterm
     | subterm CONCAT subterm
     | subterm predicate
     | LP terms RP ( '.' id )? // field reference
     | LP terms? RP // nested
+    | query
     | case
     | quantified LP query RP
+    | function // # funky
     | value
     ;
 
@@ -425,7 +455,7 @@ value
     | LOCALTIMESTAMP ( LP INTEGER_VALUE RP )?                              #specialDateTimeFunction
     | CURRENT_USER                                                                   #currentUser
     | GROUPING LP (qname (',' qname)*)? RP                               #groupingOperation
-    | function # funky
+//    | function # funky
     | idNoReserved '->' term                                                          #lambda
 
     | Variable # Variable
@@ -457,12 +487,19 @@ booleanValue
     : TRUE | FALSE | 'UNKNOWN'
     ;
 
+
 interval
     : INTERVAL (PLUS | MINUS)? string from=intervalField (TO to=intervalField)?
     ;
 
+// TODO: Varies with dialect
 intervalField
-    : YEAR | MONTH | DAY | HOUR | MINUTE | SECOND
+    : 'EPOCH' | YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | 'MILLISECOND' | 'MICROSECOND' | 'NANOSECOND'
+    | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE'  | 'TIMEZONE_SECOND'
+    | 'DAY_OF_WEEK' |
+    | 'ISO_YEAR' | 'ISO_WEEK_YEAR' | 'ISO_DAY_OF_WEEK' | 'ISODOW' | 'ISOYEAR'
+    | 'DOW' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'DATE'
+    | 'MCS' | 'NS'
     ;
 
 normalForm
@@ -571,7 +608,7 @@ idNoReserved
     | QUOTED_IDENTIFIER
     | BACKQUOTED_IDENTIFIER
     | DIGIT_IDENTIFIER
-    | { isValidKeyword() }? .
+    | { isValidKeyword() }? . // TODO: error handling
     ;
 
 id
