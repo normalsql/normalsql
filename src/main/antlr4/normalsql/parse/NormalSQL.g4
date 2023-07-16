@@ -325,18 +325,12 @@ function
    : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
    | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
    | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
-   | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
    | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
-   | 'LISTAGG' LP allDistinct? subterm COMMA subterm
-   //                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-   ( 'ON' 'OVERFLOW' 'ERROR' )? RP withinGroup? filter? over?
-   | 'STRING_AGG' LP subterm COMMA subterm orderBy RP
-   | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' subterm )? RP filter?
    | '{fn' function '}' //  ODBC style
-   | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
-   // TODO does this look like prototypical aggregation and window function?
-   | keyword LP allDistinct? term respectIgnore? orderBy? RP ( LB term RB )? filter? over?
-   //              | keyword LP id 'FROM' id SingleQ RP
+   // Generic syntax for all aggregate functions
+//   | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
+//   //                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+   | keyword LP ( WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )? ( 'SEPARATOR' subterm )? onNull? )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
    // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
    // | ID DOT ID LP terms? RP // T-SQL?
    ;
