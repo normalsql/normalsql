@@ -248,7 +248,8 @@ term
    ;
 
 subterm
-   : subterm ( '::' keyword index* )+                                # SubtermScope
+   : subterm ( '::' keyword )+                                # SubtermScope
+   | subterm index+                                # SubtermIndex
    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
    | <assoc=right> subterm '^' subterm                               # SubtermBinary
    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
