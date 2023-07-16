@@ -77,7 +77,7 @@ delete
    : 'DELETE' ; // TODO
    
 insert
-   : 'INSERT' into columnRefs? ( values | select ) ; // TODO
+   : 'INSERT' into columnRefs? rows ; // TODO
    
 merge
    : 'MERGE' ; // TODO
@@ -89,22 +89,16 @@ update
       : columnRef EQ literal ;
 
 query
-   : values
-   | 'WITH' 'RECURSIVE'? cte ( COMMA cte )* query
-   | select clauses?
-   | 'TABLE' tableRef clauses?
-   // Duplicate code because of combo of set operator precedence and left-recursion
-   | query ( 'INTERSECT' | 'MINUS' ) allDistinct? query clauses?
-   | query ( 'UNION' | 'EXCEPT' ) allDistinct? query clauses?
-   | query 'MULTISET' allDistinct? query clauses?
-   | LP query RP
+   : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
    ;
 
-   cte
-      : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP ;
+    with
+        : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
+        ;
 
-   clauses
-      : ( orderBy | offset | fetch | limit | forUpdate )+ ; // TODO move forUpdate to query's select subrule? ditto fetch?
+        cte
+            : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP
+            ; // TODO rule for column aliases
 
       offset
          : 'OFFSET' term rowRows? ;
@@ -118,12 +112,19 @@ query
       forUpdate
          : 'FOR' 'UPDATE' ;
 
-values
-   : 'VALUES' terms ;
+sets
+   : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets
+   | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets
+   | sets 'MULTISET' allDistinct? sets
+   | rows
+   ;
 
-select
+rows
    : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
       ( 'FROM' join )? where? groupBy? having? windows? qualify?
+   | 'TABLE' tableRef
+   | 'VALUES' terms
+   | LP query RP
    ;
 
    quantifier
