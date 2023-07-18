@@ -86,7 +86,7 @@ rows
       ;
 
    top
-      : { topFlag }? 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
+      : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
    into
       : 'INTO' tableRef ;
@@ -205,7 +205,6 @@ subterm
    | subterm '&' subterm                                             # SubtermBinary
    | subterm '|' subterm                                             # SubtermBinary
    | subterm predicate                                               # SubtermPredicate
-//   | LP RP                                                           # SubtermEmpty
    | LP terms RP DOT id                                              # SubtermFieldRef
    | LP terms? RP                                                     # SubtermNested
    | query                                                           # SubtermQuery
@@ -228,9 +227,6 @@ subterm
       | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
       ;
 
-jsonType
-    : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
-
 predicate
     : compare subterm                                                              # PredicateCompare
     | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
@@ -247,6 +243,8 @@ predicate
     compare
         : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
 
+    jsonType
+        : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 // TODO subrule for dialect & custom compare operators?
 // TODO might have to be in lexer
@@ -285,8 +283,16 @@ function
     filter
        : 'FILTER' LP 'WHERE' term RP ;
 
-over
-   : 'OVER' window ;
+    over
+       : 'OVER' window ;
+
+orderBy
+    : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
+    ;
+
+    orderByItem
+        : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )?
+        ;
 
 literal
    : Decimal
@@ -563,9 +569,11 @@ UnicodeString
 NationalString
    : [NE] String ;
 
+/*
+    Tokenizes 'abc '' \a \' \\ xyz' into single token correctly
+*/
 String
-   : '\'' ( ~'\'' | '\'\'' )* '\'' ;
-//   : '\'' ('\\'. | '\'\'' | ~('\'' | '\\'))* '\'' ;
+   : '\'' ( ~'\'' | '\\'. | '\'\'' )* '\'' ;
 
 UnicodeID
    : 'U&' ID ;
@@ -573,7 +581,6 @@ UnicodeID
 //TODO square bracket identifiers
 ID
    : '"' ( ~'"' | '""' )* '"' ;
-   //ID     : '"' ( '""' | ~ [\u0000"] )* '"' ; TODO Why does this variation work? Is it better?
 
 Dollars
   : '$$' .*? '$$' ;
