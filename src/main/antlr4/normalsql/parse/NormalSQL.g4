@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 /*
@@ -10,56 +10,6 @@ options
 { 
     contextSuperClass=normalsql.parse.GlobbingRuleContext; 
     caseInsensitive=true;
-}
-@ parser :: header
-{
-import java.util.HashSet;
-}
-@ parser :: members
-{
-    public boolean topFlag = true;
-
-//	HashSet<String> __keywords=keywords();
-	HashSet<String> __keywords;
-
-	public HashSet<String> keywords()
-	{
-	    if( __keywords == null )
-	    {
-		 __keywords=new HashSet<>();
-//		HashSet<String> words=new HashSet<>();
-		// Skip first literal
-		for( int nth=1; nth < _LITERAL_NAMES.length; nth++ )
-		{
-			String symbol=_SYMBOLIC_NAMES[ nth ];
-			// Keywords are literals without a matching symbol
-			if( symbol == null )
-			{
-				String keyword=_LITERAL_NAMES[ nth ];
-				keyword=keyword.substring( 1, keyword.length() - 1 );
-				if( Character.isLetter( keyword.charAt( 0 )))
-				{
-//					words.add( keyword );
-					__keywords.add( keyword );
-				}
-			}
-		}
-		}
-//		return words;
-		return __keywords;
-	}
-
-    public boolean isKeyword( Token t )
-    {
-
-        String text1=t.getText();
-        if( !Character.isAlphabetic( text1.charAt( text1.length() - 1 ))) return false;
-        if( !Character.isAlphabetic( text1.charAt( 0 ))) return false;
-        String text=text1.toUpperCase();
-        if( "NOT".equals( text )) return false;
-        boolean contains=keywords().contains( text );
-        return contains;
-    }
 }
 
 parse
@@ -158,18 +108,23 @@ rows
          | 'NATURAL'
          ;
 
-      source
-         : ( query
-           | function
-           | unnest
-           | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
-           | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
-           | 'JSON_TABLE' // TODO
-           | 'XMLTABLE' // TODO
-           | LP source RP
-           | tableRef
-           )
-         ;
+        source
+            : query
+            | function
+            | unnest
+            | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
+            | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
+            | 'JSON_TABLE' // TODO
+            | 'XMLTABLE' // TODO
+            | LP source RP
+            | tableRef
+            ;
+
+            unnest
+               : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
+
+           columnSpec
+               : id ( dataType | schemaRef ) EQ ( array | row ) ;
 
    where
       : 'WHERE' term ;
@@ -196,7 +151,7 @@ rows
 
             windowFrame
                : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                 ( preceding | 'BETWEEN' following 'AND' following ) // TODO: is 'following' AND 'following' correct?
+                 ( preceding | 'BETWEEN' following 'AND' following )
                  ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
                ;
 
@@ -213,18 +168,6 @@ rows
    qualify
       : 'QUALIFY' term ;
 
-   orderBy
-      : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )* ;
-
-      orderByItem
-         : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )? ;
-
-   unnest
-       : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
-
-columnSpec
-   : id ( dataType | schemaRef ) EQ ( array | row ) ;
-
 dataType
    : 'NULL'
    | keyword+
@@ -236,11 +179,11 @@ row
 terms
    : term ( COMMA term )* ;
 
+// TODO  | term ( 'OR' || '||' ) term                      # TermOR
 term
    : 'NOT' term                                # TermNOT
    | term 'AND' term                           # TermAND
    | term 'OR' term                            # TermOR
-//  TODO  | term ( 'OR' || '||' ) term                      # TermOR
    | 'EXISTS' LP query RP                      # TermEXISTS
    | 'UNIQUE' /* nullsDistinct */  LP query RP                      # TermUNIQUE
    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
@@ -248,14 +191,14 @@ term
 // TODO assignment operators go here ?
    ;
 
+// TODO '||' can be either string concatenation or logical OR
 subterm
    : subterm ( '::' keyword )+                                # SubtermScope
-   | subterm index+                                # SubtermIndex
+   | subterm index+                                        # SubtermIndex
    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
    | <assoc=right> subterm '^' subterm                               # SubtermBinary
    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-   // TODO '||' can be either string concatenation or logical OR
    | subterm '||' subterm                                            # SubtermBinary
    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
@@ -266,7 +209,6 @@ subterm
    | LP terms RP DOT id                                              # SubtermFieldRef
    | LP terms? RP                                                     # SubtermNested
    | query                                                           # SubtermQuery
-   | ( 'ALL' | 'ANY' | 'SOME' ) LP ( query | array ) RP              # SubtermQuantified
    | case                                                            # SubtermCase
    | array                                                           # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
@@ -290,17 +232,17 @@ jsonType
     : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 predicate
-   : compare subterm                                                  # PredicateCompare
-   | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
-   | 'IS' 'NOT'? truth                                                            # PredicateTruth
-   | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
-   | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
-   | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?  # PredicateJSON
-   | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-   | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
-   | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
-   | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
-   ;
+    : compare subterm                                                              # PredicateCompare
+    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+    | 'IS' 'NOT'? truth                                                            # PredicateTruth
+    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+    | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
+    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
+    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+    | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
+    | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
+    | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
+    ;
 
     compare
         : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
@@ -337,11 +279,11 @@ function
    // | ID DOT ID LP terms? RP // T-SQL?
    ;
 
-withinGroup
-   : 'WITHIN' 'GROUP' LP orderBy RP ;
+    withinGroup
+       : 'WITHIN' 'GROUP' LP orderBy RP ;
 
-filter
-   : 'FILTER' LP 'WHERE' term RP ;
+    filter
+       : 'FILTER' LP 'WHERE' term RP ;
 
 over
    : 'OVER' window ;
@@ -430,8 +372,157 @@ id
 
 keyword
    : Keyword
-   | { isKeyword( getCurrentToken() ) }? .
+   | good
    ;
+
+/*
+    All the tokens used by this grammar, with the (most-est) reserved SQL keywords commented out.
+    Add new tokens as needed.
+*/
+// TODO separate rules for valid identifiers, valid aliases, and valid function names
+good
+    : 'ABSENT'
+    | 'ALL'
+    // | 'AND'
+    | 'ARRAY'
+     | 'AS' //
+    | 'ASC'
+    | 'ASYMMETRIC'
+    | 'AT'
+    // | 'BETWEEN'
+    // | 'BOTH'
+    // | 'BY'
+     | 'CASE' //
+    // | 'CAST'
+    | 'CATEGORY'
+    // | 'CROSS'
+    | 'CURRENT'
+    | 'DATE'
+    // | 'DELETE'
+    | 'DESC'
+    // | 'DISTINCT'
+    | 'DIV'
+    // | 'ELSE'
+    // | 'END'
+    | 'ERROR'
+    | 'ESCAPE'
+    // | 'EXCEPT'
+    | 'EXCLUDE'
+    // | 'EXISTS'
+    | 'EXTRACT'
+    // | 'FALSE'
+    | 'FETCH'
+    | 'FILTER'
+    | 'FINAL'
+    | 'FIRST'
+    | 'FOLLOWING'
+    // | 'FOR'
+    | 'FORMAT'
+    // | 'FROM'
+    // | 'FULL'
+    // | 'GROUP'
+    | 'GROUP_CONCAT'
+    | 'GROUPS'
+    // | 'HAVING'
+    | 'IGNORE'
+    | 'ILIKE'
+    // | 'IN'
+    // | 'INNER'
+    // | 'INSERT'
+    // | 'INTERSECT'
+    | 'INTERSECTS'
+    | 'INTERVAL'
+    // | 'INTO'
+    // | 'IS'
+    // | 'JOIN'
+    | 'JSON'
+    | 'JSON_ARRAY'
+    | 'JSON_ARRAYAGG'
+    | 'JSON_OBJECT'
+    | 'JSON_OBJECTAGG'
+    | 'JSON_TABLE'
+    | 'KEY'
+    | 'KEYS'
+    | 'LAST'
+    // | 'LEADING'
+     | 'LEFT' //
+    // | 'LIKE'
+    | 'LIMIT'
+    | 'LISTAGG'
+    | 'LOCAL'
+    | 'MERGE'
+    | 'MINUS'
+    | 'MOD'
+    | 'MULTISET'
+    // | 'NATURAL'
+    | 'NEW'
+    | 'NEXT'
+    | 'NO'
+    // | 'NOT'
+    // | 'NULL'
+    | 'NULLS'
+    | 'OBJECT'
+    // | 'OF'
+    | 'OFFSET'
+    | 'OLD'
+    // | 'ON'
+    | 'ONLY'
+    // | 'OR'
+    // | 'ORDER'
+    | 'ORDINALITY'
+    | 'OTHERS'
+    | 'OUTER'
+    | 'OVER'
+    | 'OVERFLOW'
+    | 'PARTITION'
+    | 'PERCENT'
+    | 'PRECEDING'
+    | 'QUALIFY'
+    | 'RANGE'
+    | 'RECURSIVE'
+    | 'REGEXP'
+    | 'RESPECT'
+     | 'RIGHT' //
+    | 'ROW'
+    | 'ROWS'
+    | 'SCALAR'
+    // | 'SELECT'
+    | 'SEPARATOR'
+    | 'SET'
+    | 'STRING_AGG'
+    | 'SUBSTRING'
+    | 'SYMMETRIC'
+    // | 'TABLE'
+    | 'TABLE_DISTINCT'
+    // | 'THEN'
+    | 'TIES'
+    | 'TIME'
+    | 'TIMESTAMP'
+    | 'TO'
+    | 'TOP'
+    | 'TRAILING'
+    | 'TRIM'
+    // | 'TRUE'
+    | 'TRY_CAST'
+    | 'UESCAPE'
+    | 'UNBOUNDED'
+    // | 'UNION'
+    // | 'UNIQUE'
+    | 'UNKNOWN'
+    | 'UNNEST'
+    // | 'UPDATE'
+    // | 'USING'
+    | 'VALUE'
+    // | 'VALUES'
+    // | 'WHEN'
+    // | 'WHERE'
+    | 'WINDOW'
+     | 'WITH' //
+    | 'WITHIN'
+    | 'WITHOUT'
+    | 'XMLTABLE'
+    | 'ZONE'
+    ;
 
 allDistinct
    : 'ALL' | 'DISTINCT' ;
