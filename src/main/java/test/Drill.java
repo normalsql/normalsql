@@ -3,7 +3,7 @@
 
 package test;
 
-import normalsql.NormalSQLVisitor;
+import normalsql.SQLVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import org.antlr.v4.runtime.*;
@@ -24,9 +24,9 @@ public class Drill
 	public static void main( String... args )
 	{
 		String sql =
-
-//			"SELECT ID FROM TEST FETCH NEXT ROW ONLY LIMIT 1;"
-			"SELECT NOT 0;"
+			"""
+			 SELECT DATEADD(HOUR, 1, TIME '23:00:00');
+			""";
 			;
 		CharStream chars = CharStreams.fromString( sql );
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
@@ -47,7 +47,7 @@ public class Drill
 		} );
 
 		ParserRuleContext e = parser.parse();
-		NormalSQLVisitor visitor = new NormalSQLVisitor();
+		SQLVisitor visitor = new SQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( e );

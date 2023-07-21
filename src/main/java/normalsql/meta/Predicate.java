@@ -4,7 +4,7 @@
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateContext;
-//import normalsql.parse.NormalSQLParser.SubtermRefContext;
+import normalsql.parse.NormalSQLParser.SubtermRefContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.parse.NormalSQLParser.SubtermValueContext;
 
@@ -19,8 +19,7 @@ public abstract class
 	Predicate<T extends PredicateContext>
 {
 	/** Constant <code>COL</code> */
-//	public final static Class COL = SubtermRefContext.class;
-	public final static Class COL = Object.class;
+	public final static Class COL = SubtermRefContext.class;
 	/** Constant <code>VAL</code> */
 	public final static Class VAL = SubtermValueContext.class;
 

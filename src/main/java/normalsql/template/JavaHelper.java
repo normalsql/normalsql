@@ -44,7 +44,7 @@ public class
 	public Property create( SubtermContext context, String... method )
 	{
 		Property prop = new Property();
-		prop.context = ((SubtermValueContext) context).value();
+		prop.context = ((SubtermValueContext) context).literal();
 		// TODO fix this to include all tokens, incl. whitespace
 //		prop.source = prop.context.getText();
 		prop.trimmed = prop.context.getTrimmedText();

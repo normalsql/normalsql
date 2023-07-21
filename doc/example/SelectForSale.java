@@ -1,6 +1,6 @@
 
 /**
-* SelectForSaleResultSet.java Fri Apr 21 03:45:30 PDT 2023
+* SelectForSaleResultSet.java Fri Jul 21 06:40:32 PDT 2023
 *
 * Generated using NormalSQL's Select.vm template.
 *
@@ -8,10 +8,10 @@
 *
 * <pre>
 * {@code
-* SELECT id, make, model, year
-* FROM automobiles
-* WHERE style = 'coupe'
-*   AND odometer < 100000;
+* SELECT "id", "make", "model", "year"
+* FROM public.AUTOMOBILES
+* WHERE "style" = 'coupe'
+*   AND "odometer" < 100000;
 * }
 * </pre>
 *
@@ -30,16 +30,16 @@ public class
 	private PreparedStatement __ps = null;
 
     	public final String __preparedSQL =
-		"SELECT id, make, model, year\n"+ 
-		"FROM automobiles\n"+ 
-		"WHERE style = 'coupe'\n"+ 
-		"  AND odometer < 100000;"; 
+		"SELECT "id", "make", "model", "year"\n"+ 
+		"FROM public.AUTOMOBILES\n"+ 
+		"WHERE "style" = ?\n"+ 
+		"  AND "odometer" < ?;"; 
 
     	public final String __printfSQL =
-		"SELECT id, make, model, year\n"+ 
-		"FROM automobiles\n"+ 
-		"WHERE style = 'coupe'\n"+ 
-		"  AND odometer < 100000;"; 
+		"SELECT "id", "make", "model", "year"\n"+ 
+		"FROM public.AUTOMOBILES\n"+ 
+		"WHERE "style" = '%s'\n"+ 
+		"  AND "odometer" < %d;"; 
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -76,6 +76,8 @@ public class
 	public final SelectForSaleResultSet execute()
 		throws SQLException
 	{
+        __ps.setString( 1, getnull() );
+        __ps.setInteger( 2, getnull() );
 
         ResultSet rs = null;
         if( __ps.execute() )
@@ -87,10 +89,20 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
+    private String _null = "coupe";
+    public void setnull( String null ) { _null = null; }
+    public String getnull() { return _null; }
+
+    private Integer _null = 100000;
+    public void setnull( Integer null ) { _null = null; }
+    public Integer getnull() { return _null; }
+
 
 	public String toString()
 	{
 		return String.format( __printfSQL
+            , getnull()
+            , getnull()
 		);
 	}
 }

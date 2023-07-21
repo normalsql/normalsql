@@ -44,7 +44,7 @@ public class H2
 		{
 			try
 			{
-				server = Server.createTcpServer( new String[]{ "-tcp", "-tcpAllowOthers" } );
+				server = Server.createTcpServer( new String[]{ "-tcp", "-tcpAllowOthers", "true" } );
 				server.start();
 				System.out.println( "Started H2 TCP Server: " + server.getURL() );
 

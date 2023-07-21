@@ -27,7 +27,7 @@ options
 }
 
 singleStatement
-    : statement ';'? EOF
+    : statement? ( ';' statement? )* EOF
     ;
 
 //standaloneExpression
@@ -173,17 +173,12 @@ externalRoutineName
 */
 
 query
-    :  with? queryNoWith ('FOR' 'UPDATE' )?
+    : with? sets orderBy? ( offset | fetch | limit )* ( 'FOR' 'UPDATE' )?
     ;
 
-with
-    : WITH RECURSIVE? namedQuery (',' namedQuery)*
-    ;
-
-
-queryNoWith
-    : queryTerm orderBy? ( offset | fetch | limit )*
-    ;
+    with
+        : WITH RECURSIVE? namedQuery (',' namedQuery)*
+        ;
 
     orderBy
         : ORDER BY sortItem ( ',' sortItem )*
@@ -208,17 +203,17 @@ queryNoWith
 //         : LIMIT ( subterm | ALL ) // Presto
     ;
 
-queryTerm
-    : queryPrimary
-    | queryTerm INTERSECT quantifier? queryTerm
-    | queryTerm (UNION | EXCEPT) quantifier? queryTerm
+sets
+    : sets INTERSECT quantifier? sets
+    | sets (UNION | EXCEPT) quantifier? sets
+    | rows
     ;
 
-queryPrimary
+rows
     : select
     | TABLE qname
     | VALUES terms
-    | LP queryNoWith  RP // nested
+    | LP query RP // nested
     ;
 
 select
@@ -296,8 +291,7 @@ columnAliases
     ;
 
 source
-//    : queryPrimary
-    : queryNoWith
+    : query
     | function
     | UNNEST LP terms? RP  (WITH ORDINALITY)?
     | LP source RP // nested
@@ -308,7 +302,11 @@ source
     ;
 
     columnSpec
+//       : idNoReserved ( type | qname ) EQ ( 'ARRAY' LB terms? RB | LP terms? RP  ) ;
        : idNoReserved ( type | qname ) EQ ( 'ARRAY' LB terms? RB | LP terms? RP  ) ;
+
+index
+   : LB ( term | term? ':' term? )? RB ;
 
 function
     : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
@@ -316,13 +314,14 @@ function
     | NORMALIZE LP subterm (',' normalForm)? RP // BigQuery
     | EXTRACT LP intervalField FROM subterm RP // MySQL
    | 'GROUP_CONCAT' LP 'DISTINCT'? terms orderBy? ( 'SEPARATOR' string )? RP filter?
-   | 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP
    | 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP
-//      | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
-//      | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
+   | 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP
+      | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
+      | 'JSON_ARRAYAGG' LP ( 'ALL' | 'DISTINCT' )? term orderBy? onNull? RP filter? over?
    | '{fn' function '}' //  ODBC style
     | id LP ASTERISK? RP  filter? over?
-    | id LP (quantifier? terms )? orderBy? onNull? RP withinGroup? filter? (FROM (FIRST | LAST))? (nullTreatment? over)?
+    | id LP (( id | value | term ) ( ',' ( id | value | term ))* )? RP
+    | id LP (quantifier? terms )? orderBy? onNull? ( 'ON' 'OVERFLOW' 'ERROR' )? RP withinGroup? filter? (FROM (FIRST | LAST))? (nullTreatment? over)?
 //    | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
 //   | keyword LP ( WILDCARD | allDistinct? terms )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
 //    | idOrAnyToken LP (quantifier? terms )? /* respectIgnore? */ orderBy? RP ( LB term RB )? filter? over?
@@ -371,7 +370,8 @@ term
     ;
 
 subterm
-    : subterm AT timeZoneSpecifier
+    : subterm ( '::' type index* )+ // Postgres (?)
+    | subterm AT timeZoneSpecifier
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname                  // column reference
     | (MINUS | PLUS) subterm
     | <assoc=right> subterm '^' subterm // NormalSQL
@@ -408,7 +408,7 @@ predicate
     ;
 
     op
-        : EQ | NEQ | LT | LTE | GT | GTE | OVERLAP
+        : EQ | NEQ | LT | LTE | GT | GTE | OVERLAP | '~' | '!~' | '!~*' | '~*'
         ;
 
 /*
@@ -463,9 +463,12 @@ value
     ;
 
 string
-    : STRING+
-    | UNICODE_STRING STRING* ( UESCAPE STRING )?
-    | NationalString STRING* ( UESCAPE STRING )?
+    :
+    UNICODE_STRING STRING* ( UESCAPE STRING )?
+    |
+    STRING+
+    |
+    NationalString STRING* ( UESCAPE STRING )?
     ;
 
 nullTreatment
@@ -518,6 +521,7 @@ type
     | ROW LP idNoReserved type ( ',' idNoReserved type )* RP
     | INTERVAL from=intervalField TO to=intervalField
     | id+ ( LP typeParameter ( ',' typeParameter )* RP  id* )?
+//    | idNoReserved+ ( LP typeParameter ( ',' typeParameter )* RP  id* )?
     | timestamp
     ;
 
@@ -608,6 +612,7 @@ idNoReserved
     | QUOTED_IDENTIFIER
     | BACKQUOTED_IDENTIFIER
     | DIGIT_IDENTIFIER
+    | UNICODE_IDENTIFIER ( UESCAPE STRING )?
     | { isValidKeyword() }? . // TODO: error handling
     ;
 
@@ -616,6 +621,7 @@ id
     | QUOTED_IDENTIFIER
     | BACKQUOTED_IDENTIFIER
     | DIGIT_IDENTIFIER
+    | UNICODE_IDENTIFIER ( UESCAPE STRING )?
     | . // TODO: exclude punctuation tokens
     ;
 
@@ -919,6 +925,9 @@ DOUBLE_VALUE
     : DIGIT+ ('.' DIGIT*)? EXPONENT
     | '.' DIGIT+ EXPONENT
     ;
+
+UNICODE_IDENTIFIER
+   : 'U&' QUOTED_IDENTIFIER ;
 
 IDENTIFIER
    : [A-Z_#] [A-Z_#$@0-9]*

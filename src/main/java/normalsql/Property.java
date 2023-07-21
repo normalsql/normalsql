@@ -5,7 +5,7 @@ package normalsql;
 
 import normalsql.meta.Column;
 import normalsql.meta.Param;
-import normalsql.parse.NormalSQLParser.ValueContext;
+import normalsql.parse.NormalSQLParser.LiteralContext;
 
 /**
  * Property represents a class instance variable for code generation. aka JavaBean.
@@ -21,7 +21,7 @@ public class
 {
 	public Column column;
 	public Param param;
-	public ValueContext context;
+	public LiteralContext context;
 
 	// Index scrapped from JDBC metadata
 	public int nth;

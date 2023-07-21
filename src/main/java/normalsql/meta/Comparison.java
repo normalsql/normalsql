@@ -87,7 +87,7 @@ extends
 
 		if( !isMatched() ) return;
 
-		op = operatorMap.get( context.op.getText() );
+		op = operatorMap.get( context.getText() );
 		switch( match )
 		{
 			case VAL_COL:

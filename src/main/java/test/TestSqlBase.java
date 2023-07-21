@@ -4,8 +4,7 @@
 package test;
 
 import normalsql.parse.SqlBaseLexer;
-import normalsql.parse.SqlBaseParser;
-//import normalsql.parse.SqlBaseParser.ParseContext;
+import normalsql.parse.ReservedParser;
 import org.antlr.v4.runtime.*;
 
 import java.nio.file.*;
@@ -141,13 +140,8 @@ TestSqlBase
 
 		System.out.println();
 
-//		for( Work w : workList )
-//		{
-//			System.out.println( w.sql );
-//		}
-
-		System.out.println();
-		System.out.println();
+//		System.out.println();
+//		System.out.println();
 
 		for( Work w : workList )
 		{
@@ -168,50 +162,38 @@ TestSqlBase
 	ArrayList<String> fails = new ArrayList<>();
 	String last = null;
 
-	/**
-	 * <p>parse.</p>
-	 *
-	 * @param sourceFile a {@link Path} object
-	 * @param nth a int
-	 * @param sql a {@link String} object
-	 */
+	ParserRuleContext context;
+
 	public void parse( Path sourceFile, int nth, String sql )
 	{
 		CharStream chars = CharStreams.fromString( sql );
 		SqlBaseLexer lexer = new SqlBaseLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		SqlBaseParser parser = new SqlBaseParser( tokens );
-//		parser.removeErrorListeners();
+		ReservedParser parser = new ReservedParser( tokens );
+		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer,
-			                        Object offendingSymbol,
-			                        int line,
-			                        int charPositionInLine,
-			                        String msg,
-			                        RecognitionException e)
+			public void syntaxError( Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int pos, String msg, RecognitionException e)
 			{
+				// dedupe statements
 				if( !sql.equals( last ))
 				{
-					error();
-					fails.add( msg );
-					fails.add( sql );
 					last = sql;
-//					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
+
+					error();
+					fails.add( "---" );
+					fails.add( sql );
+					String temp = "line " + line + ":" + pos + " " + msg;
+					fails.add( temp );
+					fails.add( context.toStringTree( parser ) );
 //					System.out.println( sourceFile );
 //					System.out.println( "line: " + nth );
-//					System.out.println( sql );
-
-//					System.out.println( );
-
 				}
 			}
 
 		} );
 
-//		ParseContext result = parser.parse();
-		ParserRuleContext e = parser.statement();
-
+		context = parser.singleStatement();
 	}
 }

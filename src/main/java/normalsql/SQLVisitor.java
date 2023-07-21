@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 /**
- * <p>NormalSQLVisitor class.</p>
+ * <p>SQLVisitor class.</p>
  *
  * @author jasonosgood
  * @version $Id: $Id
  */
 public class
-SQLBaseVisitor
+	SQLVisitor
 extends
 	NormalSQLBaseVisitor<Void>
 {

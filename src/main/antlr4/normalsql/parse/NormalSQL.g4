@@ -8,7 +8,7 @@ grammar NormalSQL;
 
 options 
 { 
-    contextSuperClass=normalsql.parse.GlobbingRuleContext; 
+    contextSuperClass=normalsql.parse.GlobbingRuleContext;
     caseInsensitive=true;
 }
 
@@ -71,10 +71,10 @@ sets
 
 rows
    : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
-      ( 'FROM' join )? where? groupBy? having? windows? qualify?
-   | 'TABLE' tableRef
-   | 'VALUES' terms
-   | LP query RP
+      ( 'FROM' join )? where? groupBy? having? windows? qualify?       # Select
+   | 'TABLE' tableRef                                                  # Table
+   | 'VALUES' terms                                                    # Values
+   | LP query RP                                                       # Nested
    ;
 
    quantifier
@@ -179,13 +179,13 @@ row
 terms
    : term ( COMMA term )* ;
 
-// TODO  | term ( 'OR' || '||' ) term                      # TermOR
+// TODO  | term ( 'OR' || '||' ) term
 term
    : 'NOT' term                                # TermNOT
    | term 'AND' term                           # TermAND
    | term 'OR' term                            # TermOR
    | 'EXISTS' LP query RP                      # TermEXISTS
-   | 'UNIQUE' /* nullsDistinct */  LP query RP                      # TermUNIQUE
+   | 'UNIQUE' /* nullsDistinct */  LP query RP # TermUNIQUE
    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
    | subterm                                   # TermSubterm
 // TODO assignment operators go here ?
@@ -193,8 +193,8 @@ term
 
 // TODO '||' can be either string concatenation or logical OR
 subterm
-   : subterm ( '::' keyword )+                                # SubtermScope
-   | subterm index+                                        # SubtermIndex
+   : subterm ( '::' keyword )+                                       # SubtermScope
+   | subterm index+                                                  # SubtermIndex
    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
    | <assoc=right> subterm '^' subterm                               # SubtermBinary
    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
@@ -206,7 +206,7 @@ subterm
    | subterm '|' subterm                                             # SubtermBinary
    | subterm predicate                                               # SubtermPredicate
    | LP terms RP DOT id                                              # SubtermFieldRef
-   | LP terms? RP                                                     # SubtermNested
+   | LP terms? RP                                                    # SubtermNested
    | query                                                           # SubtermQuery
    | case                                                            # SubtermCase
    | array                                                           # SubtermArray
@@ -215,7 +215,7 @@ subterm
    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
    | 'ROW' LP terms? RP                                              # SubtermRow
    | function                                                        # SubtermFunction
-   | literal # SubtermValue
+   | literal                                                         # SubtermValue
    | columnRef                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
@@ -270,9 +270,12 @@ function
    | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
    | '{fn' function '}' //  ODBC style
    // Generic syntax for all aggregate functions
-//   | 'JSON_ARRAYAGG' LP allDistinct? term orderBy? onNull? RP filter? over?
-//   //                ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-   | keyword LP ( WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )? ( 'SEPARATOR' subterm )? onNull? )? RP withinGroup? filter? ( 'FROM' firstLast )? respectIgnore? over?
+//  ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+   | keyword
+     LP ( WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )?
+     ( 'SEPARATOR' subterm )? onNull? )? RP
+     withinGroup? filter? ( 'FROM' firstLast )?
+     respectIgnore? over?
    // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
    // | ID DOT ID LP terms? RP // T-SQL?
    ;
