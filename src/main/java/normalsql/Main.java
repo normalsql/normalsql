@@ -19,6 +19,29 @@ import java.sql.Statement;
  * @author jasonosgood
  * @version $Id: $Id
  */
+
+/*
+	TODO:
+
+		find and log all files
+		parse all found files
+		add just the DML statements to the work list
+		add just the parseable statements to the work list
+		log errors
+
+		log work list if diff from found list
+
+		verify DB connection
+		FUTURE: infer grammar from JDBC connection string
+		FUTURE: infer grammar by asking DB itself
+
+		test each statement in work list
+			maybe use EXPLAIN
+			could be DB specific
+		generate output for each success
+
+ */
+	
 public class
 	Main
 {
@@ -99,8 +122,6 @@ public class
 		// TODO pull source & target from command line options
 		Path source = Paths.get( "" ).toAbsolutePath();
 		Path target = source;
-//		Path source = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
-//		Path target = Paths.get( "/Users/jasonosgood/Projects/normalsql/test" );
 		crawl( source, target );
 
 		if( _conn != null )

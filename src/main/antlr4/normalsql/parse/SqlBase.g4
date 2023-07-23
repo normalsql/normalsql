@@ -41,67 +41,67 @@ singleStatement
 statement
     : query                                                            #statementDefault
     /*
-    | USE schema=identifier                                            #use
-    | USE catalog=identifier '.' schema=identifier                     #use
-    | CREATE SCHEMA (IF NOT EXISTS)? qname (WITH properties)?                                             #createSchema
-    | DROP SCHEMA (IF EXISTS)? qname (CASCADE | RESTRICT)?     #dropSchema
-    | ALTER SCHEMA qname RENAME TO identifier                  #renameSchema
-    | CREATE TABLE (IF NOT EXISTS)? qname columnAliases? (COMMENT string)? (WITH properties)? AS (query | LP query RP ) (WITH (NO)? DATA)?                                             #createTableAsSelect
-    | CREATE TABLE (IF NOT EXISTS)? qname LP tableElement (',' tableElement)* RP (COMMENT string)? (WITH properties)?                                            #createTable
-    | DROP TABLE (IF EXISTS)? qname                            #dropTable
-    | INSERT INTO qname columnAliases? query                   #insertInto
-    | DELETE FROM qname (WHERE expression)?             #delete
-    | TRUNCATE TABLE qname                                     #truncateTable
-    | ALTER TABLE (IF EXISTS)? from=qname RENAME TO to=qname                                     #renameTable
-    | ALTER TABLE (IF EXISTS)? qname RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier    #renameColumn
-    | ALTER TABLE (IF EXISTS)? qname DROP COLUMN (IF EXISTS)? column=qname                  #dropColumn
-    | ALTER TABLE (IF EXISTS)? qname ADD COLUMN (IF NOT EXISTS)? column=columnDefinition            #addColumn
-    | ANALYZE qname (WITH properties)?                         #analyze
-    | CREATE TYPE qname AS ( LP sqlParameterDeclaration (',' sqlParameterDeclaration)* RP | type)                                                        #createType
-    | CREATE (OR REPLACE)? VIEW qname (SECURITY (DEFINER | INVOKER))? AS query                   #createView
-    | DROP VIEW (IF EXISTS)? qname                             #dropView
-    | CREATE MATERIALIZED VIEW (IF NOT EXISTS)? qname (COMMENT string)? (WITH properties)? AS (query | LP query RP )                    #createMaterializedView
-    | DROP MATERIALIZED VIEW (IF EXISTS)? qname                #dropMaterializedView
-    | REFRESH MATERIALIZED VIEW qname WHERE expression  #refreshMaterializedView
-    | CREATE (OR REPLACE)? TEMPORARY? FUNCTION functionName=qname LP (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? RP RETURNS returnType=type (COMMENT string)? routineCharacteristics routineBody                             #createFunction
     | ALTER FUNCTION qname types? alterRoutineCharacteristics                                      #alterFunction
-    | DROP TEMPORARY? FUNCTION (IF EXISTS)? qname types?       #dropFunction
+    | ALTER SCHEMA qname RENAME TO identifier                  #renameSchema
+    | ALTER TABLE (IF EXISTS)? from=qname RENAME TO to=qname                                     #renameTable
+    | ALTER TABLE (IF EXISTS)? qname ADD COLUMN (IF NOT EXISTS)? column=columnDefinition            #addColumn
+    | ALTER TABLE (IF EXISTS)? qname DROP COLUMN (IF EXISTS)? column=qname                  #dropColumn
+    | ALTER TABLE (IF EXISTS)? qname RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier    #renameColumn
+    | ANALYZE qname (WITH properties)?                         #analyze
     | CALL qname LP (callArgument (',' callArgument)*)? RP    #call
-    | CREATE ROLE identifier (WITH ADMIN grantor)?                                          #createRole
-    | DROP ROLE identifier                                        #dropRole
-    | GRANT roles TO principal (',' principal)* (WITH ADMIN OPTION)? (GRANTED BY grantor)?                                          #grantRoles
-    | REVOKE (ADMIN OPTION FOR)? roles FROM principal (',' principal)* (GRANTED BY grantor)?                                          #revokeRoles
-    | SET ROLE (ALL | NONE | role=identifier)                          #setRole
-    | GRANT (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname TO grantee=principal (WITH GRANT OPTION)?                                           #grant
-    | REVOKE (GRANT OPTION FOR)? (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname FROM grantee=principal                #revoke
-    | SHOW GRANTS (ON TABLE? qname)?                                     #showGrants
-    | EXPLAIN ANALYZE? VERBOSE? ( LP explainOption (',' explainOption)* RP )? statement        #explain
-    | SHOW CREATE TABLE qname                                  #showCreateTable
-    | SHOW CREATE VIEW qname                                   #showCreateView
-    | SHOW CREATE MATERIALIZED VIEW qname                      #showCreateMaterializedView
-    | SHOW CREATE FUNCTION qname types?                        #showCreateFunction
-    | SHOW TABLES ((FROM | IN) qname)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showTables
-    | SHOW SCHEMAS ((FROM | IN) identifier)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSchemas
-    | SHOW CATALOGS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showCatalogs
-    | SHOW COLUMNS (FROM | IN) qname                           #showColumns
-    | SHOW STATS FOR qname                                     #showStats
-    | SHOW STATS FOR LP select RP                         #showStatsForQuery
-    | SHOW CURRENT? ROLES ((FROM | IN) identifier)?                    #showRoles
-    | SHOW ROLE GRANTS ((FROM | IN) identifier)?                       #showRoleGrants
-    | DESCRIBE qname                                           #showColumns
-    | DESC qname                                               #showColumns
-    | SHOW FUNCTIONS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showFunctions
-    | SHOW SESSION (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSession
-    | SET SESSION qname EQ expression                          #setSession
-    | RESET SESSION qname                                      #resetSession
-    | START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
     | COMMIT WORK?                                                     #commit
-    | ROLLBACK WORK?                                                   #rollback
-    | PREPARE identifier FROM statement                                #prepare
+    | CREATE (OR REPLACE)? TEMPORARY? FUNCTION functionName=qname LP (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? RP RETURNS returnType=type (COMMENT string)? routineCharacteristics routineBody                             #createFunction
+    | CREATE (OR REPLACE)? VIEW qname (SECURITY (DEFINER | INVOKER))? AS query                   #createView
+    | CREATE MATERIALIZED VIEW (IF NOT EXISTS)? qname (COMMENT string)? (WITH properties)? AS (query | LP query RP )                    #createMaterializedView
+    | CREATE ROLE identifier (WITH ADMIN grantor)?                                          #createRole
+    | CREATE SCHEMA (IF NOT EXISTS)? qname (WITH properties)?                                             #createSchema
+    | CREATE TABLE (IF NOT EXISTS)? qname LP tableElement (',' tableElement)* RP (COMMENT string)? (WITH properties)?                                            #createTable
+    | CREATE TABLE (IF NOT EXISTS)? qname columnAliases? (COMMENT string)? (WITH properties)? AS (query | LP query RP ) (WITH (NO)? DATA)?                                             #createTableAsSelect
+    | CREATE TYPE qname AS ( LP sqlParameterDeclaration (',' sqlParameterDeclaration)* RP | type)                                                        #createType
     | DEALLOCATE PREPARE identifier                                    #deallocate
-    | EXECUTE identifier ( USING expressions )?         #execute
+    | DELETE FROM qname (WHERE expression)?             #delete
+    | DESC qname                                               #showColumns
     | DESCRIBE INPUT identifier                                        #describeInput
     | DESCRIBE OUTPUT identifier                                       #describeOutput
+    | DESCRIBE qname                                           #showColumns
+    | DROP MATERIALIZED VIEW (IF EXISTS)? qname                #dropMaterializedView
+    | DROP ROLE identifier                                        #dropRole
+    | DROP SCHEMA (IF EXISTS)? qname (CASCADE | RESTRICT)?     #dropSchema
+    | DROP TABLE (IF EXISTS)? qname                            #dropTable
+    | DROP TEMPORARY? FUNCTION (IF EXISTS)? qname types?       #dropFunction
+    | DROP VIEW (IF EXISTS)? qname                             #dropView
+    | EXECUTE identifier ( USING expressions )?         #execute
+    | EXPLAIN ANALYZE? VERBOSE? ( LP explainOption (',' explainOption)* RP )? statement        #explain
+    | GRANT (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname TO grantee=principal (WITH GRANT OPTION)?                                           #grant
+    | GRANT roles TO principal (',' principal)* (WITH ADMIN OPTION)? (GRANTED BY grantor)?                                          #grantRoles
+    | INSERT INTO qname columnAliases? query                   #insertInto
+    | PREPARE identifier FROM statement                                #prepare
+    | REFRESH MATERIALIZED VIEW qname WHERE expression  #refreshMaterializedView
+    | RESET SESSION qname                                      #resetSession
+    | REVOKE (ADMIN OPTION FOR)? roles FROM principal (',' principal)* (GRANTED BY grantor)?                                          #revokeRoles
+    | REVOKE (GRANT OPTION FOR)? (privilege (',' privilege)* | ALL PRIVILEGES) ON TABLE? qname FROM grantee=principal                #revoke
+    | ROLLBACK WORK?                                                   #rollback
+    | SET ROLE (ALL | NONE | role=identifier)                          #setRole
+    | SET SESSION qname EQ expression                          #setSession
+    | SHOW CATALOGS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showCatalogs
+    | SHOW COLUMNS (FROM | IN) qname                           #showColumns
+    | SHOW CREATE FUNCTION qname types?                        #showCreateFunction
+    | SHOW CREATE MATERIALIZED VIEW qname                      #showCreateMaterializedView
+    | SHOW CREATE TABLE qname                                  #showCreateTable
+    | SHOW CREATE VIEW qname                                   #showCreateView
+    | SHOW CURRENT? ROLES ((FROM | IN) identifier)?                    #showRoles
+    | SHOW FUNCTIONS (LIKE pattern=string (ESCAPE escape=string)?)?                 #showFunctions
+    | SHOW GRANTS (ON TABLE? qname)?                                     #showGrants
+    | SHOW ROLE GRANTS ((FROM | IN) identifier)?                       #showRoleGrants
+    | SHOW SCHEMAS ((FROM | IN) identifier)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSchemas
+    | SHOW SESSION (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSession
+    | SHOW STATS FOR LP select RP                         #showStatsForQuery
+    | SHOW STATS FOR qname                                     #showStats
+    | SHOW TABLES ((FROM | IN) qname)? (LIKE pattern=string (ESCAPE escape=string)?)?                 #showTables
+    | START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
+    | TRUNCATE TABLE qname                                     #truncateTable
+    | USE catalog=identifier '.' schema=identifier                     #use
+    | USE schema=identifier                                            #use
     */
     ;
 

@@ -21,7 +21,37 @@ statement
    | merge
    | update
    | query
+   | drop
+   | create
    ;
+
+drop
+    : 'DROP' 'MATERIALIZED' 'VIEW' ifExists? tableRef
+    | 'DROP' 'SCHEMA' ifExists? tableRef ( 'CASCADE' | 'RESTRICT' )?
+    | 'DROP' 'TABLE' ifExists? tableRef
+    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? tableRef ( LP ( type ( ',' type )* )? RP )?
+    | 'DROP' 'VIEW' ifExists? tableRef
+    | 'DROP' 'DROP' 'ROLE' id
+    ;
+
+    ifExists : 'IF' 'EXISTS' ;
+
+create
+//    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef LP (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? RP RETURNS type (COMMENT string)? routineCharacteristics routineBody
+//    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
+//    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | LP query RP )
+//    | 'CREATE' ROLE id (WITH ADMIN grantor)?
+//    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
+    : 'CREATE' 'TABLE' ifNotExists? tableRef LP columnDef ( ',' columnDef )* RP // (COMMENT string)? (WITH properties)?
+//    | 'CREATE' TABLE ifNotExists? tableRef columnAliases? (COMMENT string)? (WITH properties)? AS (query | LP query RP ) (WITH (NO)? DATA)?
+//    | 'CREATE' TYPE tableRef AS ( LP sqlParameterDeclaration (',' sqlParameterDeclaration)* RP | type)
+    ;
+
+    ifNotExists : 'IF' 'NOT' 'EXISTS' ;
+
+    columnDef
+        : id type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
+        ;
 
 delete
    : 'DELETE' ; // TODO
@@ -255,10 +285,10 @@ predicate
 //   ;
 
 type
-   : 'ROW' LP id type ( COMMA id type )* RP
-   | type 'ARRAY' ( LB Decimal RB )?
-   | keyword+ ( LP Decimal ( COMMA Decimal )? RP keyword* )?
-   ;
+    : 'ROW' LP id type ( COMMA id type )* RP
+    | type 'ARRAY' ( LB Decimal RB )?
+    | keyword+ ( LP Decimal ( COMMA Decimal )? RP keyword* )?
+    ;
 
 array
    : 'ARRAY' LB terms? RB ;
