@@ -101,7 +101,8 @@ sets
 
 rows
    : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
-      ( 'FROM' join )? where? groupBy? having? windows? qualify?       # Select
+      ( 'FROM' join ( ',' join )* )?
+      where? groupBy? having? windows? qualify?       # Select
    | 'TABLE' tableRef                                                  # Table
    | 'VALUES' terms                                                    # Values
    | LP query RP                                                       # Nested
@@ -123,32 +124,32 @@ rows
 
 
    join
-      : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinSQL92
-      | join COMMA join                                                 # JoinSQL89
-      | source ( 'AS'? id columnRefs? )?                                # JoinSource
-      | LP join RP                                                      # JoinNested
+      : join
+        ( 'CROSS' 'JOIN' source
+        | joinType? 'JOIN' join joinCriteria?
+        | 'NATURAL' joinType? 'JOIN' source
+        )
+      | source
       ;
-/*
-            : join (( LEFT | RIGHT | FULL ) OUTER? )? JOIN join joinCriteria?
-            | join ( INNER | CROSS | NATURAL ) JOIN join
-*/
-      joinType
-         : 'INNER'
-         | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
-         | 'CROSS'
-         | 'NATURAL'
-         ;
+
+            joinType
+                : 'INNER'| ( 'LEFT'| 'RIGHT'| 'FULL' ) 'OUTER'?
+                ;
+
+            joinCriteria
+                : 'ON' term | 'USING' columnRefs ;
 
         source
-            : query
+            : ( query
             | function
             | unnest
             | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
             | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
             | 'JSON_TABLE' // TODO
             | 'XMLTABLE' // TODO
-            | LP source RP
-            | tableRef
+            | LP join RP
+            | tableRef )
+            ( 'AS'? id columnRefs? )?
             ;
 
             unnest
