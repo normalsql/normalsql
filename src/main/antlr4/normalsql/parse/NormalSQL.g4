@@ -383,7 +383,8 @@ columnRefs
    : LP columnRef ( COMMA columnRef )* RP ;
 
 columnRef
-   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id index* | '*' );
+//   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id index* | '*' );
+   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id | '*' );
 
 tableRef
    : (( catalog=id DOT )? schema=id DOT )? table=id ;
