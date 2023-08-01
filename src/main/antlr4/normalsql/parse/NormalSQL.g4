@@ -121,6 +121,7 @@ rows
    into
       : 'INTO' tableRef ;
 
+
    join
       : join joinType? 'JOIN' join ( 'ON' term | 'USING' columnRefs )?  # JoinSQL92
       | join COMMA join                                                 # JoinSQL89
@@ -381,10 +382,11 @@ columnRefs
    : LP columnRef ( COMMA columnRef )* RP ;
 
 columnRef
-   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? column=id index* ;
+   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id index* | '*' );
 
 tableRef
    : (( catalog=id DOT )? schema=id DOT )? table=id ;
+//   : (( id DOT )? id DOT )? id ;
 
 schemaRef
    : ( catalog=id DOT )? schema=id DOT ;
@@ -419,6 +421,8 @@ keyword
     Add new tokens as needed.
 */
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
+// TODO how to allow keyword as columnRef?
+// TODO refresh (regenerate) list as grammar grows
 good
     : 'ABSENT'
     | 'ALL'
@@ -522,9 +526,11 @@ good
     | 'REGEXP'
     | 'RESPECT'
      | 'RIGHT' //
+     | 'ROLE'
     | 'ROW'
     | 'ROWS'
     | 'SCALAR'
+    | 'SCHEMA'
     // | 'SELECT'
     | 'SEPARATOR'
     | 'SET'
