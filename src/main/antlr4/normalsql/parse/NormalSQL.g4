@@ -26,12 +26,12 @@ statement
    ;
 
 drop
-    : 'DROP' 'MATERIALIZED' 'VIEW' ifExists? tableRef
-    | 'DROP' 'SCHEMA' ifExists? tableRef ( 'CASCADE' | 'RESTRICT' )?
-    | 'DROP' 'TABLE' ifExists? tableRef
-    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? tableRef ( LP ( type ( ',' type )* )? RP )?
-    | 'DROP' 'VIEW' ifExists? tableRef
-    | 'DROP' 'DROP' 'ROLE' id
+    : 'DROP' 'MATERIALIZED' 'VIEW' ifExists? table
+    | 'DROP' 'SCHEMA' ifExists? table ( 'CASCADE' | 'RESTRICT' )?
+    | 'DROP' 'TABLE' ifExists? table
+    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( LP ( type ( ',' type )* )? RP )?
+    | 'DROP' 'VIEW' ifExists? table
+    | 'DROP' 'DROP' 'ROLE' name
     ;
 
     ifExists : 'IF' 'EXISTS' ;
@@ -42,7 +42,7 @@ create
 //    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | LP query RP )
 //    | 'CREATE' ROLE id (WITH ADMIN grantor)?
 //    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
-    : 'CREATE' 'TABLE' ifNotExists? tableRef LP columnDef ( ',' columnDef )* RP // (COMMENT string)? (WITH properties)?
+    : 'CREATE' 'TABLE' ifNotExists? table LP columnDef ( ',' columnDef )* RP // (COMMENT string)? (WITH properties)?
 //    | 'CREATE' TABLE ifNotExists? tableRef columnAliases? (COMMENT string)? (WITH properties)? AS (query | LP query RP ) (WITH (NO)? DATA)?
 //    | 'CREATE' TYPE tableRef AS ( LP sqlParameterDeclaration (',' sqlParameterDeclaration)* RP | type)
     ;
@@ -50,23 +50,23 @@ create
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : id type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
+        : name type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
         ;
 
 delete
    : 'DELETE' ; // TODO
    
 insert
-   : 'INSERT' into columnRefs? rows ; // TODO
+   : 'INSERT' into names? /* rows */ ; // TODO
    
 merge
    : 'MERGE' ; // TODO
    
 update
-   : 'UPDATE' columnRef 'SET' setter ( COMMA setter )* where? ;
+   : 'UPDATE' column 'SET' setter ( COMMA setter )* where? ;
 
    setter
-      : columnRef EQ literal ;
+      : column EQ literal ;
 
 query
    : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
@@ -77,7 +77,7 @@ query
         ;
 
         cte
-            : id ( LP id ( COMMA id )* RP )? 'AS' LP query RP
+            : name ( LP name ( COMMA name )* RP )? 'AS' LP query RP
             ; // TODO rule for column aliases
 
       offset
@@ -103,24 +103,24 @@ rows
    : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
       ( 'FROM' join ( ',' join )* )?
       where? groupBy? having? windows? qualify?       # Select
-   | 'TABLE' tableRef                                                  # Table
-   | 'VALUES' terms                                                    # Values
-   | LP query RP                                                       # Nested
+   | 'TABLE' table                                                  # RowsTable
+   | 'VALUES' terms                                                    # RowsValues
+   | LP query RP                                                       # RowsNested
    ;
 
    quantifier
       : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
    item
-      : (( tableRef DOT )? WILDCARD ) ( 'EXCEPT' columnRefs )?   # ItemTableRef
-      | term ( 'AS'? id )?                                       # ItemColumn
+      : (( table DOT )? WILDCARD ) ( 'EXCEPT' columns )?   # ItemTableRef
+      | term ( 'AS'? name )?                                       # ItemColumn
       ;
 
    top
       : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
    into
-      : 'INTO' tableRef ;
+      : 'INTO' table ;
 
 
    join
@@ -137,7 +137,7 @@ rows
                 ;
 
             joinCriteria
-                : 'ON' term | 'USING' columnRefs ;
+                : 'ON' term | 'USING' columns ;
 
         source
             : ( query
@@ -148,15 +148,16 @@ rows
             | 'JSON_TABLE' // TODO
             | 'XMLTABLE' // TODO
             | LP join RP
-            | tableRef )
-            ( 'AS'? id columnRefs? )?
+            | table )
+//            ( 'AS'? name columns? )?
+            ( 'AS'? name names? )?
             ;
 
             unnest
                : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
            columnSpec
-               : id ( dataType | schemaRef ) EQ ( array | row ) ;
+               : name ( dataType | schema ) EQ ( array | row ) ;
 
    where
       : 'WHERE' term ;
@@ -171,11 +172,11 @@ rows
       : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
 
       windowAlias
-         : id 'AS' window ;
+         : name 'AS' window ;
 
          window
-            : LP id? partitionBy? orderBy? windowFrame? RP
-            | id
+            : LP name? partitionBy? orderBy? windowFrame? RP
+            | name
             ;
 
             partitionBy
@@ -237,18 +238,18 @@ subterm
    | subterm '&' subterm                                             # SubtermBinary
    | subterm '|' subterm                                             # SubtermBinary
    | subterm predicate                                               # SubtermPredicate
-   | LP terms RP DOT id                                              # SubtermFieldRef
+   | LP terms RP DOT name                                              # SubtermFieldRef
    | LP terms? RP                                                    # SubtermNested
    | query                                                           # SubtermQuery
    | case                                                            # SubtermCase
    | array                                                           # SubtermArray
    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' columnRef                  # SubtermSequence
+   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                  # SubtermSequence
    | 'ROW' LP terms? RP                                              # SubtermRow
    | function                                                        # SubtermFunction
    | literal                                                         # SubtermValue
-   | columnRef                                                       # SubtermRef
+   | column                                                       # SubtermRef
    //              | term 'COLLATE' id # TermCollate TODO
    //              | sequenceValueExpression TODO
    //              | arrayElementReference TODO
@@ -287,7 +288,7 @@ predicate
 //   ;
 
 type
-    : 'ROW' LP id type ( COMMA id type )* RP
+    : 'ROW' LP name type ( COMMA name type )* RP
     | type 'ARRAY' ( LB Decimal RB )?
     | keyword+ ( LP Decimal ( COMMA Decimal )? RP keyword* )?
     ;
@@ -304,7 +305,7 @@ function
    // Generic syntax for all aggregate functions
 //  ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
    | keyword
-     LP ( WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )?
+     LP ( ( table DOT )? WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )?
      ( 'SEPARATOR' subterm )? onNull? )? RP
      withinGroup? filter? ( 'FROM' firstLast )?
      respectIgnore? over?
@@ -379,19 +380,24 @@ jsonObject
             jsonKey
                : 'NULL' | string | keyword ;
 
-columnRefs
-   : LP columnRef ( COMMA columnRef )* RP ;
+columns
+   : LP column ( COMMA column )* RP ;
 
-columnRef
-//   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id index* | '*' );
-   : ((( catalog=id DOT )? schema=id DOT )? table=id DOT )? ( column=id | '*' );
+column
+   : ((( name DOT )? name DOT )? name DOT )? name;
 
-tableRef
-   : (( catalog=id DOT )? schema=id DOT )? table=id ;
-//   : (( id DOT )? id DOT )? id ;
+table
+   : (( name DOT )? name DOT )? name ;
 
-schemaRef
-   : ( catalog=id DOT )? schema=id DOT ;
+schema
+   : ( name DOT )? name ;
+
+
+// this works too. more "semantic" might be easier for post parser stuff
+//column : ( table DOT )? name ;
+//table : ( schema DOT )? name ;
+//schema : ( catalog DOT )? name ;
+//catalog : name ;
 
 index
    : LB ( term | term? ':' term? )? RB ;
@@ -402,9 +408,12 @@ string
    | NationalString String*
    ;
 
-id
-   : ID
-   | UnicodeID uescape?
+names
+   : LP name ( COMMA name )* RP ;
+
+name
+   : Name
+   | UnicodeName uescape?
    | Backticks
    | Dollars
    | keyword
@@ -620,11 +629,11 @@ String
 //      : '\'' ('\\'. | '\'\'' | ~('\'' | '\\'))* '\'' ;
 
 
-UnicodeID
-   : 'U&' ID ;
+UnicodeName
+   : 'U&' Name ;
 
-//TODO square bracket identifiers
-ID
+// TODO square bracket names
+Name
    : '"' ( ~'"' | '""' )* '"' ;
 
 Dollars
@@ -661,7 +670,7 @@ fragment DIGIT
 Variable
    : '@' [A-Z_$@#0-9]* // T-SQL?
    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-   | ':' ID // Postgres?
+   | ':' Name // Postgres?
    ;
 
 Comment
