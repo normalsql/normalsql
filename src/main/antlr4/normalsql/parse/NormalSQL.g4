@@ -3,6 +3,13 @@
 
 /*
  NormalSQL.g4, SQL DML grammar for ANTLR 4.x
+
+ Style:
+
+ Lexer fragments & tokens UPPERCASE, lexer rules CapitalCase, parser rules lowerCase.
+
+ Child rules are indented when its (mostly) only used by a parent rule.
+
 */
 
 grammar NormalSQL;
@@ -622,15 +629,8 @@ UnicodeString
 NationalString
     : [NE] String ;
 
-/*
-    Tokenizes 'abc '' \a \' \\ xyz' into single token correctly
-*/
 String
-//   : '\'' ( ~'\'' | '\\'. | '\'\'' )* '\'' ;
-      : '\'' ( ~'\'' | '\'\'' )* '\'' ;
-//      : '\'' ( ~'\'' | '\'\'' )* '\'' ;
-//      : '\'' ('\\'. | '\'\'' | ~('\'' | '\\'))* '\'' ;
-
+    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 UnicodeName
     : 'U&' Name ;
