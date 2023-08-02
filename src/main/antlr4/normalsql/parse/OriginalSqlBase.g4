@@ -291,17 +291,16 @@ selectItem
 relation
     : left=relation
       ( CROSS JOIN right=sampledRelation
-      | joinType JOIN rightRelation=relation joinCriteria
-      | NATURAL joinType JOIN right=sampledRelation
+      | joinType? JOIN rightRelation=relation joinCriteria
+      | NATURAL joinType? JOIN right=sampledRelation
+//      | joinType JOIN rightRelation=relation joinCriteria
+//      | NATURAL joinType JOIN right=sampledRelation
       )                                           #joinRelation
     | sampledRelation                             #relationDefault
     ;
 
 joinType
-    : INNER?
-    | LEFT OUTER?
-    | RIGHT OUTER?
-    | FULL OUTER?
+    : INNER | ( LEFT | RIGHT| FULL ) OUTER?
     ;
 
 joinCriteria
