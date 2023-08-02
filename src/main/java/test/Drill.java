@@ -3,7 +3,7 @@
 
 package test;
 
-import normalsql.SQLVisitor;
+import normalsql.NormalSQLVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import org.antlr.v4.runtime.*;
@@ -47,7 +47,7 @@ public class Drill
 		} );
 
 		ParserRuleContext e = parser.parse();
-		SQLVisitor visitor = new SQLVisitor();
+		NormalSQLVisitor visitor = new NormalSQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( e );

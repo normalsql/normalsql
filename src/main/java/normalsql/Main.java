@@ -28,6 +28,8 @@ import java.sql.Statement;
 		add just the DML statements to the work list
 		add just the parseable statements to the work list
 		log errors
+		command line option for filelist
+		command line option for extension filter
 
 		log work list if diff from found list
 

@@ -85,7 +85,7 @@ public class Worker
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ParseContext parse = parser.parse();
-		SQLVisitor visitor = new SQLVisitor();
+		NormalSQLVisitor visitor = new NormalSQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 
