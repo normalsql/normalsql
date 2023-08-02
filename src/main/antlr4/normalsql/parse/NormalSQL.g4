@@ -93,14 +93,15 @@ query
          : 'FOR' 'UPDATE' ;
 
 sets
-   : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets
-   | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets
-   | sets 'MULTISET' allDistinct? sets
-   | rows
-   ;
-
-rows
-   : 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
+   : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets # Ignore
+   | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets # Ignore
+   | sets 'MULTISET' allDistinct? sets # Ignore
+//   | rows
+//   ;
+//
+//rows
+//   :
+   | 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
       ( 'FROM' join ( ',' join )* )?
       where? groupBy? having? windows? qualify?       # Select
    | 'TABLE' table                                                  # RowsTable
