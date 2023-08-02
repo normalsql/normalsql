@@ -4,6 +4,7 @@
 /*
  NormalSQL.g4, SQL DML grammar for ANTLR 4.x
 */
+
 grammar NormalSQL;
 
 options 
@@ -13,17 +14,17 @@ options
 }
 
 parse
-   : statement? ( ';' statement? )* EOF ;
+    : statement? ( ';' statement? )* EOF ;
 
 statement
-   : delete
-   | insert
-   | merge
-   | update
-   | query
-   | drop
-   | create
-   ;
+    : delete
+    | insert
+    | merge
+    | update
+    | query
+    | drop
+    | create
+    ;
 
 drop
     : 'DROP' 'MATERIALIZED' 'VIEW' ifExists? table
@@ -54,23 +55,23 @@ create
         ;
 
 delete
-   : 'DELETE' ; // TODO
+    : 'DELETE' ; // TODO
    
 insert
-   : 'INSERT' into names? /* rows */ ; // TODO
+    : 'INSERT' into names? /* rows */ ; // TODO
    
 merge
-   : 'MERGE' ; // TODO
+    : 'MERGE' ; // TODO
    
 update
-   : 'UPDATE' column 'SET' setter ( COMMA setter )* where? ;
+    : 'UPDATE' column 'SET' setter ( COMMA setter )* where? ;
 
-   setter
-      : column EQ literal ;
+    setter
+        : column EQ literal ;
 
 query
-   : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
-   ;
+    : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
+    ;
 
     with
         : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
@@ -80,186 +81,186 @@ query
             : name ( LP name ( COMMA name )* RP )? 'AS' LP query RP
             ; // TODO rule for column aliases
 
-      offset
-         : 'OFFSET' term rowRows? ;
+        offset
+            : 'OFFSET' term rowRows? ;
 
-      fetch
-         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
+        fetch
+            : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
-      limit
-         : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+        limit
+            : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
 
-      forUpdate
-         : 'FOR' 'UPDATE' ;
+        forUpdate
+            : 'FOR' 'UPDATE' ;
 
 sets
-   : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets # Ignore
-   | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets # Ignore
-   | sets 'MULTISET' allDistinct? sets # Ignore
+    : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets # Ignore
+    | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets # Ignore
+    | sets 'MULTISET' allDistinct? sets # Ignore
 //   | rows
 //   ;
 //
 //rows
 //   :
-   | 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
+    | 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
       ( 'FROM' join ( ',' join )* )?
       where? groupBy? having? windows? qualify?       # Select
-   | 'TABLE' table                                                  # RowsTable
-   | 'VALUES' terms                                                    # RowsValues
-   | LP query RP                                                       # RowsNested
-   ;
+    | 'TABLE' table                                                  # RowsTable
+    | 'VALUES' terms                                                    # RowsValues
+    | LP query RP                                                       # RowsNested
+    ;
 
-   quantifier
-      : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
+    quantifier
+        : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
-   item
-      : (( table DOT )? WILDCARD ) ( 'EXCEPT' columns )?   # ItemTableRef
-      | term ( 'AS'? name )?                                       # ItemColumn
-      ;
+    item
+        : (( table DOT )? WILDCARD ) ( 'EXCEPT' columns )?   # ItemTableRef
+        | term ( 'AS'? name )?                                       # ItemColumn
+        ;
 
-   top
-      : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
+    top
+        : 'TOP' ( Decimal | Real | LP term RP ) 'PERCENT'? withTies? ;
 
-   into
-      : 'INTO' table ;
+    into
+        : 'INTO' table ;
 
+    join
+        : join
+          ( 'CROSS' 'JOIN' source
+          | joinType? 'JOIN' join joinCriteria?
+          | 'NATURAL' joinType? 'JOIN' source
+          )
+        | source
+        ;
 
-   join
-      : join
-        ( 'CROSS' 'JOIN' source
-        | joinType? 'JOIN' join joinCriteria?
-        | 'NATURAL' joinType? 'JOIN' source
-        )
-      | source
-      ;
+        joinType
+            : 'INNER'| ( 'LEFT'| 'RIGHT'| 'FULL' ) 'OUTER'? ;
 
-            joinType
-                : 'INNER'| ( 'LEFT'| 'RIGHT'| 'FULL' ) 'OUTER'?
-                ;
-
-            joinCriteria
-                : 'ON' term | 'USING' columns ;
+        joinCriteria
+            : 'ON' term | 'USING' columns ;
 
         source
             : ( query
-            | function
-            | unnest
-            | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
-            | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
-            | 'JSON_TABLE' // TODO
-            | 'XMLTABLE' // TODO
-            | LP join RP
-            | table )
+              | function
+              | unnest
+              // TODO refactor to subrule 'tableSpec'?
+              | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
+              | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
+              | 'JSON_TABLE' // TODO
+              | 'XMLTABLE' // TODO
+              | LP join RP
+              | table )
+// TODO using 'columns' might be (more) correct than 'names'
 //            ( 'AS'? name columns? )?
-            ( 'AS'? name names? )?
+              ( 'AS'? name names? )?
             ;
 
             unnest
-               : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
+                : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
-           columnSpec
-               : name ( dataType | schema ) EQ ( array | row ) ;
+            columnSpec
+                : name ( dataType | schema ) EQ ( array | row ) ;
 
-   where
-      : 'WHERE' term ;
+    where
+        : 'WHERE' term ;
 
-   groupBy
-      : 'GROUP' 'BY' terms? ;
+    groupBy
+        : 'GROUP' 'BY' terms? ;
 
-   having
-      : 'HAVING' terms ;
+    having
+        : 'HAVING' terms ;
 
-   windows
-      : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
+    windows
+        : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
 
-      windowAlias
-         : name 'AS' window ;
+        windowAlias
+            : name 'AS' window ;
 
-         window
-            : LP name? partitionBy? orderBy? windowFrame? RP
-            | name
-            ;
+            window
+                : LP name? partitionBy? orderBy? windowFrame? RP
+                | name
+                ;
 
             partitionBy
-               : 'PARTITION' 'BY' terms ;
+                : 'PARTITION' 'BY' terms ;
 
             windowFrame
-               : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                 ( preceding | 'BETWEEN' following 'AND' following )
-                 ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-               ;
+                : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                  ( preceding | 'BETWEEN' following 'AND' following )
+                  ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+                ;
 
-               preceding
-                  : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-                  | 'CURRENT' 'ROW'
-                  ;
+                preceding
+                    : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+                    | 'CURRENT' 'ROW'
+                    ;
 
-               following
-                  : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-                  | preceding
-                  ;
+                following
+                    : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+                    | preceding
+                    ;
 
-   qualify
-      : 'QUALIFY' term ;
+    qualify
+        : 'QUALIFY' term ;
 
 dataType
-   : 'NULL'
-   | keyword+
-   ; // TODO dataTypes
+    : 'NULL'
+    | keyword+
+    ; // TODO dataTypes
    
 row
-   : term ; // TODO row value expression
+    : term ; // TODO row value expression
    
 terms
-   : term ( COMMA term )* ;
+    : term ( COMMA term )* ;
 
 // TODO  | term ( 'OR' || '||' ) term
 term
-   : 'NOT' term                                # TermNOT
-   | term 'AND' term                           # TermAND
-   | term 'OR' term                            # TermOR
-   | 'EXISTS' LP query RP                      # TermEXISTS
-   | 'UNIQUE' /* nullsDistinct */  LP query RP # TermUNIQUE
-   | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
-   | subterm                                   # TermSubterm
-// TODO assignment operators go here ?
-   ;
+    : 'NOT' term                                # TermNOT
+    | term 'AND' term                           # TermAND
+    | term 'OR' term                            # TermOR
+    | 'EXISTS' LP query RP                      # TermEXISTS
+    | 'UNIQUE' /* nullsDistinct */  LP query RP # TermUNIQUE
+    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
+    | subterm                                   # TermSubterm
+    // TODO assignment operators go here ?
+    ;
 
 // TODO '||' can be either string concatenation or logical OR
 subterm
-   : subterm ( '::' keyword )+                                       # SubtermScope
-   | subterm index+                                                  # SubtermIndex
-   | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-   | <assoc=right> subterm '^' subterm                               # SubtermBinary
-   | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-   | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-   | subterm '||' subterm                                            # SubtermBinary
-   | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-   | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-   | subterm '&' subterm                                             # SubtermBinary
-   | subterm '|' subterm                                             # SubtermBinary
-   | subterm predicate                                               # SubtermPredicate
-   | LP terms RP DOT name                                              # SubtermFieldRef
-   | LP terms? RP                                                    # SubtermNested
-   | query                                                           # SubtermQuery
-   | case                                                            # SubtermCase
-   | array                                                           # SubtermArray
-   | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
-   | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-   | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                  # SubtermSequence
-   | 'ROW' LP terms? RP                                              # SubtermRow
-   | function                                                        # SubtermFunction
-   | literal                                                         # SubtermValue
-   | column                                                       # SubtermRef
-   //              | term 'COLLATE' id # TermCollate TODO
-   //              | sequenceValueExpression TODO
-   //              | arrayElementReference TODO
-   ;
+    : subterm ( '::' keyword )+                                       # SubtermScope
+    | subterm index+                                                  # SubtermIndex
+    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+    | <assoc=right> subterm '^' subterm                               # SubtermBinary
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
+    | subterm '||' subterm                                            # SubtermBinary
+    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
+    | subterm '&' subterm                                             # SubtermBinary
+    | subterm '|' subterm                                             # SubtermBinary
+    | subterm predicate                                               # SubtermPredicate
+    | LP terms RP DOT name                                              # SubtermFieldRef
+    | LP terms? RP                                                    # SubtermNested
+    | query                                                           # SubtermQuery
+    | case                                                            # SubtermCase
+    | array                                                           # SubtermArray
+    | ( 'CAST' | 'TRY_CAST' ) LP term 'AS' type RP                    # SubtermCast
+    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                  # SubtermSequence
+    | 'ROW' LP terms? RP                                              # SubtermRow
+    | function                                                        # SubtermFunction
+    | literal                                                         # SubtermValue
+    | column                                                       # SubtermRef
+//    | term 'COLLATE' id # TermCollate TODO
+//    | sequenceValueExpression TODO
+//    | arrayElementReference TODO
+    ;
 
-   case
-      : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # SubtermCaseSimple
-      | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
-      ;
+    case
+        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # SubtermCaseSimple
+        | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
+        ;
 
 predicate
     : compare subterm                                                              # PredicateCompare
@@ -295,33 +296,34 @@ type
     ;
 
 array
-   : 'ARRAY' LB terms? RB ;
+    : 'ARRAY' LB terms? RB ;
 
 function
-   : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
-   | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
-   | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
-   | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
-   | '{fn' function '}' //  ODBC style
-   // Generic syntax for all aggregate functions
-//  ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-   | keyword
-     LP ( ( table DOT )? WILDCARD | allDistinct? terms orderBy? ( 'ON' 'OVERFLOW' 'ERROR' )?
-     ( 'SEPARATOR' subterm )? onNull? )? RP
-     withinGroup? filter? ( 'FROM' firstLast )?
-     respectIgnore? over?
-   // | ID? 'FUNCTION' ID LP terms? RP // T-SQL
-   // | ID DOT ID LP terms? RP // T-SQL?
-   ;
+    : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
+    | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
+    | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
+    | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
+    | '{fn' function '}' //  ODBC style
+    // Generic syntax for all aggregate functions
+    | keyword
+      LP ( ( table DOT )? WILDCARD | allDistinct? terms orderBy?
+//    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+      ( 'ON' 'OVERFLOW' 'ERROR' )?
+      ( 'SEPARATOR' subterm )? onNull? )? RP
+      withinGroup? filter? ( 'FROM' firstLast )?
+      respectIgnore? over?
+//    | keyword? 'FUNCTION' keyword LP terms? RP // TODO: T-SQL style
+//    | keyword DOT keyword LP terms? RP // TODO: T-SQL style?
+    ;
 
     withinGroup
-       : 'WITHIN' 'GROUP' LP orderBy RP ;
+        : 'WITHIN' 'GROUP' LP orderBy RP ;
 
     filter
-       : 'FILTER' LP 'WHERE' term RP ;
+        : 'FILTER' LP 'WHERE' term RP ;
 
     over
-       : 'OVER' window ;
+        : 'OVER' window ;
 
 orderBy
     : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
@@ -332,28 +334,28 @@ orderBy
         ;
 
 literal
-   : Decimal
-   | Real
-   | Bytes
-   | Blob
-   | truth
-   | 'DATE' string
-   | ( '{d' | '{t' | '{ts' ) string '}'
-   | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-   | interval
-   | jsonObject
-   | jsonArray
-   | Parameter
-   | Variable
-   | string
-   ;
+    : Decimal
+    | Real
+    | Bytes
+    | Blob
+    | truth
+    | 'DATE' string
+    | ( '{d' | '{t' | '{ts' ) string '}'
+    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+    | interval
+    | jsonObject
+    | jsonArray
+    | Parameter
+    | Variable
+    | string
+    ;
 
 truth
-   : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
+    : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
-   : 'INTERVAL' string (keyword ( 'TO' keyword )? )?
-   ;
+    : 'INTERVAL' string (keyword ( 'TO' keyword )? )?
+    ;
    //interval : 'INTERVAL' expression timeSpan ;
    //timeSpan      : 'EPOCH'
    //              | 'YEAR' ( 'TO' 'MONTH' )?
@@ -365,33 +367,33 @@ interval
    //              ;
    
 jsonArray
-   : 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP ;
+    : 'JSON_ARRAY' LP ( terms | LP query RP )? formatJson? onNull? RP ;
 
 jsonObject
-   : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
+    : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
 
     jsonPairs
-       : jsonPair ( COMMA jsonPair )* ;
+        : jsonPair ( COMMA jsonPair )* ;
 
         jsonPair
-           : jsonKey ':' term
-           | 'KEY'? jsonKey 'VALUE' term
-           ;
+            : jsonKey ':' term
+            | 'KEY'? jsonKey 'VALUE' term
+            ;
 
             jsonKey
-               : 'NULL' | string | keyword ;
+                : 'NULL' | string | keyword ;
 
 columns
-   : LP column ( COMMA column )* RP ;
+    : LP column ( COMMA column )* RP ;
 
 column
-   : ((( name DOT )? name DOT )? name DOT )? name;
+    : ((( name DOT )? name DOT )? name DOT )? name;
 
 table
-   : (( name DOT )? name DOT )? name ;
+    : (( name DOT )? name DOT )? name ;
 
 schema
-   : ( name DOT )? name ;
+    : ( name DOT )? name ;
 
 
 // this works too. more "semantic" might be easier for post parser stuff
@@ -401,32 +403,32 @@ schema
 //catalog : name ;
 
 index
-   : LB ( term | term? ':' term? )? RB ;
+    : LB ( term | term? ':' term? )? RB ;
 
 string
-   : String+
-   | UnicodeString String* uescape?
-   | NationalString String*
-   ;
+    : String+
+    | UnicodeString String* uescape?
+    | NationalString String*
+    ;
 
 names
-   : LP name ( COMMA name )* RP ;
+    : LP name ( COMMA name )* RP ;
 
 name
-   : Name
-   | UnicodeName uescape?
-   | Backticks
-   | Dollars
-   | keyword
-   ;
+    : Name
+    | UnicodeName uescape?
+    | Backticks
+    | Dollars
+    | keyword
+    ;
 
-   uescape
-      : 'UESCAPE' string ;
+    uescape
+        : 'UESCAPE' string ;
 
 keyword
-   : Keyword
-   | good
-   ;
+    : Keyword
+    | good
+    ;
 
 /*
     All the tokens used by this grammar, with the (most-est) reserved SQL keywords commented out.
@@ -582,43 +584,43 @@ good
     ;
 
 allDistinct
-   : 'ALL' | 'DISTINCT' ;
+    : 'ALL' | 'DISTINCT' ;
 
 firstLast
-   : 'FIRST' | 'LAST' ;
+    : 'FIRST' | 'LAST' ;
 
 formatJson
-   : 'FORMAT' 'JSON' ;
+    : 'FORMAT' 'JSON' ;
 
 onNull
-   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
+    : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
 respectIgnore
-   : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
+    : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 
 rowRows
-   : 'ROW' | 'ROWS' ;
+    : 'ROW' | 'ROWS' ;
 
 timeZone
-   : 'TIME' 'ZONE' ;
+    : 'TIME' 'ZONE' ;
 
 uniqueKeys
-   : withWithout? 'UNIQUE' 'KEYS' ;
+    : withWithout? 'UNIQUE' 'KEYS' ;
 
 withTies
-   : 'WITH' 'TIES' ;
+    : 'WITH' 'TIES' ;
 
 withWithout
-   : 'WITH' | 'WITHOUT' ;
+    : 'WITH' | 'WITHOUT' ;
 
 Keyword
-   : [A-Z_#] [A-Z_#$@0-9]* ;
+    : [A-Z_#] [A-Z_#$@0-9]* ;
 
 UnicodeString
-   : 'U&' String ;
+    : 'U&' String ;
 
 NationalString
-   : [NE] String ;
+    : [NE] String ;
 
 /*
     Tokenizes 'abc '' \a \' \\ xyz' into single token correctly
@@ -631,57 +633,57 @@ String
 
 
 UnicodeName
-   : 'U&' Name ;
+    : 'U&' Name ;
 
 // TODO square bracket names
 Name
-   : '"' ( ~'"' | '""' )* '"' ;
+    : '"' ( ~'"' | '""' )* '"' ;
 
 Dollars
-  : '$$' .*? '$$' ;
+    : '$$' .*? '$$' ;
 
 Backticks
-   : '`' ( ~'`' | '``' )* '`' ;
+    : '`' ( ~'`' | '``' )* '`' ;
 
 Blob
-   : 'X' BLOB ( ' ' BLOB )* ;
+    : 'X' BLOB ( ' ' BLOB )* ;
 
     fragment BLOB
-       : '\'' ( HEX HEX ' '? )* '\'' ;
+        : '\'' ( HEX HEX ' '? )* '\'' ;
 
 Bytes
-   : '0x' HEX+ ;
+    : '0x' HEX+ ;
 
 fragment HEX
-   : [A-F0-9] ;
+    : [A-F0-9] ;
 
 Decimal
-   : DIGIT+ 'L'? ;
+    : DIGIT+ 'L'? ;
 
 // matches "0.e1" or ".0e1", but not ".e1"
 Real
-   : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? ;
+    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? ;
 
 Parameter
-   : '?' DIGIT* ;
+    : '?' DIGIT* ;
 
 fragment DIGIT
-   : [0-9] ;
+    : [0-9] ;
 
 Variable
-   : '@' [A-Z_$@#0-9]* // T-SQL?
-   | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-   | ':' Name // Postgres?
-   ;
+    : '@' [A-Z_$@#0-9]* // T-SQL?
+    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
+    | ':' Name // Postgres?
+    ;
 
 Comment
-   : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
+    : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
 
 Block
-   : '/*' ( Block | . )*? '*/' -> channel( HIDDEN ) ;
+    : '/*' ( Block | . )*? '*/' -> channel( HIDDEN ) ;
 
 Spaces
-   : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
 LP       : '(' ;
 RP       : ')' ;
