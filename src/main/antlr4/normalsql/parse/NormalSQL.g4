@@ -39,7 +39,7 @@ drop
     | 'DROP' 'TABLE' ifExists? table
     | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( LP ( type ( ',' type )* )? RP )?
     | 'DROP' 'VIEW' ifExists? table
-    | 'DROP' 'DROP' 'ROLE' name
+    | 'DROP' 'ROLE' name
     ;
 
     ifExists : 'IF' 'EXISTS' ;
@@ -74,7 +74,8 @@ update
     : 'UPDATE' column 'SET' setter ( COMMA setter )* where? ;
 
     setter
-        : column EQ literal ;
+//        : column EQ literal ;
+        : column Compare literal ;
 
 query
     : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
@@ -166,7 +167,8 @@ sets
                 : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
             columnSpec
-                : name ( dataType | schema ) EQ ( array | row ) ;
+//                : name ( dataType | schema ) EQ ( array | row ) ;
+                : name ( dataType | schema ) Compare ( array | row ) ;
 
     where
         : 'WHERE' term ;
@@ -261,7 +263,6 @@ subterm
     | column                                                       # SubtermRef
 //    | term 'COLLATE' id # TermCollate TODO
 //    | sequenceValueExpression TODO
-//    | arrayElementReference TODO
     ;
 
     case
@@ -270,7 +271,7 @@ subterm
         ;
 
 predicate
-    : compare subterm                                                              # PredicateCompare
+    : Compare subterm                                                              # PredicateCompare
     | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
     | 'IS' 'NOT'? truth                                                            # PredicateTruth
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
@@ -282,19 +283,8 @@ predicate
     | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
     ;
 
-    compare
-        : LT | LTE | GT | GTE | EQ | NEQ | OVERLAP ;
-
     jsonType
         : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
-
-// TODO subrule for dialect & custom compare operators?
-// TODO might have to be in lexer
-//compare
-//   : '=' | '>' | '<' | '<=' | '>=' | '<>' | '!='
-////   | '!>' | '!<'
-////   | { isComparison( ... ) }
-//   ;
 
 type
     : 'ROW' LP name type ( COMMA name type )* RP
@@ -393,6 +383,7 @@ jsonObject
 columns
     : LP column ( COMMA column )* RP ;
 
+// These variants produce flattened parse tree
 column
     : ((( name DOT )? name DOT )? name DOT )? name;
 
@@ -402,8 +393,7 @@ table
 schema
     : ( name DOT )? name ;
 
-
-// this works too. more "semantic" might be easier for post parser stuff
+// These variants work too. Maybe a "semantic" parse tree makes post parser stuff easier.
 //column : ( table DOT )? name ;
 //table : ( schema DOT )? name ;
 //schema : ( catalog DOT )? name ;
@@ -418,177 +408,131 @@ string
     | NationalString String*
     ;
 
+    uescape
+        : 'UESCAPE' String ;
+
 names
     : LP name ( COMMA name )* RP ;
 
+// TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : Name
     | UnicodeName uescape?
     | Backticks
     | Dollars
-    | keyword
+    | Keyword
+    | unreserved
     ;
 
-    uescape
-        : 'UESCAPE' string ;
+unreserved
+    : ~(
+        // Exclude SQL's reserved keywords...
+        'ALL'
+        | 'AND'
+        | 'ANY'
+        | 'ARRAY'
+//        | 'AS'
+        | 'BETWEEN'
+        | 'BOTH'
+//        | 'CASE'
+        | 'CAST'
+        | 'CHECK'
+        | 'CONSTRAINT'
+        | 'CROSS'
+//        | 'DAY'
+//        | 'DELETE'
+        | 'DEFAULT'
+        | 'DISTINCT'
+        | 'ELSE'
+        | 'END'
+        | 'EXCEPT'
+        | 'EXISTS'
+        | 'FALSE'
+        | 'FOR'
+        | 'FOREIGN'
+        | 'FROM'
+        | 'FULL'
+        | 'GROUP'
+        | 'GROUPS'
+        | 'HAVING'
+//        | 'HOUR'
+//        | 'IF'
+        | 'IN'
+        | 'INNER'
+//        | 'INSERT'
+        | 'INTERSECT'
+        | 'INTERVAL'
+//        | 'INTO'
+        | 'IS'
+        | 'JOIN'
+//        | 'KEY'
+        | 'LEADING'
+        | 'LEFT'
+        | 'LIKE'
+//        | 'LIMIT'
+        | 'MINUS'
+//        | 'MINUTE'
+//        | 'MONTH'
+        | 'NATURAL'
+        | 'NOT'
+        | 'NULL'
+//        | 'OF'
+        | 'OFFSET'
+        | 'ON'
+        | 'OR'
+        | 'ORDER'
+        | 'OVER'
+        | 'PARTITION'
+        | 'PRIMARY'
+        | 'QUALIFY'
+        | 'RANGE'
+        | 'REGEXP'
+        | 'RIGHT'
+        | 'ROW'
+//        | 'ROWNUM'
+        | 'ROWS'
+        | 'SECOND'
+        | 'SELECT'
+//        | 'SESSION_USER'
+//        | 'SET'
+        | 'SOME'
+        | 'SYMMETRIC'
+//        | 'SYSTEM_USER'
+        | 'TABLE'
+        | 'TO'
+        | 'TOP'
+        | 'TRAILING'
+        | 'TRUE'
+        | 'UESCAPE'
+        | 'UNION'
+        | 'UNIQUE'
+        | 'UNKNOWN'
+        | 'USER'
+        | 'USING'
+//        | 'VALUE'
+        | 'VALUES'
+        | 'WHEN'
+        | 'WHERE'
+        | 'WINDOW'
+        | 'WITH'
+//        | 'YEAR'
+
+        // ...and all the other things which cannot be a name.
+        | Decimal | Real | Bytes | Blob | Parameter | Variable
+        | String | UnicodeString | NationalString
+        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Compare
+       )
+    ;
 
 keyword
     : Keyword
-    | good
+    // Roundabout way to accept grammar's keyword-like tokens
+    | ~ ( Decimal | Real | Bytes | Blob | Parameter | Variable
+        | String | UnicodeString | NationalString
+        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Compare
+        )
     ;
 
-/*
-    All the tokens used by this grammar, with the (most-est) reserved SQL keywords commented out.
-    Add new tokens as needed.
-*/
-// TODO separate rules for valid identifiers, valid aliases, and valid function names
-// TODO how to allow keyword as columnRef?
-// TODO refresh (regenerate) list as grammar grows
-good
-    : 'ABSENT'
-    | 'ALL'
-    // | 'AND'
-    | 'ARRAY'
-     | 'AS' //
-    | 'ASC'
-    | 'ASYMMETRIC'
-    | 'AT'
-    // | 'BETWEEN'
-    // | 'BOTH'
-    // | 'BY'
-     | 'CASE' //
-    // | 'CAST'
-    | 'CATEGORY'
-    // | 'CROSS'
-    | 'CURRENT'
-    | 'DATE'
-    // | 'DELETE'
-    | 'DESC'
-    // | 'DISTINCT'
-    | 'DIV'
-    // | 'ELSE'
-    // | 'END'
-    | 'ERROR'
-    | 'ESCAPE'
-    // | 'EXCEPT'
-    | 'EXCLUDE'
-    // | 'EXISTS'
-    | 'EXTRACT'
-    // | 'FALSE'
-    | 'FETCH'
-    | 'FILTER'
-    | 'FINAL'
-    | 'FIRST'
-    | 'FOLLOWING'
-    // | 'FOR'
-    | 'FORMAT'
-    // | 'FROM'
-    // | 'FULL'
-    // | 'GROUP'
-    | 'GROUP_CONCAT'
-    | 'GROUPS'
-    // | 'HAVING'
-    | 'IGNORE'
-    | 'ILIKE'
-    // | 'IN'
-    // | 'INNER'
-    // | 'INSERT'
-    // | 'INTERSECT'
-    | 'INTERSECTS'
-    | 'INTERVAL'
-    // | 'INTO'
-    // | 'IS'
-    // | 'JOIN'
-    | 'JSON'
-    | 'JSON_ARRAY'
-    | 'JSON_ARRAYAGG'
-    | 'JSON_OBJECT'
-    | 'JSON_OBJECTAGG'
-    | 'JSON_TABLE'
-    | 'KEY'
-    | 'KEYS'
-    | 'LAST'
-    // | 'LEADING'
-     | 'LEFT' //
-    // | 'LIKE'
-    | 'LIMIT'
-    | 'LISTAGG'
-    | 'LOCAL'
-    | 'MERGE'
-    | 'MINUS'
-    | 'MOD'
-    | 'MULTISET'
-    // | 'NATURAL'
-    | 'NEW'
-    | 'NEXT'
-    | 'NO'
-    // | 'NOT'
-    // | 'NULL'
-    | 'NULLS'
-    | 'OBJECT'
-    // | 'OF'
-    | 'OFFSET'
-    | 'OLD'
-    // | 'ON'
-    | 'ONLY'
-    // | 'OR'
-    // | 'ORDER'
-    | 'ORDINALITY'
-    | 'OTHERS'
-    | 'OUTER'
-    | 'OVER'
-    | 'OVERFLOW'
-    | 'PARTITION'
-    | 'PERCENT'
-    | 'PRECEDING'
-    | 'QUALIFY'
-    | 'RANGE'
-    | 'RECURSIVE'
-    | 'REGEXP'
-    | 'RESPECT'
-     | 'RIGHT' //
-     | 'ROLE'
-    | 'ROW'
-    | 'ROWS'
-    | 'SCALAR'
-    | 'SCHEMA'
-    // | 'SELECT'
-    | 'SEPARATOR'
-    | 'SET'
-    | 'STRING_AGG'
-    | 'SUBSTRING'
-    | 'SYMMETRIC'
-    // | 'TABLE'
-    | 'TABLE_DISTINCT'
-    // | 'THEN'
-    | 'TIES'
-    | 'TIME'
-    | 'TIMESTAMP'
-    | 'TO'
-    | 'TOP'
-    | 'TRAILING'
-    | 'TRIM'
-    // | 'TRUE'
-    | 'TRY_CAST'
-    | 'UESCAPE'
-    | 'UNBOUNDED'
-    // | 'UNION'
-    // | 'UNIQUE'
-    | 'UNKNOWN'
-    | 'UNNEST'
-    // | 'UPDATE'
-    // | 'USING'
-    | 'VALUE'
-    // | 'VALUES'
-    // | 'WHEN'
-    // | 'WHERE'
-    | 'WINDOW'
-     | 'WITH' //
-    | 'WITHIN'
-    | 'WITHOUT'
-    | 'XMLTABLE'
-    | 'ZONE'
-    ;
 
 allDistinct
     : 'ALL' | 'DISTINCT' ;
@@ -693,13 +637,8 @@ COMMA    : ',' ;
 DOT      : '.' ;
 WILDCARD : '*' ;
 
-EQ       : '=' | ':=' ;
-NEQ      : '<>' | '!=' ;
-LT       : '<' ;
-LTE      : '<=' ;
-GT       : '>' ;
-GTE      : '>=' ;
-OVERLAP  : '&&' ;
+Compare  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
+
 // TODO add isAssign for dialects (for symantec predicate)
 //ASSIGN   : ':=' ;
 
