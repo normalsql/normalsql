@@ -71,14 +71,14 @@ merge
     : 'MERGE' ; // TODO
    
 update
-    : 'UPDATE' column 'SET' setter ( COMMA setter )* where? ;
+    : 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
 
     setter
 //        : column EQ literal ;
-        : column Compare literal ;
+        : column Comparator literal ;
 
 query
-    : with? sets orderBy? ( offset | fetch | limit )* forUpdate?
+    : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
     ;
 
     with
@@ -86,31 +86,26 @@ query
         ;
 
         cte
-            : name ( LP name ( COMMA name )* RP )? 'AS' LP query RP
+            : name ( LP name ( ',' name )* RP )? 'AS' LP query RP
             ; // TODO rule for column aliases
 
-        offset
-            : 'OFFSET' term rowRows? ;
+    offset
+        : 'OFFSET' term rowRows? ;
 
-        fetch
-            : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
+    fetch
+        : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
-        limit
-            : 'LIMIT' term (( 'OFFSET' | COMMA ) term )? ;
+    limit
+        : 'LIMIT' term (( 'OFFSET' | ',' ) term )? ;
 
-        forUpdate
-            : 'FOR' 'UPDATE' ;
+    forUpdate
+        : 'FOR' 'UPDATE' ;
 
-sets
-    : sets ( 'INTERSECT' | 'MINUS' ) allDistinct? sets # Ignore
-    | sets ( 'UNION' | 'EXCEPT' ) allDistinct? sets # Ignore
-    | sets 'MULTISET' allDistinct? sets # Ignore
-//   | rows
-//   ;
-//
-//rows
-//   :
-    | 'SELECT' quantifier? top? ( item ( COMMA item )* COMMA? )? into?
+combine
+    : combine ( 'INTERSECT' | 'MINUS' ) allDistinct? combine # Ignore
+    | combine ( 'UNION' | 'EXCEPT' ) allDistinct? combine # Ignore
+    | combine 'MULTISET' allDistinct? combine # Ignore
+    | 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
       ( 'FROM' join ( ',' join )* )?
       where? groupBy? having? windows? qualify?       # Select
     | 'TABLE' table                                                  # RowsTable
@@ -122,7 +117,7 @@ sets
         : 'DISTINCT' ( 'ON' LP terms RP )? | 'ALL' | 'UNIQUE' ;
 
     item
-        : (( table DOT )? WILDCARD ) ( 'EXCEPT' columns )?   # ItemTableRef
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?   # ItemTableRef
         | term ( 'AS'? name )?                                       # ItemColumn
         ;
 
@@ -152,7 +147,7 @@ sets
               | function
               | unnest
               // TODO refactor to subrule 'tableSpec'?
-              | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( COMMA columnSpec )* RP
+              | ( 'TABLE' | 'TABLE_DISTINCT' ) LP columnSpec ( ',' columnSpec )* RP
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' LP ( delete | insert | merge | update ) RP
               | 'JSON_TABLE' // TODO
               | 'XMLTABLE' // TODO
@@ -164,11 +159,11 @@ sets
             ;
 
             unnest
-                : 'UNNEST' LP array ( COMMA array )* RP ( 'WITH' 'ORDINALITY' )? ;
+                : 'UNNEST' LP array ( ',' array )* RP ( 'WITH' 'ORDINALITY' )? ;
 
             columnSpec
 //                : name ( dataType | schema ) EQ ( array | row ) ;
-                : name ( dataType | schema ) Compare ( array | row ) ;
+                : name ( dataType | schema ) Comparator ( array | row ) ;
 
     where
         : 'WHERE' term ;
@@ -180,7 +175,7 @@ sets
         : 'HAVING' terms ;
 
     windows
-        : 'WINDOW' windowAlias ( COMMA windowAlias )* ;
+        : 'WINDOW' windowAlias ( ',' windowAlias )* ;
 
         windowAlias
             : name 'AS' window ;
@@ -214,14 +209,14 @@ sets
 
 dataType
     : 'NULL'
-    | keyword+
+    | id+
     ; // TODO dataTypes
    
 row
     : term ; // TODO row value expression
    
 terms
-    : term ( COMMA term )* ;
+    : term ( ',' term )* ;
 
 // TODO  | term ( 'OR' || '||' ) term
 term
@@ -230,14 +225,14 @@ term
     | term 'OR' term                            # TermOR
     | 'EXISTS' LP query RP                      # TermEXISTS
     | 'UNIQUE' /* nullsDistinct */  LP query RP # TermUNIQUE
-    | 'INTERSECTS' LP subterm COMMA subterm RP  # TermIntersects
+    | 'INTERSECTS' LP subterm ',' subterm RP  # TermIntersects
     | subterm                                   # TermSubterm
     // TODO assignment operators go here ?
     ;
 
 // TODO '||' can be either string concatenation or logical OR
 subterm
-    : subterm ( '::' keyword )+                                       # SubtermScope
+    : subterm ( '::' id )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
@@ -249,7 +244,7 @@ subterm
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | LP terms RP DOT name                                              # SubtermFieldRef
+    | LP terms RP '.' name                                              # SubtermFieldRef
     | LP terms? RP                                                    # SubtermNested
     | query                                                           # SubtermQuery
     | case                                                            # SubtermCase
@@ -271,11 +266,11 @@ subterm
         ;
 
 predicate
-    : Compare subterm                                                              # PredicateCompare
+    : Comparator subterm                                                           # PredicateCompare
     | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
     | 'IS' 'NOT'? truth                                                            # PredicateTruth
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
-    | 'IS' 'NOT'? 'OF' LP type ( COMMA type )* RP                                  # PredicateOfType
+    | 'IS' 'NOT'? 'OF' LP type ( ',' type )* RP                                  # PredicateOfType
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
     | 'NOT'? 'IN' LP ( query | terms )? RP                                         # PredicateIN
@@ -287,9 +282,9 @@ predicate
         : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 type
-    : 'ROW' LP name type ( COMMA name type )* RP
+    : 'ROW' LP name type ( ',' name type )* RP
     | type 'ARRAY' ( LB Decimal RB )?
-    | keyword+ ( LP Decimal ( COMMA Decimal )? RP keyword* )?
+    | id+ ( LP Decimal ( ',' Decimal )? RP id* )?
     ;
 
 array
@@ -299,18 +294,18 @@ function
     : 'TRIM' LP ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term RP
     | 'SUBSTRING' LP term 'FROM' term ( 'FOR' term )? RP
     | 'JSON_OBJECTAGG' LP jsonPairs onNull? uniqueKeys? RP filter? over?
-    | 'EXTRACT' LP keyword 'FROM' .*? RP // TODO
+    | 'EXTRACT' LP id 'FROM' .*? RP // TODO
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
-    | keyword
-      LP ( ( table DOT )? WILDCARD | allDistinct? terms orderBy?
+    | id
+      LP ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
       ( 'SEPARATOR' subterm )? onNull? )? RP
       withinGroup? filter? ( 'FROM' firstLast )?
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword LP terms? RP // TODO: T-SQL style
-//    | keyword DOT keyword LP terms? RP // TODO: T-SQL style?
+//    | keyword '.' keyword LP terms? RP // TODO: T-SQL style?
     ;
 
     withinGroup
@@ -323,7 +318,7 @@ function
         : 'OVER' window ;
 
 orderBy
-    : 'ORDER' 'BY' orderByItem ( COMMA orderByItem )*
+    : 'ORDER' 'BY' orderByItem ( ',' orderByItem )*
     ;
 
     orderByItem
@@ -351,7 +346,7 @@ truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
-    : 'INTERVAL' string (keyword ( 'TO' keyword )? )?
+    : 'INTERVAL' string (id ( 'TO' id )? )?
     ;
    //interval : 'INTERVAL' expression timeSpan ;
    //timeSpan      : 'EPOCH'
@@ -370,7 +365,7 @@ jsonObject
     : 'JSON_OBJECT' LP jsonPairs? onNull? uniqueKeys? formatJson? RP ;
 
     jsonPairs
-        : jsonPair ( COMMA jsonPair )* ;
+        : jsonPair ( ',' jsonPair )* ;
 
         jsonPair
             : jsonKey ':' term
@@ -378,25 +373,25 @@ jsonObject
             ;
 
             jsonKey
-                : 'NULL' | string | keyword ;
+                : 'NULL' | string | id ;
 
 columns
-    : LP column ( COMMA column )* RP ;
+    : LP column ( ',' column )* RP ;
 
 // These variants produce flattened parse tree
 column
-    : ((( name DOT )? name DOT )? name DOT )? name;
+    : ((( name '.' )? name '.' )? name '.' )? name;
 
 table
-    : (( name DOT )? name DOT )? name ;
+    : (( name '.' )? name '.' )? name ;
 
 schema
-    : ( name DOT )? name ;
+    : ( name '.' )? name ;
 
 // These variants work too. Maybe a "semantic" parse tree makes post parser stuff easier.
-//column : ( table DOT )? name ;
-//table : ( schema DOT )? name ;
-//schema : ( catalog DOT )? name ;
+//column : ( table '.' )? name ;
+//table : ( schema '.' )? name ;
+//schema : ( catalog '.' )? name ;
 //catalog : name ;
 
 index
@@ -412,7 +407,7 @@ string
         : 'UESCAPE' String ;
 
 names
-    : LP name ( COMMA name )* RP ;
+    : LP name ( ',' name )* RP ;
 
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
@@ -420,7 +415,7 @@ name
     | UnicodeName uescape?
     | Backticks
     | Dollars
-    | Keyword
+    | ID
     | unreserved
     ;
 
@@ -520,19 +515,18 @@ unreserved
         // ...and all the other things which cannot be a name.
         | Decimal | Real | Bytes | Blob | Parameter | Variable
         | String | UnicodeString | NationalString
-        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Compare
+        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Comparator
        )
     ;
 
-keyword
-    : Keyword
+id
+    : ID
     // Roundabout way to accept grammar's keyword-like tokens
     | ~ ( Decimal | Real | Bytes | Blob | Parameter | Variable
         | String | UnicodeString | NationalString
-        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Compare
+        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | Comparator
         )
     ;
-
 
 allDistinct
     : 'ALL' | 'DISTINCT' ;
@@ -564,7 +558,7 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-Keyword
+ID
     : [A-Z_#] [A-Z_#$@0-9]* ;
 
 UnicodeString
@@ -633,14 +627,8 @@ LP       : '(' ;
 RP       : ')' ;
 LB       : '[' ;
 RB       : ']' ;
-COMMA    : ',' ;
-DOT      : '.' ;
-WILDCARD : '*' ;
 
-Compare  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
-
-// TODO add isAssign for dialects (for symantec predicate)
-//ASSIGN   : ':=' ;
+Comparator  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 
 // TODO replace w/ isOperator (for symantec predicate)
 MATCH1 : '~' ; // match regex case sensitive
