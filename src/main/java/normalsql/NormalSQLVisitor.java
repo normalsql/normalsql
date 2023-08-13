@@ -43,17 +43,17 @@ extends
 		return null;
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public Void visitSelect( SelectContext context )
-	{
-		stack.push( new Select() );
-		super.visitSelect( context );
-		Statement child = stack.pop();
-		Statement parent = stack.peek();
-		parent.add( child );
-		return null;
-	}
+//	/** {@inheritDoc} */
+//	@Override
+//	public Void visitSelect( SelectContext context )
+//	{
+//		stack.push( new Select() );
+//		super.visitSelect( context );
+//		Statement child = stack.pop();
+//		Statement parent = stack.peek();
+//		parent.add( child );
+//		return null;
+//	}
 
 	// TODO populate Work with table's columns (scrapped from metadata)
 //	@Override

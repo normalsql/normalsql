@@ -12,8 +12,8 @@
 
 grammar NormalSQL;
 
-options 
-{ 
+options
+{
     contextSuperClass=normalsql.parse.GlobbingRuleContext;
     caseInsensitive=true;
 }
@@ -142,6 +142,7 @@ select
         joinType
             : 'INNER'| ( 'LEFT'| 'RIGHT'| 'FULL' ) 'OUTER'? ;
 
+        // TODO allow criteria for all joins, delegate validation
         joinCriteria
             : 'ON' term | 'USING' columns ;
 
@@ -276,6 +277,7 @@ predicate
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
     | 'NOT'? 'IN' '(' ( query | terms )? ')'                                         # PredicateIN
+//    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )     # PredicateIN // TODO: Oracle
     | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
     | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
     ;
@@ -306,6 +308,7 @@ function
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
       ( 'SEPARATOR' subterm )? onNull? )? ')'
+//      ( 'SEPARATOR' subterm )? onNull? )? respectIgnore? ')' // TODO: Oracle
       withinGroup? filter? ( 'FROM' firstLast )?
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style

@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="h2_classicmodels.sql" type="DatabaseScript" editBeforeRun="true" nameIsGenerated="true">
+    <script-file value="$PROJECT_DIR$/doc/classicmodels/h2_classicmodels.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="4cdc1ab5-4979-4d17-a73e-63c993107ec5" />
+    <method v="2" />
+  </configuration>
+</component>
