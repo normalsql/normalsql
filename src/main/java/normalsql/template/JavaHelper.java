@@ -11,6 +11,7 @@ package normalsql.template;
 import normalsql.Property;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.parse.NormalSQLParser.SubtermValueContext;
+import org.antlr.v4.runtime.RuleContext;
 
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
@@ -33,6 +34,42 @@ public class
 
 	}
 
+	/**
+	 * <p>trimQuotes.</p>
+	 *
+	 * @param text a {@link java.lang.String} object
+	 * @return a {@link java.lang.String} object
+	 */
+	public String trimQuotes( String text )
+	{
+		if( text == null ) return null;
+		switch( text.charAt( 0 ) )
+		{
+			case '[':
+			case '"':
+			case '\'':
+			case '`':
+				// Lexer already ensured token has matching quotes front and back
+				text = text.substring( 1, text.length() - 1 );
+				break;
+			default:
+				break;
+		}
+		return text;
+	}
+
+	/**
+	 * <p>getTrimmedText.</p>
+	 *
+	 * @return a {@link java.lang.String} object
+	 */
+	public String getTrimmedText( RuleContext context )
+	{
+		// TODO fix this to include all tokens, incl. whitespace
+		String text = context.getText();
+		return trimQuotes( text );
+	}
+
 	// TODO separate factory methods for Statement and ResultSet properties
 	/**
 	 * <p>create.</p>
@@ -45,9 +82,7 @@ public class
 	{
 		Property prop = new Property();
 		prop.context = ((SubtermValueContext) context).literal();
-		// TODO fix this to include all tokens, incl. whitespace
-//		prop.source = prop.context.getText();
-		prop.trimmed = prop.context.getTrimmedText();
+		prop.trimmed = getTrimmedText( prop.context );
 		prop.variable = toVariableCase( method );
 		prop.getter = "get" + toMethodCase( method );
 		prop.setter = "set" + toMethodCase( method );
@@ -64,7 +99,28 @@ public class
 	 */
 	public String toMethodCase( String... name )
 	{
-		return String.join( "", name );
+		String[] temp = new String[name.length];
+		for( int i = 0; i < name.length; i++ )
+		{
+			temp[i] = capitalize( name[i] );
+		}
+		String text = String.join( "", temp );
+		return text;
+	}
+
+	public String capitalize( String text )
+	{
+		if( text == null ) return null;
+		if( text.length() == 0 ) return null;
+		if( "ID".equalsIgnoreCase( text )) return "ID";
+
+		char original = text.charAt(0);
+		char upper = Character.toUpperCase( original );
+		if( original == upper ) return text;
+
+		char[] chars = text.toCharArray();
+		chars[0] = upper;
+		return new String( chars );
 	}
 
 	/**

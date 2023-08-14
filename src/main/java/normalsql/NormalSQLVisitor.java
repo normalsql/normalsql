@@ -43,17 +43,17 @@ extends
 		return null;
 	}
 
-//	/** {@inheritDoc} */
-//	@Override
-//	public Void visitSelect( SelectContext context )
-//	{
-//		stack.push( new Select() );
-//		super.visitSelect( context );
-//		Statement child = stack.pop();
-//		Statement parent = stack.peek();
-//		parent.add( child );
-//		return null;
-//	}
+	/** {@inheritDoc} */
+	@Override
+	public Void visitSelect( SelectContext context )
+	{
+		stack.push( new Select() );
+		super.visitSelect( context );
+		Statement child = stack.pop();
+		Statement parent = stack.peek();
+		parent.add( child );
+		return null;
+	}
 
 	// TODO populate Work with table's columns (scrapped from metadata)
 //	@Override
@@ -81,7 +81,7 @@ extends
 		item.name = tokens.getText( context.term() );
 		if( context.name() != null )
 		{
-			item.alias = context.name().getTrimmedText();
+			item.alias = tokens.getText( context.name() );
 		}
 		stack.peek().items.add( item );
 		super.visitItemColumn( context );

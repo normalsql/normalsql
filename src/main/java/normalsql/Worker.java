@@ -13,6 +13,9 @@ import normalsql.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.WritableToken;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -63,6 +66,13 @@ public class Worker
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
+	}
+
+	public void setStartTokenText( ParserRuleContext context, String text )
+	{
+		// Replace text of first "visible" (non whitespace) token, then exit
+		WritableToken start = (WritableToken) context.getStart();
+		start.setText( text );
 	}
 
 	/**
@@ -140,7 +150,7 @@ public class Worker
 
 		for( Property prop : work.statementProperties )
 		{
-			prop.context.setStartTokenText( "?" );
+			setStartTokenText( prop.context, "?" );
 		}
 
 		work.preparedSQL = tokens.getText();
@@ -161,7 +171,7 @@ public class Worker
 		for( Property prop : work.statementProperties )
 		{
 			String text = _helper.toPrintfConverter( prop.param.type );
-			prop.context.setStartTokenText( text );
+			setStartTokenText( prop.context, text );
 		}
 
 		work.printfSQL = tokens.getText();
@@ -182,10 +192,10 @@ public class Worker
 	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
 	 * @return a {@link java.lang.String} object
 	 */
-	public static String getColumn( SubtermContext b )
+	public String getColumn( SubtermContext b )
 	{
-//		return ( (SubtermRefContext) b ).columnRef().column.getTrimmedText();
-		return null;
+		RuleContext column = ( (SubtermRefContext) b ).column();
+		return _helper.getTrimmedText( column );
 	}
 
 	/**
@@ -251,29 +261,29 @@ public class Worker
 			Property prop = new Property();
 			prop.nth = column.nth;
 			prop.column = column;
-			String name = column.name;
-			String label = column.label;
+			String bean = column.label;
 			// TODO also match to catalog, schema, table
 			// TODO resolve best match
 			for( Item item : items )
 			{
-				if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.alias ) )
+				if( column.name.equalsIgnoreCase( item.name ) )
 				{
-					label = item.alias;
-//					prop.source = item.context.getText();
-					break;
-				}
-				else if( name.equalsIgnoreCase( item.name ) && label.equalsIgnoreCase( item.name ) )
-				{
-					label = item.name;
-//					prop.source = item.context.getText();
-					break;
+					if( column.label.equalsIgnoreCase( item.alias ) )
+					{
+						bean = item.alias;
+						break;
+					}
+					else if( column.label.equalsIgnoreCase( item.name ) )
+					{
+						bean = item.name;
+						break;
+					}
 				}
 			}
 
-			prop.variable = _helper.toVariableCase( label );
-			prop.getter = "get" + _helper.toMethodCase( label );
-			prop.setter = "set" + _helper.toMethodCase( label );
+			prop.variable = _helper.toVariableCase( bean );
+			prop.getter = "get" + _helper.toMethodCase( bean );
+			prop.setter = "set" + _helper.toMethodCase( bean );
 			prop.className = column.className;
 			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
 			prop.sqlType = column.type;

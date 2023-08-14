@@ -16,6 +16,7 @@ import normalsql.parse.NormalSQLParser.LiteralContext;
  */
 
 // TODO Maybe split into Statement and ResultSet specific subclasses.
+// TODO Probably rename to Accessor
 public class
 	Property
 {

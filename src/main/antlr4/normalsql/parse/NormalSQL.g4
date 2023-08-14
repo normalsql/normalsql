@@ -14,7 +14,6 @@ grammar NormalSQL;
 
 options
 {
-    contextSuperClass=normalsql.parse.GlobbingRuleContext;
     caseInsensitive=true;
 }
 
