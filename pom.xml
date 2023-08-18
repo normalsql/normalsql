@@ -43,7 +43,7 @@
     </properties>
 
     <dependencies>
-    <!-- runtime -->
+        <!-- runtime -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
@@ -65,7 +65,7 @@
             <version>5.0.4</version>
         </dependency>
 
-    <!-- test -->
+        <!-- test -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -102,6 +102,42 @@
                 </executions>
                 <configuration>
                     <visitor>true</visitor>
+                </configuration>
+            </plugin>
+
+            <!--
+                control h2database server:
+                $ mvn exec:java@h2-start
+                $ mvn exec:java@h2-stop
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>h2-start</id>
+                        <configuration>
+                            <arguments>
+                                <argument>-tcpPassword</argument>
+                                <argument>normalsql</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>h2-stop</id>
+                        <configuration>
+                            <arguments>
+                                <argument>-tcpPassword</argument>
+                                <argument>normalsql</argument>
+                                <argument>-tcpShutdown</argument>
+                                <argument>tcp://localhost:9092</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>org.h2.tools.Server</mainClass>
                 </configuration>
             </plugin>
 
