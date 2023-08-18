@@ -1,6 +1,6 @@
 
 /**
-* SelectForSaleResultSet.java Fri Jul 21 06:40:32 PDT 2023
+* SelectForSaleResultSet.java Tue Aug 15 10:19:31 PDT 2023
 *
 * Generated using NormalSQL's Select.vm template.
 *
@@ -76,8 +76,8 @@ public class
 	public final SelectForSaleResultSet execute()
 		throws SQLException
 	{
-        __ps.setString( 1, getnull() );
-        __ps.setInteger( 2, getnull() );
+        __ps.setString( 1, getStyle() );
+        __ps.setInteger( 2, getOdometer() );
 
         ResultSet rs = null;
         if( __ps.execute() )
@@ -89,20 +89,20 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    private String _null = "coupe";
-    public void setnull( String null ) { _null = null; }
-    public String getnull() { return _null; }
+    private String _style = "coupe";
+    public void setStyle( String style ) { _style = style; }
+    public String getStyle() { return _style; }
 
-    private Integer _null = 100000;
-    public void setnull( Integer null ) { _null = null; }
-    public Integer getnull() { return _null; }
+    private Integer _odometer = 100000;
+    public void setOdometer( Integer odometer ) { _odometer = odometer; }
+    public Integer getOdometer() { return _odometer; }
 
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-            , getnull()
-            , getnull()
+            , getStyle()
+            , getOdometer()
 		);
 	}
 }

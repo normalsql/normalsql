@@ -20,26 +20,26 @@ import java.io.FileReader;
  */
 public class CommandLineOptions
 {
-	/**
-	 * <p>Constructor for CommandLineOptions.</p>
-	 */
-	public CommandLineOptions()
-	{
-	}
+//	/**
+//	 * <p>Constructor for CommandLineOptions.</p>
+//	 */
+//	public CommandLineOptions()
+//	{
+//	}
 
-	/**
-	 * <p>Constructor for CommandLineOptions.</p>
-	 *
-	 * @param props a {@link normalsql.Config} object
-	 */
-	public CommandLineOptions( Config props )
-	{
-		if( props == null )
-		{
-			throw new NullPointerException( "props" );
-		}
-		_props = props;
-	}
+//	/**
+//	 * <p>Constructor for CommandLineOptions.</p>
+//	 *
+//	 * @param props a {@link normalsql.Config} object
+//	 */
+//	public CommandLineOptions( Config props )
+//	{
+//		if( props == null )
+//		{
+//			throw new NullPointerException( "props" );
+//		}
+//		_props = props;
+//	}
 
 	/** Constant <code>DRIVER="driver"</code> */
 	public final static String DRIVER = "driver";
@@ -59,6 +59,9 @@ public class CommandLineOptions
 	public final static String PROPERTY = "property";
 	/** Constant <code>ONLYPARSE="onlyparse"</code> */
 	public final static String ONLYPARSE = "onlyparse";
+
+	boolean _loaded = false;
+
 
 	String _filename = "normalsql";
 
@@ -81,7 +84,7 @@ public class CommandLineOptions
 	 *
 	 * @return a {@link java.lang.String} object
 	 */
-	public String getUrl()
+	public String getURL()
 	{
 		return coalesce( (String) _options.valueOf( URL ), _props.get( URL ) );
 	}
@@ -152,8 +155,9 @@ public class CommandLineOptions
 	 *
 	 * @param args an array of {@link java.lang.String} objects
 	 */
-	public void parse( String[] args )
+	public static CommandLineOptions parse( String[] args )
 	{
+		CommandLineOptions me = new CommandLineOptions();
 		OptionParser parser = new OptionParser();
 		parser.accepts( DRIVER ).withRequiredArg();
 		parser.accepts( URL ).withRequiredArg();
@@ -163,18 +167,18 @@ public class CommandLineOptions
 		parser.accepts( PACKAGE ).withRequiredArg();
 		parser.accepts( SOURCE ).withRequiredArg();
 		parser.accepts( TARGET ).withRequiredArg();
-		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( _filename );
+		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( me._filename );
 		parser.accepts( ONLYPARSE ).withRequiredArg();
 
-		_options = parser.parse( args );
+		me._options = parser.parse( args );
 
-		String filename = (String) _options.valueOf( PROPERTY );
+		String filename = (String) me._options.valueOf( PROPERTY );
 		if( !filename.endsWith( ".properties" )) 
 		{
 			filename = filename + ".properties";
 		}
 
-		// try straight filename then file in current dir. do not try classpath.
+		// TODO try straight filename then file in current dir. do not try classpath.
 		
 		try
 		{
@@ -192,14 +196,21 @@ public class CommandLineOptions
 			if( file != null ) 
 			{
 				FileReader reader = new FileReader( file );
-				_props = Config.load( reader );
-				_props.setURL( file.toURL() );
+				me._props = Config.load( reader );
+				me._props.setPropertiesFile( file.toURL() );
+				me._loaded = true;
+			}
+			else
+			{
+				System.err.printf( "properties file '%s' not found\n", filename );
 			}
 		}
 		catch( Exception e ) 
 		{
 			e.printStackTrace();
 		}
+
+		return me;
 	}
 
 	/**
@@ -226,12 +237,12 @@ public class CommandLineOptions
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
-		if( _props != null )
+		if( _loaded )
 		{
-			sb.append( "NormalSQL properties loaded from " ).append( _props.getURL() ).append( '\n' );
+			sb.append( "NormalSQL properties loaded from " ).append( _props.getPropertiesFile() ).append( '\n' );
 			sb.append( '\n' );
 			sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
-			sb.append( URL ).append( " = " ).append( getUrl() ).append( '\n' );
+			sb.append( URL ).append( " = " ).append( getURL() ).append( '\n' );
 			sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
 			sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
 			sb.append( PACKAGE ).append( " = " ).append( getPackage() ).append( '\n' );
@@ -239,6 +250,10 @@ public class CommandLineOptions
 			sb.append( TARGET ).append( " = " ).append( getTarget() ).append( '\n' );
 			sb.append( ONLYPARSE ).append( " = " ).append( Boolean.valueOf( getOnlyParse() ));
 			sb.append( '\n' );
+		}
+		else
+		{
+			sb.append( "no properties loaded" );
 		}
 		return sb.toString();
 	}

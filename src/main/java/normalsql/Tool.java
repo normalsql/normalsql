@@ -4,6 +4,7 @@
 package normalsql;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -14,7 +15,7 @@ import java.sql.Statement;
 
 
 /**
- * <p>Main class.</p>
+ * <p>Tool class.</p>
  *
  * @author jasonosgood
  * @version $Id: $Id
@@ -45,70 +46,55 @@ import java.sql.Statement;
  */
 	
 public class
-	Main
+	Tool
 {
 	/**
 	 * <p>main.</p>
 	 *
-	 * @param args an array of {@link java.lang.String} objects
+	 * @param args an array of {@link String} objects
 	 */
-	public static void main( String[] args )
+	public static void main( String[] args ) throws Exception
 	{
-		try
+		String filename = "normalsql.properties";
+		File cwd = new File( "." ).getCanonicalFile();
+		File file = new File( cwd, filename );
+		if( !file.exists() )
 		{
-			CommandLineOptions options = CommandLineOptions.parse( args );
-			System.out.println( options );
-			Main main = new Main();
-			main.init( options );
+			System.err.println( "'./normalsql.properties' not found" );
+			System.exit( -1 );
 		}
-		catch( Exception e )
-		{
-			e.printStackTrace( System.out );
-		}
+
+		FileReader reader = new FileReader( file );
+		Config config = Config.load( reader );
+		config.setPropertiesFile( file.toURL() );
+
+		init( config );
 		System.out.println( "done" );
+		System.exit( 0 );
 	}
 
-	Connection _conn = null;
+	static Connection _conn = null;
 
-//	boolean _onlyParse = false;
-
-//	public void init( Config props )
-//		throws Exception
-//	{
-//		CommandLineOptions options = new CommandLineOptions( props );
-//		init( options );
-//	}
-
-	// TODO: If properties aren't found or defined, then onlyparse = true
-	/**
-	 * <p>init.</p>
-	 *
-	 * @param options a {@link normalsql.CommandLineOptions} object
-	 * @throws java.lang.Exception if any.
-	 */
-	public void init( CommandLineOptions options )
+	public static void init( Config config )
 		throws Exception
 	{
-//		_onlyParse = options.getOnlyParse();
-
-//		if( !_onlyParse )
 		{
-			String driver = options.getDriver();
+			String driver = config.getDriver();
 			if( driver == null )
 			{
 				System.err.println( "JDBC driver class name cannot be null" );
-				return;
+				System.exit( -1 );
 			}
-			String url = options.getURL();
+			String url = config.getURL();
 			if( url == null )
 			{
 				System.err.println( "JDBC URL cannot be null" );
-				return;
+				System.exit( -1 );
 			}
 
 			Class.forName( driver );
-			String username = options.getUsername();
-			String password = options.getPassword();
+			String username = config.getUsername();
+			String password = config.getPassword();
 
 			_conn = DriverManager.getConnection( url, username, password );
 
@@ -136,10 +122,10 @@ public class
 	/**
 	 * <p>crawl.</p>
 	 *
-	 * @param sourceRoot a {@link java.nio.file.Path} object
-	 * @param targetRoot a {@link java.nio.file.Path} object
+	 * @param sourceRoot a {@link Path} object
+	 * @param targetRoot a {@link Path} object
 	 */
-	public void crawl( Path sourceRoot, Path targetRoot )
+	public static void crawl( Path sourceRoot, Path targetRoot )
 	{
 		Worker worker = new Worker( _conn );
 		try
@@ -206,5 +192,5 @@ public class
 	}
 
 	// TODO: Create command line option for this? eg. for a clean build operation
-	private boolean _alwaysOverwrite = true;
+	static boolean _alwaysOverwrite = true;
 }

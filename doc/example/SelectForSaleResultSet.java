@@ -1,6 +1,6 @@
 
 /**
-* SelectForSaleResultSet.java Fri Jul 21 06:40:32 PDT 2023
+* SelectForSaleResultSet.java Tue Aug 15 10:19:31 PDT 2023
 *
 * Generated using NormalSQL's ResultSet.vm template.
 *
@@ -120,19 +120,19 @@ public class
 
 	private Integer _id = 0;
 	/** column "${p.source}" **/
-	public Integer getid() { return _id; }
+	public Integer getID() { return _id; }
 
 	private String _make = null;
 	/** column "${p.source}" **/
-	public String getmake() { return _make; }
+	public String getMake() { return _make; }
 
 	private String _model = null;
 	/** column "${p.source}" **/
-	public String getmodel() { return _model; }
+	public String getModel() { return _model; }
 
 	private Integer _year = 0;
 	/** column "${p.source}" **/
-	public Integer getyear() { return _year; }
+	public Integer getYear() { return _year; }
 
 
 	// TODO switch from StringBuilder to printf
@@ -147,16 +147,16 @@ public class
 		sb.append( getRow() );
 		sb.append( ", \n" );
 		sb.append( "id: " );
-		sb.append( getid() );
+		sb.append( getID() );
 		sb.append( ", \n" );
 		sb.append( "make: " );
-		sb.append( getmake() );
+		sb.append( getMake() );
 		sb.append( ", \n" );
 		sb.append( "model: " );
-		sb.append( getmodel() );
+		sb.append( getModel() );
 		sb.append( ", \n" );
 		sb.append( "year: " );
-		sb.append( getyear() );
+		sb.append( getYear() );
 		sb.append( ", \n" );
 		return sb.toString();
 	}

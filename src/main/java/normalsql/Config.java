@@ -42,19 +42,9 @@ public class Config
 
 	private URL _url = null;
 	
-	/**
-	 * <p>setURL.</p>
-	 *
-	 * @param url a {@link java.net.URL} object
-	 */
-	public void setURL( URL url ) { _url = url; }
+	public void setPropertiesFile( URL url ) { _url = url; }
 	
-	/**
-	 * <p>getURL.</p>
-	 *
-	 * @return a {@link java.net.URL} object
-	 */
-	public URL getURL() { return _url; }
+	public URL getPropertiesFile() { return _url; }
 	
 	/**
 	 * <p>clear.</p>
@@ -400,5 +390,35 @@ public class Config
 	{
 		return map.hashCode();
 	}
+
+
+	public final static String DRIVER = "driver";
+	public final static String URL = "url";
+	public final static String USERNAME = "username";
+	public final static String PASSWORD = "password";
+	public final static String PACKAGE = "package";
+	public final static String SOURCE = "source";
+	public final static String TARGET = "target";
+
+	public String getDriver()
+	{
+		return get( DRIVER );
+	}
+
+	public String getURL()
+	{
+		return get( URL );
+	}
+
+	public String getUsername()
+	{
+		return get( USERNAME );
+	}
+
+	public String getPassword()
+	{
+		return get( PASSWORD );
+	}
+
 
 }
