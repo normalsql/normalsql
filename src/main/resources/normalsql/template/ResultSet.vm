@@ -44,7 +44,7 @@ public class
 		return __resultSet;
 	}
 
-	public boolean getSuccess()
+	public boolean hasResultSet()
 	{
 		return __resultSet != null;
 	}
