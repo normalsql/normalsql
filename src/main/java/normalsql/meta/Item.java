@@ -6,21 +6,18 @@ package normalsql.meta;
 import normalsql.parse.NormalSQLParser.ItemContext;
 
 /**
- * SELECT statement item. Specified in the query's source code. Later matched with
- * ResultSet Columns.
+ * Item from a SELECT statement item. Extracted from SQL query's source code.
+ * Then matched with a Column from the query's ResultSet. Item's capitalization
+ * is used for generating accessors. Note: Accessors use the data type, etc. from
+ * matched Column, not from Item.
  *
  * @author jasonosgood
  * @version $Id: $Id
  */
 
-// TODO Maybe split into TableRef (wildcard) and TableColumnRef variants
 public class Item
 {
 	public ItemContext context;
-
-//	public boolean wildcard;
-//	public TableRef tableRef;
-//	public TableColumnRef columnRef;
 	public String name;
 	public String alias;
 	public String source;
