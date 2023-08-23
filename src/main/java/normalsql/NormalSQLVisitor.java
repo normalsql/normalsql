@@ -25,12 +25,11 @@ extends
 {
 	public Parser parser;
 	public CommonTokenStream tokens;
-	ArrayList<Predicate<?>> predicates;
+	ArrayList<Predicate<?,?>> predicates;
 
 	Stack<Statement> stack;
 	Statement root;
 
-	/** {@inheritDoc} */
 	@Override
 	public Void visitParse( ParseContext context )
 	{
@@ -43,7 +42,6 @@ extends
 		return null;
 	}
 
-	/** {@inheritDoc} */
 	@Override
 	public Void visitSelect( SelectContext context )
 	{
@@ -55,7 +53,6 @@ extends
 		return null;
 	}
 
-	/** {@inheritDoc} */
 	@Override
 	public Void visitItemColumn( ItemColumnContext context )
 	{

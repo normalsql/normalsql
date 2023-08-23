@@ -7,7 +7,7 @@ import normalsql.meta.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ParseContext;
-import normalsql.parse.NormalSQLParser.SubtermRefContext;
+import normalsql.parse.NormalSQLParser.SubtermColumnContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
@@ -112,16 +112,16 @@ public class Worker
 					Comparison c = (Comparison) p;
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = _helper.create( c.value, column );
+					Property prop = _helper.create( c.literal, column );
 					work.statementProperties.add( prop );
 					break;
 				}
 				case "Between":
 				{
 					Between b = (Between) p;
-					switch( b.match )
+					switch( b.pattern )
 					{
-						case COL_VAL_VAL:
+						case ColumnLiteralLiteral:
 						{
 							String column = getColumn( b.test );
 							Property low = _helper.create( b.low, column, "low" );
@@ -131,7 +131,7 @@ public class Worker
 							work.statementProperties.add( high );
 							break;
 						}
-						case VAL_COL_COL:
+						case LiteralColumnColumn:
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
@@ -194,7 +194,7 @@ public class Worker
 	 */
 	public String getColumn( SubtermContext b )
 	{
-		RuleContext column = ( (SubtermRefContext) b ).column();
+		RuleContext column = ( (SubtermColumnContext) b ).column();
 		return _helper.getTrimmedText( column );
 	}
 

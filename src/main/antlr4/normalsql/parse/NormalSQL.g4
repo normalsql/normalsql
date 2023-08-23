@@ -122,8 +122,8 @@ select
         ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  // # ItemTableRef
-        | term ( 'AS'? name )?                         // # ItemColumn
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
+        | term ( 'AS'? name )?                         # ItemColumn
         ;
 
     top
@@ -259,8 +259,8 @@ subterm
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     | 'ROW' '(' terms? ')'                                            # SubtermRow
     | function                                                        # SubtermFunction
-    | literal                                                         # SubtermValue
-    | column                                                          # SubtermRef
+    | literal                                                         # SubtermLiteral
+    | column                                                          # SubtermColumn
 //    | term 'COLLATE' id # TermCollate TODO
 //    | sequenceValueExpression TODO
     ;

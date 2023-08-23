@@ -4,9 +4,7 @@
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateContext;
-import normalsql.parse.NormalSQLParser.SubtermRefContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
-import normalsql.parse.NormalSQLParser.SubtermValueContext;
 
 /**
  * <p>Abstract Predicate class.</p>
@@ -16,13 +14,8 @@ import normalsql.parse.NormalSQLParser.SubtermValueContext;
  * @version $Id: $Id
  */
 public abstract class
-	Predicate<T extends PredicateContext>
+	Predicate<T extends PredicateContext, E extends Enum<E>>
 {
-	/** Constant <code>COL</code> */
-	public final static Class COL = SubtermRefContext.class;
-	/** Constant <code>VAL</code> */
-	public final static Class VAL = SubtermValueContext.class;
-
 	public T context;
 	public SubtermContext parent;
 
@@ -37,10 +30,32 @@ public abstract class
 		parent = (SubtermContext) context.parent;
 	}
 
-	/**
-	 * <p>isMatched.</p>
-	 *
-	 * @return a boolean
-	 */
-	abstract public boolean isMatched();
+	public E pattern;
+
+	public boolean isMatched()
+	{
+		return pattern != null;
+	}
+
+	public static <E extends Enum<E>> E valueOf( Class<E> ugh, SubtermContext... contexts )
+	{
+		String name = "";
+		for( SubtermContext c : contexts )
+		{
+			String simple = c.getClass().getSimpleName();
+			simple = simple.replaceFirst( "^Subterm", "" ).replaceFirst( "Context$", "" );
+			name += simple;
+		}
+
+		E[] boo = ugh.getEnumConstants();
+		for( E zip : boo )
+		{
+			if( zip.name().equals( name ) ) return zip;
+
+		}
+
+		return null;
+	}
+
+
 }
