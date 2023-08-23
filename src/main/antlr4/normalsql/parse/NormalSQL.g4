@@ -116,11 +116,14 @@ select
       ( 'FROM' join ( ',' join )* )? where? groupBy? having? windows? qualify?
     ;
     quantifier
-        : 'DISTINCT' ( 'ON' '(' terms ')' )? | 'ALL' | 'UNIQUE' ;
+        : 'DISTINCT' ( 'ON' '(' terms ')' )?
+        | 'ALL'
+        | 'UNIQUE'
+        ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?   # ItemTableRef
-        | term ( 'AS'? name )?                          # ItemColumn
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  // # ItemTableRef
+        | term ( 'AS'? name )?                         // # ItemColumn
         ;
 
     top
@@ -212,7 +215,7 @@ select
 dataType
     : 'NULL'
     | id+
-    ; // TODO dataTypes
+    ; // TODO explicit dataTypes
    
 row
     : term ; // TODO row value expression
@@ -222,19 +225,19 @@ terms
 
 // TODO  | term ( 'OR' || '||' ) term
 term
-    : 'NOT' term                                # TermNOT
-    | term 'AND' term                           # TermAND
-    | term 'OR' term                            # TermOR
-    | 'EXISTS' '(' query ')'                      # TermEXISTS
-    | 'UNIQUE' /* nullsDistinct */  '(' query ')' # TermUNIQUE
-    | 'INTERSECTS' '(' subterm ',' subterm ')'  # TermIntersects
-    | subterm                                   # TermSubterm
+    : 'NOT' term                                  // # TermNOT
+    | term 'AND' term                             // # TermAND
+    | term 'OR' term                              // # TermOR
+    | 'EXISTS' '(' query ')'                      // # TermEXISTS
+    | 'UNIQUE' /* nullsDistinct */  '(' query ')' // # TermUNIQUE
+    | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
+    | subterm                                     // # TermSubterm
     // TODO assignment operators go here ?
     ;
 
 // TODO '||' can be either string concatenation or logical OR
 subterm
-    : subterm ( '::' id )+                                       # SubtermScope
+    : subterm ( '::' id )+                                            # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
@@ -246,18 +249,18 @@ subterm
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | '(' terms ')' '.' name                                              # SubtermFieldRef
-    | '(' terms? ')'                                                    # SubtermNested
+    | '(' terms ')' '.' name                                          # SubtermFieldRef
+    | '(' terms? ')'                                                  # SubtermNested
     | query                                                           # SubtermQuery
     | case                                                            # SubtermCase
     | array                                                           # SubtermArray
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                    # SubtermCast
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
     | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                  # SubtermSequence
-    | 'ROW' '(' terms? ')'                                              # SubtermRow
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
+    | 'ROW' '(' terms? ')'                                            # SubtermRow
     | function                                                        # SubtermFunction
     | literal                                                         # SubtermValue
-    | column                                                       # SubtermRef
+    | column                                                          # SubtermRef
 //    | term 'COLLATE' id # TermCollate TODO
 //    | sequenceValueExpression TODO
     ;
@@ -275,8 +278,8 @@ predicate
     | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                                  # PredicateOfType
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-    | 'NOT'? 'IN' '(' ( query | terms )? ')'                                         # PredicateIN
-//    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )     # PredicateIN // TODO: Oracle
+    | 'NOT'? 'IN' '(' ( query | terms )? ')'                                       # PredicateIN
+//    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )     # PredicateIN // TODO: Oracle allows single term w/o parens, eg 'x IN y'
     | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
     | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
     ;

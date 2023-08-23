@@ -26,7 +26,8 @@ public class SelectIN
 	public static void main( String[] args )
 		throws Exception
 	{
-		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+//		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+		String url = "jdbc:h2:~/temp";
 		Connection conn = DriverManager.getConnection( url, "sa", null );
 //		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
 

@@ -19,7 +19,7 @@ import java.util.Stack;
  * @version $Id: $Id
  */
 public class
-NormalSQLVisitor
+	NormalSQLVisitor
 extends
 	NormalSQLBaseVisitor<Void>
 {
@@ -55,22 +55,6 @@ extends
 		return null;
 	}
 
-	// TODO populate Work with table's columns (scrapped from metadata)
-//	@Override
-//	public Void visitItemWildcard( ItemWildcardContext context )
-//	{
-//		Item item = new Item();
-//		item.context = context;
-//		item.wildcard = true;
-//		if( context.tableRef() != null )
-//		{
-//			item.tableRef = new TableRef( context.tableRef() );
-//		}
-//		stack.peek().items.add( item );
-////		return super.visitItemWildcard( context );
-//		return null;
-//	}
-
 	/** {@inheritDoc} */
 	@Override
 	public Void visitItemColumn( ItemColumnContext context )
@@ -105,37 +89,63 @@ extends
 //		return super.visitSource( context );
 //	}
 
-	/** {@inheritDoc} */
+//	@Override
+//	public Void visitPredicateCompare( PredicateCompareContext ctx )
+//	{
+//		Comparison comparison = new Comparison( ctx );
+//		if( comparison.isMatched() )
+//		{
+//			stack.peek().predicates.add( comparison );
+//			predicates.add( comparison );
+//		}
+//		else
+//		{
+//			super.visitPredicateCompare( ctx );
+//		}
+//		return null;
+//	}
+
 	@Override
-	public Void visitPredicateCompare( PredicateCompareContext ctx )
+	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 	{
-		Comparison comparison = new Comparison( ctx );
-		if( comparison.isMatched() )
+		PredicateContext pc = ctx.predicate();
+		Predicate p = null;
+		switch( pc.getClass().getSimpleName() )
 		{
-			stack.peek().predicates.add( comparison );
-			predicates.add( comparison );
+			case "PredicateBETWEENContext":
+				p = new Between( (PredicateBETWEENContext) pc );
+				break;
+
+			case "PredicateCompareContext":
+				p = new Comparison( (PredicateCompareContext) pc );
+				break;
+
+			default:
+				break;
 		}
-		else
+
+		if( p != null && p.isMatched() )
 		{
-			super.visitPredicateCompare( ctx );
+			stack.peek().predicates.add( p );
+			predicates.add( p );
+			return null;
 		}
-		return null;
+		return super.visitSubtermPredicate( ctx );
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public Void visitPredicateBETWEEN( PredicateBETWEENContext ctx )
-	{
-		Between between = new Between( ctx );
-		if( between.isMatched() )
-		{
-			stack.peek().predicates.add( between );
-			predicates.add( between );
-		}
-		else
-		{
-			super.visitPredicateBETWEEN( ctx );
-		}
-		return null;
-	}
+//	@Override
+//	public Void visitPredicateBETWEEN( PredicateBETWEENContext ctx )
+//	{
+//		Between between = new Between( ctx );
+//		if( between.isMatched() )
+//		{
+//			stack.peek().predicates.add( between );
+//			predicates.add( between );
+//		}
+//		else
+//		{
+//			super.visitPredicateBETWEEN( ctx );
+//		}
+//		return null;
+//	}
 }
