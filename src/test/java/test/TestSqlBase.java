@@ -4,7 +4,6 @@
 package test;
 
 import normalsql.parse.SqlBaseLexer;
-import normalsql.parse.ReservedParser;
 import org.antlr.v4.runtime.*;
 
 import java.nio.file.*;

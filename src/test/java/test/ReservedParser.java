@@ -1,5 +1,6 @@
-package normalsql.parse;
+package test;
 
+import normalsql.parse.SqlBaseParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 

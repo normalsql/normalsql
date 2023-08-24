@@ -4,8 +4,6 @@
 package test;
 
 //import normalsql.parse.ReservedParser;
-import normalsql.parse.ReservedParser;
-import normalsql.parse.SqlBaseParser;
 import normalsql.parse.SqlBaseLexer;
 import org.antlr.v4.runtime.*;
 
