@@ -12,10 +12,7 @@
 
 grammar NormalSQL;
 
-options
-{
-    caseInsensitive=true;
-}
+options { caseInsensitive=true; }
 
 parse
     : statement? ( ';' statement? )* EOF ;
@@ -28,6 +25,7 @@ statement
     | query
     | drop
     | create
+    // | set // TODO
     ;
 
 drop
@@ -132,6 +130,7 @@ select
     into
         : 'INTO' table ;
 
+    // TODO: Change from left-recursive to flat
     join
         : join
           ( 'CROSS' 'JOIN' source
@@ -431,9 +430,11 @@ name
     | unreserved
     ;
 
+// All tokens in this grammars which are unreserved SQL keywords. Keep up to
+// date manually. (Ugh.)
 unreserved
     : ~(
-        // Exclude SQL's reserved keywords...
+        // Exclude tokens which are SQL's reserved keywords...
         'ALL'
         | 'AND'
         | 'ANY'
@@ -524,7 +525,7 @@ unreserved
         | 'WITH'
 //        | 'YEAR'
 
-        // ...and all the other things which cannot be a name.
+        // ...And exclude all the other tokens which cannot be a keyword or name
         | DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
@@ -533,7 +534,9 @@ unreserved
 
 id
     : ID
-    // Roundabout way to accept grammar's keyword-like tokens
+    // Exclude all the tokens which cannot be an ID.
+    // Roundabout way to accept grammar's keyword-like tokens.
+    // Copypasta because ANTLR 4 only supports excluding lists of tokens.
     | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
@@ -585,7 +588,7 @@ STRING
 UNICODE_NAME
     : 'U&' NAME ;
 
-// TODO square bracket names
+// TODO square bracket names, per T-SQL. Will probably conflict with 'index' rule.
 NAME
     : '"' ( ~'"' | '""' )* '"' ;
 
