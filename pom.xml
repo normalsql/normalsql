@@ -6,11 +6,11 @@
 
     <groupId>org.normalsql</groupId>
     <artifactId>normalsql</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.0</version>
     <packaging>jar</packaging>
 
     <name>normalsql</name>
-    <description>Use SQL statements to generate app source code.</description>
+    <description>Compile SQL statements into Java source code.</description>
     <url>https://normalsql.org</url>
 
     <licenses>
@@ -22,8 +22,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/jasonosgood/normalsql</connection>
-        <url>https://github.com/jasonosgood/normalsql</url>
+        <connection>scm:git:https://github.com/normalsql/normalsql</connection>
+        <developerConnection>scm:git:https://github.com/normalsql/normalsql</developerConnection>
+        <url>https://github.com/normalsql/normalsql</url>
     </scm>
 
     <developers>
@@ -105,12 +106,12 @@
                 </configuration>
             </plugin>
 
-            <!--
-                control h2database server:
-                $ mvn exec:java@h2-start
-                $ mvn exec:java@h2-stop
-            -->
             <plugin>
+                <!--
+                    control h2database server:
+                    $ mvn exec:java@h2-start
+                    $ mvn exec:java@h2-stop
+                -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
