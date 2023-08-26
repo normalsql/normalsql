@@ -110,7 +110,7 @@ combine
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-      ( 'FROM' join ( ',' join )* )? where? groupBy? having? windows? qualify?
+      ( 'FROM' from ( ',' from )* )? where? groupBy? having? windows? qualify?
     ;
 
     quantifier
@@ -130,22 +130,20 @@ select
     into
         : 'INTO' table ;
 
-    // TODO: Change from left-recursive to flat
-    join
-        : join
-          ( 'CROSS' 'JOIN' source
-          | joinType? 'JOIN' join joinCriteria?
-          | 'NATURAL' joinType? 'JOIN' source
-          )
-        | source
-        ;
+    from : source ( join source criteria* )*  ;
 
-        joinType
-            : 'INNER'| ( 'LEFT'| 'RIGHT'| 'FULL' ) 'OUTER'? ;
+        join
+            : ( 'CROSS'
+              | 'INNER'
+              | 'NATURAL'? ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
+              | 'NATURAL' )?
+              'JOIN'
+            ;
 
-        // TODO allow criteria for all joins, delegate validation
-        joinCriteria
-            : 'ON' term | 'USING' columns ;
+        criteria
+            : 'ON' term
+            | 'USING' columns
+            ;
 
         source
             : ( unnest
@@ -156,7 +154,7 @@ select
               | 'JSON_TABLE' // TODO
               | 'XMLTABLE' // TODO
               | function
-              | '(' join ')'
+              | '(' from ')'
               | table
               | query
                )
@@ -389,7 +387,7 @@ jsonObject
 columns
     : '(' column ( ',' column )* ')' ;
 
-// These variants produce flattened parse tree
+// Having these variants produce flatter parse trees
 column
     : ((( name '.' )? name '.' )? name '.' )? name;
 
@@ -399,7 +397,7 @@ table
 schema
     : ( name '.' )? name ;
 
-// These variants work too. Maybe a "semantic" parse tree makes post parser stuff easier.
+// These variants work too. Maybe a "semantic" parse tree will make post parser stuff easier.
 //column : ( table '.' )? name ;
 //table : ( schema '.' )? name ;
 //schema : ( catalog '.' )? name ;
