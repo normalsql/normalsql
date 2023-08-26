@@ -69,7 +69,6 @@ update
     : 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
 
     setter
-//        : column EQ literal ;
         : column '=' literal ;
 
 query
@@ -88,11 +87,11 @@ query
     offset
         : 'OFFSET' term rowRows? ;
 
+    limit
+        : 'LIMIT' term ( ',' term )? ;
+
     fetch
         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
-
-    limit
-        : 'LIMIT' term (( 'OFFSET' | ',' ) term )? ;
 
     forUpdate
         : 'FOR' 'UPDATE' ;
@@ -113,6 +112,7 @@ select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
       ( 'FROM' join ( ',' join )* )? where? groupBy? having? windows? qualify?
     ;
+
     quantifier
         : 'DISTINCT' ( 'ON' '(' terms ')' )?
         | 'ALL'
@@ -189,24 +189,24 @@ select
                 | name
                 ;
 
-            partitionBy
-                : 'PARTITION' 'BY' terms ;
+                partitionBy
+                    : 'PARTITION' 'BY' terms ;
 
-            windowFrame
-                : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                  ( preceding | 'BETWEEN' following 'AND' following )
-                  ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-                ;
-
-                preceding
-                    : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-                    | 'CURRENT' 'ROW'
+                windowFrame
+                    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                      ( preceding | 'BETWEEN' following 'AND' following )
+                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
                     ;
 
-                following
-                    : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-                    | preceding
-                    ;
+                    preceding
+                        : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+                        | 'CURRENT' 'ROW'
+                        ;
+
+                    following
+                        : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+                        | preceding
+                        ;
 
     qualify
         : 'QUALIFY' term ;
