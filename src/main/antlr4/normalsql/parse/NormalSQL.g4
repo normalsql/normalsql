@@ -84,6 +84,16 @@ query
             : name ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
             ; // TODO rule for column aliases
 
+    combine
+        : combine ( 'INTERSECT' | 'MINUS' ) allDistinct? combine
+        | combine ( 'UNION' | 'EXCEPT' ) allDistinct? combine
+        | combine 'MULTISET' allDistinct? combine
+        | select
+        | 'TABLE' table
+        | values
+        | '(' query ')'
+        ;
+
     offset
         : 'OFFSET' term rowRows? ;
 
@@ -96,18 +106,6 @@ query
     forUpdate
         : 'FOR' 'UPDATE' ;
 
-combine
-    : combine ( 'INTERSECT' | 'MINUS' ) allDistinct? combine
-    | combine ( 'UNION' | 'EXCEPT' ) allDistinct? combine
-    | combine 'MULTISET' allDistinct? combine
-    | select
-    | 'TABLE' table
-    | values
-    | '(' query ')'
-    ;
-
-    values : 'VALUES' terms ;
-
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
       ( 'FROM' from ( ',' from )* )? where? groupBy? having? windows? qualify?
@@ -119,13 +117,13 @@ select
         | 'UNIQUE'
         ;
 
+    top
+        : 'TOP' ( DECIMAL | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
+
     item
         : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
         | term ( 'AS'? name )?                         # ItemColumn
         ;
-
-    top
-        : 'TOP' ( DECIMAL | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
 
     into
         : 'INTO' table ;
@@ -148,8 +146,11 @@ select
         source
             : ( unnest
               | values
-              // TODO: refactor to subrule 'tableSpec'?
-              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
+              // TODO: What are table (valued) functions?
+              //  Added to pass ./h2/src/test/org/h2/test/scripts/functions/system/table.sql
+              // http://h2database.com/html/functions.html#table
+              // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
+//              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
               | 'JSON_TABLE' // TODO
               | 'XMLTABLE' // TODO
@@ -157,15 +158,25 @@ select
               | '(' from ')'
               | table
               | query
-               )
+              )
               ( 'AS'? name names? )?
             ;
 
+            // TODO: Should this part of rule 'function'?
             unnest
                 : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
-
+/*
             columnSpec
                 : name ( dataType | schema ) '=' ( array | row ) ;
+
+                dataType
+                    : 'NULL'
+                    | id+
+                    ; // TODO explicit dataTypes
+
+                row
+                    : term ; // TODO row value expression
+*/
 
     where
         : 'WHERE' term ;
@@ -182,41 +193,10 @@ select
         windowAlias
             : name 'AS' window ;
 
-            window
-                : '(' name? partitionBy? orderBy? windowFrame? ')'
-                | name
-                ;
-
-                partitionBy
-                    : 'PARTITION' 'BY' terms ;
-
-                windowFrame
-                    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                      ( preceding | 'BETWEEN' following 'AND' following )
-                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-                    ;
-
-                    preceding
-                        : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-                        | 'CURRENT' 'ROW'
-                        ;
-
-                    following
-                        : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-                        | preceding
-                        ;
-
     qualify
         : 'QUALIFY' term ;
 
-dataType
-    : 'NULL'
-    | id+
-    ; // TODO explicit dataTypes
-   
-row
-    : term ; // TODO row value expression
-   
+
 terms
     : term ( ',' term )* ;
 
@@ -292,6 +272,9 @@ type
     | id+ ( '(' DECIMAL ( ',' DECIMAL )? ')' id* )?
     ;
 
+values
+    : 'VALUES' terms ;
+
 array
     : 'ARRAY' '[' terms? ']' ;
 
@@ -322,6 +305,30 @@ function
 
     over
         : 'OVER' window ;
+
+window
+    : '(' name? partitionBy? orderBy? windowFrame? ')'
+    | name
+    ;
+
+    partitionBy
+        : 'PARTITION' 'BY' terms ;
+
+    windowFrame
+        : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+          ( preceding | 'BETWEEN' following 'AND' following )
+          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+        ;
+
+        preceding
+            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+            | 'CURRENT' 'ROW'
+            ;
+
+        following
+            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+            | preceding
+            ;
 
 orderBy
     : 'ORDER' 'BY' orderByItem ( ',' orderByItem )*
