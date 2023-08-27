@@ -196,7 +196,6 @@ select
     qualify
         : 'QUALIFY' term ;
 
-
 terms
     : term ( ',' term )* ;
 
@@ -206,8 +205,9 @@ term
     | term 'AND' term                             // # TermAND
     | term 'OR' term                              // # TermOR
     | 'EXISTS' '(' query ')'                      // # TermEXISTS
-    | 'UNIQUE' /* nullsDistinct */  '(' query ')' // # TermUNIQUE
-    | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')' // # TermUNIQUE
+    // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+//    | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
     | subterm                                     // # TermSubterm
     // TODO assignment operators go here ?
     ;
@@ -247,24 +247,26 @@ subterm
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
         ;
 
-predicate
-    : comparator subterm                                                           # PredicateCompare
-    | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
-    | 'IS' 'NOT'? truth                                                            # PredicateTruth
-    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
-    | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                                  # PredicateOfType
-    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
-    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-    | 'NOT'? 'IN' '(' ( query | terms )? ')'                                       # PredicateIN
-//    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )     # PredicateIN // TODO: Oracle allows single term w/o parens, eg 'x IN y'
-    | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
-    | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
-    ;
+    predicate
+        : comparator subterm                                                           # PredicateCompare
+        | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+        | 'IS' 'NOT'? truth                                                            # PredicateTruth
+        | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
+        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                                  # PredicateOfType
+        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
+        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                     # PredicateIN
+        // TODO: Oracle's IN predicate allows single term w/o parens, eg 'x IN y'
+//        | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )                            # PredicateIN
+        | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
+        | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
+        ;
 
-    jsonType
-        : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
+        jsonType
+            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
-comparator  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
+        // TODO: can this be a Token? would simplify the 'unreserved' and 'id' rules a bit.
+        comparator  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 
 type
     : 'ROW' '(' name type ( ',' name type )* ')'
