@@ -21,6 +21,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.apache.velocity.tools.generic.EscapeTool;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -304,6 +305,7 @@ public class Worker
 	public void merge( Work work ) throws IOException
 	{
 		HashMap<String, Object> childMap = work.asMap();
+		childMap.put( "esc", new EscapeTool() );
 		// TODO change to 'now', use same Date for all artifacts
 		childMap.put( "date", new Date() );
 

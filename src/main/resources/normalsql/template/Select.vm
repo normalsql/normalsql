@@ -7,6 +7,7 @@
 ##
 ## Template Parameters:
 ##
+##     esc - EscapeTool
 ##     date - current timestamp
 ##     packageName - target Java package name as String
 ##     statementClassName - target Java class name for PreparedStatement wrapper as String
@@ -54,13 +55,13 @@ public class
     ## add back each '\n', then concat each line with '+', then end with ';'
 	public final String __preparedSQL =
 		#foreach( $line in $preparedSQL.split('\n') )
-		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
 		#end
 
     ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 	public final String __printfSQL =
 		#foreach( $line in $printfSQL.split('\n') )
-		"${line}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
 		#end
 
 	/**
