@@ -53,7 +53,7 @@ extends
 
 		if( !isMatched() ) return;
 
-		// TODO: Move this logic to the Working, like for Between predicates
+		// TODO: Move this logic to Worker, like for Between predicates
 		switch( pattern )
 		{
 			case LiteralColumn:

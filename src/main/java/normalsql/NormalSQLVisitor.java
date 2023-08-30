@@ -27,16 +27,22 @@ extends
 	public CommonTokenStream tokens;
 	ArrayList<Predicate<?,?>> predicates;
 
-	Stack<Statement> stack;
+	Stack<Statement> statementStack;
+//	Stack<Predicate> predicateStack;
+	// TODO: Support multiple root-level statements
 	Statement root;
 
 	@Override
 	public Void visitParse( ParseContext context )
 	{
 		predicates = new ArrayList<>();
-		stack = new Stack<>();
+
+		statementStack = new Stack<>();
 		root = new Statement();
-		stack.add( root );
+		statementStack.add( root );
+
+//		predicateStack = new Stack<>();
+
 
 		super.visitParse( context );
 		return null;
@@ -45,10 +51,10 @@ extends
 	@Override
 	public Void visitSelect( SelectContext context )
 	{
-		stack.push( new Select() );
+		statementStack.push( new Select() );
 		super.visitSelect( context );
-		Statement child = stack.pop();
-		Statement parent = stack.peek();
+		Statement child = statementStack.pop();
+		Statement parent = statementStack.peek();
 		parent.add( child );
 		return null;
 	}
@@ -64,7 +70,7 @@ extends
 		{
 			item.alias = tokens.getText( context.name() );
 		}
-		stack.peek().items.add( item );
+		statementStack.peek().items.add( item );
 		super.visitItemColumn( context );
 		return null;
 	}
@@ -86,22 +92,6 @@ extends
 //		return super.visitSource( context );
 //	}
 
-//	@Override
-//	public Void visitPredicateCompare( PredicateCompareContext ctx )
-//	{
-//		Comparison comparison = new Comparison( ctx );
-//		if( comparison.isMatched() )
-//		{
-//			stack.peek().predicates.add( comparison );
-//			predicates.add( comparison );
-//		}
-//		else
-//		{
-//			super.visitPredicateCompare( ctx );
-//		}
-//		return null;
-//	}
-
 	@Override
 	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 	{
@@ -117,32 +107,20 @@ extends
 				p = new Comparison( (PredicateCompareContext) pc );
 				break;
 
+			case "PredicateINContext":
+				p = new IN( (PredicateINContext) pc );
+				break;
+
 			default:
 				break;
 		}
 
 		if( p != null && p.isMatched() )
 		{
-			stack.peek().predicates.add( p );
+			statementStack.peek().predicates.add( p );
 			predicates.add( p );
 			return null;
 		}
 		return super.visitSubtermPredicate( ctx );
 	}
-
-//	@Override
-//	public Void visitPredicateBETWEEN( PredicateBETWEENContext ctx )
-//	{
-//		Between between = new Between( ctx );
-//		if( between.isMatched() )
-//		{
-//			stack.peek().predicates.add( between );
-//			predicates.add( between );
-//		}
-//		else
-//		{
-//			super.visitPredicateBETWEEN( ctx );
-//		}
-//		return null;
-//	}
 }

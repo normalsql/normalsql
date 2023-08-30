@@ -7,7 +7,7 @@
 package normalsql.meta;
 
 /**
- * <p>Column class.</p>
+ * POJO ResultSet column metadata, one instance per column.
  *
  * @author jasonosgood
  * @version $Id: $Id

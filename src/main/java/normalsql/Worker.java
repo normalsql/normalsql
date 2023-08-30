@@ -108,15 +108,6 @@ public class Worker
 		{
 			switch( p.getClass().getSimpleName() )
 			{
-				case "Comparison":
-				{
-					Comparison c = (Comparison) p;
-					// TODO add operator to method signature
-					String column = getColumn( c.column );
-					Property prop = _helper.create( c.literal, column );
-					work.statementProperties.add( prop );
-					break;
-				}
 				case "Between":
 				{
 					Between b = (Between) p;
@@ -124,11 +115,11 @@ public class Worker
 					{
 						case ColumnLiteralLiteral:
 						{
-							String column = getColumn( b.test );
-							Property low = _helper.create( b.low, column, "low" );
+							String name = getColumn( b.test );
+							Property low = _helper.create( b.low, name, "low" );
 							work.statementProperties.add( low );
 
-							Property high = _helper.create( b.high, column, "high" );
+							Property high = _helper.create( b.high, name, "high" );
 							work.statementProperties.add( high );
 							break;
 						}
@@ -143,6 +134,23 @@ public class Worker
 						default:
 							break;
 					}
+					break;
+				}
+				case "Comparison":
+				{
+					Comparison c = (Comparison) p;
+					// TODO add operator to method signature
+					String column = getColumn( c.column );
+					Property prop = _helper.create( c.literal, column );
+					work.statementProperties.add( prop );
+					break;
+				}
+				case "IN":
+				{
+					IN i = (IN) p;
+					String column = getColumn( i.column );
+//					Property prop = _helper.create( i.literals, column );
+//					work.statementProperties.add( prop );
 					break;
 				}
 				default: break;
@@ -188,7 +196,7 @@ public class Worker
 	}
 
 	/**
-	 * <p>getColumn.</p>
+	 * <p>returns name of column</p>
 	 *
 	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
 	 * @return a {@link java.lang.String} object

@@ -32,8 +32,10 @@ public class SelectIN
 //		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
 
 //		PreparedStatement ps = processPreparedStatement( conn, "select 1 in ( ?, ? );" );
+//		PreparedStatement ps = processPreparedStatement( conn, "select 'a' in ( ?, ? );" );
 		PreparedStatement ps = processPreparedStatement( conn, "select 'a' = any ( ? );" );
 		String array[] = {  "2", "a", "3", "4" };
+//		String array[] = {  "2", "3", "4" };
 		ps.setObject( 1, array );
 //		ps.setString( 1, "a" );
 		if( ps.execute() )
