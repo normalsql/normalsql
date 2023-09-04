@@ -20,4 +20,19 @@ public class Param
 	public int scaled;
 	public int precision;
 	public int mode;
+
+	@Override
+	public String toString() {
+		return "Param{" +
+				"nth=" + nth +
+				", type=" + type +
+				", typeName='" + typeName + '\'' +
+				", isNullable=" + isNullable +
+				", className='" + className + '\'' +
+				", isSigned=" + isSigned +
+				", scaled=" + scaled +
+				", precision=" + precision +
+				", mode=" + mode +
+				'}';
+	}
 }

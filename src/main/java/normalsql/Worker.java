@@ -6,9 +6,7 @@ package normalsql;
 import normalsql.meta.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
-import normalsql.parse.NormalSQLParser.ParseContext;
-import normalsql.parse.NormalSQLParser.SubtermColumnContext;
-import normalsql.parse.NormalSQLParser.SubtermContext;
+import normalsql.parse.NormalSQLParser.*;
 import normalsql.template.JavaHelper;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -147,10 +145,15 @@ public class Worker
 				}
 				case "IN":
 				{
-					IN i = (IN) p;
-					String column = getColumn( i.column );
-//					Property prop = _helper.create( i.literals, column );
-//					work.statementProperties.add( prop );
+					IN in = (IN) p;
+					String column = getColumn( in.column );
+					for( int nth = 0; nth < in.literals.size(); nth++ )
+					{
+						SubtermLiteralContext l = in.literals.get( nth );
+						String temp = column + "_" + (nth + 1);
+						Property prop = _helper.create( l, temp);
+						work.statementProperties.add( prop );
+					}
 					break;
 				}
 				default: break;
