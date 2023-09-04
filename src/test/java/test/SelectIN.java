@@ -27,16 +27,33 @@ public class SelectIN
 		throws Exception
 	{
 //		String url = "jdbc:h2:tcp://localhost/~/Projects/ambrose/db/cm";
+//		String url = "jdbc:h2:mem:";
 		String url = "jdbc:h2:~/temp";
 		Connection conn = DriverManager.getConnection( url, "sa", null );
 //		Map<String, Table> tables = MetaData.getTablesAndColumns( conn );
 
 //		PreparedStatement ps = processPreparedStatement( conn, "select 1 in ( ?, ? );" );
 //		PreparedStatement ps = processPreparedStatement( conn, "select 'a' in ( ?, ? );" );
-		PreparedStatement ps = processPreparedStatement( conn, "select 'a' = any ( ? );" );
-		String array[] = {  "2", "a", "3", "4" };
+//		PreparedStatement ps = processPreparedStatement( conn, "select 'a' = any ( ? );" );
+//		String array[] = {  "2", "a", "3", "4" };
 //		String array[] = {  "2", "3", "4" };
-		ps.setObject( 1, array );
+//		ps.setObject( 1, array );
+
+		// http://h2database.com/html/performance.html
+
+		/*
+		Prepared Statements and IN(...)
+
+Avoid generating SQL statements with a variable size IN(...) list. Instead, use a prepared statement with arrays as in the following example:
+
+PreparedStatement prep = conn.prepareStatement(
+    "SELECT * FROM TEST WHERE ID = ANY(?)");
+prep.setObject(1, new Long[] { 1L, 2L });
+ResultSet rs = prep.executeQuery();
+
+		 */
+		PreparedStatement ps = processPreparedStatement( conn, "explain SELECT * FROM TEST WHERE ID = ANY(?)" );
+		ps.setObject(1, new Long[] { 1L, 2L });
 //		ps.setString( 1, "a" );
 		if( ps.execute() )
 		{
