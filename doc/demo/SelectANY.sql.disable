@@ -1,0 +1,10 @@
+/*
+Works with Postgres. Both the query and PreparedStatement's metadata.
+TODO Query in H2 does not work, but metadata does. Fix it.
+TODO Experiment with T-SQL, SQLite, MySQL, Oracle, etc.
+*/
+
+SELECT *
+FROM (VALUES (1, 'apple'), (2, 'banana'), (3, 'cherry'), (4, 'daikon')
+    t("count", "fruit"))
+where "count" = any (1, 2);
