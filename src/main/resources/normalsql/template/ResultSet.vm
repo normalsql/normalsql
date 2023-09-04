@@ -136,11 +136,11 @@ public class
 
 	#foreach( $p in $resultSetProperties )
 	private ${p.classShortName} _${p.variable} = ${p.initial};
-	/** column "${p.source}" **/
+	/** column "${p.original}" **/
 	public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
 	#if( $p.isNullable )
 	private boolean _${p.variable}_wasNull = false;
-	/** returns true if column "${p.source}" was NULL **/
+	/** returns true if column "${p.original}" was NULL **/
 	public boolean ${p.getter}WasNull() { return _${p.variable}_wasNull; }
 	#end
 

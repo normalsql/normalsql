@@ -301,6 +301,7 @@ public class Worker
 				}
 			}
 
+			prop.original = bean;
 			prop.variable = _helper.toVariableCase( bean );
 			prop.getter = "get" + _helper.toMethodCase( bean );
 			prop.setter = "set" + _helper.toMethodCase( bean );

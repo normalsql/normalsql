@@ -35,8 +35,8 @@ public class
 
 	// Name of local variable instance
 	public String variable;
-	// Copy of clause from source code
-	public String source;
+	// Original text copied from source code or metadata
+	public String original;
 	// Name (identifier) stripped of punctuation
 	public String trimmed;
 	// Generated getter method
@@ -59,7 +59,7 @@ public class
 			", context=" + context +
 			", nth=" + nth +
 			", variable='" + variable + '\'' +
-			", source='" + source + '\'' +
+			", source='" + original + '\'' +
 			", trimmed='" + trimmed + '\'' +
 			", getter='" + getter + '\'' +
 			", setter='" + setter + '\'' +

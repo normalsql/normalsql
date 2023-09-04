@@ -82,6 +82,7 @@ public class
 	{
 		Property prop = new Property();
 		prop.context = ((SubtermLiteralContext) context).literal();
+		prop.original = prop.context.getText();
 		prop.trimmed = getTrimmedText( prop.context );
 		prop.variable = toVariableCase( method );
 		prop.getter = "get" + toMethodCase( method );
