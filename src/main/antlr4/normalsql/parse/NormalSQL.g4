@@ -249,17 +249,16 @@ subterm
 
     predicate
         : comparator subterm                                                           # PredicateCompare
-        | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateMatch
+        | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateTBD
         | 'IS' 'NOT'? truth                                                            # PredicateTruth
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
         | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                                  # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                     # PredicateIN
+        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                       # PredicateIN
         // TODO: Oracle's IN predicate allows single term w/o parens, eg 'x IN y'
 //        | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )                            # PredicateIN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' ) subterm ( 'ESCAPE' string )?                     # PredicateLike
-        | 'NOT'? 'REGEXP' subterm ( 'ESCAPE' string )?                                 # PredicateRegex
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?          # PredicateMatch
         ;
 
         jsonType

@@ -143,6 +143,14 @@ public class Worker
 					work.statementProperties.add( prop );
 					break;
 				}
+				case "Match":
+				{
+					Match m = (Match) p;
+					String column = getColumn( m.column );
+					Property prop = _helper.create( m.literal, column );
+					work.statementProperties.add( prop );
+					break;
+				}
 				case "IN":
 				{
 					IN in = (IN) p;

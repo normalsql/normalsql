@@ -111,6 +111,10 @@ extends
 				p = new IN( (PredicateINContext) pc );
 				break;
 
+			case "PredicateMatchContext":
+				p = new Match( (PredicateMatchContext) pc );
+				break;
+
 			default:
 				break;
 		}
