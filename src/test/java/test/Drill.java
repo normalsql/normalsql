@@ -61,6 +61,64 @@ public class Drill
 		visitor.visit( e );
 
 
-		System.out.println( e.toStringTree( parser ) );
+		System.out.println( toStringTree( e, parser ) );
 	}
+
+	public static String toStringTree( Tree parent, Parser recog )
+	{
+		String[] ruleNames = recog.getRuleNames();
+		StringBuilder sb = new StringBuilder();
+		toStringTree( parent, ruleNames, sb );
+		return sb.toString();
+	}
+
+	public static void toStringTree( Tree t, String[] ruleNames, StringBuilder buf )
+	{
+		if( t instanceof ErrorNode)
+		{
+			buf.append( t );
+			return;
+		}
+
+		int ruleIndex = ((RuleContext) t ).getRuleContext().getRuleIndex();
+		String ruleName = ruleNames[ruleIndex];
+
+		buf.append( '(' );
+		buf.append( ruleName );
+		buf.append( ' ' );
+		for( int i = 0; i < t.getChildCount(); i++ )
+		{
+			Tree child = t.getChild( i );
+
+			if( child instanceof TerminalNode )
+			{
+				String symbol = child.toString();
+				switch( symbol )
+				{
+					// eat punctuation
+					case "(":
+					case ")":
+					case "[":
+					case "]":
+					case ",":
+					case "<EOF>":
+						break;
+
+					default:
+						if( i > 0 ) buf.append( ' ' );
+						buf.append( '«' );
+						buf.append( symbol );
+						buf.append( '»' );
+						break;
+				}
+			}
+			else
+			{
+				if( i > 0 ) buf.append( ' ' );
+				toStringTree( child, ruleNames, buf );
+			}
+		}
+		buf.append( ')' );
+	}
+
 }
