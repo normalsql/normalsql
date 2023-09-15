@@ -14,15 +14,18 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
-parse
+script
     : statement? ( ';' statement? )* EOF ;
 
 statement
+    // DML
     : delete
     | insert
     | merge
-    | update
     | query
+    | update
+
+    // DDL
     | drop
     | create
     // | set // TODO
@@ -56,17 +59,25 @@ create
         : name type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
         ;
 
+with
+    : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
+    ;
+
+    cte
+        : name ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
+        ; // TODO rule for column aliases
+
 delete
-    : 'DELETE' ; // TODO
-   
+    : with? 'DELETE' ; // TODO
+
 insert
-    : 'INSERT' into names? /* rows */ ; // TODO
-   
+    : with? 'INSERT' into names? source ; // TODO
+
 merge
-    : 'MERGE' ; // TODO
-   
+    : with? 'MERGE' ; // TODO
+
 update
-    : 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
+    : with? 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
 
     setter
         : column '=' literal ;
@@ -75,15 +86,6 @@ query
     : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
     ;
 
-    // TODO: inline 'with' and 'forUpdate'?
-    with
-        : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
-        ;
-
-        cte
-            : name ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
-            ; // TODO rule for column aliases
-
     combine
         : combine ( 'INTERSECT' | 'MINUS' ) allDistinct? combine
         | combine ( 'UNION' | 'EXCEPT' ) allDistinct? combine
@@ -91,7 +93,7 @@ query
         | select
         | 'TABLE' table
         | values
-        | '(' query ')'
+        | '(' query ')' // TOOD move nested up to 'query' rule?
         ;
 
     offset
@@ -138,11 +140,6 @@ select
               'JOIN'
             ;
 
-        criteria
-            : 'ON' term
-            | 'USING' columns
-            ;
-
         source
             : ( unnest
               | values
@@ -177,6 +174,11 @@ select
                 row
                     : term ; // TODO row value expression
 */
+        criteria
+            : 'ON' term
+            | 'USING' columns
+            ;
+
 
     where
         : 'WHERE' term ;
@@ -196,6 +198,7 @@ select
     qualify
         : 'QUALIFY' term ;
 
+// TODO: consider inlining 'terms', 'names', 'columns' to flatten parse trees
 terms
     : term ( ',' term )* ;
 
@@ -345,6 +348,7 @@ literal
     | BYTES
     | BLOB
     | truth
+    | 'DEFAULT'
     // TODO: change date literals from 'string' rule to 'STRING' token?
     | 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'

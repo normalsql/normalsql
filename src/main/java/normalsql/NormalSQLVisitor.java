@@ -33,7 +33,7 @@ extends
 	Statement root;
 
 	@Override
-	public Void visitParse( ParseContext context )
+	public Void visitScript( ScriptContext context )
 	{
 		predicates = new ArrayList<>();
 
@@ -43,8 +43,7 @@ extends
 
 //		predicateStack = new Stack<>();
 
-
-		super.visitParse( context );
+		super.visitScript( context );
 		return null;
 	}
 

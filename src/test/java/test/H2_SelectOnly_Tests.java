@@ -5,7 +5,7 @@ package test;
 
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
-import normalsql.parse.NormalSQLParser.ParseContext;
+import normalsql.parse.NormalSQLParser.ScriptContext;
 import org.antlr.v4.runtime.*;
 
 import java.io.File;
@@ -181,6 +181,6 @@ H2_SelectOnly_Tests
 
 		} );
 
-		ParseContext result = parser.parse();
+		ScriptContext result = parser.script();
 	}
 }

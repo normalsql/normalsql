@@ -6,7 +6,14 @@ package test;
 import normalsql.NormalSQLVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
+import static normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.Tree;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>Drill class.</p>
@@ -46,7 +53,8 @@ public class Drill
 
 		} );
 
-		ParserRuleContext e = parser.parse();
+		ScriptContext e = parser.script();
+
 		NormalSQLVisitor visitor = new NormalSQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
