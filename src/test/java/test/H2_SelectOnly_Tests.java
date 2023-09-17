@@ -8,7 +8,6 @@ import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ScriptContext;
 import org.antlr.v4.runtime.*;
 
-import java.io.File;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;

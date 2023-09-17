@@ -80,7 +80,7 @@ update
     : with? 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
 
     setter
-        : column '=' literal ;
+        : name '=' literal ;
 
 query
     : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
@@ -198,7 +198,6 @@ select
     qualify
         : 'QUALIFY' term ;
 
-// TODO: consider inlining 'terms', 'names', 'columns' to flatten parse trees
 terms
     : term ( ',' term )* ;
 
@@ -399,21 +398,11 @@ jsonObject
 columns
     : '(' column ( ',' column )* ')' ;
 
-// Having these variants produce flatter parse trees
 column
-    : ((( name '.' )? name '.' )? name '.' )? name;
+    : name ( '.' name )*;
 
 table
-    : (( name '.' )? name '.' )? name ;
-
-schema
-    : ( name '.' )? name ;
-
-// These variants work too. Maybe a "semantic" parse tree will make post parser stuff easier.
-//column : ( table '.' )? name ;
-//table : ( schema '.' )? name ;
-//schema : ( catalog '.' )? name ;
-//catalog : name ;
+    : name ( '.' name )*;
 
 index
     : '[' ( term | term? ':' term? )? ']' ;
@@ -538,7 +527,7 @@ unreserved
         // ...And exclude all the other tokens which cannot be a keyword or name
         | DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
-        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
+        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
     ;
 
@@ -549,7 +538,7 @@ id
     // Copypasta because ANTLR 4 only supports excluding lists of tokens.
     | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
-        | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
+        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
         )
     ;
 
