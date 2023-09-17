@@ -1,5 +1,7 @@
 package jsqlparser;
 
+import test.Drill;
+
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
@@ -12,8 +14,14 @@ public class JSQLParserTests {
     public static void main( String[] args )
         throws IOException
     {
-        String dir = "";
+        String dir = "/Users/jasonosgood/Projects/normalsql-resources/JSqlParser/src/test/resources/net/sf/jsqlparser/statement/select/oracle-tests";
         List<Path> files = getAllTheFiles( dir );
+        for( Path f : files )
+        {
+//            System.out.println( f );
+            String sql = Files.readString( f );
+            Drill.parse( f, sql );
+        }
     }
 
     public static List<Path> getAllTheFiles( String dir )
