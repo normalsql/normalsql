@@ -8,6 +8,7 @@ import static java.nio.file.FileVisitResult.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 public class JSQLParserTests {
 
@@ -18,8 +19,14 @@ public class JSQLParserTests {
         List<Path> files = getAllTheFiles( dir );
         for( Path f : files )
         {
-//            System.out.println( f );
-            String sql = Files.readString( f );
+            var joiner = new StringJoiner( "\n" );
+            var original = Files.readAllLines( f );
+            for( String line : original )
+            {
+                if( line.startsWith( "--" )) continue;
+                joiner.add( line );
+            }
+            String sql = joiner.toString();
             Drill.parse( f, sql );
         }
     }

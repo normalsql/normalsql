@@ -3,7 +3,6 @@
 
 package test;
 
-import normalsql.NormalSQLVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import static normalsql.parse.NormalSQLParser.*;
@@ -14,22 +13,38 @@ import org.antlr.v4.runtime.tree.Tree;
 
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class Drill
 {
 	public static void main( String... args )
 	{
 		String sql =
-				"""
-                SELECT 1, a.b.c FROM VALUES (), () gorp gorp;
-                """;
+		"""
+with rn as (
+  select rownum rn
+  from dual
+  connect by level <= (select max(cases) from t1))
+select pname
+from t1, rn
+where rn <= cases
+order by pname
+		"""
+//		"""
+//			-- whoops
+//			-- whoops
+//			gorp /* dang 'not this time' /* nested */ */ dorf -- bing
+//			-- whoops
+//			argh ('as -- oh boy /* hot dog */')
+//			/*
+//			big space gap
+//			*/
+//			SELECT 1, a.b.c FROM VALUES (), () gorp gorp;
+//		""";
 //		SELECT a.b.c;
 //                SELECT DATEADD(HOUR, 1, TIME '23:00:00');
 		;
 
-		parse( null, sql );
+//		parse( null, sql );
 	}
 
 	public static void parse( Path p, String sql )
@@ -50,7 +65,7 @@ public class Drill
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
-		parser.removeErrorListeners();
+//		parser.removeErrorListeners();
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer,
@@ -88,7 +103,12 @@ public class Drill
 		}
 
 		System.out.println();
-		System.out.println( sql );
+		String[] lines = sql.split( "\\n" );
+		for( int i = 0; i < lines.length ; i++ )
+		{
+			System.out.printf( "%d: %s\n", i + 1, lines[i] );
+		}
+//		System.out.println( sql );
 
 		System.out.println();
 		System.out.println( toStringTree( script, parser ) );
