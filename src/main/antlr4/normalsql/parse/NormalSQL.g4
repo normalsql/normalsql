@@ -93,7 +93,7 @@ query
         | select
         | 'TABLE' table
         | values
-        | '(' query ')' // TOOD move nested up to 'query' rule?
+        | '(' query ')'
         ;
 
     offset
@@ -106,7 +106,7 @@ query
         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     forUpdate
-        : 'FOR' 'UPDATE' ;
+        : 'FOR' ( 'READ' 'ONLY' | 'UPDATE' 'OF' name ( ',' name )* ) ;
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
