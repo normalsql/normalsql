@@ -106,7 +106,7 @@ query
         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     forUpdate
-        : 'FOR' ( 'READ' 'ONLY' | 'UPDATE' 'OF' name ( ',' name )* ) ;
+        : 'FOR' ( 'READ' 'ONLY' | 'UPDATE' ( 'OF' name ( ',' name )* )? ) ;
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
@@ -206,14 +206,12 @@ term
     : 'NOT' term                                  // # TermNOT
     | term 'AND' term                             // # TermAND
     | term 'OR' term                              // # TermOR
-    | 'EXISTS' '(' query ')'                      // # TermEXISTS
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')' // # TermUNIQUE
-    // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-//    | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
     | subterm                                     // # TermSubterm
     // TODO assignment operators go here ?
     ;
 
+    // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+    // | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
 // TODO '||' can be either string concatenation or logical OR
 subterm
     : subterm ( '::' id )+                                            # SubtermScope
@@ -229,12 +227,17 @@ subterm
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
     | '(' terms ')' '.' name                                          # SubtermFieldRef
-    | '(' terms? ')'                                                  # SubtermNested
-    | query                                                           # SubtermQuery
-    | case                                                            # SubtermCase
-    | array                                                           # SubtermArray
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
+    | '(' term ')'                                                    # SubtermNested
+    | '('')'                                                          # SubtermEmpty
+    // TODO Verify implicit row with some tests
+    | '(' term ( ',' term )* ',' term ')'                             # SubtermRow // Implicit
     | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+    | query                                                           # SubtermQuery
+    | array                                                           # SubtermArray
+    | case                                                            # SubtermCase
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
+    | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     | 'ROW' '(' terms? ')'                                            # SubtermRow
     | function                                                        # SubtermFunction
@@ -286,6 +289,16 @@ function
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | 'EXTRACT' '(' id 'FROM' .*? ')' // TODO
+//    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+//    | 'XMLCONCAT' '(' terms ')'
+//    | 'XMLELEMENT' '(' 'NAME' name (',' terms )? ')'
+//    | 'XMLEXISTS' '(' subterm xmlexists_argument ')'
+//    | 'XMLFOREST' '(' xml_attribute_list ')'
+//    | 'XMLPARSE' '(' document_or_content a_expr xml_whitespace_option ')'
+//    | 'XMLPI' '(' 'NAME' name (',' a_expr)? ')'
+//    | 'XMLROOT' '(' 'XML' a_expr ',' xml_root_version opt_xml_root_standalone ')'
+//    | 'XMLSERIALIZE' '(' document_or_content a_expr AS simpletypename ')'
+
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
     | id
@@ -308,6 +321,9 @@ function
 
     over
         : 'OVER' window ;
+
+    xmlAttrib
+        : term ( 'AS' name )? ;
 
 window
     : '(' name? partitionBy? orderBy? windowFrame? ')'
