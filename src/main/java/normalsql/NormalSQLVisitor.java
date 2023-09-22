@@ -92,7 +92,7 @@ extends
 //	}
 
 	@Override
-	public Void visitTermPredicate( TermPredicateContext ctx )
+	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 	{
 		PredicateContext pc = ctx.predicate();
 		Predicate p = null;
@@ -124,6 +124,6 @@ extends
 			predicates.add( p );
 			return null;
 		}
-		return super.visitTermPredicate( ctx );
+		return super.visitSubtermPredicate( ctx );
 	}
 }

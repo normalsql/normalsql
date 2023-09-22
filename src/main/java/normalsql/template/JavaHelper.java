@@ -9,8 +9,8 @@
 package normalsql.template;
 
 import normalsql.Property;
-import normalsql.parse.NormalSQLParser.TermContext;
-import normalsql.parse.NormalSQLParser.TermLiteralContext;
+import normalsql.parse.NormalSQLParser.SubtermContext;
+import normalsql.parse.NormalSQLParser.SubtermLiteralContext;
 import org.antlr.v4.runtime.RuleContext;
 
 import static java.lang.Character.toLowerCase;
@@ -74,14 +74,14 @@ public class
 	/**
 	 * <p>create.</p>
 	 *
-	 * @param context a {@link normalsql.parse.NormalSQLParser.TermContext} object
+	 * @param context a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
 	 * @param method a {@link java.lang.String} object
 	 * @return a {@link normalsql.Property} object
 	 */
-	public Property create( TermContext context, String... method )
+	public Property create( SubtermContext context, String... method )
 	{
 		Property prop = new Property();
-		prop.context = ((TermLiteralContext) context).literal();
+		prop.context = ((SubtermLiteralContext) context).literal();
 		prop.original = prop.context.getText();
 		prop.trimmed = getTrimmedText( prop.context );
 		prop.variable = toVariableCase( method );

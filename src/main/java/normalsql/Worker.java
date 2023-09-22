@@ -157,7 +157,7 @@ public class Worker
 					String column = getColumn( in.column );
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
-						TermLiteralContext l = in.literals.get( nth );
+						SubtermLiteralContext l = in.literals.get( nth );
 						String temp = column + "_" + (nth + 1);
 						Property prop = _helper.create( l, temp);
 						work.statementProperties.add( prop );
@@ -209,12 +209,12 @@ public class Worker
 	/**
 	 * <p>returns name of column</p>
 	 *
-	 * @param b a {@link normalsql.parse.NormalSQLParser.TermContext} object
+	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
 	 * @return a {@link java.lang.String} object
 	 */
-	public String getColumn( TermContext b )
+	public String getColumn( SubtermContext b )
 	{
-		RuleContext column = ( (TermColumnContext) b ).column();
+		RuleContext column = ( (SubtermColumnContext) b ).column();
 		return _helper.getTrimmedText( column );
 	}
 

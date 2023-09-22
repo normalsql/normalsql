@@ -4,7 +4,7 @@
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateContext;
-import normalsql.parse.NormalSQLParser.TermContext;
+import normalsql.parse.NormalSQLParser.SubtermContext;
 
 /**
  * <p>Abstract Predicate class.</p>
@@ -17,7 +17,7 @@ public abstract class
 	Predicate<T extends PredicateContext, E extends Enum<E>>
 {
 	public T context;
-	public TermContext parent;
+	public SubtermContext parent;
 
 	/**
 	 * <p>Constructor for Predicate.</p>
@@ -27,7 +27,7 @@ public abstract class
 	public Predicate( T context )
 	{
 		this.context = context;
-		parent = (TermContext) context.parent;
+		parent = (SubtermContext) context.parent;
 	}
 
 	public E pattern;
@@ -37,20 +37,20 @@ public abstract class
 		return pattern != null;
 	}
 
-	public static <E extends Enum<E>> E valueOf( Class<E> ugh, TermContext... contexts )
+	public static <E extends Enum<E>> E valueOf( Class<E> ugh, SubtermContext... contexts )
 	{
-		String name = "";
-		for( TermContext c : contexts )
+		StringBuilder name = new StringBuilder();
+		for( SubtermContext c : contexts )
 		{
 			String simple = c.getClass().getSimpleName();
 			simple = simple.replaceFirst( "^Subterm", "" ).replaceFirst( "Context$", "" );
-			name += simple;
+			name.append(simple);
 		}
 
 		E[] boo = ugh.getEnumConstants();
 		for( E zip : boo )
 		{
-			if( zip.name().equals( name ) ) return zip;
+			if( zip.name().equals( name.toString() )) return zip;
 
 		}
 

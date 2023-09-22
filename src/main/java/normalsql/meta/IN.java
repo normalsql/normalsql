@@ -3,6 +3,7 @@ package normalsql.meta;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
 import normalsql.parse.NormalSQLParser.TermContext;
+import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.parse.NormalSQLParser.PredicateINContext;
 
 import java.util.ArrayList;
@@ -18,25 +19,25 @@ extends
         Literals
     }
 
-    public TermContext column;
-    public List<TermLiteralContext> literals = new ArrayList<>();
+    public SubtermContext column;
+    public List<SubtermLiteralContext> literals = new ArrayList<>();
 
     public IN( PredicateINContext context )
     {
         super( context );
 
         // TODO: fix when parent is CASE
-        column = (TermContext) context.parent.getChild(0);
-        if( !( column instanceof TermColumnContext )) return;
+        column = (SubtermContext) context.parent.getChild(0);
+        if( !( column instanceof SubtermColumnContext )) return;
 
         if( context.terms() != null && context.terms().term() != null )
         {
             for( TermContext term : context.terms().term() )
             {
-//                TermContext sc = term.term();
-                if( term != null && term instanceof TermLiteralContext )
+                SubtermContext sc = term.subterm();
+                if( sc != null && sc instanceof SubtermLiteralContext )
                 {
-                    literals.add( (TermLiteralContext) term );
+                    literals.add( (SubtermLiteralContext) sc );
                 }
             }
 

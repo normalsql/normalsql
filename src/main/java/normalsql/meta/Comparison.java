@@ -4,7 +4,7 @@
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateCompareContext;
-import normalsql.parse.NormalSQLParser.TermContext;
+import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
 
@@ -40,15 +40,15 @@ extends
 	}
 
 	public String op;
-	public TermContext literal;
-	public TermContext column;
+	public SubtermContext literal;
+	public SubtermContext column;
 
 	public Comparison( PredicateCompareContext context )
 	{
 		super( context );
 		op = operatorMap.get( context.compare().getText() );
-		TermContext left = (TermContext) context.parent.getChild( 0 );
-		TermContext right = context.term();
+		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
+		SubtermContext right = context.subterm();
 		pattern = valueOf( Pattern.class, left, right );
 
 		if( !isMatched() ) return;

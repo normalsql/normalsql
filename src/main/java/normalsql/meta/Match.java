@@ -18,14 +18,14 @@ extends
 		Literal
 	}
 
-	public TermContext column;
-	public TermContext literal;
+	public SubtermContext column;
+	public SubtermContext literal;
 
 	public Match(PredicateMatchContext context )
 	{
 		super( context );
-		column = (TermContext) context.parent.getChild( 0 );
-		literal = context.term();
+		column = (SubtermContext) context.parent.getChild( 0 );
+		literal = context.subterm();
 		pattern = valueOf( Pattern.class, literal );
 	}
 }
