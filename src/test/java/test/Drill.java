@@ -59,13 +59,16 @@ order by pname
 			RecognitionException e;
 		}
 
+		System.out.println();
+		if( p != null ) System.out.println( p );
+
 		ArrayList<SyntaxError> errors = new ArrayList<>();
 
 		CharStream chars = CharStreams.fromString( sql );
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
-//		parser.removeErrorListeners();
+		parser.removeErrorListeners();
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer,
@@ -106,12 +109,13 @@ order by pname
 		String[] lines = sql.split( "\\n" );
 		for( int i = 0; i < lines.length ; i++ )
 		{
-			System.out.printf( "%d: %s\n", i + 1, lines[i] );
+//			System.out.printf( "%d: %s\n", i + 1, lines[i] );
+			System.out.println( lines[i] );
 		}
 //		System.out.println( sql );
 
-		System.out.println();
-		System.out.println( toStringTree( script, parser ) );
+//		System.out.println();
+//		System.out.println( toStringTree( script, parser ) );
 	}
 
 	public static String toStringTree( Tree parent, Parser recog )

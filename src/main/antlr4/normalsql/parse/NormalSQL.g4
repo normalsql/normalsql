@@ -201,76 +201,79 @@ select
 terms
     : term ( ',' term )* ;
 
-// TODO  | term ( 'OR' || '||' ) term
-term
-    : 'NOT' term                                  // # TermNOT
-    | term 'AND' term                             // # TermAND
-    | term 'OR' term                              // # TermOR
-    | subterm                                     // # TermSubterm
-    // TODO assignment operators go here ?
-    ;
 
     // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-    // | 'INTERSECTS' '(' subterm ',' subterm ')'    // # TermIntersects
-// TODO '||' can be either string concatenation or logical OR
-subterm
-    : subterm ( '::' id )+                                            # SubtermScope
-    | subterm index+                                                  # SubtermIndex
-    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-    | <assoc=right> subterm '^' subterm                               # SubtermBinary
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-    | subterm '||' subterm                                            # SubtermBinary
-    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-    | subterm '&' subterm                                             # SubtermBinary
-    | subterm '|' subterm                                             # SubtermBinary
-    | subterm predicate                                               # SubtermPredicate
-    | '(' terms ')' '.' name                                          # SubtermFieldRef
-    | '(' term ')'                                                    # SubtermNested
-    | '('')'                                                          # SubtermEmpty
-    // TODO Verify implicit row with some tests
-    | '(' term ( ',' term )* ',' term ')'                             # SubtermRow // Implicit
-    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
-    | query                                                           # SubtermQuery
-    | array                                                           # SubtermArray
-    | case                                                            # SubtermCase
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
-    | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
-    | 'ROW' '(' terms? ')'                                            # SubtermRow
-    | function                                                        # SubtermFunction
-    | literal                                                         # SubtermLiteral
-    | column                                                          # SubtermColumn
+    // | 'INTERSECTS' '(' term ',' term ')'    // # TermIntersects
+term
+    : literal                                                      # TermLiteral
+    | term ( '::' id )+                                            # TermTypecast
+    | term index+                                                  # TermIndex
+    | column                                                       # TermColumn
+// INTERVAL
+// BINARY, COLLATE
 //    | term 'COLLATE' id # TermCollate TODO
+//    | '!' term                               # TermNot
+    | ( '+' | '-' | '~' | '!' ) term                            # TermUnary
+    | term '||' term                                            # TermBinary
+    | <assoc=right> term '^' term                               # TermBinary
+    | term ( '*' | '/' | 'DIV' | '%' | 'MOD' ) term             # TermBinary
+    | term ( '+' | '-' ) term                                   # TermBinary
+    | term ( '->' | '->>' ) term                                # TermBinary
+    | term ( '<<' | '>>' ) term                                 # TermBinary
+    | term '&' term                                             # TermBinary
+    | term '|' term                                             # TermBinary
+    | term predicate                                            # TermPredicate
+
+    | '(' terms ')' '.' name                                          # TermRowField
+    | '(' term ')'                                                    # TermNested
+    | '('')'                                                          # TermEmpty
+    | '(' term ( ',' term )* ',' term ')'                             # TermRow
+    | term 'AT' ( 'LOCAL' | timeZone ( interval | string ))?          # TermTime
+    | query                                                           # TermQuery
+    | array                                                           # TermArray
+    | case                                                            # TermCase
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # TermCast
+    | 'EXISTS' '(' query ')'                                          # TermEXISTS
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # TermUNIQUE
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # TermSequence
+    | 'ROW' '(' terms? ')'                                            # TermRow
+    | function                                                        # TermFunction
 //    | sequenceValueExpression TODO
+    | <assoc=right> 'NOT' term                                     # TermNOT
+    | term 'AND' term                                              # TermLogical
+    | term 'XOR' term                                              # TermLogical
+//    | term ( 'OR' | '||' ) term                                               # TermLogical
+    | term 'OR' term                                               # TermLogical
+//    | <assoc=right> term ( '=' | ':=' ) term                     # TermAssign
+    | term ( '=' | ':=' ) term                                     # TermAssign
     ;
 
     case
-        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # SubtermCaseSimple
-        | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # SubtermCaseSearch
+        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # TermCaseSimple
+        | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # TermCaseSearch
         ;
 
     predicate
-        : comparator subterm                                                           # PredicateCompare
-        | ( MATCH1 | MATCH2 | MATCH3 | MATCH4 ) subterm                                # PredicateTBD
-        | 'IS' 'NOT'? truth                                                            # PredicateTruth
-        | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                        # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                                  # PredicateOfType
-        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                     # PredicateJSON
-        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
-        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                       # PredicateIN
-        // TODO: Oracle's IN predicate allows single term w/o parens, eg 'x IN y'
-//        | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | term )                            # PredicateIN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?          # PredicateMatch
+        : compare term                                                           # PredicateCompare
+        | 'IS' 'NOT'? truth                                                      # PredicateTruth
+        // | 'ISNULL' ... TODO
+        // | 'NOTNULL' ... TODO
+        | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                     # PredicateDistinct
+        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                            # PredicateOfType
+        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                               # PredicateJSON
+        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                 # PredicateIN
+        | 'NOT'? 'IN' term                                                      # PredicateIN // Oracle dialect
+        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term       # PredicateBETWEEN
+        // | 'OVERLAPS' ... TODO
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) term ( 'ESCAPE' string )?       # PredicateMatch
         ;
 
         jsonType
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
-        // TODO: can this be a Token? would simplify the 'unreserved' and 'id' rules a bit.
-        comparator  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
+        // TODO: can these be Tokens? might simplify the 'unreserved' and 'id' rules a bit.
+        // TODO: split rule 'compare' to handle dialects and customs
+        compare  : '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
 
 type
     : 'ROW' '(' name type ( ',' name type )* ')'
@@ -292,7 +295,7 @@ function
 //    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
 //    | 'XMLCONCAT' '(' terms ')'
 //    | 'XMLELEMENT' '(' 'NAME' name (',' terms )? ')'
-//    | 'XMLEXISTS' '(' subterm xmlexists_argument ')'
+//    | 'XMLEXISTS' '(' term xmlexists_argument ')'
 //    | 'XMLFOREST' '(' xml_attribute_list ')'
 //    | 'XMLPARSE' '(' document_or_content a_expr xml_whitespace_option ')'
 //    | 'XMLPI' '(' 'NAME' name (',' a_expr)? ')'
@@ -305,8 +308,8 @@ function
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
-      ( 'SEPARATOR' subterm )? onNull? )? ')'
-//      ( 'SEPARATOR' subterm )? onNull? )? respectIgnore? ')' // TODO: Oracle
+      ( 'SEPARATOR' term )? onNull? )? ')'
+//      ( 'SEPARATOR' term )? onNull? )? respectIgnore? ')' // TODO: Oracle
       withinGroup? filter? ( 'FROM' firstLast )?
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style

@@ -4,7 +4,7 @@
 package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.PredicateBETWEENContext;
-import normalsql.parse.NormalSQLParser.SubtermContext;
+import normalsql.parse.NormalSQLParser.TermContext;
 
 /**
  * POJO holding the subterms of a BETWEEN predicate's parse tree.
@@ -36,16 +36,16 @@ extends
 //		LiteralLiteralLiteral  // '5 BETWEEN 0 AND 10'
 	}
 
-	public SubtermContext test;
-	public SubtermContext low;
-	public SubtermContext high;
+	public TermContext test;
+	public TermContext low;
+	public TermContext high;
 
 	public Between( PredicateBETWEENContext context )
 	{
 		super( context );
-		test = (SubtermContext) context.parent.getChild( 0 );
-		low = context.subterm( 0 );
-		high = context.subterm( 1 );
+		test = (TermContext) context.parent.getChild( 0 );
+		low = context.term( 0 );
+		high = context.term( 1 );
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
 

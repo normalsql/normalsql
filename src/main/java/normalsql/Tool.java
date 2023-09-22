@@ -29,8 +29,8 @@ import java.sql.Statement;
 		add just the DML statements to the work list
 		add just the parseable statements to the work list
 		log errors
-		command line option for filelist
-		command line option for extension filter
+		','nd line option for filelist
+		','nd line option for extension filter
 
 		log work list if diff from found list
 
@@ -108,7 +108,7 @@ public class
 		}
 
 		// TODO verify source exists
-		// TODO pull source & target from command line options
+		// TODO pull source & target from ','nd line options
 		Path source = Paths.get( "" ).toAbsolutePath();
 		Path target = source;
 		crawl( source, target );
@@ -191,6 +191,6 @@ public class
 		}
 	}
 
-	// TODO: Create command line option for this? eg. for a clean build operation
+	// TODO: Create ','nd line option for this? eg. for a clean build operation
 	static boolean _alwaysOverwrite = true;
 }
