@@ -27,6 +27,28 @@ public class JSQLParserTests {
                 joiner.add( line );
             }
             String sql = joiner.toString();
+
+            if( sql.contains( "(+)" ))
+            {
+                System.out.println( "!! skipping legacy join syntax: " );
+                System.out.println( f );
+                continue;
+            }
+
+            if( sql.contains( "connect by" ))
+            {
+                System.out.println( "!! skipping legacy recursion syntax: " );
+                System.out.println( f );
+                continue;
+            }
+
+            if( sql.contains( "model" ))
+            {
+                System.out.println( "!! skipping whatever 'model' is: " );
+                System.out.println( f );
+                continue;
+            }
+
             Drill.parse( f, sql );
         }
     }

@@ -59,8 +59,6 @@ order by pname
 			RecognitionException e;
 		}
 
-		System.out.println();
-		if( p != null ) System.out.println( p );
 
 		ArrayList<SyntaxError> errors = new ArrayList<>();
 

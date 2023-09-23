@@ -64,10 +64,10 @@ extends
 		Item item = new Item();
 		item.context = context;
 		item.source = tokens.getText( context );
-		item.name = tokens.getText( context.term() );
-		if( context.name() != null )
+		item.name = tokens.getText( context.aliasedTerm().term() );
+		if( context.aliasedTerm().name() != null )
 		{
-			item.alias = tokens.getText( context.name() );
+			item.alias = tokens.getText( context.aliasedTerm().name() );
 		}
 		statementStack.peek().items.add( item );
 		super.visitItemColumn( context );

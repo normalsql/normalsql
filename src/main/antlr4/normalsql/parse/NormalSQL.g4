@@ -123,8 +123,8 @@ select
         : 'TOP' ( DECIMAL | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
-        | term ( 'AS'? name )?                         # ItemColumn
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )? # ItemTableRef
+        | aliasedTerm                                 # ItemColumn
         ;
 
     into
@@ -150,7 +150,7 @@ select
 //              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
               | 'JSON_TABLE' // TODO
-              | 'XMLTABLE' // TODO
+              | xmlTable
               | function
               | '(' from ')'
               | table
@@ -179,7 +179,6 @@ select
             | 'USING' columns
             ;
 
-
     where
         : 'WHERE' term ;
 
@@ -198,9 +197,31 @@ select
     qualify
         : 'QUALIFY' term ;
 
+xmlTable
+    : 'XMLTABLE'
+      '('
+      subterm passing?
+      'COLUMNS' xmlColumn ( ',' xmlColumn )*
+      ')'
+    ;
+
+passing : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerm ( ',' aliasedTerm )* ;
+content : 'DOCUMENT' | 'CONTENT' ;
+
+
+    xmlColumn
+       : id ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
+       ;
+
+
+
+
+
 terms
     : term ( ',' term )* ;
 
+aliasedTerm
+    : term ( 'AS'? name )? ;
 
     // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
     // | 'INTERSECTS' '(' term ',' term ')'
@@ -221,21 +242,19 @@ subterm
     : literal                                                         # SubtermLiteral
     | subterm ( '::' id )+                                            # SubtermScope
     | subterm index+                                                  # SubtermIndex
+    | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
 // INTERVAL
 // BINARY, COLLATE
 //    | term 'COLLATE' id # SubtermCollate TODO
 //    | '!' term                               # SubtermNot
-    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-    | subterm '||' subterm                                            # SubtermBinary
-    | <assoc=right> subterm '^' subterm                               # SubtermBinary
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
+    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+    | subterm '||' subterm                                            # SubtermBinary
+    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
 
     | '(' terms ')' '.' name                                          # SubtermRowField
     | '(' term ')'                                                    # SubtermNested
@@ -250,8 +269,10 @@ subterm
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     | 'ROW' '(' terms? ')'                                            # SubtermRow
-    | function                                                        # SubtermFunction
 //    | sequenceValueExpression TODO
+    | <assoc=right> subterm '^' subterm                               # SubtermBinary
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
     ;
 
     case
@@ -282,9 +303,53 @@ subterm
         compare  : '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
 
 type
-    : 'ROW' '(' name type ( ',' name type )* ')'
+    : 'ROW' '(' name types ( ',' name types )* ')'
     | type 'ARRAY' ( '[' DECIMAL ']' )?
-    | id+ ( '(' DECIMAL ( ',' DECIMAL )? ')' id* )?
+    | types
+    ;
+
+types
+    : 'INT'
+    | 'INTEGER'
+    | 'TINYINT'
+    | 'SMALLINT'
+    | 'BIGINT'
+    | 'REAL'
+    | 'DECFLOAT'
+    | 'FLOAT' ( '(' DECIMAL ')' )?
+    | 'DOUBLE' 'PRECISION'
+    | 'DECIMAL' typePrecision?
+    | 'DEC' typePrecision?
+    | 'NUMBER' typePrecision?
+    | 'BOOLEAN'
+
+    | 'VARBINARY'
+    | 'BIT' 'VARYING'? // Postgres?
+    | chars ( '(' DECIMAL ')' )?
+
+    | 'BLOB'
+    | 'CLOB'
+    | 'NCLOB'
+
+    | 'DATE'
+    | ( 'TIMESTAMP' | 'TIME' ) ( '(' DECIMAL ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
+
+    | 'UUID'
+
+    | id typePrecision?
+    ;
+
+ chars
+    : 'CHARACTER' 'VARYING'? // Postgres?
+    | 'CHAR' 'VARYING'? // Postgres?
+    | 'NCHAR' 'VARYING'? // Postgres?
+    | 'VARCHAR'
+    | 'VARCHAR2'
+    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'? // Postgres?
+    ;
+
+typePrecision
+    : '(' DECIMAL ( ',' DECIMAL )? ')'
     ;
 
 values
@@ -298,15 +363,15 @@ function
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | 'EXTRACT' '(' id 'FROM' .*? ')' // TODO
-//    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-//    | 'XMLCONCAT' '(' terms ')'
-//    | 'XMLELEMENT' '(' 'NAME' name (',' terms )? ')'
-//    | 'XMLEXISTS' '(' term xmlexists_argument ')'
-//    | 'XMLFOREST' '(' xml_attribute_list ')'
-//    | 'XMLPARSE' '(' document_or_content a_expr xml_whitespace_option ')'
-//    | 'XMLPI' '(' 'NAME' name (',' a_expr)? ')'
-//    | 'XMLROOT' '(' 'XML' a_expr ',' xml_root_version opt_xml_root_standalone ')'
-//    | 'XMLSERIALIZE' '(' document_or_content a_expr AS simpletypename ')'
+    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+    | 'XMLCONCAT' '(' terms ')'
+    | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
+    | 'XMLEXISTS' '(' subterm passing? ')'
+    | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+    | 'XMLPARSE' '(' content term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
+    | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
+    | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
+    | 'XMLSERIALIZE' '(' content term 'AS' type ')'
 
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
@@ -513,7 +578,7 @@ unreserved
         | 'ON'
         | 'OR'
         | 'ORDER'
-        | 'OVER'
+//        | 'OVER'
         | 'PARTITION'
         | 'PRIMARY'
         | 'QUALIFY'
