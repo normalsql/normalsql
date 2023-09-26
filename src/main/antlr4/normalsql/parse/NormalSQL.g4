@@ -130,15 +130,8 @@ select
     into
         : 'INTO' table ;
 
-    from : source ( join source criteria* )*  ;
-
-        join
-            : ( 'CROSS'
-              | 'INNER'
-              | 'NATURAL'? ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
-              | 'NATURAL' )?
-              'JOIN'
-            ;
+    from
+        : source ( join source criteria*  | pivot | unpivot )* ;
 
         source
             : ( unnest
@@ -166,17 +159,54 @@ select
             columnSpec
                 : name ( dataType | schema ) '=' ( array | row ) ;
 
-                dataType
-                    : 'NULL'
-                    | id+
-                    ; // TODO explicit dataTypes
+                        dataType
+                            : 'NULL'
+                            | id+
+                            ; // TODO explicit dataTypes
 
-                row
-                    : term ; // TODO row value expression
-*/
-        criteria
-            : 'ON' term
-            | 'USING' columns
+                        row
+                            : term ; // TODO row value expression
+                */
+
+        join
+            : ( 'CROSS'
+              | 'INNER'
+              | 'NATURAL'? ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
+              | 'NATURAL' )?
+              'JOIN'
+            ;
+
+            criteria
+                : 'ON' term
+                | 'USING' columns
+                ;
+
+        pivot
+            // T-SQL, PL/SQL
+            : 'PIVOT'
+              '('
+                aliasedFunction ( ',' aliasedFunction )*
+                'FOR' ( column | columns )
+                'IN' '(' aliasedTerms ')'
+              ')'
+            // PL/SQL
+            | 'PIVOT' 'XML'
+              '('
+                aliasedFunction ( ',' aliasedFunction )*
+                'FOR' ( column | columns )
+                'IN' '(' ( query | 'ANY' ) ')'
+              ')'
+            ;
+
+            aliasedFunction : function ( 'AS'? alias )? ;
+
+        unpivot
+            : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
+            '('
+              ( column | columns )
+              'FOR' ( column | columns )
+              'IN' '(' aliasedTerms ')'
+            ')'
             ;
 
     where
@@ -212,10 +242,6 @@ content : 'DOCUMENT' | 'CONTENT' ;
     xmlColumn
        : id ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
        ;
-
-
-
-
 
 terms
     : term ( ',' term )* ;
