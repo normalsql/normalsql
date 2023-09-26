@@ -303,19 +303,27 @@ subterm
         ;
 
     predicate
-        : compare subterm                                                           # PredicateCompare
-        | 'IS' 'NOT'? truth                                                      # PredicateTruth
+        : compare subterm                                                          # PredicateCompare
+        | 'IS' 'NOT'? truth                                                        # PredicateTruth
+        // PL/SQL dialect
+        | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         // | 'ISNULL' ... TODO
         // | 'NOTNULL' ... TODO
-        | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                     # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                            # PredicateOfType
-        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                               # PredicateJSON
-        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                 # PredicateIN
-        | 'NOT'? 'IN' subterm                                                      # PredicateIN // Oracle dialect
-        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm       # PredicateBETWEEN
+        | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
+        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                              # PredicateOfType
+        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
+        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                   # PredicateIN
+        // PL/SQL dialect
+        | 'NOT'? 'IN' subterm                                                      # PredicateIN
+        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
         // | 'OVERLAPS' ... TODO
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?       # PredicateMatch
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
         ;
+
+        logicals
+            : 'NAN' | 'PRESENT' | 'INFINITE' | 'A' 'SET' | 'EMPTY'
+            | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
+            ;
 
         jsonType
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
@@ -325,12 +333,12 @@ subterm
         compare  : '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
 
 type
-    : 'ROW' '(' name types ( ',' name types )* ')'
+    : 'ROW' '(' name scalar ( ',' name scalar )* ')'
     | type 'ARRAY' ( '[' DECIMAL ']' )?
-    | types
+    | scalar
     ;
 
-types
+scalar
     : 'INT'
     | 'INTEGER'
     | 'TINYINT'
