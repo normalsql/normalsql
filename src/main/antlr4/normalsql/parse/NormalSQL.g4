@@ -131,7 +131,7 @@ select
         : 'INTO' table ;
 
     from
-        : source ( join source criteria*  | pivot | unpivot )* ;
+        : source ( join | pivot | unpivot )* ;
 
         source
             : ( unnest
@@ -170,17 +170,9 @@ select
                 */
 
         join
-            : ( 'CROSS'
-              | 'INNER'
-              | 'NATURAL'? ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
-              | 'NATURAL' )?
-              'JOIN'
+            : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
+            | ( 'CROSS' | 'NATURAL' ) 'JOIN' source
             ;
-
-            criteria
-                : 'ON' term
-                | 'USING' columns
-                ;
 
         pivot
             // T-SQL, PL/SQL
