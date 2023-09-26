@@ -87,9 +87,9 @@ query
     ;
 
     combine
-        : combine ( 'INTERSECT' | 'MINUS' ) allDistinct? combine
-        | combine ( 'UNION' | 'EXCEPT' ) allDistinct? combine
-        | combine 'MULTISET' allDistinct? combine
+        : combine ( 'INTERSECT' | 'MINUS' ) combine
+        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
+        | combine 'MULTISET' combine
         | select
         | 'TABLE' table
         | values
