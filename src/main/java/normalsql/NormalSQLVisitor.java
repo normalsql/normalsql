@@ -65,9 +65,9 @@ extends
 		item.context = context;
 		item.source = tokens.getText( context );
 		item.name = tokens.getText( context.aliasedTerm().term() );
-		if( context.aliasedTerm().name() != null )
+		if( context.aliasedTerm().alias() != null )
 		{
-			item.alias = tokens.getText( context.aliasedTerm().name() );
+			item.alias = tokens.getText( context.aliasedTerm().alias() );
 		}
 		statementStack.peek().items.add( item );
 		super.visitItemColumn( context );

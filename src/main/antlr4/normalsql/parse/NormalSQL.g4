@@ -64,7 +64,7 @@ with
     ;
 
     cte
-        : name ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
+        : alias ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
         ; // TODO rule for column aliases
 
 delete
@@ -149,15 +149,16 @@ select
               | table
               | query
               )
-              ( 'AS'? name names? )?
+              ( 'AS'? alias names? )?
             ;
 
             // TODO: Should this part of rule 'function'?
             unnest
                 : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
-/*
-            columnSpec
-                : name ( dataType | schema ) '=' ( array | row ) ;
+
+                /*
+                    columnSpec
+                        : name ( dataType | schema ) '=' ( array | row ) ;
 
                         dataType
                             : 'NULL'
@@ -222,7 +223,7 @@ select
         : 'WINDOW' windowAlias ( ',' windowAlias )* ;
 
         windowAlias
-            : name 'AS' window ;
+            : alias 'AS' window ;
 
     qualify
         : 'QUALIFY' term ;
@@ -235,7 +236,7 @@ xmlTable
       ')'
     ;
 
-passing : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerm ( ',' aliasedTerm )* ;
+passing : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
 content : 'DOCUMENT' | 'CONTENT' ;
 
 
@@ -247,7 +248,10 @@ terms
     : term ( ',' term )* ;
 
 aliasedTerm
-    : term ( 'AS'? name )? ;
+    : term ( 'AS'? alias )? ;
+
+aliasedTerms
+    : aliasedTerm ( ',' aliasedTerm )* ;
 
     // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
     // | 'INTERSECTS' '(' term ',' term ')'
@@ -423,7 +427,7 @@ function
         : 'OVER' window ;
 
     xmlAttrib
-        : term ( 'AS' name )? ;
+        : term ( 'AS' alias )? ;
 
 window
     : '(' name? partitionBy? orderBy? windowFrame? ')'
@@ -545,6 +549,10 @@ name
     | unreserved
     ;
 
+alias
+    // supports << abc, 'abc', and "abc" >> Because I can't definitively figure out correct answer
+    : id | string ;
+
 // All tokens in this grammars which are unreserved SQL keywords. Keep up to
 // date manually. (Ugh.)
 unreserved
@@ -590,7 +598,7 @@ unreserved
         | 'JOIN'
 //        | 'KEY'
         | 'LEADING'
-        | 'LEFT'
+//        | 'LEFT'
         | 'LIKE'
 //        | 'LIMIT'
         | 'MINUS'
@@ -610,7 +618,7 @@ unreserved
         | 'QUALIFY'
         | 'RANGE'
         | 'REGEXP'
-        | 'RIGHT'
+//        | 'RIGHT'
         | 'ROW'
 //        | 'ROWNUM'
         | 'ROWS'
@@ -694,8 +702,8 @@ ID
 UNICODE_STRING
     : 'U&' STRING ;
 
-NATIONAL_STRING
-    : [NE] STRING ;
+NATIONAL_STRING options { caseInsensitive=false; }
+    :  [NE] STRING ;
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
