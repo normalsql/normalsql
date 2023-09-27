@@ -233,7 +233,7 @@ content : 'DOCUMENT' | 'CONTENT' ;
 
 
     xmlColumn
-       : id ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
+       : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
        ;
 
 terms
@@ -262,7 +262,8 @@ term
 
 subterm
     : literal                                                         # SubtermLiteral
-    | subterm ( '::' id )+                                            # SubtermScope
+    | subterm ( '::' subterm )+                                            # SubtermScope
+//    | subterm ( '::' id )+                                            # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
@@ -365,8 +366,9 @@ scalar
     | ( 'TIMESTAMP' | 'TIME' ) ( '(' DECIMAL ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
 
     | 'UUID'
+//    | 'RAW'
 
-    | id typePrecision?
+    | name typePrecision?
     ;
 
  chars
@@ -392,7 +394,7 @@ function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'EXTRACT' '(' id 'FROM' .*? ')' // TODO
+    | 'EXTRACT' '(' name 'FROM' .*? ')' // TODO
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
@@ -405,7 +407,7 @@ function
 
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
-    | id
+    | name /* id */
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
@@ -513,7 +515,8 @@ jsonObject
             ;
 
             jsonKey
-                : 'NULL' | string | id ;
+                : 'NULL' | string | name ;
+//                : 'NULL' | string | id ;
 
 columns
     : '(' column ( ',' column )* ')' ;
@@ -541,26 +544,33 @@ names
 
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
-    : NAME
+//    : NAME
+//    | UNICODE_NAME uescape?
+//    | BACKTICKS
+//    | DOLLARS
+//    | ID
+//    | unreserved
+    : ID
+    | STRING
     | UNICODE_NAME uescape?
-    | BACKTICKS
     | DOLLARS
-    | ID
     | unreserved
     ;
 
 alias
     // supports << abc, 'abc', and "abc" >> Because I can't definitively figure out correct answer
-    : id | string ;
+    : name | string ;
+//    : id | string ;
 
 // All tokens in this grammars which are unreserved SQL keywords. Keep up to
 // date manually. (Ugh.)
 unreserved
     : ~(
         // Exclude tokens which are SQL's reserved keywords...
-        'ALL'
-        | 'AND'
-        | 'ANY'
+//        'ALL'
+//        | 'AND'
+         'AND'
+//        | 'ANY'
         | 'ARRAY'
 //        | 'AS'
         | 'BETWEEN'
@@ -622,11 +632,11 @@ unreserved
         | 'ROW'
 //        | 'ROWNUM'
         | 'ROWS'
-        | 'SECOND'
+//        | 'SECOND'
         | 'SELECT'
 //        | 'SESSION_USER'
 //        | 'SET'
-        | 'SOME'
+//        | 'SOME'
         | 'SYMMETRIC'
 //        | 'SYSTEM_USER'
         | 'TABLE'
@@ -638,7 +648,7 @@ unreserved
         | 'UNION'
         | 'UNIQUE'
         | 'UNKNOWN'
-        | 'USER'
+//        | 'USER'
         | 'USING'
 //        | 'VALUE'
         | 'VALUES'
@@ -655,16 +665,16 @@ unreserved
        )
     ;
 
-id
-    : ID
-    // Exclude all the tokens which cannot be an ID.
-    // Roundabout way to accept grammar's keyword-like tokens.
-    // Copypasta because ANTLR 4 only supports excluding lists of tokens.
-    | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
-        | STRING | UNICODE_STRING | NATIONAL_STRING
-        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-        )
-    ;
+//id
+//    : ID
+//    // Exclude all the tokens which cannot be an ID.
+//    // Roundabout way to accept grammar's keyword-like tokens.
+//    // Copypasta because ANTLR 4 only supports excluding lists of tokens.
+////    | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
+////        | STRING | UNICODE_STRING | NATIONAL_STRING
+////        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
+////        )
+//    ;
 
 allDistinct
     : 'ALL' | 'DISTINCT' ;
@@ -697,7 +707,11 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 ID
-    : [A-Z_#] [A-Z_#$@0-9]* ;
+    : '"' ( ~'"' | '""' )* '"'
+    | '`' ( ~'`' | '``' )* '`'
+//    | '[' ~']'* ']'
+    | [A-Z_#] [A-Z_#$@0-9]*
+    ;
 
 UNICODE_STRING
     : 'U&' STRING ;
@@ -709,17 +723,18 @@ STRING
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 UNICODE_NAME
-    : 'U&' NAME ;
+//    : 'U&' NAME ;
+    : 'U&' ID ;
 
 // TODO square bracket names, per T-SQL. Will probably conflict with 'index' rule.
-NAME
-    : '"' ( ~'"' | '""' )* '"' ;
+//NAME
+//    : '"' ( ~'"' | '""' )* '"' ;
 
 DOLLARS
     : '$$' .*? '$$' ;
 
-BACKTICKS
-    : '`' ( ~'`' | '``' )* '`' ;
+//BACKTICKS
+//    : '`' ( ~'`' | '``' )* '`' ;
 
 BLOB
     : 'X' HEXHEX ( ' ' HEXHEX )* ;
@@ -747,10 +762,11 @@ fragment DIGIT
     : [0-9] ;
 
 VARIABLE
-    : '@' [A-Z_$@#0-9]* // T-SQL?
-    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-    | ':' NAME // Postgres?
-    ;
+    : '?' DIGIT* | [:@$] ID ;
+//    : '@' [A-Z_$@#0-9]* // T-SQL?
+//    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
+//    | ':' NAME // Postgres?
+//    ;
 
 //COMPARATOR  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 
