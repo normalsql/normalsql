@@ -142,6 +142,7 @@ select
               // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
 //              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+              | 'TABLE' '(' select ')'
               | 'JSON_TABLE' // TODO
               | xmlTable
               | function
