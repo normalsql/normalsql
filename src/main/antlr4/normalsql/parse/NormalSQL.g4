@@ -330,8 +330,8 @@ subterm
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
         // TODO: can these be Tokens? might simplify the 'unreserved' and 'id' rules a bit.
-        // TODO: split rule 'compare' to handle dialects and customs
-        compare  : '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
+        // TODO: split rule 'compare' to handle dialects and customs?
+        compare  : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
 
 type
     : 'ROW' '(' name scalar ( ',' name scalar )* ')'
@@ -419,6 +419,24 @@ function
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
     ;
 
+// TODO: Maybe archetypes for agg, win, etc functions?
+//    | ( 'ALL' | 'ANY' | 'SOME' ) '(' ( query | terms )? ')'
+
+/*
+
+function_name OPEN_PAR ((DISTINCT_? expr ( COMMA expr)*) | STAR)? CLOSE_PAR filter_clause? over_clause?
+
+aggregate_function_invocation:
+    aggregate_func OPEN_PAR (DISTINCT_? expr (COMMA expr)* | STAR)? CLOSE_PAR filter_clause?
+;
+
+window_function_invocation:
+    window_function OPEN_PAR (expr (COMMA expr)* | STAR)? CLOSE_PAR filter_clause? OVER_ (
+        window_defn
+        | window_name
+    )
+;
+*/
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
 
@@ -485,21 +503,24 @@ literal
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
-interval
-    : 'INTERVAL' string (id ( 'TO' id )? )?
-    ;
+//interval
+//    : 'INTERVAL' string ( name ( 'TO' name )? )?
+////    : 'INTERVAL' string (id ( 'TO' id )? )?
+//    ;
 
     // TODO: explicit, then uncomment time units in rule 'unreserved'
-   //interval : 'INTERVAL' expression timeSpan ;
-   //timeSpan      : 'EPOCH'
-   //              | 'YEAR' ( 'TO' 'MONTH' )?
-   //              | 'MONTH'
-   //              | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-   //              | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-   //              | 'MINUTE' ( 'TO' 'SECOND' )?
-   //              | 'SECOND'
-   //              ;
-   
+interval : 'INTERVAL' subterm timeSpan ;
+
+    timeSpan
+        : 'EPOCH'
+        | 'YEAR' ( 'TO' 'MONTH' )?
+        | 'MONTH'
+        | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
+        | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
+        | 'MINUTE' ( 'TO' 'SECOND' )?
+        | 'SECOND'
+        ;
+
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
 
