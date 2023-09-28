@@ -200,11 +200,11 @@ select
 
         unpivot
             : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
-            '('
-              ( column | columns )
-              'FOR' ( column | columns )
-              'IN' '(' aliasedTerms ')'
-            ')'
+              '('
+                ( column | columns )
+                'FOR' ( column | columns )
+                'IN' '(' aliasedTerms ')'
+              ')'
             ;
 
     where
@@ -228,14 +228,16 @@ select
 xmlTable
     : 'XMLTABLE'
       '('
-      subterm passing?
-      'COLUMNS' xmlColumn ( ',' xmlColumn )*
+        subterm passing?
+        'COLUMNS' xmlColumn ( ',' xmlColumn )*
       ')'
     ;
 
-passing : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
-content : 'DOCUMENT' | 'CONTENT' ;
+    passing
+        : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
 
+    content
+        : 'DOCUMENT' | 'CONTENT' ;
 
     xmlColumn
        : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
@@ -250,8 +252,9 @@ aliasedTerm
 aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
 
-    // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-    // | 'INTERSECTS' '(' term ',' term ')'
+// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+// | row 'INTERSECTS' '(' term ',' term ')'
+
 term
     : subterm
     | <assoc=right> 'NOT' term
@@ -267,15 +270,13 @@ term
 
 subterm
     : literal                                                         # SubtermLiteral
-    | subterm ( '::' subterm )+                                            # SubtermScope
-//    | subterm ( '::' id )+                                            # SubtermScope
+    | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
 // INTERVAL
 // BINARY, COLLATE
 //    | term 'COLLATE' id # SubtermCollate TODO
-//    | '!' term                               # SubtermNot
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
@@ -326,6 +327,12 @@ subterm
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
         ;
 
+        compare
+            : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
+            // Postgres match regex
+            | '~' | '~*' | '!~' | '!~*'
+            ;
+
         logicals
             : 'NAN' | 'PRESENT' | 'INFINITE' | 'A' 'SET' | 'EMPTY'
             | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
@@ -333,10 +340,6 @@ subterm
 
         jsonType
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
-
-        // TODO: can these be Tokens? might simplify the 'unreserved' and 'id' rules a bit.
-        // TODO: split rule 'compare' to handle dialects and customs?
-        compare  : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
 
 type
     : 'ROW' '(' name scalar ( ',' name scalar )* ')'
@@ -354,9 +357,9 @@ scalar
     | 'DECFLOAT'
     | 'FLOAT' ( '(' DECIMAL ')' )?
     | 'DOUBLE' 'PRECISION'
-    | 'DECIMAL' typePrecision?
-    | 'DEC' typePrecision?
-    | 'NUMBER' typePrecision?
+    | 'DECIMAL' precisionScale?
+    | 'DEC' precisionScale?
+    | 'NUMBER' precisionScale?
     | 'BOOLEAN'
 
     | 'VARBINARY'
@@ -373,7 +376,7 @@ scalar
     | 'UUID'
 //    | 'RAW'
 
-    | name typePrecision?
+    | name precisionScale?
     ;
 
  chars
@@ -385,7 +388,7 @@ scalar
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'? // Postgres?
     ;
 
-typePrecision
+precisionScale
     : '(' DECIMAL ( ',' DECIMAL )? ')'
     ;
 
@@ -412,7 +415,7 @@ function
 
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
-    | name /* id */
+    | name
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
@@ -424,24 +427,8 @@ function
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
     ;
 
-// TODO: Maybe archetypes for agg, win, etc functions?
-//    | ( 'ALL' | 'ANY' | 'SOME' ) '(' ( query | terms )? ')'
+// TODO: Maybe archetype rules for agg, win, etc functions?
 
-/*
-
-function_name OPEN_PAR ((DISTINCT_? expr ( COMMA expr)*) | STAR)? CLOSE_PAR filter_clause? over_clause?
-
-aggregate_function_invocation:
-    aggregate_func OPEN_PAR (DISTINCT_? expr (COMMA expr)* | STAR)? CLOSE_PAR filter_clause?
-;
-
-window_function_invocation:
-    window_function OPEN_PAR (expr (COMMA expr)* | STAR)? CLOSE_PAR filter_clause? OVER_ (
-        window_defn
-        | window_name
-    )
-;
-*/
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
 
@@ -493,7 +480,6 @@ literal
     | BLOB
     | truth
     | 'DEFAULT'
-    // TODO: change date literals from 'string' rule to 'STRING' token?
     | 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
@@ -508,12 +494,6 @@ literal
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
-//interval
-//    : 'INTERVAL' string ( name ( 'TO' name )? )?
-////    : 'INTERVAL' string (id ( 'TO' id )? )?
-//    ;
-
-    // TODO: explicit, then uncomment time units in rule 'unreserved'
 interval : 'INTERVAL' subterm timeSpan ;
 
     timeSpan
@@ -542,7 +522,6 @@ jsonObject
 
             jsonKey
                 : 'NULL' | string | name ;
-//                : 'NULL' | string | id ;
 
 columns
     : '(' column ( ',' column )* ')' ;
@@ -555,38 +534,6 @@ table
 
 index
     : '[' ( term | term? ':' term? )? ']' ;
-
-string
-    : STRING+
-    | UNICODE_STRING STRING* uescape?
-    | NATIONAL_STRING STRING*
-    ;
-
-    uescape
-        : 'UESCAPE' STRING ;
-
-names
-    : '(' name ( ',' name )* ')' ;
-
-// TODO separate rules for valid identifiers, valid aliases, and valid function names
-name
-//    : NAME
-//    | UNICODE_NAME uescape?
-//    | BACKTICKS
-//    | DOLLARS
-//    | ID
-//    | unreserved
-    : ID
-    | STRING
-    | UNICODE_NAME uescape?
-    | DOLLARS
-    | unreserved
-    ;
-
-alias
-    // supports << abc, 'abc', and "abc" >> Because I can't definitively figure out correct answer
-    : name | string ;
-//    : id | string ;
 
 // All tokens in this grammars which are unreserved SQL keywords. Keep up to
 // date manually. (Ugh.)
@@ -691,17 +638,6 @@ unreserved
        )
     ;
 
-//id
-//    : ID
-//    // Exclude all the tokens which cannot be an ID.
-//    // Roundabout way to accept grammar's keyword-like tokens.
-//    // Copypasta because ANTLR 4 only supports excluding lists of tokens.
-////    | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
-////        | STRING | UNICODE_STRING | NATIONAL_STRING
-////        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-////        )
-//    ;
-
 allDistinct
     : 'ALL' | 'DISTINCT' ;
 
@@ -732,35 +668,52 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-ID
-    : '"' ( ~'"' | '""' )* '"'
-    | '`' ( ~'`' | '``' )* '`'
-//    | '[' ~']'* ']'
-    | [A-Z_#] [A-Z_#$@0-9]*
+alias
+    : name | string ;
+
+names
+    : '(' name ( ',' name )* ')' ;
+
+// TODO separate rules for valid identifiers, valid aliases, and valid function names
+name
+    : ID
+    | STRING
+    | UNICODE_NAME uescape?
+    | DOLLARS
+    | unreserved
     ;
+
+string
+    : STRING+
+    | UNICODE_STRING STRING* uescape?
+    | NATIONAL_STRING STRING*
+    ;
+
+    uescape
+        : 'UESCAPE' STRING ;
+
+UNICODE_NAME
+    : 'U&' ID ;
 
 UNICODE_STRING
     : 'U&' STRING ;
 
-NATIONAL_STRING options { caseInsensitive=false; }
+NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-UNICODE_NAME
-//    : 'U&' NAME ;
-    : 'U&' ID ;
-
-// TODO square bracket names, per T-SQL. Will probably conflict with 'index' rule.
-//NAME
-//    : '"' ( ~'"' | '""' )* '"' ;
+ID
+    : '"' ( ~'"' | '""' )* '"'
+    | '`' ( ~'`' | '``' )* '`'
+    // T-SQL
+//    | '[' ~']'* ']'
+    | [A-Z_#] [A-Z_#$@0-9]*
+    ;
 
 DOLLARS
     : '$$' .*? '$$' ;
-
-//BACKTICKS
-//    : '`' ( ~'`' | '``' )* '`' ;
 
 BLOB
     : 'X' HEXHEX ( ' ' HEXHEX )* ;
@@ -788,19 +741,9 @@ fragment DIGIT
     : [0-9] ;
 
 VARIABLE
-    : '?' DIGIT* | [:@$] ID ;
-//    : '@' [A-Z_$@#0-9]* // T-SQL?
-//    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-//    | ':' NAME // Postgres?
-//    ;
-
-//COMPARATOR  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
-
-// TODO replace w/ isOperator (for symantec predicate)
-MATCH1 : '~' ; // match regex case sensitive
-MATCH2 : '~*' ; // match regex case insensitive
-MATCH3 : '!~' ; // not match regex case sensitive
-MATCH4 : '!~*' ; // not match regex case insensitive
+    : '?' DIGIT*
+    | [:@$] ID
+    ;
 
 COMMENT
     : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
