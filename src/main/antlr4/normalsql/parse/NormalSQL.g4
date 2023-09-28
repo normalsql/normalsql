@@ -91,6 +91,7 @@ query
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
         | select
+        // MySQL table statement
         | 'TABLE' table
         | values
         | '(' query ')'
@@ -141,8 +142,11 @@ select
               // http://h2database.com/html/functions.html#table
               // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
 //              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
+
+              // DB2 intermediate result table
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-              | 'TABLE' '(' select ')'
+              // PL/SQL table collection expression
+              | 'TABLE' '(' term ')'
               | 'JSON_TABLE' // TODO
               | xmlTable
               | function
