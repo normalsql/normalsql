@@ -274,7 +274,6 @@ subterm
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
-// INTERVAL
 // BINARY, COLLATE
 //    | term 'COLLATE' id # SubtermCollate TODO
     | subterm '&' subterm                                             # SubtermBinary
@@ -360,9 +359,9 @@ scalar
     | 'DECFLOAT'
     | 'FLOAT' ( '(' INTEGER ')' )?
     | 'DOUBLE' 'PRECISION'
-    | 'DECIMAL' precisionScale?
-    | 'DEC' precisionScale?
-    | 'NUMBER' precisionScale?
+    | 'DECIMAL' precision?
+    | 'DEC' precision?
+    | 'NUMBER' precision?
     | 'BOOLEAN'
 
     | 'VARBINARY'
@@ -379,7 +378,7 @@ scalar
     | 'UUID'
 //    | 'RAW'
 
-    | name precisionScale?
+    | name precision?
     ;
 
  chars
@@ -391,7 +390,7 @@ scalar
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'? // Postgres?
     ;
 
-precisionScale
+precision
     : '(' INTEGER ( ',' INTEGER )? ')'
     ;
 
@@ -497,17 +496,13 @@ literal
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
+// PL/SQL, ODBC
 interval
-    : 'INTERVAL' subterm
-      ( 'EPOCH'
-      | 'YEAR' ( 'TO' 'MONTH' )?
-      | 'MONTH'
-      | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-      | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-      | 'MINUTE' ( 'TO' 'SECOND' )?
-      | 'SECOND'
-    )
+    : 'INTERVAL' subterm intervalUnits ( 'TO' intervalUnits )?
     ;
+
+    intervalUnits
+        : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision? ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
