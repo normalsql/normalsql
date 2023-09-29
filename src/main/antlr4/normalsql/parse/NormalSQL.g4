@@ -284,11 +284,9 @@ subterm
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-
     | '(' terms ')' '.' name                                          # SubtermRowField
     | '(' term ')'                                                    # SubtermNested
     | '('')'                                                          # SubtermEmpty
-    | '(' term ( ',' term )* ',' term ')'                             # SubtermRow
     | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
     | query                                                           # SubtermQuery
     | array                                                           # SubtermArray
@@ -297,7 +295,8 @@ subterm
     | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
-    | 'ROW' '(' terms? ')'                                            # SubtermRow
+    | row 'OVERLAPS' row                                              # SubtermOverlaps
+    | row                                                             # SubtermRow
 //    | sequenceValueExpression TODO
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
@@ -307,6 +306,11 @@ subterm
     case
         : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # CaseSearch
+        ;
+
+    row
+        : 'ROW' '(' terms? ')'
+        | '(' term ( ',' term )+ ')' // two or more
         ;
 
     predicate
