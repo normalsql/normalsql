@@ -121,7 +121,7 @@ select
         ;
 
     top
-        : 'TOP' ( DECIMAL | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
+        : 'TOP' ( INTEGER | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
         : (( table '.' )? '*' ) ( 'EXCEPT' columns )? # ItemTableRef
@@ -323,7 +323,6 @@ subterm
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        // | 'OVERLAPS' ... TODO
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
         ;
 
@@ -334,7 +333,7 @@ subterm
             ;
 
         logicals
-            : 'NAN' | 'PRESENT' | 'INFINITE' | 'A' 'SET' | 'EMPTY'
+            : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
             | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
             ;
 
@@ -343,7 +342,7 @@ subterm
 
 type
     : 'ROW' '(' name scalar ( ',' name scalar )* ')'
-    | type 'ARRAY' ( '[' DECIMAL ']' )?
+    | type 'ARRAY' ( '[' INTEGER ']' )?
     | scalar
     ;
 
@@ -355,7 +354,7 @@ scalar
     | 'BIGINT'
     | 'REAL'
     | 'DECFLOAT'
-    | 'FLOAT' ( '(' DECIMAL ')' )?
+    | 'FLOAT' ( '(' INTEGER ')' )?
     | 'DOUBLE' 'PRECISION'
     | 'DECIMAL' precisionScale?
     | 'DEC' precisionScale?
@@ -364,14 +363,14 @@ scalar
 
     | 'VARBINARY'
     | 'BIT' 'VARYING'? // Postgres?
-    | chars ( '(' DECIMAL ')' )?
+    | chars ( '(' INTEGER ')' )?
 
     | 'BLOB'
     | 'CLOB'
     | 'NCLOB'
 
     | 'DATE'
-    | ( 'TIMESTAMP' | 'TIME' ) ( '(' DECIMAL ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
+    | ( 'TIMESTAMP' | 'TIME' ) ( '(' INTEGER ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
 
     | 'UUID'
 //    | 'RAW'
@@ -389,7 +388,7 @@ scalar
     ;
 
 precisionScale
-    : '(' DECIMAL ( ',' DECIMAL )? ')'
+    : '(' INTEGER ( ',' INTEGER )? ')'
     ;
 
 values
@@ -474,7 +473,7 @@ orderBy
         ;
 
 literal
-    : DECIMAL
+    : INTEGER
     | REAL
     | BYTES
     | BLOB
@@ -494,17 +493,17 @@ literal
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
-interval : 'INTERVAL' subterm timeSpan ;
-
-    timeSpan
-        : 'EPOCH'
-        | 'YEAR' ( 'TO' 'MONTH' )?
-        | 'MONTH'
-        | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-        | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-        | 'MINUTE' ( 'TO' 'SECOND' )?
-        | 'SECOND'
-        ;
+interval
+    : 'INTERVAL' subterm
+      ( 'EPOCH'
+      | 'YEAR' ( 'TO' 'MONTH' )?
+      | 'MONTH'
+      | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
+      | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
+      | 'MINUTE' ( 'TO' 'SECOND' )?
+      | 'SECOND'
+    )
+    ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
@@ -632,7 +631,7 @@ unreserved
 //        | 'YEAR'
 
         // ...And exclude all the other tokens which cannot be a keyword or name
-        | DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
+        | INTEGER | REAL | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
@@ -727,7 +726,7 @@ BYTES
 fragment HEX
     : [A-F0-9] ;
 
-DECIMAL
+INTEGER
     : DIGIT+ 'L'? ;
 
 // matches "0.e1" or ".0e1", but not ".e1"
