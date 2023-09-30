@@ -56,7 +56,7 @@ create
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
+        : name type ( 'NOT' 'NULL' )?  // (COMMENT string)? (WITH properties)?
         ;
 
 with
@@ -263,7 +263,7 @@ term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
     | <assoc=right> VARIABLE assign term
-    ;
+   ;
 
     assign
         : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
@@ -739,8 +739,8 @@ fragment DIGIT
     : [0-9] ;
 
 VARIABLE
-    : '?' DIGIT*
-    | [:@$] ID
+    : '?' // DIGIT*
+    | [:@$] ( INTEGER | ID )
     ;
 
 COMMENT
