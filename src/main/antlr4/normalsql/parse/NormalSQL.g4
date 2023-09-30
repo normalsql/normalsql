@@ -256,7 +256,8 @@ aliasedTerms
 // | row 'INTERSECTS' '(' term ',' term ')'
 
 term
-    : subterm
+    : '(' term ')'
+    | subterm
     | <assoc=right> 'NOT' term
     | term 'AND' term
     | term 'XOR' term
@@ -284,7 +285,7 @@ subterm
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | '(' terms ')' '.' name                                          # SubtermRowField
-    | '(' term ')'                                                    # SubtermNested
+    | '(' subterm ')'                                                    # SubtermNested
     | '('')'                                                          # SubtermEmpty
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
