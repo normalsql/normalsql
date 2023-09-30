@@ -286,7 +286,10 @@ subterm
     | '(' terms ')' '.' name                                          # SubtermRowField
     | '(' term ')'                                                    # SubtermNested
     | '('')'                                                          # SubtermEmpty
-    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+    | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
+    // PL/SQL, ODBC
+    | subterm interval                                                # SubtermInterval
+    | 'INTERVAL' subterm interval                                     # SubtermInterval
     | query                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
@@ -485,7 +488,6 @@ literal
     | 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-    | interval
     | jsonObject
     | jsonArray
     | PARAMETER
@@ -496,12 +498,11 @@ literal
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
-// PL/SQL, ODBC
 interval
-    : 'INTERVAL' subterm intervalUnits ( 'TO' intervalUnits )?
+    : timeUnit ( 'TO' timeUnit )?
     ;
 
-    intervalUnits
+    timeUnit
         : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision? ;
 
 jsonArray
