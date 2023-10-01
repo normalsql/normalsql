@@ -68,19 +68,27 @@ with
         ; // TODO rule for column aliases
 
 delete
-    : with? 'DELETE' ; // TODO
+    : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )?
+      ( 'USING' from ( ',' from )* )?
+      where? returning? ;
 
 insert
-    : with? 'INSERT' into names? source ; // TODO
+    : with? 'INSERT' into names?
+      ( 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' )?
+      ( source | 'DEFAULT' 'VALUES' )
+      returning? ;
 
 merge
     : with? 'MERGE' ; // TODO
 
 update
-    : with? 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
+    : with? 'UPDATE' qname 'SET' setter ( ',' setter )* from? where? returning? ;
 
     setter
-        : name '=' literal ;
+        : name '=' term ;
+
+returning
+    : 'RETURNING' item ( ',' item )* ;
 
 query
     : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
@@ -107,7 +115,15 @@ query
         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     forUpdate
-        : 'FOR' ( 'READ' 'ONLY' | 'UPDATE' ( 'OF' name ( ',' name )* )? ) ;
+        : 'FOR'
+          ( 'READ' 'ONLY'
+          | 'UPDATE'
+            ( ( 'OF' name ( ',' name )* )
+            | 'NOWAIT'
+            | 'WAIT' REAL
+            | 'SKIP' 'LOCKED'
+            )?
+          ) ;
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
@@ -124,8 +140,8 @@ select
         : 'TOP' ( INTEGER | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )? # ItemTableRef
-        | aliasedTerm                                 # ItemColumn
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
+        | aliasedTerm                                  # ItemColumn
         ;
 
     into
@@ -143,7 +159,7 @@ select
               // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
 //              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
 
-              // DB2 intermediate result table
+              // H2 data change table, DB2 intermediate result table
               | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
               // PL/SQL table collection expression
               | 'TABLE' '(' term ')'
@@ -208,7 +224,7 @@ select
             ;
 
     where
-        : 'WHERE' term ;
+        : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
     groupBy
         : 'GROUP' 'BY' terms? ;
@@ -526,10 +542,14 @@ jsonObject
 columns
     : '(' column ( ',' column )* ')' ;
 
+// TODO: remove 'column' and 'table' rules, use 'qname' instead
 column
     : name ( '.' name )*;
 
 table
+    : name ( '.' name )*;
+
+qname
     : name ( '.' name )*;
 
 index
@@ -752,6 +772,9 @@ BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
 WHITESPACE
-    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+// \u000B line (vertical) tab
+// \u000C form feed
+//    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+    : [ \t\r\n] -> channel ( HIDDEN ) ;
 
 ERROR : . ;
