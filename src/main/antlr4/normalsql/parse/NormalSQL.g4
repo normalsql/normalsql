@@ -150,45 +150,6 @@ select
     from
         : source ( join | pivot | unpivot )* ;
 
-        source
-            : ( unnest
-              | values
-              // TODO: What are table (valued) functions?
-              //  Added to pass ./h2/src/test/org/h2/test/scripts/functions/system/table.sql
-              // http://h2database.com/html/functions.html#table
-              // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
-//              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
-
-              // H2 data change table, DB2 intermediate result table
-              | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-              // PL/SQL table collection expression
-              | 'TABLE' '(' term ')'
-              | 'JSON_TABLE' // TODO
-              | xmlTable
-              | function
-              | '(' from ')'
-              | table
-              | query
-              )
-              ( 'AS'? alias names? )?
-            ;
-
-            // TODO: Should this part of rule 'function'?
-            unnest
-                : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
-
-                /*
-                    columnSpec
-                        : name ( dataType | schema ) '=' ( array | row ) ;
-
-                        dataType
-                            : 'NULL'
-                            | id+
-                            ; // TODO explicit dataTypes
-
-                        row
-                            : term ; // TODO row value expression
-                */
 
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
@@ -241,23 +202,52 @@ select
     qualify
         : 'QUALIFY' term ;
 
-xmlTable
-    : 'XMLTABLE'
-      '('
-        subterm passing?
-        'COLUMNS' xmlColumn ( ',' xmlColumn )*
-      ')'
+
+
+source
+    : ( unnest
+      | values
+      | tableFunc
+      // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+      // DB2 intermediate result table
+      | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+      // PL/SQL table collection expression
+      | 'TABLE' '(' term ')'
+      | 'JSON_TABLE' // TODO
+      | xmlTable
+      | function
+      | '(' from ')'
+      | table
+      | query
+      )
+      ( 'AS'? alias names? )?
     ;
 
-    passing
-        : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
+    // TODO: Should this part of rule 'function'?
+    unnest
+        : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
 
-    content
-        : 'DOCUMENT' | 'CONTENT' ;
+    // H2 table function http://h2database.com/html/functions.html#table
+    tableFunc
+        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')' ;
 
-    xmlColumn
-       : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
-       ;
+        tableFuncParam
+            : name ( type | qname | 'NULL' ) '=' subterm ;
+
+    xmlTable
+        : 'XMLTABLE'
+          '('
+            subterm passing?
+            'COLUMNS' xmlColumn ( ',' xmlColumn )*
+          ')'
+        ;
+
+        passing
+            : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
+
+        xmlColumn
+           : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
+           ;
 
 terms
     : term ( ',' term )* ;
@@ -430,10 +420,10 @@ function
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
     | 'XMLEXISTS' '(' subterm passing? ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-    | 'XMLPARSE' '(' content term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
+    | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
     | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
-    | 'XMLSERIALIZE' '(' content term 'AS' type ')'
+    | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all aggregate functions
@@ -462,6 +452,9 @@ function
 
     xmlAttrib
         : term ( 'AS' alias )? ;
+        
+    xmlContent
+        : 'DOCUMENT' | 'CONTENT' ;
 
 window
     : '(' name? partitionBy? orderBy? windowFrame? ')'
