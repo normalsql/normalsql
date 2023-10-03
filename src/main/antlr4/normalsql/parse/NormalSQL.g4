@@ -145,7 +145,7 @@ select
         ;
 
     top
-        : 'TOP' ( INTEGER | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
+        : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
         : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
@@ -638,7 +638,7 @@ unreserved
 //        | 'SOME'
         | 'SYMMETRIC'
 //        | 'SYSTEM_USER'
-        | 'TABLE'
+//        | 'TABLE'
         | 'TO'
         | 'TOP'
         | 'TRAILING'
@@ -658,7 +658,7 @@ unreserved
 //        | 'YEAR'
 
         // ...And exclude all the other tokens which cannot be a keyword or name
-        | INTEGER | REAL | BYTES | BLOB | PARAMETER | VARIABLE
+        | INTEGER | FLOAT | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
@@ -757,8 +757,8 @@ INTEGER
     : DIGIT+ 'L'? ;
 
 // matches "0.e1" or ".0e1", but not ".e1"
-REAL
-    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? ;
+FLOAT
+    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
 PARAMETER
     : '?' DIGIT* ;
