@@ -161,7 +161,7 @@ select
 
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
-            | ( 'CROSS' | 'NATURAL' ) 'JOIN' source
+            | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
             ;
 
         pivot
@@ -309,7 +309,7 @@ subterm
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
     | subterm interval                                                # SubtermInterval
-    | 'INTERVAL' subterm interval                                     # SubtermInterval
+    | 'INTERVAL' subterm interval?                                     # SubtermInterval
     | query                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
