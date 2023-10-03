@@ -64,8 +64,14 @@ with
     ;
 
     cte
-        : alias ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
-        ; // TODO rule for column aliases
+        // TODO add rule for column aliases
+        : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
+        '(' query ')'
+//        '(' ( select | values | insert | update | delete ) ')'
+        ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
+        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? 'USING' name )?
+
+        ;
 
 delete
     : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )?
@@ -117,13 +123,12 @@ query
     forUpdate
         : 'FOR'
           ( 'READ' 'ONLY'
-          | 'UPDATE'
-            ( ( 'OF' name ( ',' name )* )
-            | 'NOWAIT'
-            | 'WAIT' REAL
-            | 'SKIP' 'LOCKED'
-            )?
-          ) ;
+          | ( 'NO' 'KEY' )? 'UPDATE'
+          | 'KEY'? 'SHARE'
+          )
+          ( 'OF' qname ( ',' qname )* )?
+          ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
+        ;
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
@@ -291,7 +296,7 @@ subterm
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | '(' terms ')' '.' name                                          # SubtermRowField
-    | '(' subterm ')'                                                    # SubtermNested
+    | '(' subterm ')'                                                 # SubtermNested
     | '('')'                                                          # SubtermEmpty
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
@@ -490,7 +495,7 @@ orderBy
 
 literal
     : INTEGER
-    | REAL
+    | FLOAT
     | BYTES
     | BLOB
     | truth
