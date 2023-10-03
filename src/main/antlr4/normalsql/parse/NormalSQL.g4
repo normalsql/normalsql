@@ -193,7 +193,12 @@ select
         : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
     groupBy
-        : 'GROUP' 'BY' terms? ;
+        : 'GROUP' 'BY' allDistinct? groupByItems? ;
+
+        groupByItems
+            : terms | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
+            | 'GROUPING' 'SETS' '(' groupByItems ( ',' groupByItems )* ')'
+            ;
 
     having
         : 'HAVING' terms ;
