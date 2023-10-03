@@ -97,7 +97,10 @@ returning
     : 'RETURNING' item ( ',' item )* ;
 
 query
-    : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
+    : with? combine
+    // Because various dialects order these clauses differently
+    // TODO: Allow just one of each clause (somehow)
+    ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
     combine
