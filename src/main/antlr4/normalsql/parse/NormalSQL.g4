@@ -79,7 +79,7 @@ delete
       where? returning? ;
 
 insert
-    : with? 'INSERT' into names?
+    : with? 'INSERT' 'INTO' qname ( 'AS' name )? names?
       ( 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' )?
       ( source | 'DEFAULT' 'VALUES' )
       returning? ;
@@ -88,7 +88,7 @@ merge
     : with? 'MERGE' ; // TODO
 
 update
-    : with? 'UPDATE' qname 'SET' setter ( ',' setter )* from? where? returning? ;
+    : with? 'UPDATE' qname name? 'SET' setter ( ',' setter )* from? where? returning? ;
 
     setter
         : name '=' term ;
@@ -196,11 +196,11 @@ select
         : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
     groupBy
-        : 'GROUP' 'BY' allDistinct? groupByItems? ;
+        : 'GROUP' 'BY' allDistinct? groupByItem ( ',' groupByItem )* ;
 
-        groupByItems
+        groupByItem
             : terms | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
-            | 'GROUPING' 'SETS' '(' groupByItems ( ',' groupByItems )* ')'
+            | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
             ;
 
     having
@@ -414,7 +414,7 @@ scalar
     ;
 
 precision
-    : '(' INTEGER ( ',' INTEGER )? ')'
+    : '(' subterm ( ',' subterm )? ')'
     ;
 
 values
@@ -628,7 +628,7 @@ unreserved
         | 'RANGE'
         | 'REGEXP'
 //        | 'RIGHT'
-        | 'ROW'
+//        | 'ROW'
 //        | 'ROWNUM'
         | 'ROWS'
 //        | 'SECOND'
