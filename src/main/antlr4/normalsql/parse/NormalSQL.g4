@@ -67,9 +67,8 @@ with
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
         '(' query ')'
-//        '(' ( select | values | insert | update | delete ) ')'
         ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
-        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? 'USING' name )?
+        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
 
         ;
 
@@ -153,7 +152,7 @@ select
         ;
 
     into
-        : 'INTO' table ;
+        : 'INTO' ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
     from
         : source ( join | pivot | unpivot )* ;
