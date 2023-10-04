@@ -428,6 +428,7 @@ function
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | 'EXTRACT' '(' name 'FROM' .*? ')' // TODO
+    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
@@ -439,7 +440,9 @@ function
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
     | '{fn' function '}' //  ODBC style
-    // Generic syntax for all aggregate functions
+    // Generic syntax for all analytic functions?
+    | name '(' term respectIgnore? ')' respectIgnore? over?
+    // Generic syntax for all aggregate functions?
     | name
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
