@@ -8,6 +8,10 @@
 
  Child rules are indented when its (mostly) only used by a parent rule.
 
+   Heuristics:
+      Create subrules to ease parse tree navigation.
+      Per DRY, create subrule for 3 (sometimes 2) or more copypastas.
+
 */
 
 grammar NormalSQL;
@@ -69,7 +73,6 @@ with
         '(' query ')'
         ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
         ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
-
         ;
 
 delete
@@ -157,7 +160,6 @@ select
     from
         : source ( join | pivot | unpivot )* ;
 
-
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
             | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
@@ -213,8 +215,6 @@ select
 
     qualify
         : 'QUALIFY' term ;
-
-
 
 source
     : ( unnest
@@ -337,10 +337,9 @@ subterm
     predicate
         : compare subterm                                                          # PredicateCompare
         | 'IS' 'NOT'? truth                                                        # PredicateTruth
+        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         // PL/SQL dialect
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
-        // | 'ISNULL' ... TODO
-        // | 'NOTNULL' ... TODO
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
         | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
