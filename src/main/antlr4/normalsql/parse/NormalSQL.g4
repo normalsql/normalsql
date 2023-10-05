@@ -76,27 +76,64 @@ with
         ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )?
+    : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )? indexedBy?
+      // Postgres
       ( 'USING' from ( ',' from )* )?
-      where? returning? ;
+      where? returning?
+      ;
 
 insert
-    : with? 'INSERT' 'INTO' qname ( 'AS' name )? names?
-      ( 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' )?
-      ( source | 'DEFAULT' 'VALUES' )
-      returning? ;
+    : with? ( 'INSERT' | 'REPLACE' )
+      ( 'OR' ( 'ABORT' | 'FAIL'| 'IGNORE' | 'REPLACE' | 'ROLLBACK' ))?
+      'INTO' qname ( 'AS' name )? names?
+      overriding?
+      ( source upsert* | 'DEFAULT' 'VALUES' )
+      returning?
+    ;
+
+    overriding
+        : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
+
+    // SQLite
+    upsert
+        : 'ON' 'CONFLICT' '(' terms ')' where? 'DO'
+          ( 'NOTHING'
+          | 'UPDATE' 'SET' setter ( ',' setter )* where?
+          )
+        ;
 
 merge
-    : with? 'MERGE' ; // TODO
+    : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
+      'USING' 'ONLY'? source 'ON' terms
+      when*
+    ;
+
+    when
+        : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
+          ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
+          | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
+          | 'DELETE'
+          | 'DO' 'NOTHING'
+          )
+        ;
 
 update
-    : with? 'UPDATE' qname name? 'SET' setter ( ',' setter )* from? where? returning? ;
+    : with? 'UPDATE' qname name? indexedBy?
+      'SET' setter ( ',' setter )* from? where? returning? ;
 
     setter
-        : name '=' term ;
+        : ( qname | qnames ) '=' term ;
+
+// SQLite
+indexedBy
+    : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
 
 returning
-    : 'RETURNING' item ( ',' item )* ;
+    : 'RETURNING' returned ( ',' returned )* ;
+
+    returned
+        : '*' | aliasedTerm
+        ;
 
 query
     : with? combine
@@ -163,6 +200,7 @@ select
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
             | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
+            // TODO 'LATERAL'
             ;
 
         pivot
@@ -233,6 +271,10 @@ source
       | query
       )
       ( 'AS'? alias names? )?
+      // H2
+      ( 'USE' 'INDEX' names )?
+      // SQLite
+      ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )?
     ;
 
     // TODO: Should this part of rule 'function'?
@@ -293,8 +335,8 @@ subterm
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
-// BINARY, COLLATE
-//    | term 'COLLATE' id # SubtermCollate TODO
+// BINARY
+    | subterm 'COLLATE' name                                          # SubtermBinary
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
@@ -348,6 +390,7 @@ subterm
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
+        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
         compare
@@ -700,6 +743,9 @@ alias
 
 names
     : '(' name ( ',' name )* ')' ;
+
+qnames
+    : '(' qname ( ',' qname )* ')' ;
 
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
