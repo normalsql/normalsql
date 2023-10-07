@@ -331,6 +331,7 @@ term
 
 subterm
     : literal                                                         # SubtermLiteral
+    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
     | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
@@ -340,7 +341,6 @@ subterm
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
@@ -546,8 +546,7 @@ orderBy
         ;
 
 literal
-    : INTEGER
-    | FLOAT
+    : ( '+' | '-' )? ( INTEGER | FLOAT )
     | BYTES
     | BLOB
     | truth
