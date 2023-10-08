@@ -12,12 +12,6 @@ import org.antlr.v4.runtime.Parser;
 import java.util.ArrayList;
 import java.util.Stack;
 
-/**
- * <p>NormalSQLVisitor class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
 	NormalSQLVisitor
 extends
@@ -27,8 +21,10 @@ extends
 	public CommonTokenStream tokens;
 	ArrayList<Predicate<?,?>> predicates;
 
+	ArrayList<SubtermLiteralContext> literals = new ArrayList<>();
+
+
 	Stack<Statement> statementStack;
-//	Stack<Predicate> predicateStack;
 	// TODO: Support multiple root-level statements
 	Statement root;
 
@@ -40,8 +36,7 @@ extends
 		statementStack = new Stack<>();
 		root = new Statement();
 		statementStack.add( root );
-
-//		predicateStack = new Stack<>();
+		// TODO create contexts stack, so rules can match on parent too
 
 		super.visitScript( context );
 		return null;
@@ -50,11 +45,22 @@ extends
 	@Override
 	public Void visitSelect( SelectContext context )
 	{
-		statementStack.push( new Select() );
-		super.visitSelect( context );
-		Statement child = statementStack.pop();
 		Statement parent = statementStack.peek();
+		Statement child = new Select();
+		statementStack.push( child );
 		parent.add( child );
+		super.visitSelect( context );
+		return null;
+	}
+
+	@Override
+	public Void visitInsert( InsertContext context )
+	{
+		Statement parent = statementStack.peek();
+		Statement child = new Insert();
+		statementStack.push( child );
+		parent.add( child );
+		super.visitInsert( context );
 		return null;
 	}
 
@@ -74,22 +80,60 @@ extends
 		return null;
 	}
 
-	// TODO verify this is needed
+//	// TODO verify this is needed
+//	// TODO will likely need this, since preparedstatement param metadata is incomplete
 //	@Override
 //	public Void visitSource( SourceContext context )
 //	{
-//		if( context.tableRef() != null )
-//		{
-//			Source source = new Source();
-//			source.tableRef = new TableRef( context.tableRef() );
-//			if( context.alias() != null )
-//			{
-////				source.alias = context.alias().name().getTrimmedText();
-//			}
-//			stack.peek().sources.add( source );
-//		}
+//		Source source = new Source();
+//		statementStack.peek().sources.add( source );
+////		if( context.tableRef() != null )
+////		{
+////			Source source = new Source();
+////			source.tableRef = new TableRef( context.tableRef() );
+////			if( context.alias() != null )
+////			{
+//////				source.alias = context.alias().name().getTrimmedText();
+////			}
+////			stack.peek().sources.add( source );
+////		}
 //		return super.visitSource( context );
 //	}
+
+//	@Override
+//	public Void visitValues( ValuesContext context )
+//	{
+//		super.visitValues( context );
+//		return null;
+//	}
+
+	@Override
+	public Void visitSubtermRow( SubtermRowContext context )
+	{
+		if( context.terms() == null || context.terms().term() == null )
+		{
+			return null;
+		}
+
+		var temp = new ArrayList<SubtermLiteralContext>();
+		for( TermContext term : context.terms().term() )
+		{
+			SubtermContext sc = term.subterm();
+			if( sc instanceof SubtermLiteralContext )
+			{
+				temp.add( (SubtermLiteralContext) sc );
+			}
+		}
+
+		if( temp.size() == context.terms().term().size() )
+		{
+			// TODO also add literals to parent Statement
+			literals.addAll( temp );
+			return null;
+		}
+
+		return super.visitSubtermRow( context );
+	}
 
 	@Override
 	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
@@ -114,13 +158,17 @@ extends
 				p = new Match( (PredicateMatchContext) pc );
 				break;
 
+			// TODO: ANY
+			case "PredicateAnyContext":
+				break;
+
 			default:
 				break;
 		}
 
 		if( p != null && p.isMatched() )
 		{
-			statementStack.peek().predicates.add( p );
+			statementStack.peek().placeholders.add( p );
 			predicates.add( p );
 			return null;
 		}

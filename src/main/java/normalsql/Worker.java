@@ -67,6 +67,7 @@ public class Worker
 		_helper = new JavaHelper();
 	}
 
+	// TODO: use ANTLR's token stream rewriter instead
 	public void setStartTokenText( ParserRuleContext context, String text )
 	{
 		// Replace text of first "visible" (non whitespace) token, then exit
@@ -196,10 +197,12 @@ public class Worker
 
 		work.printfSQL = tokens.getText();
 
-		// TODO support unions, multiple statements, and such
-		work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
-
-		merge( work );
+//		// TODO foreach statement this, to support unions, multiple statements, and such
+//		work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+//
+//		// TODO match values' literals to columns
+//
+//		merge( work );
 
 		// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
@@ -247,21 +250,24 @@ public class Worker
 		}
 
 		ResultSetMetaData md = ps.getMetaData();
-		// TODO: dedupe resultset columns
-		for( int nth = 1; nth <= md.getColumnCount(); nth++ )
+		if( md != null )
 		{
-			Column column = new Column();
-			column.nth = nth;
-			column.catalog = md.getCatalogName( nth );
-			column.schema = md.getSchemaName( nth );
-			column.table = md.getTableName( nth );
-			column.name = md.getColumnName( nth );
-			column.label = md.getColumnLabel( nth );
-			column.type = md.getColumnType( nth );
-			column.typeName = md.getColumnTypeName( nth );
-			column.isNullable = md.isNullable( nth );
-			column.className = md.getColumnClassName( nth );
-			work.columns.add( column );
+			// TODO: dedupe resultset columns
+			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
+			{
+				Column column = new Column();
+				column.nth = nth;
+				column.catalog = md.getCatalogName( nth );
+				column.schema = md.getSchemaName( nth );
+				column.table = md.getTableName( nth );
+				column.name = md.getColumnName( nth );
+				column.label = md.getColumnLabel( nth );
+				column.type = md.getColumnType( nth );
+				column.typeName = md.getColumnTypeName( nth );
+				column.isNullable = md.isNullable( nth );
+				column.className = md.getColumnClassName( nth );
+				work.columns.add( column );
+			}
 		}
 	}
 

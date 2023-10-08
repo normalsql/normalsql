@@ -3,18 +3,20 @@
 
 package normalsql.meta;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import normalsql.parse.NormalSQLParser.PredicateContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 /**
- * <p>Abstract Predicate class.</p>
+ * Placeholder represents a question mark '?' in parsed query. In contrast
+ * to a Param which represents a JDBC PreparedStatement Parameter.
  *
- * @param <T> class extends PredicateContext
- * @author jasonosgood
- * @version $Id: $Id
+ *
  */
+
 public abstract class
-	Predicate<T extends PredicateContext, E extends Enum<E>>
+	Predicate<T extends ParserRuleContext, E extends Enum<E>>
+//	Predicate<T extends PredicateContext, E extends Enum<E>>
 {
 	public T context;
 	public SubtermContext parent;

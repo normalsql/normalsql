@@ -1,0 +1,1 @@
+INSERT INTO OOPS VALUES(2 + 2, 'World');

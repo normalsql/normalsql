@@ -3,6 +3,12 @@
 
 package normalsql.meta;
 
+import normalsql.parse.NormalSQLParser;
+import normalsql.parse.NormalSQLParser.SubtermRowContext;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * <p>Source class.</p>
  *
@@ -13,4 +19,5 @@ public class Source
 {
 	public TableRef tableRef;
 	public String alias;
+	public List<SubtermRowContext> rows = new ArrayList<>();
 }

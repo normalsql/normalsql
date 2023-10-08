@@ -8,12 +8,6 @@ import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
 
-/**
- * Comparison class.
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
 	Comparison
 extends

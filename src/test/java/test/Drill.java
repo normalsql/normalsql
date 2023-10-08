@@ -47,7 +47,7 @@ order by pname
 //		parse( null, sql );
 	}
 
-	public static void parse( Path p, String sql )
+	public static boolean parse( Path p, String sql )
 	{
 		class SyntaxError
 		{
@@ -89,7 +89,7 @@ order by pname
 		} );
 
 		ScriptContext script = parser.script();
-		if( errors.isEmpty() ) return;
+		if( errors.isEmpty() ) return true;
 
 //		NormalSQLVisitor visitor = new NormalSQLVisitor();
 //		visitor.parser = parser;
@@ -113,7 +113,9 @@ order by pname
 //		System.out.println( sql );
 
 //		System.out.println();
-//		System.out.println( toStringTree( script, parser ) );
+		System.out.println( toStringTree( script, parser ) );
+//		System.out.println(script.toInfoString( script, parser ) );
+		return false;
 	}
 
 	public static String toStringTree( Tree parent, Parser recog )

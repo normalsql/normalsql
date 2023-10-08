@@ -4,10 +4,9 @@
 package normalsql.meta;
 
 /**
- * PreparedStatement parameter.
+ * POJO representing a JDBC PreparedStatement Parameter. In contrast
+ * to a Placeholder representing a question mark '?' in parsed query.
  *
- * @author jasonosgood
- * @version $Id: $Id
  */
 public class Param
 {

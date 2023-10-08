@@ -14,13 +14,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 
-/**
- * <p>Tool class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
-
 /*
 	TODO:
 
@@ -191,6 +184,6 @@ public class
 		}
 	}
 
-	// TODO: Create ','nd line option for this? eg. for a clean build operation
+	// TODO: Create command line option for this? eg. for a clean build operation
 	static boolean _alwaysOverwrite = true;
 }

@@ -5,12 +5,6 @@ package normalsql.meta;
 
 import java.util.ArrayList;
 
-/**
- * Statements are lists containing child Statements. Simplifies recursion.
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
 	Statement
 extends
@@ -18,6 +12,7 @@ extends
 {
 	// TODO handle duplicate item names, eg replace List with LinkedHashMap, add suffixes to names
 	public ArrayList<Item> items = new ArrayList<>();
-//	public ArrayList<Source> sources = new ArrayList<>();
-	public ArrayList<Predicate> predicates = new ArrayList<>();
+	public ArrayList<Source> sources = new ArrayList<>();
+	// TODO: Trying "Placeholder" name
+	public ArrayList<Predicate> placeholders = new ArrayList<>();
 }
