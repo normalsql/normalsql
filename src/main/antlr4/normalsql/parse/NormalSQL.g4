@@ -336,7 +336,7 @@ subterm
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
-// BINARY
+    // TODO: BINARY
     | subterm 'COLLATE' name                                          # SubtermBinary
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
@@ -350,7 +350,7 @@ subterm
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
     | subterm interval                                                # SubtermInterval
-    | 'INTERVAL' subterm interval?                                     # SubtermInterval
+    | 'INTERVAL' subterm interval?                                    # SubtermInterval
     | query                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
@@ -358,9 +358,10 @@ subterm
     | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
-    | row 'OVERLAPS' row                                              # SubtermOverlaps
-    | row                                                             # SubtermRow
-//    | sequenceValueExpression TODO
+    // PL/SQL
+    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+    | 'ROW'? '(' terms? ')'                                           # SubtermRow
+//   TODO  | sequenceValueExpression
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
@@ -369,11 +370,6 @@ subterm
     case
         : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # CaseSearch
-        ;
-
-    row
-        : 'ROW' '(' terms? ')'
-        | '(' term ( ',' term )+ ')' // two or more
         ;
 
     predicate
