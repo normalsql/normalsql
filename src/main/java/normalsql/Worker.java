@@ -3,6 +3,9 @@
 
 package normalsql;
 
+import normalsql.jdbc.Column;
+import normalsql.jdbc.FancyMetaData;
+import normalsql.jdbc.Param;
 import normalsql.meta.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
@@ -25,31 +28,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * <p>Worker class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class Worker
 {
 	Connection _conn;
 	VelocityEngine _engine;
 	Template _selectTemplate;
+	Template _insertTemplate;
 	Template _resultSetTemplate;
 	JavaHelper _helper;
 
-	/**
-	 * <p>Constructor for Worker.</p>
-	 *
-	 * @param conn a Connection object
-	 */
 	public Worker( Connection conn )
 	{
 		_conn = conn;
@@ -63,6 +57,7 @@ public class Worker
 		_engine.init();
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
+		_insertTemplate = _engine.getTemplate( "normalsql/template/Insert.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
 	}
@@ -75,13 +70,6 @@ public class Worker
 		start.setText( text );
 	}
 
-	/**
-	 * <p>process.</p>
-	 *
-	 * @param work a {@link normalsql.Work} object
-	 * @throws java.io.IOException if any.
-	 * @throws SQLException if any.
-	 */
 	public void process( Work work )
 		throws IOException, SQLException
 	{
@@ -95,13 +83,26 @@ public class Worker
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ScriptContext script = parser.script();
+
 		NormalSQLVisitor visitor = new NormalSQLVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
-
 		visitor.visit( script );
 		work.root = visitor.root;
+
 		work.predicates = visitor.predicates;
+		for( Statement s : work.root )
+		{
+			switch( s )
+			{
+				case Insert insert ->
+				{
+//					Insert insert = (Insert) s;
+					System.out.println( insert );
+				}
+				default -> throw new IllegalStateException( "Unexpected value: " + s );
+			}
+		}
 
 		for( var p : work.predicates )
 		{
@@ -176,12 +177,12 @@ public class Worker
 
 		work.preparedSQL = tokens.getText();
 
-		processPreparedStatement( _conn, work );
+		FancyMetaData md = new FancyMetaData( _conn, work.preparedSQL );
 
-		for( int nth = 0; nth < work.params.size(); nth++ )
+		for( int nth = 0; nth < md.params.size(); nth++ )
 		{
 			Property prop = work.statementProperties.get( nth );
-			Param p = work.params.get( nth );
+			Param p = md.params.get( nth );
 			prop.param = p;
 			prop.nth = p.nth;
 			prop.className = p.className;
@@ -221,55 +222,6 @@ public class Worker
 		return _helper.getTrimmedText( column );
 	}
 
-	/**
-	 * <p>processPreparedStatement.</p>
-	 *
-	 * @param conn a Connection object
-	 * @param work a {@link normalsql.Work} object
-	 * @throws SQLException if any.
-	 */
-	public void processPreparedStatement( Connection conn, Work work )
-		throws SQLException
-	{
-		PreparedStatement ps = conn.prepareStatement( work.preparedSQL );
-
-		ParameterMetaData pmd = ps.getParameterMetaData();
-		for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
-		{
-			Param param = new Param();
-			param.nth = nth;
-			param.type = pmd.getParameterType( nth );
-			param.typeName = pmd.getParameterTypeName( nth );
-			param.isNullable = pmd.isNullable( nth );
-			param.isSigned = pmd.isSigned( nth );
-			param.scaled = pmd.getScale( nth );
-			param.precision = pmd.getPrecision( nth );
-			param.mode = pmd.getParameterMode( nth );
-			param.className = pmd.getParameterClassName( nth );
-			work.params.add( param );
-		}
-
-		ResultSetMetaData md = ps.getMetaData();
-		if( md != null )
-		{
-			// TODO: dedupe resultset columns
-			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
-			{
-				Column column = new Column();
-				column.nth = nth;
-				column.catalog = md.getCatalogName( nth );
-				column.schema = md.getSchemaName( nth );
-				column.table = md.getTableName( nth );
-				column.name = md.getColumnName( nth );
-				column.label = md.getColumnLabel( nth );
-				column.type = md.getColumnType( nth );
-				column.typeName = md.getColumnTypeName( nth );
-				column.isNullable = md.isNullable( nth );
-				column.className = md.getColumnClassName( nth );
-				work.columns.add( column );
-			}
-		}
-	}
 
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL

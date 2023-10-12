@@ -4,7 +4,7 @@
 /*
  Represents a ResultSet's result column. Columns correspond to the items of a SELECT query.
 */
-package normalsql.meta;
+package normalsql.jdbc;
 
 public class
 	Column

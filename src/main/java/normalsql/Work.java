@@ -3,8 +3,8 @@
 
 package normalsql;
 
-import normalsql.meta.Column;
-import normalsql.meta.Param;
+import normalsql.jdbc.Column;
+import normalsql.jdbc.Param;
 import normalsql.meta.Predicate;
 import normalsql.meta.Statement;
 
@@ -30,10 +30,6 @@ public class Work
 	// All the (matched) predicates in one flattened list.
 	ArrayList<Predicate<?,?>> predicates = new ArrayList<>();
 
-	// Parameters copied from PreparedStatement's metadata
-	ArrayList<Param> params = new ArrayList<>();
-	// Columns copied from ResultSet's metadata
-	public ArrayList<Column> columns = new ArrayList<>();
 
 	public Path sourceFile;
 	public Path targetDir;

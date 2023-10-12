@@ -3,6 +3,19 @@
 
 package normalsql.meta;
 
-public class Insert extends Statement
+import normalsql.parse.NormalSQLParser.NameContext;
+import normalsql.parse.NormalSQLParser.QnameContext;
+import normalsql.parse.NormalSQLParser.LiteralContext;
+
+import java.util.List;
+
+public class
+	Insert
+extends
+	Statement
 {
+	public QnameContext table;
+	public NameContext alias;
+	public List<NameContext> columns;
+	public List<LiteralContext> literals;
 }

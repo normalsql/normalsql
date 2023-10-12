@@ -3,8 +3,8 @@
 
 package normalsql;
 
-import normalsql.meta.Column;
-import normalsql.meta.Param;
+import normalsql.jdbc.Column;
+import normalsql.jdbc.Param;
 import normalsql.parse.NormalSQLParser.LiteralContext;
 
 /**

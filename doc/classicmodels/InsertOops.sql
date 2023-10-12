@@ -1,1 +1,1 @@
-INSERT INTO OOPS VALUES(2 + 2, 'World');
+INSERT INTO OOPS (id, ook) VALUES(2, 'World');

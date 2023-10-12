@@ -3,8 +3,8 @@
 
 package test;
 
-import normalsql.meta.Column;
-import normalsql.meta.Param;
+import normalsql.jdbc.Column;
+import normalsql.jdbc.Param;
 import spare.Dumper;
 
 import java.sql.*;

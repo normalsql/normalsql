@@ -18,7 +18,7 @@
 ##     printfSQL - printf version of originalSQL, for debugging
 ##     statementProperties - List<Property>, meta data for getters and setters
 /**
-* ${resultSetClassName}.java ${date}
+* ${statementClassName}.java ${date}
 *
 ## TODO put actual filename and its timestamp here.
 * Generated using NormalSQL's Select.vm template.

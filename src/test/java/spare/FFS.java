@@ -1,8 +1,6 @@
 package spare;
 
-import com.mysql.cj.jdbc.ConnectionImpl;
-import com.mysql.cj.jdbc.JdbcPropertySet;
-import normalsql.meta.Param;
+import normalsql.jdbc.Param;
 
 import java.sql.DriverManager;
 import java.sql.*;
@@ -70,7 +68,7 @@ public class FFS
 			param.mode = pmd.getParameterMode( nth );
 			param.className = pmd.getParameterClassName( nth );
 			params.add( param );
-//			System.out.println( param );
+			System.out.println( param );
 		}
 //		ps.setString( 1, "USA" );
 //		if( ps.execute() )

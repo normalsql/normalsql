@@ -21,7 +21,7 @@ extends
 	public CommonTokenStream tokens;
 	ArrayList<Predicate<?,?>> predicates;
 
-	ArrayList<SubtermLiteralContext> literals = new ArrayList<>();
+	ArrayList<LiteralContext> literals = new ArrayList<>();
 
 
 	Stack<Statement> statementStack;
@@ -54,17 +54,6 @@ extends
 	}
 
 	@Override
-	public Void visitInsert( InsertContext context )
-	{
-		Statement parent = statementStack.peek();
-		Statement child = new Insert();
-		statementStack.push( child );
-		parent.add( child );
-		super.visitInsert( context );
-		return null;
-	}
-
-	@Override
 	public Void visitItemColumn( ItemColumnContext context )
 	{
 		Item item = new Item();
@@ -79,6 +68,53 @@ extends
 		super.visitItemColumn( context );
 		return null;
 	}
+
+	@Override
+	public Void visitInsert( InsertContext context )
+	{
+		try
+		{
+			var terms = context.source().values().terms().term();
+
+			var temp = new ArrayList<LiteralContext>();
+			for( TermContext term : terms )
+			{
+				SubtermContext sc = term.subterm();
+				if( sc instanceof SubtermLiteralContext )
+				{
+					temp.add( ((SubtermLiteralContext) sc).literal() );
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			if( temp.size() == terms.size() )
+			{
+				// TODO also add literals to parent Statement
+				literals.addAll( temp );
+
+				Statement parent = statementStack.peek();
+				Insert child = new Insert();
+				child.literals = temp;
+				if( context.names() != null )
+				{
+					child.columns = context.names().name();
+				}
+
+				statementStack.push( child );
+				parent.add( child );
+
+				return null;
+			}
+		}
+		// ignore
+		catch( NullPointerException npe ) {}
+
+		return super.visitInsert( context );
+	}
+
 
 //	// TODO verify this is needed
 //	// TODO will likely need this, since preparedstatement param metadata is incomplete
@@ -107,33 +143,33 @@ extends
 //		return null;
 //	}
 
-	@Override
-	public Void visitSubtermRow( SubtermRowContext context )
-	{
-		if( context.terms() == null || context.terms().term() == null )
-		{
-			return null;
-		}
-
-		var temp = new ArrayList<SubtermLiteralContext>();
-		for( TermContext term : context.terms().term() )
-		{
-			SubtermContext sc = term.subterm();
-			if( sc instanceof SubtermLiteralContext )
-			{
-				temp.add( (SubtermLiteralContext) sc );
-			}
-		}
-
-		if( temp.size() == context.terms().term().size() )
-		{
-			// TODO also add literals to parent Statement
-			literals.addAll( temp );
-			return null;
-		}
-
-		return super.visitSubtermRow( context );
-	}
+//	@Override
+//	public Void visitSubtermRow( SubtermRowContext context )
+//	{
+//		if( context.terms() == null || context.terms().term() == null )
+//		{
+//			return null;
+//		}
+//
+//		var temp = new ArrayList<SubtermLiteralContext>();
+//		for( TermContext term : context.terms().term() )
+//		{
+//			SubtermContext sc = term.subterm();
+//			if( sc instanceof SubtermLiteralContext )
+//			{
+//				temp.add( (SubtermLiteralContext) sc );
+//			}
+//		}
+//
+//		if( temp.size() == context.terms().term().size() )
+//		{
+//			// TODO also add literals to parent Statement
+//			literals.addAll( temp );
+//			return null;
+//		}
+//
+//		return super.visitSubtermRow( context );
+//	}
 
 	@Override
 	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
