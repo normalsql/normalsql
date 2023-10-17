@@ -3,7 +3,8 @@ package normalsql.jdbc;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class FancyMetaData
+public class
+	FancyMetaData
 {
 	// Parameters copied from PreparedStatement's metadata
 	public ArrayList<Param> params = new ArrayList<>();

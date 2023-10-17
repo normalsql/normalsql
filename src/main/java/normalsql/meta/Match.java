@@ -21,6 +21,7 @@ extends
 	public SubtermContext column;
 	public SubtermContext literal;
 
+	// TODO Rename to LIKE. I already forgot what a "match" is.
 	public Match(PredicateMatchContext context )
 	{
 		super( context );

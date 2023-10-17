@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 public class
@@ -56,6 +57,7 @@ extends
 	@Override
 	public Void visitItemColumn( ItemColumnContext context )
 	{
+		// TODO: Could or should these be inlined into visitSelect?
 		Item item = new Item();
 		item.context = context;
 		item.source = tokens.getText( context );
@@ -74,39 +76,60 @@ extends
 	{
 		try
 		{
-			var terms = context.source().values().terms().term();
+			// TODO this method chaining SUCKS, bring back the globber
+			// Drill down to first row
+			var termList = context.source().values().terms().term();
+			var subterm = termList.get( 0 ).subterm();
 
-			var temp = new ArrayList<LiteralContext>();
-			for( TermContext term : terms )
+			if( subterm instanceof SubtermRowContext )
 			{
-				SubtermContext sc = term.subterm();
-				if( sc instanceof SubtermLiteralContext )
+//				var found = new ArrayList<LiteralContext>();
+				var found = new ArrayList<SubtermLiteralContext>();
+//				List<TermContext> maybes = ((SubtermRowContext) subterm).terms().term();
+				var maybes = ((SubtermRowContext) subterm).terms().term();
+				for( TermContext term : maybes )
 				{
-					temp.add( ((SubtermLiteralContext) sc).literal() );
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			if( temp.size() == terms.size() )
-			{
-				// TODO also add literals to parent Statement
-				literals.addAll( temp );
-
-				Statement parent = statementStack.peek();
-				Insert child = new Insert();
-				child.literals = temp;
-				if( context.names() != null )
-				{
-					child.columns = context.names().name();
+					SubtermContext sc = term.subterm();
+					if( sc instanceof SubtermLiteralContext )
+					{
+//						found.add( ((SubtermLiteralContext) sc).literal() );
+						found.add( (SubtermLiteralContext) sc );
+					}
+					else
+					{
+						break;
+					}
 				}
 
-				statementStack.push( child );
-				parent.add( child );
+				if( found.size() == maybes.size() )
+				{
+					// TODO also add literals to parent Statement?
+//					literals.addAll( found );
 
-				return null;
+					Insert child = new Insert();
+//					child.literals = found;
+					if( context.qname() != null )
+					{
+						child.table = context.qname();
+					}
+
+					if( context.names() != null )
+					{
+						child.columns = context.names().name();
+					}
+
+					Rooster roo = new Rooster( context, child );
+					roo.literals = found;
+
+					child.placeholders.add( roo );
+					predicates.add( roo );
+
+					Statement parent = statementStack.peek();
+					parent.add( child );
+					statementStack.push( child );
+
+					return null;
+				}
 			}
 		}
 		// ignore

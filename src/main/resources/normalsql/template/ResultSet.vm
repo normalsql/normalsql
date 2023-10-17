@@ -145,7 +145,7 @@ public class
 	#end
 
 	#end
-
+/*
 	// TODO switch from StringBuilder to printf
 	public String toString()
 	{
@@ -169,4 +169,6 @@ public class
 		#end
 		return sb.toString();
 	}
+*/
 }
+

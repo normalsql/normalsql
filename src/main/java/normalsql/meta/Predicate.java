@@ -4,22 +4,24 @@
 package normalsql.meta;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import normalsql.parse.NormalSQLParser.PredicateContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 /**
- * Placeholder represents a question mark '?' in parsed query. In contrast
- * to a Param which represents a JDBC PreparedStatement Parameter.
+ * Predicate references parsed literals which will be replaced with a
+ * placeholder question mark '?' in parsed query. Subclasses also
+ * have any additional context needed for code generating the accessors.
+ *
  *
  *
  */
 
+// TODO: Rename to Knockout or something totally distinct from "param".
+
 public abstract class
 	Predicate<T extends ParserRuleContext, E extends Enum<E>>
-//	Predicate<T extends PredicateContext, E extends Enum<E>>
 {
 	public T context;
-	public SubtermContext parent;
+	public ParserRuleContext parent;
 
 	/**
 	 * <p>Constructor for Predicate.</p>
@@ -29,7 +31,7 @@ public abstract class
 	public Predicate( T context )
 	{
 		this.context = context;
-		parent = (SubtermContext) context.parent;
+		parent = (ParserRuleContext) context.parent;
 	}
 
 	public E pattern;
@@ -58,6 +60,4 @@ public abstract class
 
 		return null;
 	}
-
-
 }

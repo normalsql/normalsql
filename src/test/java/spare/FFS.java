@@ -22,8 +22,6 @@ public class FFS
 	 */
 	public static void main( String[] args ) throws Exception
 	{
-		if( null instanceof Integer )
-			{ System.out.println( "woot");}
 		Class.forName( "com.mysql.cj.jdbc.Driver" );
 		Class.forName( "org.h2.Driver" );
 		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/classicmodels", "sa", null );

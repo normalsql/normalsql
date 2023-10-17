@@ -341,7 +341,7 @@ subterm
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | subterm '||' subterm                                            # SubtermBinary
+    | subterm '||' subterm                              # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | '(' terms ')' '.' name                                          # SubtermRowField

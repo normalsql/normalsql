@@ -73,7 +73,7 @@ public class Worker
 	public void process( Work work )
 		throws IOException, SQLException
 	{
-		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
+		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ));
 
 		// TODO attempt running statement before parsing
 
@@ -91,18 +91,6 @@ public class Worker
 		work.root = visitor.root;
 
 		work.predicates = visitor.predicates;
-		for( Statement s : work.root )
-		{
-			switch( s )
-			{
-				case Insert insert ->
-				{
-//					Insert insert = (Insert) s;
-					System.out.println( insert );
-				}
-				default -> throw new IllegalStateException( "Unexpected value: " + s );
-			}
-		}
 
 		for( var p : work.predicates )
 		{
@@ -153,6 +141,13 @@ public class Worker
 					work.statementProperties.add( prop );
 					break;
 				}
+
+				case "ANY":
+				{
+					// TODO ANY predicate
+					break;
+				}
+
 				case "IN":
 				{
 					IN in = (IN) p;
@@ -160,12 +155,28 @@ public class Worker
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
-						String temp = column + "_" + (nth + 1);
-						Property prop = _helper.create( l, temp);
+						String temp = column + "_" + ( nth + 1 );
+						Property prop = _helper.create( l, temp );
 						work.statementProperties.add( prop );
 					}
 					break;
 				}
+
+				case "Rooster":
+				{
+					Rooster row = (Rooster) p;
+					for( int nth = 0; nth < row.literals.size(); nth++ )
+					{
+						SubtermLiteralContext l = row.literals.get( nth );
+						String col = row.insert.columns.get( nth ).getText();
+						Property prop = _helper.create( l, col );
+						work.statementProperties.add( prop );
+					}
+
+					break;
+				}
+
+
 				default: break;
 			}
 		}
@@ -198,12 +209,24 @@ public class Worker
 
 		work.printfSQL = tokens.getText();
 
-//		// TODO foreach statement this, to support unions, multiple statements, and such
-//		work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
-//
-//		// TODO match values' literals to columns
-//
-//		merge( work );
+		switch ( work.root.get( 0 ))
+		{
+			case Select ignore ->
+			{
+				// TODO foreach statement this, to support unions, multiple statements, and such
+				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+			}
+			case Insert ignore ->
+			{
+			}
+	        default ->
+			{
+			}
+    	};
+
+		// TODO match values' literals to columns
+
+		merge( work );
 
 		// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
@@ -274,12 +297,6 @@ public class Worker
 		return properties;
 	}
 
-	/**
-	 * <p>merge.</p>
-	 *
-	 * @param work a {@link normalsql.Work} object
-	 * @throws java.io.IOException if any.
-	 */
 	public void merge( Work work ) throws IOException
 	{
 		HashMap<String, Object> childMap = work.asMap();
@@ -289,8 +306,22 @@ public class Worker
 
 		VelocityContext vc = new VelocityContext( childMap );
 
-		generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
-		generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+		switch ( work.root.get( 0 ))
+		{
+			case Select ignore ->
+			{
+				generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
+				generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+			}
+			case Insert ignore ->
+			{
+				generate( _insertTemplate, vc, work.targetDir, work.statementClassName );
+			}
+	        default ->
+			{
+				System.out.println( "unrecognized: " + work.root.get( 0 ).getClass() );
+			}
+    	};
 	}
 
 	/**

@@ -15,7 +15,6 @@ extends
 	Statement
 {
 	public QnameContext table;
-	public NameContext alias;
 	public List<NameContext> columns;
 	public List<LiteralContext> literals;
 }
