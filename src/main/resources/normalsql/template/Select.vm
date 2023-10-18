@@ -43,25 +43,27 @@
 package ${packageName};
 #end
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class
 	${statementClassName}
 {
-	private PreparedStatement __ps = null;
+	private PreparedStatement __ps;
 
 	public final String __preparedSQL =
 ## add back each '\n', then concat each line with '+', then end with ';'
 		#foreach( $line in $preparedSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
 		#end
 
 	public final String __printfSQL =
 ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 		#foreach( $line in $printfSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
 		#end
 
 	/**

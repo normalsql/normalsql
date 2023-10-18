@@ -189,6 +189,7 @@ public class Worker
 		work.preparedSQL = tokens.getText();
 
 		FancyMetaData md = new FancyMetaData( _conn, work.preparedSQL );
+		work.columns = md.columns;
 
 		for( int nth = 0; nth < md.params.size(); nth++ )
 		{

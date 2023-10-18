@@ -10,8 +10,6 @@
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     printfSQL - like preparedSQL, but for printf
-##     sourceFile - name of original .sql file
 ##     resultSetProperties - List<Property>, meta data for getters and setters
 /**
 * ${resultSetClassName}.java ${date}
@@ -26,13 +24,15 @@
 package ${packageName};
 #end
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.math.BigDecimal;
 
 public class 
 	${resultSetClassName}
 {
-	private ResultSet __resultSet = null;
+	private ResultSet __resultSet;
 
 	public ${resultSetClassName}( ResultSet resultSet )
 	{
@@ -80,6 +80,9 @@ public class
 		return __connection;
 	}
 
+	private int __row = 0;
+	public int getRow() { return __row; }
+
 	public final boolean hasNext()
 		throws SQLException
 	{
@@ -88,12 +91,12 @@ public class
 		boolean	success = rs.next();
 		if( success )
 		{
+			__row = rs.getRow();
 			#foreach( $p in $resultSetProperties )
 			_${p.variable} = rs.get${p.classShortName}( ${p.nth} );
-			#if( $a.isNullable )
+			#if( $p.isNullable )
 			_${p.variable}_wasNull = !rs.wasNull();
 			#end
-
 			#end
 		}
 		return success;
@@ -145,7 +148,7 @@ public class
 	#end
 
 	#end
-/*
+
 	// TODO switch from StringBuilder to printf
 	public String toString()
 	{
@@ -153,22 +156,24 @@ public class
 		{
 			return "No results";
 		}
+		if( getRow() == 0 )
+		{
+			return "No current row";
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append( "#row: " );
 		sb.append( getRow() );
-		sb.append( ", \n" );
+		sb.append( ", " );
 		#foreach( $p in $resultSetProperties )
 		sb.append( "${p.variable}: " );
 		sb.append( ${p.getter}() );
-		#if( $p.isNullable )
-		sb.append( "(was null: " );
-		sb.append( ${p.getter}WasNull() );
-		sb.append( ")" );
+##		sb.append( ${p.getter}WasNull() ? null : ${p.getter}() );
+		#if($foreach.hasNext)
+		sb.append( ", " );
 		#end
-		sb.append( ", \n" );
 		#end
 		return sb.toString();
 	}
-*/
+
 }
 

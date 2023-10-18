@@ -33,7 +33,7 @@ public class Work
 	// Parameters copied from PreparedStatement's metadata
 	ArrayList<Param> params = new ArrayList<>();
 	// Columns copied from ResultSet's metadata
-	public ArrayList<Column> columns = new ArrayList<>();
+	public ArrayList<Column> columns;
 
 	public Path sourceFile;
 	public Path targetDir;
