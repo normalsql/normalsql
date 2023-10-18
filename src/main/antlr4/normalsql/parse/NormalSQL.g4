@@ -565,7 +565,10 @@ interval
     ;
 
     timeUnit
-        : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision? ;
+        : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision?
+        // DB2 interval units
+        | 'MONTHS' | 'DAYS' | 'HOURS'
+        ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
