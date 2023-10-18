@@ -219,6 +219,7 @@ public class Worker
 			}
 			case Insert ignore ->
 			{
+				// TODO fill in missing columns
 			}
 	        default ->
 			{

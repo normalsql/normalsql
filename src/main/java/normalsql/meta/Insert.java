@@ -5,7 +5,7 @@ package normalsql.meta;
 
 import normalsql.parse.NormalSQLParser.NameContext;
 import normalsql.parse.NormalSQLParser.QnameContext;
-import normalsql.parse.NormalSQLParser.LiteralContext;
+//import normalsql.parse.NormalSQLParser.LiteralContext;
 
 import java.util.List;
 
@@ -16,5 +16,5 @@ extends
 {
 	public QnameContext table;
 	public List<NameContext> columns;
-	public List<LiteralContext> literals;
+//	public List<LiteralContext> literals;
 }
