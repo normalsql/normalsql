@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 public class 
 	${resultSetClassName}
 {
-	private ResultSet __resultSet;
+	private final ResultSet __resultSet;
 
 	public ${resultSetClassName}( ResultSet resultSet )
 	{

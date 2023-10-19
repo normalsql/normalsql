@@ -4,11 +4,9 @@
 package normalsql.parse;
 
 public class
-	Select
+	Delete
 extends
 	Statement
 {
-//	public ArrayList<Item> items = new ArrayList<>();
 //	public ArrayList<Source> tables = new ArrayList<>();
-//	public ArrayList<Knockout> predicates = new ArrayList<>();
 }

@@ -52,7 +52,7 @@ import java.math.BigDecimal;
 public class
 	${statementClassName}
 {
-	private PreparedStatement __ps;
+	private final PreparedStatement __ps;
 
 	public final String __preparedSQL =
 ## add back each '\n', then concat each line with '+', then end with ';'
@@ -105,13 +105,13 @@ public class
         __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
         #end
 
-        ResultSet rs = null;
         if( __ps.execute() )
         {
-            rs = __ps.getResultSet();
+	        ResultSet rs = __ps.getResultSet();
+			return new ${resultSetClassName}( rs );
         }
-		${resultSetClassName} result = new ${resultSetClassName}( rs );
-        return result;
+
+        return null;
     }
 
 	// TODO add null check to setters (when !isnullable)

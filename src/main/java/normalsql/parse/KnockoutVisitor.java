@@ -38,6 +38,17 @@ extends
 	}
 
 	@Override
+	public Void visitDelete( DeleteContext context )
+	{
+		Statement parent = statementStack.peek();
+		Statement child = new Delete();
+		statementStack.push( child );
+		parent.add( child );
+		super.visitDelete( context );
+		return null;
+	}
+
+	@Override
 	public Void visitSelect( SelectContext context )
 	{
 		Statement parent = statementStack.peek();

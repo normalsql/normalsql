@@ -26,5 +26,10 @@ public class UseInsertOops {
         {
             System.out.println( rs );
         }
+
+        DeleteOopsByID delete = new DeleteOopsByID( conn );
+        delete.setID( 5L );
+        int count = delete.execute();
+        System.out.println( "deleted: " + count );
     }
 }

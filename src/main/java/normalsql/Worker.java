@@ -42,6 +42,7 @@ public class Worker
 	VelocityEngine _engine;
 	Template _selectTemplate;
 	Template _insertTemplate;
+	Template _deleteTemplate;
 	Template _resultSetTemplate;
 	JavaHelper _helper;
 
@@ -59,6 +60,7 @@ public class Worker
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
 		_insertTemplate = _engine.getTemplate( "normalsql/template/Insert.vm" );
+		_deleteTemplate = _engine.getTemplate( "normalsql/template/Delete.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
 	}
@@ -203,6 +205,10 @@ public class Worker
 			{
 				// TODO fill in missing columns
 			}
+			case Delete ignore ->
+			{
+				// TODO may have to attach Params to Table & Columns
+			}
 	        default ->
 			{
 			}
@@ -293,6 +299,10 @@ public class Worker
 			case Insert ignore ->
 			{
 				generate( _insertTemplate, vc, work.targetDir, work.statementClassName );
+			}
+			case Delete ignore ->
+			{
+				generate( _deleteTemplate, vc, work.targetDir, work.statementClassName );
 			}
 	        default ->
 			{
