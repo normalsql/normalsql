@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package test;
@@ -151,7 +151,7 @@ H2_SelectOnly_Tests
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
-//		parser.removeErrorListeners();
+		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override

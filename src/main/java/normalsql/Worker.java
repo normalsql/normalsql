@@ -1,13 +1,17 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
 
-import normalsql.meta.*;
+import normalsql.jdbc.Column;
+import normalsql.jdbc.FancyMetaData;
+import normalsql.jdbc.Param;
+import normalsql.parse.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
 import normalsql.template.JavaHelper;
+import normalsql.template.Accessor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -25,31 +29,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * <p>Worker class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class Worker
 {
 	Connection _conn;
 	VelocityEngine _engine;
 	Template _selectTemplate;
+	Template _insertTemplate;
 	Template _resultSetTemplate;
 	JavaHelper _helper;
 
-	/**
-	 * <p>Constructor for Worker.</p>
-	 *
-	 * @param conn a Connection object
-	 */
 	public Worker( Connection conn )
 	{
 		_conn = conn;
@@ -63,10 +58,12 @@ public class Worker
 		_engine.init();
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
+		_insertTemplate = _engine.getTemplate( "normalsql/template/Insert.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
 	}
 
+	// TODO: use ANTLR's token stream rewriter instead
 	public void setStartTokenText( ParserRuleContext context, String text )
 	{
 		// Replace text of first "visible" (non whitespace) token, then exit
@@ -74,17 +71,10 @@ public class Worker
 		start.setText( text );
 	}
 
-	/**
-	 * <p>process.</p>
-	 *
-	 * @param work a {@link normalsql.Work} object
-	 * @throws java.io.IOException if any.
-	 * @throws SQLException if any.
-	 */
 	public void process( Work work )
 		throws IOException, SQLException
 	{
-		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ) );
+		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ));
 
 		// TODO attempt running statement before parsing
 
@@ -94,39 +84,40 @@ public class Worker
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ScriptContext script = parser.script();
-		NormalSQLVisitor visitor = new NormalSQLVisitor();
+
+		KnockoutVisitor visitor = new KnockoutVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
-
 		visitor.visit( script );
 		work.root = visitor.root;
-		work.predicates = visitor.predicates;
 
-		for( var p : work.predicates )
+		work.knockouts = visitor.knockouts;
+
+		for( var p : work.knockouts)
 		{
 			switch( p.getClass().getSimpleName() )
 			{
-				case "Between":
+				case "BETWEEN":
 				{
-					Between b = (Between) p;
+					BETWEEN b = (BETWEEN) p;
 					switch( b.pattern )
 					{
 						case ColumnLiteralLiteral:
 						{
 							String name = getColumn( b.test );
-							Property low = _helper.create( b.low, name, "low" );
-							work.statementProperties.add( low );
+							Accessor low = _helper.create( b.low, name, "low" );
+							work.statementAccessors.add( low );
 
-							Property high = _helper.create( b.high, name, "high" );
-							work.statementProperties.add( high );
+							Accessor high = _helper.create( b.high, name, "high" );
+							work.statementAccessors.add( high );
 							break;
 						}
 						case LiteralColumnColumn:
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Property high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
-							work.statementProperties.add( high );
+							Accessor high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
+							work.statementAccessors.add( high );
 							break;
 						}
 						default:
@@ -139,18 +130,25 @@ public class Worker
 					Comparison c = (Comparison) p;
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = _helper.create( c.literal, column );
-					work.statementProperties.add( prop );
+					Accessor prop = _helper.create( c.literal, column );
+					work.statementAccessors.add( prop );
 					break;
 				}
-				case "Match":
+				case "LIKE":
 				{
-					Match m = (Match) p;
+					LIKE m = (LIKE) p;
 					String column = getColumn( m.column );
-					Property prop = _helper.create( m.literal, column );
-					work.statementProperties.add( prop );
+					Accessor prop = _helper.create( m.literal, column );
+					work.statementAccessors.add( prop );
 					break;
 				}
+
+				case "ANY":
+				{
+					// TODO ANY predicate
+					break;
+				}
+
 				case "IN":
 				{
 					IN in = (IN) p;
@@ -158,29 +156,46 @@ public class Worker
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
-						String temp = column + "_" + (nth + 1);
-						Property prop = _helper.create( l, temp);
-						work.statementProperties.add( prop );
+						String temp = column + "_" + ( nth + 1 );
+						Accessor prop = _helper.create( l, temp );
+						work.statementAccessors.add( prop );
 					}
 					break;
 				}
+
+				case "Row":
+				{
+					Row row = (Row) p;
+					for( int nth = 0; nth < row.literals.size(); nth++ )
+					{
+						SubtermLiteralContext l = row.literals.get( nth );
+						String col = row.insert.columns.get( nth ).getText();
+						Accessor prop = _helper.create( l, col );
+						work.statementAccessors.add( prop );
+					}
+
+					break;
+				}
+
+
 				default: break;
 			}
 		}
 
-		for( Property prop : work.statementProperties )
+		for( Accessor prop : work.statementAccessors )
 		{
 			setStartTokenText( prop.context, "?" );
 		}
 
 		work.preparedSQL = tokens.getText();
 
-		processPreparedStatement( _conn, work );
+		FancyMetaData md = new FancyMetaData( _conn, work.preparedSQL );
+		work.columns = md.columns;
 
-		for( int nth = 0; nth < work.params.size(); nth++ )
+		for( int nth = 0; nth < md.params.size(); nth++ )
 		{
-			Property prop = work.statementProperties.get( nth );
-			Param p = work.params.get( nth );
+			Accessor prop = work.statementAccessors.get( nth );
+			Param p = md.params.get( nth );
 			prop.param = p;
 			prop.nth = p.nth;
 			prop.className = p.className;
@@ -188,7 +203,7 @@ public class Worker
 			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
 		}
 
-		for( Property prop : work.statementProperties )
+		for( Accessor prop : work.statementAccessors )
 		{
 			String text = _helper.toPrintfConverter( prop.param.type );
 			setStartTokenText( prop.context, text );
@@ -196,8 +211,23 @@ public class Worker
 
 		work.printfSQL = tokens.getText();
 
-		// TODO support unions, multiple statements, and such
-		work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+		switch ( work.root.get( 0 ))
+		{
+			case Select ignore ->
+			{
+				// TODO foreach statement this, to support unions, multiple statements, and such
+				work.resultSetAccessors = matchItemsToColumns( work.root.get(0).items, work.columns );
+			}
+			case Insert ignore ->
+			{
+				// TODO fill in missing columns
+			}
+	        default ->
+			{
+			}
+    	};
+
+		// TODO match values' literals to columns
 
 		merge( work );
 
@@ -206,63 +236,10 @@ public class Worker
 		System.out.println( work.sourceFile + " processed" );
 	}
 
-	/**
-	 * <p>returns name of column</p>
-	 *
-	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
-	 * @return a {@link java.lang.String} object
-	 */
 	public String getColumn( SubtermContext b )
 	{
 		RuleContext column = ( (SubtermColumnContext) b ).column();
 		return _helper.getTrimmedText( column );
-	}
-
-	/**
-	 * <p>processPreparedStatement.</p>
-	 *
-	 * @param conn a Connection object
-	 * @param work a {@link normalsql.Work} object
-	 * @throws SQLException if any.
-	 */
-	public void processPreparedStatement( Connection conn, Work work )
-		throws SQLException
-	{
-		PreparedStatement ps = conn.prepareStatement( work.preparedSQL );
-
-		ParameterMetaData pmd = ps.getParameterMetaData();
-		for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
-		{
-			Param param = new Param();
-			param.nth = nth;
-			param.type = pmd.getParameterType( nth );
-			param.typeName = pmd.getParameterTypeName( nth );
-			param.isNullable = pmd.isNullable( nth );
-			param.isSigned = pmd.isSigned( nth );
-			param.scaled = pmd.getScale( nth );
-			param.precision = pmd.getPrecision( nth );
-			param.mode = pmd.getParameterMode( nth );
-			param.className = pmd.getParameterClassName( nth );
-			work.params.add( param );
-		}
-
-		ResultSetMetaData md = ps.getMetaData();
-		// TODO: dedupe resultset columns
-		for( int nth = 1; nth <= md.getColumnCount(); nth++ )
-		{
-			Column column = new Column();
-			column.nth = nth;
-			column.catalog = md.getCatalogName( nth );
-			column.schema = md.getSchemaName( nth );
-			column.table = md.getTableName( nth );
-			column.name = md.getColumnName( nth );
-			column.label = md.getColumnLabel( nth );
-			column.type = md.getColumnType( nth );
-			column.typeName = md.getColumnTypeName( nth );
-			column.isNullable = md.isNullable( nth );
-			column.className = md.getColumnClassName( nth );
-			work.columns.add( column );
-		}
 	}
 
 	/**
@@ -271,14 +248,14 @@ public class Worker
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
+	List<Accessor> matchItemsToColumns(List<Item> items, List<Column> columns )
 	{
-		ArrayList<Property> properties = new ArrayList<>();
+		ArrayList<Accessor> properties = new ArrayList<>();
 
 		for( Column column : columns )
 		{
 			// TODO reference to parent Item
-			Property prop = new Property();
+			Accessor prop = new Accessor();
 			prop.nth = column.nth;
 			prop.column = column;
 			String bean = column.label;
@@ -316,12 +293,6 @@ public class Worker
 		return properties;
 	}
 
-	/**
-	 * <p>merge.</p>
-	 *
-	 * @param work a {@link normalsql.Work} object
-	 * @throws java.io.IOException if any.
-	 */
 	public void merge( Work work ) throws IOException
 	{
 		HashMap<String, Object> childMap = work.asMap();
@@ -331,8 +302,22 @@ public class Worker
 
 		VelocityContext vc = new VelocityContext( childMap );
 
-		generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
-		generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+		switch ( work.root.get( 0 ))
+		{
+			case Select ignore ->
+			{
+				generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
+				generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+			}
+			case Insert ignore ->
+			{
+				generate( _insertTemplate, vc, work.targetDir, work.statementClassName );
+			}
+	        default ->
+			{
+				System.out.println( "unrecognized: " + work.root.get( 0 ).getClass() );
+			}
+    	};
 	}
 
 	/**

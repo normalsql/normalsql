@@ -1,9 +1,9 @@
-## Copyright 2010-2022 Jason Osgood
+## Copyright 2010-2023 Jason Osgood
 ## SPDX-License-Identifier: Apache-2.0
 
 ## NormalSQL - SELECT Statement Template for Java & JDBC
 ##
-## Copyright 2022, 2014, 2011, 2010 Jason Osgood
+## Copyright 2023, 2022, 2014, 2011, 2010 Jason Osgood
 ##
 ## Template Parameters:
 ##
@@ -16,9 +16,9 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     statementProperties - List<Property>, meta data for getters and setters
+##     statementAccessors - List<Accessor>, meta data for getters and setters
 /**
-* ${resultSetClassName}.java ${date}
+* ${statementClassName}.java ${date}
 *
 ## TODO put actual filename and its timestamp here.
 * Generated using NormalSQL's Select.vm template.
@@ -43,25 +43,27 @@
 package ${packageName};
 #end
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class
 	${statementClassName}
 {
-	private PreparedStatement __ps = null;
+	private PreparedStatement __ps;
 
 	public final String __preparedSQL =
 ## add back each '\n', then concat each line with '+', then end with ';'
 		#foreach( $line in $preparedSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
 		#end
 
 	public final String __printfSQL =
 ## add back each '\n' (as %n), then concat each line with '+', then end with ';'
 		#foreach( $line in $printfSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n#end"#if($foreach.hasNext)+ #else; #end
+		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
 		#end
 
 	/**
@@ -99,7 +101,7 @@ public class
 	public final ${resultSetClassName} execute()
 		throws SQLException
 	{
-        #foreach( $p in $statementProperties )
+        #foreach( $p in $statementAccessors )
         __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
         #end
 
@@ -113,7 +115,7 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $p in $statementProperties )
+    #foreach( $p in $statementAccessors )
     private ${p.classShortName} _${p.variable} = ${p.asCode};
     public void ${p.setter}( ${p.classShortName} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
@@ -123,7 +125,7 @@ public class
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $p in $statementProperties )
+            #foreach( $p in $statementAccessors )
             , ${p.getter}()
             #end
 		);

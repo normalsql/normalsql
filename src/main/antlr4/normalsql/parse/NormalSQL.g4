@@ -8,6 +8,10 @@
 
  Child rules are indented when its (mostly) only used by a parent rule.
 
+   Heuristics:
+      Create subrules to ease parse tree navigation.
+      Per DRY, create subrule for 3 (sometimes 2) or more copypastas.
+
 */
 
 grammar NormalSQL;
@@ -56,7 +60,7 @@ create
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type ('NOT' 'NULL')?  // (COMMENT string)? (WITH properties)?
+        : name type ( 'NOT' 'NULL' )?  // (COMMENT string)? (WITH properties)?
         ;
 
 with
@@ -64,26 +68,78 @@ with
     ;
 
     cte
-        : alias ( '(' name ( ',' name )* ')' )? 'AS' '(' query ')'
-        ; // TODO rule for column aliases
+        // TODO add rule for column aliases
+        : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
+        '(' query ')'
+        ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
+        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
+        ;
 
 delete
-    : with? 'DELETE' ; // TODO
+    : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )? indexedBy?
+      // Postgres
+      ( 'USING' from ( ',' from )* )?
+      where? returning?
+      ;
 
 insert
-    : with? 'INSERT' into names? source ; // TODO
+    : with? ( 'INSERT' | 'REPLACE' )
+      ( 'OR' ( 'ABORT' | 'FAIL'| 'IGNORE' | 'REPLACE' | 'ROLLBACK' ))?
+      'INTO' qname ( 'AS' name )? names?
+      overriding?
+      ( source upsert* | 'DEFAULT' 'VALUES' )
+      returning?
+    ;
+
+    overriding
+        : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
+
+    // SQLite
+    upsert
+        : 'ON' 'CONFLICT' '(' terms ')' where? 'DO'
+          ( 'NOTHING'
+          | 'UPDATE' 'SET' setter ( ',' setter )* where?
+          )
+        ;
 
 merge
-    : with? 'MERGE' ; // TODO
+    : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
+      'USING' 'ONLY'? source 'ON' terms
+      when*
+    ;
+
+    when
+        : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
+          ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
+          | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
+          | 'DELETE'
+          | 'DO' 'NOTHING'
+          )
+        ;
 
 update
-    : with? 'UPDATE' column 'SET' setter ( ',' setter )* where? ;
+    : with? 'UPDATE' qname name? indexedBy?
+      'SET' setter ( ',' setter )* from? where? returning? ;
 
     setter
-        : name '=' literal ;
+        : ( qname | qnames ) '=' term ;
+
+// SQLite
+indexedBy
+    : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
+
+returning
+    : 'RETURNING' returned ( ',' returned )* ;
+
+    returned
+        : '*' | aliasedTerm
+        ;
 
 query
-    : with? combine orderBy? ( offset | fetch | limit )* forUpdate?
+    : with? combine
+    // Because various dialects order these clauses differently
+    // TODO: Allow just one of each clause (somehow)
+    ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
     combine
@@ -91,6 +147,7 @@ query
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
         | select
+        // MySQL table statement
         | 'TABLE' table
         | values
         | '(' query ')'
@@ -106,7 +163,14 @@ query
         : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     forUpdate
-        : 'FOR' ( 'READ' 'ONLY' | 'UPDATE' ( 'OF' name ( ',' name )* )? ) ;
+        : 'FOR'
+          ( 'READ' 'ONLY'
+          | ( 'NO' 'KEY' )? 'UPDATE'
+          | 'KEY'? 'SHARE'
+          )
+          ( 'OF' qname ( ',' qname )* )?
+          ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
+        ;
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
@@ -120,58 +184,23 @@ select
         ;
 
     top
-        : 'TOP' ( DECIMAL | REAL | '(' term ')' ) 'PERCENT'? withTies? ;
+        : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )? # ItemTableRef
-        | aliasedTerm                                 # ItemColumn
+        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
+        | aliasedTerm                                  # ItemColumn
         ;
 
     into
-        : 'INTO' table ;
+        : 'INTO' ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
     from
         : source ( join | pivot | unpivot )* ;
 
-        source
-            : ( unnest
-              | values
-              // TODO: What are table (valued) functions?
-              //  Added to pass ./h2/src/test/org/h2/test/scripts/functions/system/table.sql
-              // http://h2database.com/html/functions.html#table
-              // This syntax seems different from what Snowflake and Oracle's LiveSQL support.
-//              | ( 'TABLE' | 'TABLE_DISTINCT' ) '(' columnSpec ( ',' columnSpec )* ')'
-              | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-              | 'JSON_TABLE' // TODO
-              | xmlTable
-              | function
-              | '(' from ')'
-              | table
-              | query
-              )
-              ( 'AS'? alias names? )?
-            ;
-
-            // TODO: Should this part of rule 'function'?
-            unnest
-                : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
-
-                /*
-                    columnSpec
-                        : name ( dataType | schema ) '=' ( array | row ) ;
-
-                        dataType
-                            : 'NULL'
-                            | id+
-                            ; // TODO explicit dataTypes
-
-                        row
-                            : term ; // TODO row value expression
-                */
-
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
-            | ( 'CROSS' | 'NATURAL' ) 'JOIN' source
+            | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
+            // TODO 'LATERAL'
             ;
 
         pivot
@@ -195,18 +224,23 @@ select
 
         unpivot
             : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
-            '('
-              ( column | columns )
-              'FOR' ( column | columns )
-              'IN' '(' aliasedTerms ')'
-            ')'
+              '('
+                ( column | columns )
+                'FOR' ( column | columns )
+                'IN' '(' aliasedTerms ')'
+              ')'
             ;
 
     where
-        : 'WHERE' term ;
+        : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
     groupBy
-        : 'GROUP' 'BY' terms? ;
+        : 'GROUP' 'BY' allDistinct? groupByItem ( ',' groupByItem )* ;
+
+        groupByItem
+            : terms | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
+            | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
+            ;
 
     having
         : 'HAVING' terms ;
@@ -220,21 +254,54 @@ select
     qualify
         : 'QUALIFY' term ;
 
-xmlTable
-    : 'XMLTABLE'
-      '('
-      subterm passing?
-      'COLUMNS' xmlColumn ( ',' xmlColumn )*
-      ')'
+source
+    : ( unnest
+      | values
+      | tableFunc
+      // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+      // DB2 intermediate result table
+      | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+      // PL/SQL table collection expression
+      | 'TABLE' '(' term ')'
+      | 'JSON_TABLE' // TODO
+      | xmlTable
+      | function
+      | '(' from ')'
+      | table
+      | query
+      )
+      ( 'AS'? alias names? )?
+      // H2
+      ( 'USE' 'INDEX' names )?
+      // SQLite
+      ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )?
     ;
 
-passing : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
-content : 'DOCUMENT' | 'CONTENT' ;
+    // TODO: Should this part of rule 'function'?
+    unnest
+        : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
 
+    // H2 table function http://h2database.com/html/functions.html#table
+    tableFunc
+        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')' ;
 
-    xmlColumn
-       : id ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
-       ;
+        tableFuncParam
+            : name ( type | qname | 'NULL' ) '=' subterm ;
+
+    xmlTable
+        : 'XMLTABLE'
+          '('
+            subterm passing?
+            'COLUMNS' xmlColumn ( ',' xmlColumn )*
+          ')'
+        ;
+
+        passing
+            : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
+
+        xmlColumn
+           : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
+           ;
 
 terms
     : term ( ',' term )* ;
@@ -245,44 +312,45 @@ aliasedTerm
 aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
 
-    // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-    // | 'INTERSECTS' '(' term ',' term ')'
+// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+// | row 'INTERSECTS' '(' term ',' term ')'
+
 term
-    : subterm
+    : '(' term ')'
+    | subterm
     | <assoc=right> 'NOT' term
     | term 'AND' term
     | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
     | <assoc=right> VARIABLE assign term
-    ;
+   ;
 
     assign
         : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 
 subterm
     : literal                                                         # SubtermLiteral
-    | subterm ( '::' id )+                                            # SubtermScope
+    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+    | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
-// INTERVAL
-// BINARY, COLLATE
-//    | term 'COLLATE' id # SubtermCollate TODO
-//    | '!' term                               # SubtermNot
+    // TODO: BINARY
+    | subterm 'COLLATE' name                                          # SubtermBinary
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-    | subterm '||' subterm                                            # SubtermBinary
+    | subterm '||' subterm                              # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-
     | '(' terms ')' '.' name                                          # SubtermRowField
-    | '(' term ')'                                                    # SubtermNested
+    | '(' subterm ')'                                                 # SubtermNested
     | '('')'                                                          # SubtermEmpty
-    | '(' term ( ',' term )* ',' term ')'                             # SubtermRow
-    | subterm 'AT' ( 'LOCAL' | timeZone ( interval | string ))?       # SubtermTime
+    | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
+    // PL/SQL, ODBC
+    | subterm interval                                                # SubtermInterval
+    | 'INTERVAL' subterm interval?                                    # SubtermInterval
     | query                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
@@ -290,8 +358,10 @@ subterm
     | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
-    | 'ROW' '(' terms? ')'                                            # SubtermRow
-//    | sequenceValueExpression TODO
+    // PL/SQL
+    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+    | 'ROW'? '(' terms? ')'                                           # SubtermRow
+//   TODO  | sequenceValueExpression
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
@@ -305,10 +375,9 @@ subterm
     predicate
         : compare subterm                                                          # PredicateCompare
         | 'IS' 'NOT'? truth                                                        # PredicateTruth
+        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         // PL/SQL dialect
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
-        // | 'ISNULL' ... TODO
-        // | 'NOTNULL' ... TODO
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
         | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
@@ -316,25 +385,27 @@ subterm
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        // | 'OVERLAPS' ... TODO
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateLIKE
+        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
+        compare
+            : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
+            // Postgres match regex
+            | '~' | '~*' | '!~' | '!~*'
+            ;
+
         logicals
-            : 'NAN' | 'PRESENT' | 'INFINITE' | 'A' 'SET' | 'EMPTY'
+            : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
             | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
             ;
 
         jsonType
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
-        // TODO: can these be Tokens? might simplify the 'unreserved' and 'id' rules a bit.
-        // TODO: split rule 'compare' to handle dialects and customs
-        compare  : '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | MATCH1 | MATCH2 | MATCH3 | MATCH4 ;
-
 type
     : 'ROW' '(' name scalar ( ',' name scalar )* ')'
-    | type 'ARRAY' ( '[' DECIMAL ']' )?
+    | type 'ARRAY' ( '[' INTEGER ']' )?
     | scalar
     ;
 
@@ -346,27 +417,28 @@ scalar
     | 'BIGINT'
     | 'REAL'
     | 'DECFLOAT'
-    | 'FLOAT' ( '(' DECIMAL ')' )?
+    | 'FLOAT' ( '(' INTEGER ')' )?
     | 'DOUBLE' 'PRECISION'
-    | 'DECIMAL' typePrecision?
-    | 'DEC' typePrecision?
-    | 'NUMBER' typePrecision?
+    | 'DECIMAL' precision?
+    | 'DEC' precision?
+    | 'NUMBER' precision?
     | 'BOOLEAN'
 
     | 'VARBINARY'
     | 'BIT' 'VARYING'? // Postgres?
-    | chars ( '(' DECIMAL ')' )?
+    | chars ( '(' INTEGER ')' )?
 
     | 'BLOB'
     | 'CLOB'
     | 'NCLOB'
 
     | 'DATE'
-    | ( 'TIMESTAMP' | 'TIME' ) ( '(' DECIMAL ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
+    | ( 'TIMESTAMP' | 'TIME' ) ( '(' INTEGER ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
 
     | 'UUID'
+//    | 'RAW'
 
-    | id typePrecision?
+    | name precision?
     ;
 
  chars
@@ -378,8 +450,8 @@ scalar
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'? // Postgres?
     ;
 
-typePrecision
-    : '(' DECIMAL ( ',' DECIMAL )? ')'
+precision
+    : '(' subterm ( ',' subterm )? ')'
     ;
 
 values
@@ -392,20 +464,23 @@ function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'EXTRACT' '(' id 'FROM' .*? ')' // TODO
+    | 'EXTRACT' '(' name 'FROM' .*? ')' // TODO
+    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
     | 'XMLEXISTS' '(' subterm passing? ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-    | 'XMLPARSE' '(' content term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
+    | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
     | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
-    | 'XMLSERIALIZE' '(' content term 'AS' type ')'
+    | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
     | '{fn' function '}' //  ODBC style
-    // Generic syntax for all aggregate functions
-    | id
+    // Generic syntax for all analytic functions?
+    | name '(' term respectIgnore? ')' respectIgnore? over?
+    // Generic syntax for all aggregate functions?
+    | name
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
@@ -416,6 +491,8 @@ function
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
     ;
+
+// TODO: Maybe archetype rules for agg, win, etc functions?
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -428,6 +505,9 @@ function
 
     xmlAttrib
         : term ( 'AS' alias )? ;
+        
+    xmlContent
+        : 'DOCUMENT' | 'CONTENT' ;
 
 window
     : '(' name? partitionBy? orderBy? windowFrame? ')'
@@ -462,17 +542,14 @@ orderBy
         ;
 
 literal
-    : DECIMAL
-    | REAL
+    : ( '+' | '-' )? ( INTEGER | FLOAT )
     | BYTES
     | BLOB
     | truth
     | 'DEFAULT'
-    // TODO: change date literals from 'string' rule to 'STRING' token?
     | 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-    | interval
     | jsonObject
     | jsonArray
     | PARAMETER
@@ -484,20 +561,15 @@ truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
-    : 'INTERVAL' string (id ( 'TO' id )? )?
+    : timeUnit ( 'TO' timeUnit )?
     ;
 
-    // TODO: explicit, then uncomment time units in rule 'unreserved'
-   //interval : 'INTERVAL' expression timeSpan ;
-   //timeSpan      : 'EPOCH'
-   //              | 'YEAR' ( 'TO' 'MONTH' )?
-   //              | 'MONTH'
-   //              | 'DAY' ( 'TO' ( 'HOUR' | 'MINUTE' | 'SECOND' ) )?
-   //              | 'HOUR' ( 'TO' ( 'MINUTE' | 'SECOND' ) )?
-   //              | 'MINUTE' ( 'TO' 'SECOND' )?
-   //              | 'SECOND'
-   //              ;
-   
+    timeUnit
+        : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision?
+        // DB2 interval units
+        | 'MONTHS' | 'DAYS' | 'HOURS'
+        ;
+
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
 
@@ -513,54 +585,33 @@ jsonObject
             ;
 
             jsonKey
-                : 'NULL' | string | id ;
+                : 'NULL' | string | name ;
 
 columns
     : '(' column ( ',' column )* ')' ;
 
+// TODO: remove 'column' and 'table' rules, use 'qname' instead
 column
     : name ( '.' name )*;
 
 table
     : name ( '.' name )*;
 
+qname
+    : name ( '.' name )*;
+
 index
     : '[' ( term | term? ':' term? )? ']' ;
-
-string
-    : STRING+
-    | UNICODE_STRING STRING* uescape?
-    | NATIONAL_STRING STRING*
-    ;
-
-    uescape
-        : 'UESCAPE' STRING ;
-
-names
-    : '(' name ( ',' name )* ')' ;
-
-// TODO separate rules for valid identifiers, valid aliases, and valid function names
-name
-    : NAME
-    | UNICODE_NAME uescape?
-    | BACKTICKS
-    | DOLLARS
-    | ID
-    | unreserved
-    ;
-
-alias
-    // supports << abc, 'abc', and "abc" >> Because I can't definitively figure out correct answer
-    : id | string ;
 
 // All tokens in this grammars which are unreserved SQL keywords. Keep up to
 // date manually. (Ugh.)
 unreserved
     : ~(
         // Exclude tokens which are SQL's reserved keywords...
-        'ALL'
-        | 'AND'
-        | 'ANY'
+//        'ALL'
+//        | 'AND'
+         'AND'
+//        | 'ANY'
         | 'ARRAY'
 //        | 'AS'
         | 'BETWEEN'
@@ -619,17 +670,17 @@ unreserved
         | 'RANGE'
         | 'REGEXP'
 //        | 'RIGHT'
-        | 'ROW'
+//        | 'ROW'
 //        | 'ROWNUM'
         | 'ROWS'
-        | 'SECOND'
+//        | 'SECOND'
         | 'SELECT'
 //        | 'SESSION_USER'
 //        | 'SET'
-        | 'SOME'
+//        | 'SOME'
         | 'SYMMETRIC'
 //        | 'SYSTEM_USER'
-        | 'TABLE'
+//        | 'TABLE'
         | 'TO'
         | 'TOP'
         | 'TRAILING'
@@ -638,7 +689,7 @@ unreserved
         | 'UNION'
         | 'UNIQUE'
         | 'UNKNOWN'
-        | 'USER'
+//        | 'USER'
         | 'USING'
 //        | 'VALUE'
         | 'VALUES'
@@ -649,21 +700,10 @@ unreserved
 //        | 'YEAR'
 
         // ...And exclude all the other tokens which cannot be a keyword or name
-        | DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
+        | INTEGER | FLOAT | BYTES | BLOB | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
-    ;
-
-id
-    : ID
-    // Exclude all the tokens which cannot be an ID.
-    // Roundabout way to accept grammar's keyword-like tokens.
-    // Copypasta because ANTLR 4 only supports excluding lists of tokens.
-    | ~ ( DECIMAL | REAL | BYTES | BLOB | PARAMETER | VARIABLE
-        | STRING | UNICODE_STRING | NATIONAL_STRING
-        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-        )
     ;
 
 allDistinct
@@ -696,30 +736,55 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-ID
-    : [A-Z_#] [A-Z_#$@0-9]* ;
+alias
+    : name | string ;
+
+names
+    : '(' name ( ',' name )* ')' ;
+
+qnames
+    : '(' qname ( ',' qname )* ')' ;
+
+// TODO separate rules for valid identifiers, valid aliases, and valid function names
+name
+    : ID
+    | STRING
+    | UNICODE_NAME uescape?
+    | DOLLARS
+    | unreserved
+    ;
+
+string
+    : STRING+
+    | UNICODE_STRING STRING* uescape?
+    | NATIONAL_STRING STRING*
+    ;
+
+    uescape
+        : 'UESCAPE' STRING ;
+
+UNICODE_NAME
+    : 'U&' ID ;
 
 UNICODE_STRING
     : 'U&' STRING ;
 
-NATIONAL_STRING options { caseInsensitive=false; }
+NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-UNICODE_NAME
-    : 'U&' NAME ;
-
-// TODO square bracket names, per T-SQL. Will probably conflict with 'index' rule.
-NAME
-    : '"' ( ~'"' | '""' )* '"' ;
+ID
+    : '"' ( ~'"' | '""' )* '"'
+    | '`' ( ~'`' | '``' )* '`'
+    // T-SQL
+//    | '[' ~']'* ']'
+    | [A-Z_#] [A-Z_#$@0-9]*
+    ;
 
 DOLLARS
     : '$$' .*? '$$' ;
-
-BACKTICKS
-    : '`' ( ~'`' | '``' )* '`' ;
 
 BLOB
     : 'X' HEXHEX ( ' ' HEXHEX )* ;
@@ -733,12 +798,12 @@ BYTES
 fragment HEX
     : [A-F0-9] ;
 
-DECIMAL
+INTEGER
     : DIGIT+ 'L'? ;
 
 // matches "0.e1" or ".0e1", but not ".e1"
-REAL
-    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? ;
+FLOAT
+    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
 PARAMETER
     : '?' DIGIT* ;
@@ -747,18 +812,9 @@ fragment DIGIT
     : [0-9] ;
 
 VARIABLE
-    : '@' [A-Z_$@#0-9]* // T-SQL?
-    | ':' [A-Z_] [A-Z_0-9$]* // Postgres?
-    | ':' NAME // Postgres?
+    : '?' // DIGIT*
+    | [:@$] ( INTEGER | ID )
     ;
-
-//COMPARATOR  : '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
-
-// TODO replace w/ isOperator (for symantec predicate)
-MATCH1 : '~' ; // match regex case sensitive
-MATCH2 : '~*' ; // match regex case insensitive
-MATCH3 : '!~' ; // not match regex case sensitive
-MATCH4 : '!~*' ; // not match regex case insensitive
 
 COMMENT
     : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
@@ -767,6 +823,9 @@ BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
 WHITESPACE
-    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+// \u000B line (vertical) tab
+// \u000C form feed
+//    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+    : [ \t\r\n] -> channel ( HIDDEN ) ;
 
 ERROR : . ;

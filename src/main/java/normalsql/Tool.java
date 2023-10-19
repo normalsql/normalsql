@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
@@ -14,13 +14,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 
-/**
- * <p>Tool class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
-
 /*
 	TODO:
 
@@ -29,30 +22,28 @@ import java.sql.Statement;
 		add just the DML statements to the work list
 		add just the parseable statements to the work list
 		log errors
-		','nd line option for filelist
-		','nd line option for extension filter
+		command line option for filelist
+		command line option for extension filter
 
 		log work list if diff from found list
 
 		verify DB connection
-		FUTURE: infer grammar from JDBC connection string
-		FUTURE: infer grammar by asking DB itself
+		FUTURE: infer dialect from JDBC connection string
+		FUTURE: infer dialect by asking DB itself
 
 		test each statement in work list
 			maybe use EXPLAIN
 			could be DB specific
 		generate output for each success
 
+		setClientInfo to "normalsql"
+			https://franckpachot.medium.com/you-should-set-ocsid-clientid-e00cb81ed7e2
+
  */
 	
 public class
 	Tool
 {
-	/**
-	 * <p>main.</p>
-	 *
-	 * @param args an array of {@link String} objects
-	 */
 	public static void main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";
@@ -108,7 +99,7 @@ public class
 		}
 
 		// TODO verify source exists
-		// TODO pull source & target from ','nd line options
+		// TODO pull source & target from command line options
 		Path source = Paths.get( "" ).toAbsolutePath();
 		Path target = source;
 		crawl( source, target );
@@ -191,6 +182,6 @@ public class
 		}
 	}
 
-	// TODO: Create ','nd line option for this? eg. for a clean build operation
+	// TODO: Create command line option for this? eg. for a clean build operation
 	static boolean _alwaysOverwrite = true;
 }
