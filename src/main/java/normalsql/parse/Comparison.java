@@ -50,16 +50,8 @@ extends
 		// TODO: Move this logic to Worker, like for BETWEEN predicates
 		switch( pattern )
 		{
-			case LiteralColumn:
-				literal = left;
-				column = right;
-				break;
-			case ColumnLiteral:
-				literal = right;
-				column = left;
-				break;
-			default:
-				break;
+			case LiteralColumn -> { literal = left; column = right; }
+			case ColumnLiteral -> { literal = right; column = left; }
 		}
 	}
 }

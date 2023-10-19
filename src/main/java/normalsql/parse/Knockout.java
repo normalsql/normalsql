@@ -46,8 +46,7 @@ public abstract class
 		E[] boo = ugh.getEnumConstants();
 		for( E zip : boo )
 		{
-			if( zip.name().equals( name.toString() )) return zip;
-
+			if( zip.name().contentEquals( name )) return zip;
 		}
 
 		return null;

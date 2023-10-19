@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Source
 {
-	public TableRef tableRef;
+//	public TableRef tableRef;
 	public String alias;
 	public List<SubtermRowContext> rows = new ArrayList<>();
 }

@@ -34,7 +34,7 @@ extends
             for( TermContext term : context.terms().term() )
             {
                 SubtermContext sc = term.subterm();
-                if( sc != null && sc instanceof SubtermLiteralContext )
+                if( sc instanceof SubtermLiteralContext )
                 {
                     literals.add( (SubtermLiteralContext) sc );
                 }

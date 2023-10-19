@@ -147,7 +147,7 @@ public class CommandLineOptions
 	public boolean getOnlyParse()
 	{
 		String onlyParse = coalesce( (String) _options.valueOf( ONLYPARSE ), _props.get( ONLYPARSE ), "false" );
-		return Boolean.valueOf( onlyParse );
+		return Boolean.parseBoolean( onlyParse );
 	}
 
 	/**

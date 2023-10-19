@@ -121,7 +121,7 @@ public class
 		Worker worker = new Worker( _conn );
 		try
 		{
-			Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
+			Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
 			{
 				@Override
 				public FileVisitResult visitFile( Path sourceFile, BasicFileAttributes attrs )
@@ -131,7 +131,7 @@ public class
 					if( sourceFileName.startsWith( "." ) ) return FileVisitResult.CONTINUE;
 
 					String extension = ".sql";
-					if( sourceFileName.toLowerCase().endsWith( extension ))
+					if( sourceFileName.toLowerCase().endsWith( extension ) )
 					{
 						int len = sourceFileName.length() - extension.length();
 						String className = sourceFileName.substring( 0, len );
@@ -144,12 +144,12 @@ public class
 						try
 						{
 							boolean go = _alwaysOverwrite;
-							if( Files.notExists( targetDir ))
+							if( Files.notExists( targetDir ) )
 							{
 								Files.createDirectories( targetDir );
 								go = true;
 							}
-							else if( !go || Files.notExists( targetFile ))
+							else if( !go || Files.notExists( targetFile ) )
 							{
 								go = true;
 							}

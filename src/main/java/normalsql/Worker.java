@@ -95,14 +95,13 @@ public class Worker
 
 		for( var p : work.knockouts)
 		{
-			switch( p.getClass().getSimpleName() )
+			switch( p )
 			{
-				case "BETWEEN":
+				case BETWEEN b ->
 				{
-					BETWEEN b = (BETWEEN) p;
 					switch( b.pattern )
 					{
-						case ColumnLiteralLiteral:
+						case ColumnLiteralLiteral ->
 						{
 							String name = getColumn( b.test );
 							Accessor low = _helper.create( b.low, name, "low" );
@@ -110,48 +109,35 @@ public class Worker
 
 							Accessor high = _helper.create( b.high, name, "high" );
 							work.statementAccessors.add( high );
-							break;
 						}
-						case LiteralColumnColumn:
+
+						case LiteralColumnColumn ->
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
 							Accessor high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
 							work.statementAccessors.add( high );
-							break;
 						}
-						default:
-							break;
 					}
-					break;
 				}
-				case "Comparison":
+				case Comparison c ->
 				{
-					Comparison c = (Comparison) p;
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
 					Accessor prop = _helper.create( c.literal, column );
 					work.statementAccessors.add( prop );
-					break;
 				}
-				case "LIKE":
+				case LIKE m ->
 				{
-					LIKE m = (LIKE) p;
 					String column = getColumn( m.column );
 					Accessor prop = _helper.create( m.literal, column );
 					work.statementAccessors.add( prop );
-					break;
 				}
 
-				case "ANY":
-				{
-					// TODO ANY predicate
-					break;
-				}
+				// TODO ANY predicate
 
-				case "IN":
+				case IN in ->
 				{
-					IN in = (IN) p;
 					String column = getColumn( in.column );
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
@@ -160,12 +146,10 @@ public class Worker
 						Accessor prop = _helper.create( l, temp );
 						work.statementAccessors.add( prop );
 					}
-					break;
 				}
 
-				case "Row":
+				case Row row ->
 				{
-					Row row = (Row) p;
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
 						SubtermLiteralContext l = row.literals.get( nth );
@@ -173,12 +157,9 @@ public class Worker
 						Accessor prop = _helper.create( l, col );
 						work.statementAccessors.add( prop );
 					}
-
-					break;
 				}
 
-
-				default: break;
+				default -> throw new IllegalStateException( "Unexpected value: " + p );
 			}
 		}
 
@@ -225,7 +206,7 @@ public class Worker
 	        default ->
 			{
 			}
-    	};
+    	}
 
 		// TODO match values' literals to columns
 
@@ -317,7 +298,7 @@ public class Worker
 			{
 				System.out.println( "unrecognized: " + work.root.get( 0 ).getClass() );
 			}
-    	};
+    	}
 	}
 
 	/**

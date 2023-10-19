@@ -182,33 +182,16 @@ extends
 	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 	{
 		PredicateContext pc = ctx.predicate();
-		Knockout k = null;
-		// TODO use new pattern switch
-		switch( pc.getClass().getSimpleName() )
+//			// TODO: ANY
+//			case PredicateAnyContext any -> {}
+		Knockout<?,?> k = switch( pc )
 		{
-			case "PredicateBETWEENContext":
-				k = new BETWEEN( (PredicateBETWEENContext) pc );
-				break;
-
-			case "PredicateCompareContext":
-				k = new Comparison( (PredicateCompareContext) pc );
-				break;
-
-			case "PredicateINContext":
-				k = new IN( (PredicateINContext) pc );
-				break;
-
-			case "PredicateLIKEContext":
-				k = new LIKE( (PredicateLIKEContext) pc );
-				break;
-
-			// TODO: ANY
-			case "PredicateAnyContext":
-				break;
-
-			default:
-				break;
-		}
+			case PredicateBETWEENContext between -> new BETWEEN( between );
+			case PredicateCompareContext compare -> new Comparison( compare );
+			case PredicateINContext in -> new IN( in );
+			case PredicateLIKEContext like -> new LIKE( like );
+			default -> null;
+		};
 
 		if( k != null && k.isMatched() )
 		{
@@ -216,6 +199,7 @@ extends
 			knockouts.add( k );
 			return null;
 		}
+
 		return super.visitSubtermPredicate( ctx );
 	}
 }
