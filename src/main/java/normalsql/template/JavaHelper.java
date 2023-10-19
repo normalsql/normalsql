@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 /*
@@ -8,7 +8,6 @@
 */
 package normalsql.template;
 
-import normalsql.Property;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 import normalsql.parse.NormalSQLParser.SubtermLiteralContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -71,16 +70,9 @@ public class
 	}
 
 	// TODO separate factory methods for Statement and ResultSet properties
-	/**
-	 * <p>create.</p>
-	 *
-	 * @param context a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
-	 * @param method a {@link java.lang.String} object
-	 * @return a {@link normalsql.Property} object
-	 */
-	public Property create( SubtermContext context, String... method )
+	public Accessor create(SubtermContext context, String... method )
 	{
-		Property prop = new Property();
+		Accessor prop = new Accessor();
 		prop.context = ((SubtermLiteralContext) context).literal();
 		prop.original = prop.context.getText();
 		prop.trimmed = getTrimmedText( prop.context );

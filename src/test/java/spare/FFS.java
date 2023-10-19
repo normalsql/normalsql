@@ -25,6 +25,7 @@ public class FFS
 		Class.forName( "com.mysql.cj.jdbc.Driver" );
 		Class.forName( "org.h2.Driver" );
 		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/classicmodels", "sa", null );
+
 //		ConnectionImpl conn = (ConnectionImpl) DriverManager.getConnection( "jdbc:mysql://localhost/classicmodels?useServerPrepStmts=true", "root", null );
 //		ConnectionImpl conn = (ConnectionImpl) DriverManager.getConnection( "jdbc:mysql://localhost?useServerPrepStmts=true", "root", null );
 

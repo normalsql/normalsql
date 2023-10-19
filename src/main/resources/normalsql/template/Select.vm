@@ -16,7 +16,7 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     statementProperties - List<Property>, meta data for getters and setters
+##     statementAccessors - List<Accessor>, meta data for getters and setters
 /**
 * ${statementClassName}.java ${date}
 *
@@ -101,7 +101,7 @@ public class
 	public final ${resultSetClassName} execute()
 		throws SQLException
 	{
-        #foreach( $p in $statementProperties )
+        #foreach( $p in $statementAccessors )
         __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
         #end
 
@@ -115,7 +115,7 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $p in $statementProperties )
+    #foreach( $p in $statementAccessors )
     private ${p.classShortName} _${p.variable} = ${p.asCode};
     public void ${p.setter}( ${p.classShortName} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
@@ -125,7 +125,7 @@ public class
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $p in $statementProperties )
+            #foreach( $p in $statementAccessors )
             , ${p.getter}()
             #end
 		);

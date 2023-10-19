@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+package normalsql.jdbc;// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 //package classicmodels;
@@ -104,29 +104,4 @@ Dumper
 			rs.beforeFirst();
 		}
 	}
-//	public static void dumpResultSet( ResultSet rs )
-//			throws SQLException
-//	{
-//		System.out.println();
-//		ResultSetMetaData meta = rs.getMetaData();
-//		int count = meta.getColumnCount();
-//		for( int i = 0; i < count; i++ )
-//		{
-//			String temp = meta.getColumnName( i + 1 );
-//			System.out.print( temp + "\t" );
-//		}
-//		System.out.print( "\n--\n" );
-////		set.first();
-//		while( rs.next() )
-//		{
-//			for( int i = 0; i < count; i++ )
-//			{
-//				Object temp = rs.getObject( i + 1 );
-//				System.out.print( temp + "\t" );
-//			}
-//			System.out.print( "\n" );
-//
-//		}
-//		System.out.println();
-//	}
 }

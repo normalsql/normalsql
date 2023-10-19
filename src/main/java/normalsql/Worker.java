@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
@@ -6,11 +6,12 @@ package normalsql;
 import normalsql.jdbc.Column;
 import normalsql.jdbc.FancyMetaData;
 import normalsql.jdbc.Param;
-import normalsql.meta.*;
+import normalsql.parse.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
 import normalsql.template.JavaHelper;
+import normalsql.template.Accessor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -84,39 +85,39 @@ public class Worker
 		NormalSQLParser parser = new NormalSQLParser( tokens );
 		ScriptContext script = parser.script();
 
-		NormalSQLVisitor visitor = new NormalSQLVisitor();
+		KnockoutVisitor visitor = new KnockoutVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
 		work.root = visitor.root;
 
-		work.predicates = visitor.predicates;
+		work.knockouts = visitor.knockouts;
 
-		for( var p : work.predicates )
+		for( var p : work.knockouts)
 		{
 			switch( p.getClass().getSimpleName() )
 			{
-				case "Between":
+				case "BETWEEN":
 				{
-					Between b = (Between) p;
+					BETWEEN b = (BETWEEN) p;
 					switch( b.pattern )
 					{
 						case ColumnLiteralLiteral:
 						{
 							String name = getColumn( b.test );
-							Property low = _helper.create( b.low, name, "low" );
-							work.statementProperties.add( low );
+							Accessor low = _helper.create( b.low, name, "low" );
+							work.statementAccessors.add( low );
 
-							Property high = _helper.create( b.high, name, "high" );
-							work.statementProperties.add( high );
+							Accessor high = _helper.create( b.high, name, "high" );
+							work.statementAccessors.add( high );
 							break;
 						}
 						case LiteralColumnColumn:
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Property high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
-							work.statementProperties.add( high );
+							Accessor high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
+							work.statementAccessors.add( high );
 							break;
 						}
 						default:
@@ -129,16 +130,16 @@ public class Worker
 					Comparison c = (Comparison) p;
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = _helper.create( c.literal, column );
-					work.statementProperties.add( prop );
+					Accessor prop = _helper.create( c.literal, column );
+					work.statementAccessors.add( prop );
 					break;
 				}
-				case "Match":
+				case "LIKE":
 				{
-					Match m = (Match) p;
+					LIKE m = (LIKE) p;
 					String column = getColumn( m.column );
-					Property prop = _helper.create( m.literal, column );
-					work.statementProperties.add( prop );
+					Accessor prop = _helper.create( m.literal, column );
+					work.statementAccessors.add( prop );
 					break;
 				}
 
@@ -156,21 +157,21 @@ public class Worker
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
 						String temp = column + "_" + ( nth + 1 );
-						Property prop = _helper.create( l, temp );
-						work.statementProperties.add( prop );
+						Accessor prop = _helper.create( l, temp );
+						work.statementAccessors.add( prop );
 					}
 					break;
 				}
 
-				case "Rooster":
+				case "Row":
 				{
-					Rooster row = (Rooster) p;
+					Row row = (Row) p;
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
 						SubtermLiteralContext l = row.literals.get( nth );
 						String col = row.insert.columns.get( nth ).getText();
-						Property prop = _helper.create( l, col );
-						work.statementProperties.add( prop );
+						Accessor prop = _helper.create( l, col );
+						work.statementAccessors.add( prop );
 					}
 
 					break;
@@ -181,7 +182,7 @@ public class Worker
 			}
 		}
 
-		for( Property prop : work.statementProperties )
+		for( Accessor prop : work.statementAccessors )
 		{
 			setStartTokenText( prop.context, "?" );
 		}
@@ -193,7 +194,7 @@ public class Worker
 
 		for( int nth = 0; nth < md.params.size(); nth++ )
 		{
-			Property prop = work.statementProperties.get( nth );
+			Accessor prop = work.statementAccessors.get( nth );
 			Param p = md.params.get( nth );
 			prop.param = p;
 			prop.nth = p.nth;
@@ -202,7 +203,7 @@ public class Worker
 			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
 		}
 
-		for( Property prop : work.statementProperties )
+		for( Accessor prop : work.statementAccessors )
 		{
 			String text = _helper.toPrintfConverter( prop.param.type );
 			setStartTokenText( prop.context, text );
@@ -215,7 +216,7 @@ public class Worker
 			case Select ignore ->
 			{
 				// TODO foreach statement this, to support unions, multiple statements, and such
-				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+				work.resultSetAccessors = matchItemsToColumns( work.root.get(0).items, work.columns );
 			}
 			case Insert ignore ->
 			{
@@ -235,18 +236,11 @@ public class Worker
 		System.out.println( work.sourceFile + " processed" );
 	}
 
-	/**
-	 * <p>returns name of column</p>
-	 *
-	 * @param b a {@link normalsql.parse.NormalSQLParser.SubtermContext} object
-	 * @return a {@link java.lang.String} object
-	 */
 	public String getColumn( SubtermContext b )
 	{
 		RuleContext column = ( (SubtermColumnContext) b ).column();
 		return _helper.getTrimmedText( column );
 	}
-
 
 	/**
 	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL
@@ -254,14 +248,14 @@ public class Worker
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
+	List<Accessor> matchItemsToColumns(List<Item> items, List<Column> columns )
 	{
-		ArrayList<Property> properties = new ArrayList<>();
+		ArrayList<Accessor> properties = new ArrayList<>();
 
 		for( Column column : columns )
 		{
 			// TODO reference to parent Item
-			Property prop = new Property();
+			Accessor prop = new Accessor();
 			prop.nth = column.nth;
 			prop.column = column;
 			String bean = column.label;

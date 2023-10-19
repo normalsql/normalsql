@@ -1,11 +1,11 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-/*
- Represents a ResultSet's result column. Columns correspond to the items of a SELECT query.
-*/
 package normalsql.jdbc;
 
+/*
+ POJO for a ResultSet's column.
+*/
 public class
 	Column
 {

@@ -1,26 +1,21 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.meta;
+package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.PredicateBETWEENContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
-/**
- * POJO holding the subterms of a BETWEEN predicate's parse tree.
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
-	Between
+	BETWEEN
 extends
-	Predicate<PredicateBETWEENContext, Between.Pattern>
+	Knockout<PredicateBETWEENContext, BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
 	 *
-	 * Disabled variants kept for reference; They might be supported in the future.
+	 * All combinations listed for reference. Unsupported combos commented out;
+	 * They might be supported in the future.
 	 * If you need a variant that's missing, please submit a feature request.
 	 * Also suggest the method signatures you think should be generated.
 	 */
@@ -40,7 +35,7 @@ extends
 	public SubtermContext low;
 	public SubtermContext high;
 
-	public Between( PredicateBETWEENContext context )
+	public BETWEEN( PredicateBETWEENContext context )
 	{
 		super( context );
 		test = (SubtermContext) context.parent.getChild( 0 );
@@ -48,5 +43,4 @@ extends
 		high = context.subterm( 1 );
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
-
 }

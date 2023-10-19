@@ -1,12 +1,10 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql.jdbc;
 
 /**
- * POJO representing a JDBC PreparedStatement Parameter. In contrast
- * to a Placeholder representing a question mark '?' in parsed query.
- *
+ * POJO for a PreparedStatement Parameter.
  */
 public class Param
 {

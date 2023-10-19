@@ -1,4 +1,4 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
@@ -28,24 +28,22 @@ import java.sql.Statement;
 		log work list if diff from found list
 
 		verify DB connection
-		FUTURE: infer grammar from JDBC connection string
-		FUTURE: infer grammar by asking DB itself
+		FUTURE: infer dialect from JDBC connection string
+		FUTURE: infer dialect by asking DB itself
 
 		test each statement in work list
 			maybe use EXPLAIN
 			could be DB specific
 		generate output for each success
 
+		setClientInfo to "normalsql"
+			https://franckpachot.medium.com/you-should-set-ocsid-clientid-e00cb81ed7e2
+
  */
 	
 public class
 	Tool
 {
-	/**
-	 * <p>main.</p>
-	 *
-	 * @param args an array of {@link String} objects
-	 */
 	public static void main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";

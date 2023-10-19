@@ -1,6 +1,5 @@
-package normalsql.meta;
+package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
 import normalsql.parse.NormalSQLParser.TermContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
@@ -12,7 +11,7 @@ import java.util.List;
 public class
     IN
 extends
-    Predicate<PredicateINContext, IN.Pattern>
+    Knockout<PredicateINContext, IN.Pattern>
 {
     public enum Pattern
     {

@@ -385,7 +385,7 @@ subterm
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateMatch
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 

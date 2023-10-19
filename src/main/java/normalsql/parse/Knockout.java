@@ -1,34 +1,26 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.meta;
+package normalsql.parse;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 /**
- * Predicate references parsed literals which will be replaced with a
- * placeholder question mark '?' in parsed query. Subclasses also
- * have any additional context needed for code generating the accessors.
+ * A Knockout references a parse tree containing literals to be considered
+ * for replacement by a placeholder question mark '?' by the code generator.
  *
- *
- *
+ * Subclasses will have any additional context needed for code generating
+ * their corresponding accessors.
  */
 
-// TODO: Rename to Knockout or something totally distinct from "param".
-
 public abstract class
-	Predicate<T extends ParserRuleContext, E extends Enum<E>>
+	Knockout<T extends ParserRuleContext, E extends Enum<E>>
 {
 	public T context;
 	public ParserRuleContext parent;
 
-	/**
-	 * <p>Constructor for Predicate.</p>
-	 *
-	 * @param context a T object
-	 */
-	public Predicate( T context )
+	public Knockout( T context )
 	{
 		this.context = context;
 		parent = (ParserRuleContext) context.parent;

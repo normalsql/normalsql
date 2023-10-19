@@ -1,38 +1,32 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql;
+package normalsql.parse;
 
-import normalsql.meta.*;
-import normalsql.parse.NormalSQLBaseVisitor;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
 public class
-	NormalSQLVisitor
+	KnockoutVisitor
 extends
 	NormalSQLBaseVisitor<Void>
 {
 	public Parser parser;
 	public CommonTokenStream tokens;
-	ArrayList<Predicate<?,?>> predicates;
-
-	ArrayList<LiteralContext> literals = new ArrayList<>();
-
+	public ArrayList<Knockout<?,?>> knockouts;
 
 	Stack<Statement> statementStack;
 	// TODO: Support multiple root-level statements
-	Statement root;
+	public Statement root;
 
 	@Override
 	public Void visitScript( ScriptContext context )
 	{
-		predicates = new ArrayList<>();
+		knockouts = new ArrayList<>();
 
 		statementStack = new Stack<>();
 		root = new Statement();
@@ -81,6 +75,7 @@ extends
 			var termList = context.source().values().terms().term();
 			var subterm = termList.get( 0 ).subterm();
 
+
 			if( subterm instanceof SubtermRowContext )
 			{
 //				var found = new ArrayList<LiteralContext>();
@@ -103,11 +98,7 @@ extends
 
 				if( found.size() == maybes.size() )
 				{
-					// TODO also add literals to parent Statement?
-//					literals.addAll( found );
-
 					Insert child = new Insert();
-//					child.literals = found;
 					if( context.qname() != null )
 					{
 						child.table = context.qname();
@@ -118,11 +109,11 @@ extends
 						child.columns = context.names().name();
 					}
 
-					Rooster roo = new Rooster( context, child );
-					roo.literals = found;
+					Row row = new Row( context, child );
+					row.literals = found;
 
-					child.placeholders.add( roo );
-					predicates.add( roo );
+					child.knockouts.add( row );
+					knockouts.add( row );
 
 					Statement parent = statementStack.peek();
 					parent.add( child );
@@ -160,13 +151,6 @@ extends
 //	}
 
 //	@Override
-//	public Void visitValues( ValuesContext context )
-//	{
-//		super.visitValues( context );
-//		return null;
-//	}
-
-//	@Override
 //	public Void visitSubtermRow( SubtermRowContext context )
 //	{
 //		if( context.terms() == null || context.terms().term() == null )
@@ -198,23 +182,24 @@ extends
 	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 	{
 		PredicateContext pc = ctx.predicate();
-		Predicate p = null;
+		Knockout k = null;
+		// TODO use new pattern switch
 		switch( pc.getClass().getSimpleName() )
 		{
 			case "PredicateBETWEENContext":
-				p = new Between( (PredicateBETWEENContext) pc );
+				k = new BETWEEN( (PredicateBETWEENContext) pc );
 				break;
 
 			case "PredicateCompareContext":
-				p = new Comparison( (PredicateCompareContext) pc );
+				k = new Comparison( (PredicateCompareContext) pc );
 				break;
 
 			case "PredicateINContext":
-				p = new IN( (PredicateINContext) pc );
+				k = new IN( (PredicateINContext) pc );
 				break;
 
-			case "PredicateMatchContext":
-				p = new Match( (PredicateMatchContext) pc );
+			case "PredicateLIKEContext":
+				k = new LIKE( (PredicateLIKEContext) pc );
 				break;
 
 			// TODO: ANY
@@ -225,10 +210,10 @@ extends
 				break;
 		}
 
-		if( p != null && p.isMatched() )
+		if( k != null && k.isMatched() )
 		{
-			statementStack.peek().placeholders.add( p );
-			predicates.add( p );
+			statementStack.peek().knockouts.add( k );
+			knockouts.add( k );
 			return null;
 		}
 		return super.visitSubtermPredicate( ctx );

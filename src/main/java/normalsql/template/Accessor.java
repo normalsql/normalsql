@@ -1,24 +1,21 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql;
+package normalsql.template;
 
 import normalsql.jdbc.Column;
 import normalsql.jdbc.Param;
 import normalsql.parse.NormalSQLParser.LiteralContext;
 
 /**
- * Property represents a class instance variable for code generation. aka JavaBean.
- * One Property for each PreparedStatement Param.
+ * An Accessor represents a class instance variable and its accessor
+ * methods (getter, setter). aka a JavaBean.
  *
- * @author jasonosgood
- * @version $Id: $Id
+ * One Accessor for each ResultSet Column and PreparedStatement Param.
  */
 
-// TODO Maybe split into Statement and ResultSet specific subclasses.
-// TODO Probably rename to Accessor
 public class
-	Property
+	Accessor
 {
 	public Column column;
 	public Param param;
@@ -43,17 +40,16 @@ public class
 	public String getter;
 	// Generated setter method
 	public String setter;
-
-	// Used by PreparedStatement templates. Syntax conversion of value from SQL to Java.
+	// The default value literal converted from Java to SQL syntax. Used by PreparedStatement templates.
 	public String asCode;
 	// Used by ResultSet templates. To specify variable default initial value.
+	// TODO Are initial default values necessary? I can't remember why I added them.
 	public String initial;
 
-	/** {@inheritDoc} */
 	@Override
 	public String toString()
 	{
-		return "Property{" +
+		return "Accessor{" +
 			"column=" + column +
 			", param=" + param +
 			", context=" + context +

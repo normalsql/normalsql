@@ -1,7 +1,7 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.meta;
+package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.NameContext;
 import normalsql.parse.NormalSQLParser.QnameContext;
@@ -16,5 +16,4 @@ extends
 {
 	public QnameContext table;
 	public List<NameContext> columns;
-//	public List<LiteralContext> literals;
 }

@@ -10,7 +10,7 @@
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     resultSetProperties - List<Property>, meta data for getters and setters
+##     resultSetAccessors - List<Accessor>, meta data for getters and setters
 /**
 * ${resultSetClassName}.java ${date}
 *
@@ -92,7 +92,7 @@ public class
 		if( success )
 		{
 			__row = rs.getRow();
-			#foreach( $p in $resultSetProperties )
+			#foreach( $p in $resultSetAccessors )
 			_${p.variable} = rs.get${p.classShortName}( ${p.nth} );
 			#if( $p.isNullable )
 			_${p.variable}_wasNull = !rs.wasNull();
@@ -137,7 +137,7 @@ public class
 		return result;
 	}
 
-	#foreach( $p in $resultSetProperties )
+	#foreach( $p in $resultSetAccessors )
 	private ${p.classShortName} _${p.variable} = ${p.initial};
 	/** column "${p.original}" **/
 	public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
@@ -164,7 +164,7 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", " );
-		#foreach( $p in $resultSetProperties )
+		#foreach( $p in $resultSetAccessors )
 		sb.append( "${p.variable}: " );
 		sb.append( ${p.getter}() );
 ##		sb.append( ${p.getter}WasNull() ? null : ${p.getter}() );

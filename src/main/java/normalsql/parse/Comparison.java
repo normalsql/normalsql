@@ -1,7 +1,7 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.meta;
+package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.PredicateCompareContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class
 	Comparison
 extends
-	Predicate<PredicateCompareContext, Comparison.Pattern>
+	Knockout<PredicateCompareContext, Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -47,7 +47,7 @@ extends
 
 		if( !isMatched() ) return;
 
-		// TODO: Move this logic to Worker, like for Between predicates
+		// TODO: Move this logic to Worker, like for BETWEEN predicates
 		switch( pattern )
 		{
 			case LiteralColumn:

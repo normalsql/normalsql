@@ -1,4 +1,4 @@
-package normalsql.meta;
+package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.*;
 
@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class
-    Rooster
+    Row
 extends
-    Predicate<InsertContext, Rooster.Pattern>
+    Knockout<InsertContext, Row.Pattern>
 {
     public enum Pattern
     {
@@ -16,10 +16,9 @@ extends
     }
 
     public Insert insert;
-//    public SubtermContext column;
     public List<SubtermLiteralContext> literals = new ArrayList<>();
 
-    public Rooster( InsertContext context, Insert insert )
+    public Row( InsertContext context, Insert insert )
     {
         super( context );
         this.insert = insert;

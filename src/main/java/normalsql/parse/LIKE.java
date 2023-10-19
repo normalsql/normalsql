@@ -1,7 +1,7 @@
-// Copyright 2010-2022 Jason Osgood
+// Copyright 2010-2023 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.meta;
+package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.*;
 
@@ -9,9 +9,9 @@ import normalsql.parse.NormalSQLParser.*;
 	Represents LIKE, ILIKE, and REGEXP predicates.
  */
 public class
-	Match
+	LIKE
 extends
-	Predicate<PredicateMatchContext, Match.Pattern>
+		Knockout<PredicateLIKEContext, LIKE.Pattern>
 {
 	public enum Pattern
 	{
@@ -21,8 +21,7 @@ extends
 	public SubtermContext column;
 	public SubtermContext literal;
 
-	// TODO Rename to LIKE. I already forgot what a "match" is.
-	public Match(PredicateMatchContext context )
+	public LIKE( PredicateLIKEContext context )
 	{
 		super( context );
 		column = (SubtermContext) context.parent.getChild( 0 );
