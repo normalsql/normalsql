@@ -47,12 +47,15 @@ drop
     ifExists : 'IF' 'EXISTS' ;
 
 create
+    : 'CREATE' ( 'TEMP' | 'TEMPORARY' )? 'TABLE' ifNotExists? table
+      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+      | 'AS' query
+      ) // (COMMENT string)? (WITH properties)?
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
 //    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
 //    | 'CREATE' ROLE id (WITH ADMIN grantor)?
 //    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
-    : 'CREATE' 'TABLE' ifNotExists? table '(' columnDef ( ',' columnDef )* ')' // (COMMENT string)? (WITH properties)?
 //    | 'CREATE' TABLE ifNotExists? tableRef columnAliases? (COMMENT string)? (WITH properties)? AS (query | '(' query ')' ) (WITH (NO)? DATA)?
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
     ;
@@ -60,8 +63,47 @@ create
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type ( 'NOT' 'NULL' )?  // (COMMENT string)? (WITH properties)?
+        : name type columnStuff*  // (COMMENT string)? (WITH properties)?
         ;
+        
+    columnStuff
+        : ( 'CONSTRAINT' name )?
+          ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
+          | ( 'NOT' 'NULL' | 'UNIQUE' ) onConflict?
+          | 'CHECK' '(' term ')'
+          | 'DEFAULT' ( literal | '(' term ')' )
+          | 'COLLATE' name
+          | reference
+          | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
+          )
+        ;
+
+    tableStuff
+        : (CONSTRAINT_ name)?
+        ( ( 'PRIMARY' 'KEY' | 'UNIQUE' )
+        names
+//        OPEN_PAR indexed_column ( COMMA indexed_column )* CLOSE_PAR
+        onConflict?
+        | 'CHECK' '(' term ')'
+        | 'FOREIGN' 'KEY' names reference
+    )
+;
+        onConflict
+            : 'ON' 'CONFLICT' ( 'ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' )
+            ;
+
+        reference
+            : 'REFERENCE' name names?
+              ( 'ON' ( 'DELETE' | 'UPDATE' )
+                ( 'SET' ( 'NULL' | 'DEFAULT' )
+                | 'CASCADE'
+                | 'RESTRICT'
+                | 'NO' 'ACTION'
+                )
+              | 'MATCH' name
+              )*
+              ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))? )?
+            ;
 
 with
     : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
@@ -323,6 +365,13 @@ term
     | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
+    /*
+        | MATCH OPEN_ROUND_BRACKET matchPredicateIdents
+        COMMA term=primaryExpression CLOSE_ROUND_BRACKET
+        (USING matchType=ident withProperties?)?
+        */
+    // CrateDB
+    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
     | <assoc=right> VARIABLE assign term
    ;
 
@@ -332,6 +381,9 @@ term
 subterm
     : literal                                                         # SubtermLiteral
     | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+    // TODO This correct? Which dialect is this?
+    | subterm '::' type                                               # SubtermCast
+    // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
@@ -341,7 +393,7 @@ subterm
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
-    | subterm '||' subterm                              # SubtermBinary
+    | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | '(' terms ')' '.' name                                          # SubtermRowField
@@ -412,6 +464,7 @@ type
 scalar
     : 'INT'
     | 'INTEGER'
+    | 'INTERVAL' // TODO This correct, wrt type casting? or other? or remove from keywords?
     | 'TINYINT'
     | 'SMALLINT'
     | 'BIGINT'
@@ -538,8 +591,11 @@ orderBy
     ;
 
     orderByItem
-        : term ( 'ASC' | 'DESC' )? ( 'NULLS' firstLast )?
+        : term sortDir? ( 'NULLS' firstLast )?
         ;
+
+    sortDir
+        : 'ASC' | 'DESC' ;
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
