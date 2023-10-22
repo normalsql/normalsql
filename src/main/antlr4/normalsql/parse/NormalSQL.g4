@@ -47,9 +47,11 @@ drop
     ifExists : 'IF' 'EXISTS' ;
 
 create
-    : 'CREATE' ( 'TEMP' | 'TEMPORARY' )? 'TABLE' ifNotExists? table
+//    : 'CREATE' KEYWORD*
+    : 'CREATE' ( 'CACHED' | 'MEMORY' )? (( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? | 'UNLOGGED' )?
+      'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' query
+      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // (COMMENT string)? (WITH properties)?
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
@@ -59,6 +61,11 @@ create
 //    | 'CREATE' TABLE ifNotExists? tableRef columnAliases? (COMMENT string)? (WITH properties)? AS (query | '(' query ')' ) (WITH (NO)? DATA)?
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
     ;
+
+    createTableOptions
+        :
+        ;
+
 
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
@@ -456,54 +463,63 @@ subterm
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 type
-    : 'ROW' '(' name scalar ( ',' name scalar )* ')'
+//    : 'ROW' '(' name scalar ( ',' name scalar )* ')'
+    : 'ROW' '(' name type ( ',' name type )* ')'
+    | 'SETOF' type
     | type 'ARRAY' ( '[' INTEGER ']' )?
+    | type ( '[' INTEGER? ']' )+
     | scalar
     ;
 
 scalar
     : 'INT'
     | 'INTEGER'
-    | 'INTERVAL' // TODO This correct, wrt type casting? or other? or remove from keywords?
     | 'TINYINT'
     | 'SMALLINT'
     | 'BIGINT'
     | 'REAL'
     | 'DECFLOAT'
-    | 'FLOAT' ( '(' INTEGER ')' )?
+    | 'FLOAT' length?
     | 'DOUBLE' 'PRECISION'
     | 'DECIMAL' precision?
     | 'DEC' precision?
     | 'NUMBER' precision?
-    | 'BOOLEAN'
+    | 'NUMERIC' precision?
+    | 'BOOL' | 'BOOLEAN'
 
+    | 'INTERVAL'
     | 'VARBINARY'
-    | 'BIT' 'VARYING'? // Postgres?
-    | chars ( '(' INTEGER ')' )?
+    // Postgres?
+    | 'BIT' 'VARYING'? length?
+    | chars length?
 
     | 'BLOB'
     | 'CLOB'
     | 'NCLOB'
 
     | 'DATE'
-    | ( 'TIMESTAMP' | 'TIME' ) ( '(' INTEGER ')' )? ( 'WITH' 'LOCAL'? 'TIME' 'ZONE' )?
+    | ( 'TIMESTAMP' | 'TIME' ) length? ( ( 'WITH' | 'WITHOUT' ) 'LOCAL'? 'TIME' 'ZONE' )?
 
     | 'UUID'
-//    | 'RAW'
+    | 'JSON'
+    | 'JSONB'
+    | 'XML'
 
     | name precision?
     ;
 
  chars
-    : 'CHARACTER' 'VARYING'? // Postgres?
-    | 'CHAR' 'VARYING'? // Postgres?
-    | 'NCHAR' 'VARYING'? // Postgres?
+    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
     | 'VARCHAR'
     | 'VARCHAR2'
-    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'? // Postgres?
+    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
     ;
 
+length
+    : ( '(' INTEGER ')' ) ;
+
 precision
+    // TODO can this just be two INTEGERs?
     : '(' subterm ( ',' subterm )? ')'
     ;
 

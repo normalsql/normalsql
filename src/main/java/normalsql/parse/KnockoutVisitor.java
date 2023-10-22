@@ -40,6 +40,7 @@ extends
 	@Override
 	public Void visitDelete( DeleteContext context )
 	{
+		// TODO StatementStack w/ auto parenting
 		Statement parent = statementStack.peek();
 		Statement child = new Delete();
 		statementStack.push( child );
