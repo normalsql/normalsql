@@ -547,9 +547,9 @@ function
 
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all analytic functions?
-    | name '(' term respectIgnore? ')' respectIgnore? over?
+    | qname '(' term respectIgnore? ')' respectIgnore? over?
     // Generic syntax for all aggregate functions?
-    | name
+    | qname
       '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
