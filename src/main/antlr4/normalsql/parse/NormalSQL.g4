@@ -181,7 +181,7 @@ returning
     : 'RETURNING' returned ( ',' returned )* ;
 
     returned
-        : '*' | aliasedTerm
+        : '*' | term ( 'AS'? alias )?
         ;
 
 query
@@ -237,7 +237,7 @@ select
 
     item
         : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
-        | aliasedTerm                                  # ItemColumn
+        | term ( 'AS'? alias )?                        # ItemTerm
         ;
 
     into
