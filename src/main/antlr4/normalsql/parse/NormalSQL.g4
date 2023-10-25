@@ -9,8 +9,11 @@
  Child rules are indented when its (mostly) only used by a parent rule.
 
    Heuristics:
-      Create subrules to ease parse tree navigation.
-      Per DRY, create subrule for 3 (sometimes 2) or more copypastas.
+
+      1. Create subrules to ease parse tree navigation.
+
+      2. Per DRY, create subrule for 3 (sometimes 2) or more copypastas. Except when doing so
+         conflicts with #1.
 
 */
 
