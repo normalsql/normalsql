@@ -3,9 +3,12 @@
 
 package test;
 
+import normalsql.parse.KnockoutVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import static normalsql.parse.NormalSQLParser.*;
+
+import normalsql.parse.NormalSQLVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -44,7 +47,7 @@ order by pname
 //                SELECT DATEADD(HOUR, 1, TIME '23:00:00');
 		;
 
-//		parse( null, sql );
+		parse( null, sql );
 	}
 
 	public static boolean parse( Path p, String sql )
@@ -91,10 +94,10 @@ order by pname
 		ScriptContext script = parser.script();
 		if( errors.isEmpty() ) return true;
 
-//		NormalSQLVisitor visitor = new NormalSQLVisitor();
-//		visitor.parser = parser;
-//		visitor.tokens = tokens;
-//		visitor.visit( script );
+		KnockoutVisitor visitor = new KnockoutVisitor();
+		visitor.parser = parser;
+		visitor.tokens = tokens;
+		visitor.visit( script );
 
 		System.out.println();
 		if( p != null ) System.out.println( p );
