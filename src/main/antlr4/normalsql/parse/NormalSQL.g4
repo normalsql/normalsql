@@ -616,6 +616,7 @@ orderBy
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
+    | BITS
     | BYTES
     | BLOB
     | truth
@@ -864,6 +865,8 @@ BLOB
 
     fragment HEXHEX
         : '\'' ( HEX HEX ' '? )* '\'' ;
+
+BITS : 'B' '\'' [01]+ '\'' ;
 
 BYTES
     : '0x' HEX+ ;
