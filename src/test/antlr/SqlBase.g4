@@ -40,7 +40,6 @@ singleStatement
 
 statement
     : query                                                            #statementDefault
-    /*
     | ALTER FUNCTION qname types? alterRoutineCharacteristics                                      #alterFunction
     | ALTER SCHEMA qname RENAME TO identifier                  #renameSchema
     | ALTER TABLE (IF EXISTS)? from=qname RENAME TO to=qname                                     #renameTable
@@ -102,7 +101,6 @@ statement
     | TRUNCATE TABLE qname                                     #truncateTable
     | USE catalog=identifier '.' schema=identifier                     #use
     | USE schema=identifier                                            #use
-    */
     ;
 
 /*

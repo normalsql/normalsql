@@ -15,7 +15,7 @@ public class JSQLParserTests {
     public static void main( String[] args )
         throws IOException
     {
-        String dir = "/Users/jasonosgood/Projects/normalsql-resources/JSqlParser/src/test/resources/net/sf/jsqlparser/statement/select/oracle-tests";
+        String dir = "/Users/jasonosgood/Projects/SQL/Parsers/JSqlParser/src/test/resources/net/sf/jsqlparser/statement/select/oracle-tests";
         List<Path> files = getAllTheFiles( dir );
         for( Path f : files )
         {
@@ -57,6 +57,10 @@ public class JSQLParserTests {
         throws IOException
     {
         Path sourceRoot = Paths.get( dir );
+        if( !Files.exists( sourceRoot ))
+        {
+            throw new NoSuchFileException( "not found: " + sourceRoot );
+        }
         ArrayList<Path> files = new ArrayList<>();
         String extension = ".sql";
 
