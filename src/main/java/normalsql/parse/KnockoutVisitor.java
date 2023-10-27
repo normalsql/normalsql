@@ -61,19 +61,19 @@ extends
 	}
 
 	@Override
-	public Void visitItemColumn( ItemColumnContext context )
+	public Void visitItemTerm( ItemTermContext context )
 	{
 		// TODO: Could or should these be inlined into visitSelect?
 		Item item = new Item();
 		item.context = context;
 		item.source = tokens.getText( context );
-		item.name = tokens.getText( context.aliasedTerm().term() );
-		if( context.aliasedTerm().alias() != null )
+		item.name = tokens.getText( context.term() );
+		if( context.alias() != null )
 		{
-			item.alias = tokens.getText( context.aliasedTerm().alias() );
+			item.alias = tokens.getText( context.alias() );
 		}
 		statementStack.peek().items.add( item );
-		super.visitItemColumn( context );
+		super.visitItemTerm( context );
 		return null;
 	}
 

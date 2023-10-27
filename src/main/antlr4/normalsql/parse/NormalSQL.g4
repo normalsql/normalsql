@@ -84,17 +84,30 @@ create
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
           )
         ;
+        /*
+        ( 'CONSTRAINT' constraint_name )?
+        ( 'NOT'? 'NULL'
+        |  'CHECK '(' expression ')' ( 'NO' 'INHERIT' )?
+          | 'DEFAULT' default_expr
+          | 'GENERATED' 'ALWAYS' 'AS' '(' generation_expr ')' 'STORED'
+          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
+          | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
+          | 'PRIMARY' 'KEY' index_parameters
+          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' ) )?
+            ( 'ON 'DELETE' referential_action )? ( 'ON 'UPDATE' referential_action )? )
+            ( 'DEFERRABLE' | 'NOT' 'DEFERRABLE' )? ( 'INITIALLY' 'DEFERRED' | 'INITIALLY' 'IMMEDIATE' )?
+   */
 
     tableStuff
-        : (CONSTRAINT_ name)?
-        ( ( 'PRIMARY' 'KEY' | 'UNIQUE' )
-        names
+        : ( 'CONSTRAINT' name)?
+          ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) names
 //        OPEN_PAR indexed_column ( COMMA indexed_column )* CLOSE_PAR
         onConflict?
-        | 'CHECK' '(' term ')'
-        | 'FOREIGN' 'KEY' names reference
-    )
-;
+          | 'CHECK' '(' term ')'
+          | 'FOREIGN' 'KEY' names reference
+          )
+          ;
+
         onConflict
             : 'ON' 'CONFLICT' ( 'ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' )
             ;
