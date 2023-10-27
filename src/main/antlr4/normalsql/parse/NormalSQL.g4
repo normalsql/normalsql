@@ -25,37 +25,81 @@ script
     : statement? ( ';' statement? )* EOF ;
 
 statement
-    // DML
+    : dml
+    | ddl
+    | set
+    | reset
+    | stuff // TODO meaningful name
+    | explain
+    ;
+
+dml
     : delete
     | insert
     | merge
     | query
     | update
-
-    // DDL
-    | drop
-    | create
-    | set // TODO
-    | stuff // TODO meaningful name
     ;
 
+ddl
+    : drop
+    | create
+    ;
+
+explain
+    : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )? dml
+    ;
+
+    option
+        : 'ANALYZE' boolean?
+        | 'VERBOSE' boolean?
+        | 'COSTS' boolean?
+        | 'SETTINGS' boolean?
+        | 'BUFFERS' boolean?
+        | 'WAL' boolean?
+        | 'TIMING' boolean?
+        | 'SUMMARY' boolean?
+        | 'FORMAT' ( 'TEXT' | 'XML' | 'JSON' | 'YAML' )
+        ;
+
+// TODO so much more to add
 set
-    : 'SET' ( qname | VARIABLE ) '=' terms ;
+    : 'SET' ( 'LOCAL' | 'GLOBAL' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
+
+reset
+    : 'RESET' qname;
 
 stuff
-    : 'BEGIN' | 'COMMIT'
+    : 'BEGIN' | 'COMMIT' | 'ROLLBACK'
     ;
 
 drop
-    : 'DROP' 'MATERIALIZED' 'VIEW' ifExists? table
-    | 'DROP' 'SCHEMA' ifExists? table ( 'CASCADE' | 'RESTRICT' )?
-    | 'DROP' 'TABLE' ifExists? table
-    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( '(' ( type ( ',' type )* )? ')' )?
-    | 'DROP' 'VIEW' ifExists? table
-    | 'DROP' 'ROLE' name
+    : 'DROP' dropsicle ( 'IF' 'EXISTS' )? qnames0 ( 'CASCADE' | 'RESTRICT' )?
+//    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( '(' ( type ( ',' type )* )? ')' )?
     ;
 
-    ifExists : 'IF' 'EXISTS' ;
+    // TODO new name. this copypasta from Postgres probably needs to be validated.
+    dropsicle
+        : 'ACCESS METHOD'
+        | 'COLLATION'
+        | 'CONVERSION'
+        | 'EVENT' 'TRIGGER'
+        | 'EXTENSION'
+        | 'FOREIGN' 'DATA' 'WRAPPER'
+        | 'FOREIGN' 'TABLE'
+        | 'INDEX'
+        | 'MATERIALIZED' 'VIEW'
+        | 'PROCEDURAL'? 'LANGUAGE'
+        | 'PUBLICATION'
+        | 'ROLE'
+        | 'SCHEMA'
+        | 'SEQUENCE'
+        | 'SERVER'
+        | 'STATISTICS'
+        | 'TABLE'
+        | 'TEXT' 'SEARCH' ( 'CONFIGURATION' | 'DICTIONARY' | 'PARSER' | 'TEMPLATE' | 'VIEW' )
+        | 'VIEW'
+        ;
 
 create
 //    : 'CREATE' KEYWORD*
@@ -64,6 +108,7 @@ create
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // (COMMENT string)? (WITH properties)?
+      | 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
 //    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
@@ -83,7 +128,7 @@ create
     columnDef
         : name type columnStuff*  // (COMMENT string)? (WITH properties)?
         ;
-        
+
     columnStuff
         : ( 'CONSTRAINT' name )?
           ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
@@ -265,7 +310,7 @@ select
         ;
 
     into
-        : 'INTO' ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
+        : 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
     from
         : source ( join | pivot | unpivot )* ;
@@ -478,6 +523,7 @@ subterm
             : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
             // Postgres match regex
             | '~' | '~*' | '!~' | '!~*'
+            | OPERATOR
             ;
 
         logicals
@@ -553,7 +599,10 @@ values
     : 'VALUES' terms ;
 
 array
-    : 'ARRAY' '[' terms? ']' ;
+    : 'ARRAY' arrayTerms  ;
+
+    arrayTerms : '[' ( terms | arrayNested ) ']' ;
+    arrayNested : arrayTerms ( ',' arrayTerms )* ;
 
 function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
@@ -570,7 +619,8 @@ function
     | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
-
+    // Postgres
+    | 'ARRAY' '(' query ')'
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all analytic functions?
     | qname '(' term respectIgnore? ')' respectIgnore? over?
@@ -600,7 +650,7 @@ function
 
     xmlAttrib
         : term ( 'AS' alias )? ;
-        
+
     xmlContent
         : 'DOCUMENT' | 'CONTENT' ;
 
@@ -637,7 +687,11 @@ orderBy
         ;
 
     sortDir
-        : 'ASC' | 'DESC' ;
+        : 'ASC'
+        | 'DESC'
+        // Postgres
+        | 'USING' compare
+        ;
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
@@ -658,6 +712,9 @@ literal
 
 truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
+
+boolean
+    : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
 
 interval
     : timeUnit precision? ( 'TO' timeUnit precision? )?
@@ -841,6 +898,9 @@ alias
 names
     : '(' name ( ',' name )* ')' ;
 
+qnames0
+    : qname ( ',' qname )* ;
+
 qnames
     : '(' qname ( ',' qname )* ')' ;
 
@@ -915,6 +975,11 @@ fragment DIGIT
 VARIABLE
     : '?' // DIGIT*
     | [:@$] ( INTEGER | ID )
+    ;
+
+// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+OPERATOR
+    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
     ;
 
 COMMENT
