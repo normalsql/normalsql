@@ -35,7 +35,15 @@ statement
     // DDL
     | drop
     | create
-    // | set // TODO
+    | set // TODO
+    | stuff // TODO meaningful name
+    ;
+
+set
+    : 'SET' ( qname | VARIABLE ) '=' terms ;
+
+stuff
+    : 'BEGIN' | 'COMMIT'
     ;
 
 drop
@@ -318,6 +326,7 @@ select
 
     qualify
         : 'QUALIFY' term ;
+
 
 source
     : ( unnest
