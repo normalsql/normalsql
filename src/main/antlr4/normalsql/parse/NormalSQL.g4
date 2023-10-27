@@ -9,8 +9,11 @@
  Child rules are indented when its (mostly) only used by a parent rule.
 
    Heuristics:
-      Create subrules to ease parse tree navigation.
-      Per DRY, create subrule for 3 (sometimes 2) or more copypastas.
+
+      1. Create subrules to ease parse tree navigation.
+
+      2. Per DRY, create subrule for 3 (sometimes 2) or more copypastas. Except when doing so
+         conflicts with #1.
 
 */
 
@@ -420,6 +423,7 @@ subterm
     | '(' subterm ')'                                                 # SubtermNested
     | '('')'                                                          # SubtermEmpty
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
+    // TODO figure out interval types vs interval literals
     // PL/SQL, ODBC
     | subterm interval                                                # SubtermInterval
     | 'INTERVAL' subterm interval?                                    # SubtermInterval
@@ -628,6 +632,7 @@ orderBy
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
+    | BITS
     | BYTES
     | BLOB
     | truth
@@ -646,14 +651,14 @@ truth
     : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
 
 interval
-    : timeUnit ( 'TO' timeUnit )?
+    : timeUnit precision? ( 'TO' timeUnit precision? )?
     ;
 
-    timeUnit
-        : ( 'EPOCH' | 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' | 'SECOND' ) precision?
-        // DB2 interval units
-        | 'MONTHS' | 'DAYS' | 'HOURS'
-        ;
+timeUnit
+    : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
+    | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
+    | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
+    | 'MILLISECOND' | 'MICROSECOND' | 'NANOSECOND' ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
@@ -876,6 +881,8 @@ BLOB
 
     fragment HEXHEX
         : '\'' ( HEX HEX ' '? )* '\'' ;
+
+BITS : 'B' '\'' [01]+ '\'' ;
 
 BYTES
     : '0x' HEX+ ;
