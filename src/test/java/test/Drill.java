@@ -63,12 +63,12 @@ order by pname
 		}
 
 
-		ArrayList<SyntaxError> errors = new ArrayList<>();
+		var errors = new ArrayList<SyntaxError>();
 
-		CharStream chars = CharStreams.fromString( sql );
-		NormalSQLLexer lexer = new NormalSQLLexer( chars );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		NormalSQLParser parser = new NormalSQLParser( tokens );
+		var chars = CharStreams.fromString( sql );
+		var lexer = new NormalSQLLexer( chars );
+		var tokens = new CommonTokenStream( lexer );
+		var parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
@@ -91,10 +91,10 @@ order by pname
 
 		} );
 
-		ScriptContext script = parser.script();
+		var script = parser.script();
 		if( errors.isEmpty() ) return true;
 
-		KnockoutVisitor visitor = new KnockoutVisitor();
+		var visitor = new KnockoutVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
@@ -107,7 +107,7 @@ order by pname
 		}
 
 		System.out.println();
-		String[] lines = sql.split( "\\n" );
+		var lines = sql.split( "\\n" );
 		for( int i = 0; i < lines.length ; i++ )
 		{
 //			System.out.printf( "%d: %s\n", i + 1, lines[i] );
