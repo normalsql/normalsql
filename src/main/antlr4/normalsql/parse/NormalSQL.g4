@@ -599,7 +599,7 @@ values
 array
     : 'ARRAY' arrayTerms  ;
 
-    arrayTerms : '[' ( terms | arrayNested ) ']' ;
+    arrayTerms : '[' ( terms | arrayNested )? ']' ;
     arrayNested : arrayTerms ( ',' arrayTerms )* ;
 
 function
@@ -975,11 +975,6 @@ VARIABLE
     | [:@$] ( INTEGER | ID )
     ;
 
-// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
-OPERATOR
-    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
-    ;
-
 COMMENT
     : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
 
@@ -992,4 +987,11 @@ WHITESPACE
 //    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
     : [ \t\r\n] -> channel ( HIDDEN ) ;
 
-ERROR : . ;
+// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+// BOZO this crude OPERATOR token accepts way more than spec'd
+OPERATOR
+//    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
+    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
+    ;
+
+//ERROR : . ;
