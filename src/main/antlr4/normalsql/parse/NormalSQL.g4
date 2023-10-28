@@ -463,7 +463,7 @@ subterm
     // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
-    | function ( '.' function )*                                      # SubtermFunction
+//    | function ( '.' function )*                                      # SubtermFunction
     | column                                                          # SubtermColumn
     // TODO: BINARY
     | subterm 'COLLATE' name                                          # SubtermBinary
@@ -473,11 +473,7 @@ subterm
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
-    | '(' terms ')' '.' name                                          # SubtermRowField
-    | '(' subterm ')'                                                 # SubtermNested
-    | '('')'                                                          # SubtermEmpty
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
-    // TODO figure out interval types vs interval literals
     // PL/SQL, ODBC
     | subterm interval                                                # SubtermInterval
     | 'INTERVAL' subterm interval?                                    # SubtermInterval
@@ -490,8 +486,10 @@ subterm
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     // PL/SQL
     | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
-    | 'ROW'? '(' terms? ')'                                           # SubtermRow
 //   TODO  | sequenceValueExpression
+    // TODO these may need to be in a parent rule, for proper precedence
+    | 'ROW'? '(' terms? ')' ( '.' name )?                             # SubtermRow
+    | function ( '.' function )*                                      # SubtermFunction
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
