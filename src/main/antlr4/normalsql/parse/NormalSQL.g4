@@ -28,7 +28,8 @@ statement
     : dml
     | ddl
     | set
-    | reset
+//    | reset
+    | 'RESET' qname
     | stuff // TODO meaningful name
     | explain
     ;
@@ -66,8 +67,8 @@ explain
 set
     : 'SET' ( 'LOCAL' | 'GLOBAL' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
 
-reset
-    : 'RESET' qname;
+//reset
+//    : 'RESET' qname;
 
 stuff
     : 'BEGIN' | 'COMMIT' | 'ROLLBACK'
@@ -103,11 +104,11 @@ drop
 
 create
 //    : 'CREATE' KEYWORD*
-    : 'CREATE' ( 'CACHED' | 'MEMORY' )? (( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? | 'UNLOGGED' )?
+    : 'CREATE' ( 'CACHED' | 'MEMORY' )? //(( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? | 'UNLOGGED' )?
       'TABLE' ifNotExists? qname
-      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
-      ) // (COMMENT string)? (WITH properties)?
+//      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+//      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
+//      ) // (COMMENT string)? (WITH properties)?
       | 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
