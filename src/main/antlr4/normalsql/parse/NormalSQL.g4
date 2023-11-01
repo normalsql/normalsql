@@ -25,30 +25,28 @@ script
     : statement? ( ';' statement? )* EOF ;
 
 statement
-    : dml
-    | ddl
-    | set
-//    | reset
-    | 'RESET' qname
-    | stuff // TODO meaningful name
-    | explain
-    ;
-
-dml
-    : delete
+    : explain?
+    ( set
+    | delete
     | insert
     | merge
     | query
     | update
-    ;
-
-ddl
-    : drop
+    | drop
     | create
+//    | reset
+    | 'RESET' qname
+    | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
+    | 'COMMIT' 'TRANSACTION'?
+    | 'DETACH' 'DATABASE'? term
+    | 'END' 'TRANSACTION'?
+    | 'ROLLBACK'
+    )
     ;
 
 explain
-    : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )? dml
+    : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
+    | 'EXPLAIN' 'QUERY' 'PLAN'
     ;
 
     option
@@ -69,14 +67,6 @@ set
 
 //reset
 //    : 'RESET' qname;
-
-stuff
-    : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
-    | 'COMMIT' 'TRANSACTION'?
-    | 'DETACH' 'DATABASE'? term
-    | 'END' 'TRANSACTION'?
-    | 'ROLLBACK'
-    ;
 
 drop
     : 'DROP' dropsicle ( 'IF' 'EXISTS' )? qnames0 ( 'CASCADE' | 'RESTRICT' )?
@@ -378,7 +368,6 @@ select
     qualify
         : 'QUALIFY' term ;
 
-
 source
     : ( unnest
       | values
@@ -462,15 +451,19 @@ term
         : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 
 subterm
-    : literal                                                         # SubtermLiteral
+    : literal                                                       # SubtermLiteral
     | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
-    // TODO This correct? Which dialect is this?
     | subterm '::' type                                               # SubtermCast
     // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
 //    | function ( '.' function )*                                      # SubtermFunction
+
+
+//    | qname                                                          # SubtermQNAME
     | column                                                          # SubtermColumn
+
+
     // TODO: BINARY
     | subterm 'COLLATE' name                                          # SubtermBinary
     | subterm '&' subterm                                             # SubtermBinary
@@ -781,7 +774,7 @@ unreserved
         | 'CAST'
         | 'CHECK'
         | 'CONSTRAINT'
-        | 'CROSS'
+//        | 'CROSS'
 //        | 'DAY'
 //        | 'DELETE'
         | 'DEFAULT'
@@ -790,18 +783,18 @@ unreserved
         | 'END'
         | 'EXCEPT'
         | 'EXISTS'
-        | 'FALSE'
+//        | 'FALSE'
         | 'FOR'
         | 'FOREIGN'
         | 'FROM'
-        | 'FULL'
+//        | 'FULL'
         | 'GROUP'
         | 'GROUPS'
         | 'HAVING'
 //        | 'HOUR'
 //        | 'IF'
         | 'IN'
-        | 'INNER'
+//        | 'INNER'
 //        | 'INSERT'
         | 'INTERSECT'
         | 'INTERVAL'
@@ -816,7 +809,7 @@ unreserved
         | 'MINUS'
 //        | 'MINUTE'
 //        | 'MONTH'
-        | 'NATURAL'
+//        | 'NATURAL'
         | 'NOT'
         | 'NULL'
 //        | 'OF'
@@ -912,11 +905,16 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
+    | BRACKETS
     | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
     | unreserved
     ;
+
+//brackets
+//    : '[' ID ']'
+//    ;
 
 string
     : STRING+
@@ -937,15 +935,19 @@ NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
+    // TODO no newlines etc within STRINGs
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
+// TODO no newlines etc within IDs
 ID
     : '"' ( ~'"' | '""' )* '"'
     | '`' ( ~'`' | '``' )* '`'
-    // T-SQL
-//    | '[' ~']'* ']'
     | [A-Z_#] [A-Z_#$@0-9]*
     ;
+
+// TODO add flag to disable
+BRACKETS
+    : '[' ~']'* ']';
 
 DOLLARS
     : '$$' .*? '$$' ;
@@ -977,9 +979,11 @@ PARAMETER
 fragment DIGIT
     : [0-9] ;
 
+// TODO separate alts for each style & dialect
 VARIABLE
     : '?' // DIGIT*
-    | [:@$] ( INTEGER | ID )
+    | [:$] ( INTEGER | ID )
+    | '@' '@'? [A-Z_#] [A-Z_0-9]*
     ;
 
 COMMENT
