@@ -200,7 +200,7 @@ delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
       ( 'USING' from ( ',' from )* )?
-      where? returning? ( 'MATCH' name )? orderBy? limit? offset?
+      where? returning? orderBy? limit? offset?
       ;
 
 insert
@@ -450,7 +450,7 @@ term
         COMMA term=primaryExpression CLOSE_ROUND_BRACKET
         (USING matchType=ident withProperties?)?
         */
-    // CrateDB
+    // CrateDB ?
     | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
     | <assoc=right> VARIABLE assign term
    ;
@@ -505,8 +505,8 @@ subterm
 
     predicate
         : compare subterm                                                          # PredicateCompare
-        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
-        | 'IS' 'NOT'? truth                                                        # PredicateTruth
+        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateIsNull
+        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
@@ -517,7 +517,7 @@ subterm
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' ) subterm ( 'ESCAPE' string )?      # PredicateLIKE
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' string )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
