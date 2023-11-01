@@ -200,7 +200,7 @@ delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
       ( 'USING' from ( ',' from )* )?
-      where? ( 'MATCH' name )? orderBy? limit? offset? returning?
+      where? returning? ( 'MATCH' name )? orderBy? limit? offset?
       ;
 
 insert
@@ -507,12 +507,12 @@ subterm
         : compare subterm                                                          # PredicateCompare
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         | 'IS' 'NOT'? truth                                                        # PredicateTruth
-        // PL/SQL dialect
+        // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
         | 'IS' 'NOT'? 'TYPE'? 'OF' '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
-        | 'IS' 'NOT'? term                                                         # PredicateJSON
+        | 'IS' 'NOT'? term                                                         # PredicateIS
         | 'NOT'? 'IN' '(' ( query | terms )? ')'                                   # PredicateIN
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
