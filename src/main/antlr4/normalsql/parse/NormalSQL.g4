@@ -71,9 +71,10 @@ set
 //    : 'RESET' qname;
 
 stuff
-    : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'EXCLUSIVE' )? 'TRANSACTION'?
+    : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
     | 'DETACH' 'DATABASE'? term
+//    | 'END' 'TRANSACTION'?
     | 'ROLLBACK'
     ;
 
@@ -102,6 +103,7 @@ drop
         | 'STATISTICS'
         | 'TABLE'
         | 'TEXT' 'SEARCH' ( 'CONFIGURATION' | 'DICTIONARY' | 'PARSER' | 'TEMPLATE' | 'VIEW' )
+        | 'TRIGGER'
         | 'VIEW'
         ;
 
@@ -854,7 +856,7 @@ unreserved
         | 'VALUES'
         | 'WHEN'
         | 'WHERE'
-        | 'WINDOW'
+//        | 'WINDOW'
         | 'WITH'
 //        | 'YEAR'
 
