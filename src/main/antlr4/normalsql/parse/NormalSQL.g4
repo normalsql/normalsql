@@ -40,7 +40,7 @@ statement
     | 'COMMIT' 'TRANSACTION'?
     | 'DETACH' 'DATABASE'? term
     | 'END' 'TRANSACTION'?
-    | 'ROLLBACK'
+    | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
     )
     ;
 
