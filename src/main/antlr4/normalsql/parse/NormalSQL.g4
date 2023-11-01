@@ -71,7 +71,9 @@ set
 //    : 'RESET' qname;
 
 stuff
-    : 'BEGIN' | 'COMMIT' | 'ROLLBACK'
+    : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'EXCLUSIVE' )? 'TRANSACTION'?
+    | 'COMMIT' 'TRANSACTION'?
+    | 'ROLLBACK'
     ;
 
 drop
@@ -195,10 +197,10 @@ with
         ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? name ( 'AS' name )? indexedBy?
+    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
       ( 'USING' from ( ',' from )* )?
-      where? returning?
+      where? ( 'MATCH' name )? orderBy? limit? offset? returning?
       ;
 
 insert
@@ -505,7 +507,6 @@ subterm
         : compare subterm                                                          # PredicateCompare
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         | 'IS' 'NOT'? truth                                                        # PredicateTruth
-        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         // PL/SQL dialect
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
