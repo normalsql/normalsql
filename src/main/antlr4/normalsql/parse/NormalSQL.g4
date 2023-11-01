@@ -503,13 +503,15 @@ subterm
 
     predicate
         : compare subterm                                                          # PredicateCompare
+        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         | 'IS' 'NOT'? truth                                                        # PredicateTruth
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNulls
         // PL/SQL dialect
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'                              # PredicateOfType
+        | 'IS' 'NOT'? 'TYPE'? 'OF' '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
+        | 'IS' 'NOT'? term                                                         # PredicateJSON
         | 'NOT'? 'IN' '(' ( query | terms )? ')'                                   # PredicateIN
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
@@ -527,7 +529,7 @@ subterm
 
         logicals
             : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
-            | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
+//            | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
             ;
 
         jsonType
