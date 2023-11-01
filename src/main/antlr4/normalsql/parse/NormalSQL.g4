@@ -74,7 +74,7 @@ stuff
     : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
     | 'DETACH' 'DATABASE'? term
-//    | 'END' 'TRANSACTION'?
+    | 'END' 'TRANSACTION'?
     | 'ROLLBACK'
     ;
 
