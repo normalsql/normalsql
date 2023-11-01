@@ -41,6 +41,9 @@ statement
     | 'DETACH' 'DATABASE'? term
     | 'END' 'TRANSACTION'?
     | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
+    | 'PRAGMA' qname ( '=' ( literal | name ) | '(' ( literal | name ) ')' )?
+    | 'REINDEX' qname
+    | 'RELEASE'? 'SAVEPOINT' qname
     )
     ;
 
@@ -197,8 +200,8 @@ delete
       ;
 
 insert
-    : with? ( 'INSERT' | 'REPLACE' )
-      ( 'OR' ( 'ABORT' | 'FAIL'| 'IGNORE' | 'REPLACE' | 'ROLLBACK' ))?
+    : with?
+      ( 'INSERT' ( 'OR' ( 'ABORT' | 'FAIL'| 'IGNORE' | 'REPLACE' | 'ROLLBACK' ))? | 'REPLACE' )
       'INTO' qname ( 'AS' name )? names?
       overriding?
       ( source upsert* | 'DEFAULT' 'VALUES' )
@@ -210,11 +213,13 @@ insert
 
     // SQLite
     upsert
-        : 'ON' 'CONFLICT' '(' terms ')' where? 'DO'
-          ( 'NOTHING'
-          | 'UPDATE' 'SET' setter ( ',' setter )* where?
-          )
+        : 'ON' 'CONFLICT' ( conflictColumn ( ',' conflictColumn )* where? )?
+          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
         ;
+
+        conflictColumn
+            : ( name | term ) ( 'COLLATE' name )? ( 'ASC' | 'DESC' )?
+            ;
 
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
@@ -236,7 +241,8 @@ update
       'SET' setter ( ',' setter )* from? where? returning? ;
 
     setter
-        : ( qname | qnames ) '=' term ;
+//        : ( qname | qnames ) '=' term ;
+        : ( name | names ) '=' term ;
 
 // SQLite
 indexedBy
@@ -696,7 +702,7 @@ literal
     | BITS
     | BYTES
     | BLOB
-    | truth
+    | truth | boolean
     | 'DEFAULT'
     | 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
@@ -838,7 +844,7 @@ unreserved
         | 'TO'
         | 'TOP'
         | 'TRAILING'
-        | 'TRUE'
+//        | 'TRUE'
         | 'UESCAPE'
         | 'UNION'
         | 'UNIQUE'
@@ -1002,7 +1008,8 @@ WHITESPACE
 // BOZO this crude OPERATOR token accepts way more than spec'd
 OPERATOR
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
-    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
+//    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
+    : [*/<>=~!@#%^&|`]+
     ;
 
 //ERROR : . ;
