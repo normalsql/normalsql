@@ -73,6 +73,7 @@ set
 stuff
     : 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'EXCLUSIVE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
+    | 'DETACH' 'DATABASE'? term
     | 'ROLLBACK'
     ;
 
