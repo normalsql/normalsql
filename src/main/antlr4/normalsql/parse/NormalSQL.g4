@@ -113,61 +113,46 @@ drop
         ;
 
 create
-//    : 'CREATE' KEYWORD*
-    : 'CREATE' ( 'CACHED' | 'MEMORY' )? //(( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? | 'UNLOGGED' )?
+    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
-//      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-//      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
-//      ) // (COMMENT string)? (WITH properties)?
+      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
+      ) // TODO (COMMENT string)? (WITH properties)?
       | 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
 //    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
 //    | 'CREATE' ROLE id (WITH ADMIN grantor)?
 //    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
-//    | 'CREATE' TABLE ifNotExists? tableRef columnAliases? (COMMENT string)? (WITH properties)? AS (query | '(' query ')' ) (WITH (NO)? DATA)?
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
     ;
-
-    createTableOptions
-        :
-        ;
-
 
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type? columnStuff*  // (COMMENT string)? (WITH properties)?
+        : name type? columnStuff*  // TODO (COMMENT string)? (WITH properties)?
         ;
 
     columnStuff
         : ( 'CONSTRAINT' name )?
           ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
-//                    | 'PRIMARY' 'KEY' index_parameters
+// TODO                    | 'PRIMARY' 'KEY' index_parameters
+          // TODO 'NOT'?
           | 'NOT' 'NULL' onConflict?
+//  TODO         | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
           | 'UNIQUE' onConflict?
-//          | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' ( literal | '(' term ')' )
           | 'COLLATE' name
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
-//          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
+// TODO          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
           )
         ;
-        /*
-        ( 'NOT'? 'NULL'
-          | 'DEFAULT' default_expr
-          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' ) )?
-            ( 'ON 'DELETE' referential_action )? ( 'ON 'UPDATE' referential_action )? )
-            ( 'DEFERRABLE' | 'NOT' 'DEFERRABLE' )? ( 'INITIALLY' 'DEFERRED' | 'INITIALLY' 'IMMEDIATE' )?
-   */
 
     tableStuff
         : ( 'CONSTRAINT' name)?
-          ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) names
-//        OPEN_PAR indexed_column ( COMMA indexed_column )* CLOSE_PAR
-        onConflict?
+          ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) '(' terms ')' onConflict?
           | 'CHECK' '(' term ')'
           | 'FOREIGN' 'KEY' names foreignKey
           )
@@ -177,6 +162,11 @@ create
             : 'ON' 'CONFLICT' afirr
             ;
 
+        /* TODO
+          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' ) )?
+            ( 'ON 'DELETE' referential_action )? ( 'ON 'UPDATE' referential_action )? )
+            ( 'DEFERRABLE' | 'NOT' 'DEFERRABLE' )? ( 'INITIALLY' 'DEFERRED' | 'INITIALLY' 'IMMEDIATE' )?
+   */
         foreignKey
             : 'REFERENCES' name names?
               ( 'ON' ( 'DELETE' | 'UPDATE' )
@@ -223,13 +213,9 @@ insert
 
     // SQLite
     upsert
-        : 'ON' 'CONFLICT' ( conflictColumn ( ',' conflictColumn )* where? )?
+        : 'ON' 'CONFLICT' ( terms where? )?
           'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
         ;
-
-        conflictColumn
-            : ( name | term ) ( 'COLLATE' name )? ( 'ASC' | 'DESC' )?
-            ;
 
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
@@ -249,7 +235,6 @@ merge
 update
     : with? 'UPDATE' ( 'OR' afirr )?
       qname ( 'AS' name )? indexedBy?
-//      qname name? indexedBy?
       'SET' setter ( ',' setter )* ( 'FROM' sources )?
       where? returning? orderBy? limit? offset?  ;
 
@@ -310,7 +295,6 @@ query
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-//      ( 'FROM' from ( ',' from )* )? where? groupBy? having? windows? qualify?
       ( 'FROM' sources )? where? groupBy? having? windows? qualify?
     ;
 
@@ -337,12 +321,9 @@ select
         join
             // TODO 'LATERAL'
             : ','
-            | ( 'NATURAL'?
-                ( 'INNER'
-                |  ( 'LEFT' | 'RIGHT' | 'FULL' )? 'OUTER'?
-                )
-              | 'CROSS'
-              )?
+                // TODO argh figure out correct, robust join operators
+            | 'NATURAL'?
+                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )* | 'INNER' | 'CROSS' )?
               'JOIN'
             ;
 
@@ -467,14 +448,8 @@ term
     | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
-    /*
-        | MATCH OPEN_ROUND_BRACKET matchPredicateIdents
-        COMMA term=primaryExpression CLOSE_ROUND_BRACKET
-        (USING matchType=ident withProperties?)?
-        */
     // CrateDB ?
     | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-//    | <assoc=right> VARIABLE assign term
     | VARIABLE assign term
    ;
 
@@ -490,13 +465,11 @@ subterm
     | subterm index+                                                  # SubtermIndex
 //    | function ( '.' function )*                                      # SubtermFunction
 
-
 //    | qname                                                          # SubtermQNAME
     | column                                                          # SubtermColumn
 
-
     // TODO: BINARY
-    | subterm 'COLLATE' name                                          # SubtermBinary
+    | subterm 'COLLATE' name sortDir?                                          # SubtermCOLLATE
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
@@ -537,7 +510,7 @@ subterm
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
-        | 'IS' 'NOT'? 'TYPE'? 'OF' '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
+        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
         | 'NOT'? 'IN' '(' ( query | terms )? ')'                                   # PredicateIN
@@ -557,7 +530,6 @@ subterm
 
         logicals
             : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
-//            | 'OF' 'TYPE'? '(' 'ONLY'? type (',' type )* ')'
             ;
 
         jsonType
@@ -963,10 +935,10 @@ NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
-    // TODO no newlines etc within STRINGs
+    // TODO no newlines etc within STRINGs?
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-// TODO no newlines etc within IDs
+// TODO no newlines etc within IDs?
 ID
     : '"' ( ~'"' | '""' )* '"'
     | '`' ( ~'`' | '``' )* '`'
@@ -1011,8 +983,7 @@ fragment DIGIT
 
 // TODO separate alts for each style & dialect
 VARIABLE
-    : '?' // DIGIT*
-    | [:$] ( INTEGER | ID )
+    : [:$] ( INTEGER | ID )
     | '@' '@'? [A-Z_#] [A-Z_0-9]*
     ;
 
@@ -1022,18 +993,16 @@ COMMENT
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
-WHITESPACE
 // \u000B line (vertical) tab
 // \u000C form feed
-//    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
-    : [ \t\r\n\f] -> channel ( HIDDEN ) ;
+WHITESPACE : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
+// TODO BOZO this crude OPERATOR token accepts way more than spec'd
 // Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
-// BOZO this crude OPERATOR token accepts way more than spec'd
 OPERATOR
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
     : [*/<>=~!@#%^&|`]+
     ;
 
-//ERROR : . ;
+// END
