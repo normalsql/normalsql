@@ -26,25 +26,27 @@ script
 
 statement
     : explain?
-    ( set
-    | delete
-    | insert
-    | merge
-    | query
-    | update
-    | drop
-    | create
-//    | reset
-    | 'RESET' qname
+    ( alter
+//    | analyze
+//    | attach
     | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
+    | create
+    | delete
     | 'DETACH' 'DATABASE'? term
+    | drop
     | 'END' 'TRANSACTION'?
-    | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
+    | insert
+    | merge
     | 'PRAGMA' qname ( '=' ( literal | name ) | '(' ( literal | name ) ')' )?
+    | query
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
+    | 'RESET' qname
+    | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
     | 'SAVEPOINT' qname
+    | set
+    | update
     | 'VACUUM' qname? ( 'INTO' term )?
     )
     ;
@@ -65,6 +67,14 @@ explain
         | 'SUMMARY' boolean?
         | 'FORMAT' ( 'TEXT' | 'XML' | 'JSON' | 'YAML' )
         ;
+
+alter
+    : 'ALTER' 'TABLE' qname
+      ( 'RENAME' ( 'COLUMN'? qname )? 'TO' qname
+      | 'ADD' 'COLUMN'? qname columnDef
+      | 'DROP' 'COLUMN'? qname
+      )
+    ;
 
 // TODO so much more to add
 set
@@ -127,29 +137,27 @@ create
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type columnStuff*  // (COMMENT string)? (WITH properties)?
+        : name type? columnStuff*  // (COMMENT string)? (WITH properties)?
         ;
 
     columnStuff
         : ( 'CONSTRAINT' name )?
           ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
-          | ( 'NOT' 'NULL' | 'UNIQUE' ) onConflict?
-          | 'CHECK' '(' term ')'
+//                    | 'PRIMARY' 'KEY' index_parameters
+          | 'NOT' 'NULL' onConflict?
+          | 'UNIQUE' onConflict?
+//          | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
+          | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' ( literal | '(' term ')' )
           | 'COLLATE' name
-          | reference
+          | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
+//          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
           )
         ;
         /*
-        ( 'CONSTRAINT' constraint_name )?
         ( 'NOT'? 'NULL'
-        |  'CHECK '(' expression ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' default_expr
-          | 'GENERATED' 'ALWAYS' 'AS' '(' generation_expr ')' 'STORED'
-          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
-          | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
-          | 'PRIMARY' 'KEY' index_parameters
           | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' ) )?
             ( 'ON 'DELETE' referential_action )? ( 'ON 'UPDATE' referential_action )? )
             ( 'DEFERRABLE' | 'NOT' 'DEFERRABLE' )? ( 'INITIALLY' 'DEFERRED' | 'INITIALLY' 'IMMEDIATE' )?
@@ -161,7 +169,7 @@ create
 //        OPEN_PAR indexed_column ( COMMA indexed_column )* CLOSE_PAR
         onConflict?
           | 'CHECK' '(' term ')'
-          | 'FOREIGN' 'KEY' names reference
+          | 'FOREIGN' 'KEY' names foreignKey
           )
           ;
 
@@ -169,8 +177,8 @@ create
             : 'ON' 'CONFLICT' afirr
             ;
 
-        reference
-            : 'REFERENCE' name names?
+        foreignKey
+            : 'REFERENCES' name names?
               ( 'ON' ( 'DELETE' | 'UPDATE' )
                 ( 'SET' ( 'NULL' | 'DEFAULT' )
                 | 'CASCADE'
