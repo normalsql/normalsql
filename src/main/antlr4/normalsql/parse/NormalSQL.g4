@@ -438,7 +438,8 @@ aliasedTerms
 term
     : '(' term ')'
     | subterm
-    | <assoc=right> 'NOT' term
+    // TODO redundant w/ subterm unary. still ok?
+    | 'NOT' term
     | term 'AND' term
     | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
@@ -450,7 +451,8 @@ term
         */
     // CrateDB ?
     | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-    | <assoc=right> VARIABLE assign term
+//    | <assoc=right> VARIABLE assign term
+    | VARIABLE assign term
    ;
 
     assign
@@ -458,7 +460,7 @@ term
 
 subterm
     : literal                                                       # SubtermLiteral
-    | ( '+' | '-' | '~' | '!' ) subterm                               # SubtermUnary
+    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm                               # SubtermUnary
     | subterm '::' type                                               # SubtermCast
     // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
