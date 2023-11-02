@@ -42,8 +42,10 @@ statement
     | 'END' 'TRANSACTION'?
     | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
     | 'PRAGMA' qname ( '=' ( literal | name ) | '(' ( literal | name ) ')' )?
-    | 'REINDEX' qname
-    | 'RELEASE'? 'SAVEPOINT' qname
+    | 'REINDEX' qname?
+    | 'RELEASE' 'SAVEPOINT'? qname
+    | 'SAVEPOINT' qname
+    | 'VACUUM' qname? ( 'INTO' term )?
     )
     ;
 
@@ -164,7 +166,7 @@ create
           ;
 
         onConflict
-            : 'ON' 'CONFLICT' ( 'ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' )
+            : 'ON' 'CONFLICT' afirr
             ;
 
         reference
@@ -195,13 +197,13 @@ with
 delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
-      ( 'USING' from ( ',' from )* )?
+      ( 'USING' sources ( ',' sources )* )?
       where? returning? orderBy? limit? offset?
       ;
 
 insert
     : with?
-      ( 'INSERT' ( 'OR' ( 'ABORT' | 'FAIL'| 'IGNORE' | 'REPLACE' | 'ROLLBACK' ))? | 'REPLACE' )
+      ( 'INSERT' ( 'OR' afirr )? | 'REPLACE' )
       'INTO' qname ( 'AS' name )? names?
       overriding?
       ( source upsert* | 'DEFAULT' 'VALUES' )
@@ -237,12 +239,18 @@ merge
         ;
 
 update
-    : with? 'UPDATE' qname name? indexedBy?
-      'SET' setter ( ',' setter )* from? where? returning? ;
+    : with? 'UPDATE' ( 'OR' afirr )?
+      qname indexedBy?
+//      qname name? indexedBy?
+      'SET' setter ( ',' setter )* ( 'FROM' sources )?
+      where? orderBy? limit? offset? returning? ;
 
     setter
 //        : ( qname | qnames ) '=' term ;
         : ( name | names ) '=' term ;
+
+afirr
+    : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
 
 // SQLite
 indexedBy
@@ -294,7 +302,8 @@ query
 
 select
     : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-      ( 'FROM' from ( ',' from )* )? where? groupBy? having? windows? qualify?
+//      ( 'FROM' from ( ',' from )* )? where? groupBy? having? windows? qualify?
+      ( 'FROM' sources )? where? groupBy? having? windows? qualify?
     ;
 
     quantifier
@@ -314,15 +323,19 @@ select
     into
         : 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
-    from
-        : source ( join | pivot | unpivot )* ;
+    sources
+        :  source ( join source ( 'ON' term | 'USING' columns )* | pivot | unpivot )* ;
 
         join
-            : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
-            // SQLite
-            | ',' source 'ON' term | 'USING' columns
-            | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
             // TODO 'LATERAL'
+            : ','
+            | ( 'NATURAL'?
+                ( 'INNER'
+                |  ( 'LEFT' | 'RIGHT' | 'FULL' )? 'OUTER'?
+                )
+              | 'CROSS'
+              )?
+              'JOIN'
             ;
 
         pivot
@@ -388,7 +401,7 @@ source
       | 'JSON_TABLE' // TODO
       | xmlTable
       | function
-      | '(' from ')'
+      | '(' sources ')'
       | table
       | query
       )
@@ -799,7 +812,7 @@ unreserved
         | 'FROM'
 //        | 'FULL'
         | 'GROUP'
-        | 'GROUPS'
+//        | 'GROUPS'
         | 'HAVING'
 //        | 'HOUR'
 //        | 'IF'
@@ -814,7 +827,7 @@ unreserved
 //        | 'KEY'
         | 'LEADING'
 //        | 'LEFT'
-        | 'LIKE'
+//        | 'LIKE'
 //        | 'LIMIT'
         | 'MINUS'
 //        | 'MINUTE'
@@ -828,11 +841,11 @@ unreserved
         | 'OR'
         | 'ORDER'
 //        | 'OVER'
-        | 'PARTITION'
+//        | 'PARTITION'
         | 'PRIMARY'
         | 'QUALIFY'
-        | 'RANGE'
-        | 'REGEXP'
+//        | 'RANGE'
+//        | 'REGEXP'
 //        | 'RIGHT'
 //        | 'ROW'
 //        | 'ROWNUM'
@@ -846,7 +859,7 @@ unreserved
 //        | 'SYSTEM_USER'
 //        | 'TABLE'
         | 'TO'
-        | 'TOP'
+//        | 'TOP'
         | 'TRAILING'
 //        | 'TRUE'
         | 'UESCAPE'
@@ -921,10 +934,6 @@ name
     | DOLLARS
     | unreserved
     ;
-
-//brackets
-//    : '[' ID ']'
-//    ;
 
 string
     : STRING+
