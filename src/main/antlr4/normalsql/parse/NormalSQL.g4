@@ -319,6 +319,8 @@ select
 
         join
             : ( 'INNER' | ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? )? 'JOIN' source ( 'ON' term | 'USING' columns )*
+            // SQLite
+            | ',' source 'ON' term | 'USING' columns
             | ( 'CROSS' | 'NATURAL' 'FULL'? ) 'JOIN' source
             // TODO 'LATERAL'
             ;
