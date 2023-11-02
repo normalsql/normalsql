@@ -240,10 +240,10 @@ merge
 
 update
     : with? 'UPDATE' ( 'OR' afirr )?
-      qname indexedBy?
+      qname ( 'AS' name )? indexedBy?
 //      qname name? indexedBy?
       'SET' setter ( ',' setter )* ( 'FROM' sources )?
-      where? orderBy? limit? offset? returning? ;
+      where? returning? orderBy? limit? offset?  ;
 
     setter
 //        : ( qname | qnames ) '=' term ;
@@ -719,6 +719,7 @@ literal
     | BITS
     | BYTES
     | BLOB
+    | BLOB2
     | truth | boolean
     | 'DEFAULT'
     | 'DATE' string
@@ -877,7 +878,7 @@ unreserved
 //        | 'YEAR'
 
         // ...And exclude all the other tokens which cannot be a keyword or name
-        | INTEGER | FLOAT | BYTES | BLOB | PARAMETER | VARIABLE
+        | INTEGER | FLOAT | BYTES | BLOB | BLOB2 | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
@@ -971,16 +972,18 @@ BRACKETS
 DOLLARS
     : '$$' .*? '$$' ;
 
+// TODO fix BLOB & BLOB2 names
 BLOB
     : 'X' HEXHEX ( ' ' HEXHEX )* ;
 
     fragment HEXHEX
         : '\'' ( HEX HEX ' '? )* '\'' ;
 
-BITS : 'B' '\'' [01]+ '\'' ;
+BLOB2 : 'X' STRING ;
 
-BYTES
-    : '0x' HEX+ ;
+BITS  : 'B' '\'' [01]+ '\'' ;
+
+BYTES : '0x' HEX+ ;
 
 fragment HEX
     : [A-F0-9] ;
@@ -1015,7 +1018,7 @@ WHITESPACE
 // \u000B line (vertical) tab
 // \u000C form feed
 //    : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
-    : [ \t\r\n] -> channel ( HIDDEN ) ;
+    : [ \t\r\n\f] -> channel ( HIDDEN ) ;
 
 // Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
 // BOZO this crude OPERATOR token accepts way more than spec'd
