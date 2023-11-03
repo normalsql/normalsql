@@ -21,14 +21,19 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
+@lexer::members
+{
+    public boolean bracketsEnabled = false;
+}
+
 script
     : statement? ( ';' statement? )* EOF ;
 
 statement
     : explain?
     ( alter
-//    | analyze
-//    | attach
+    | ( 'ANALYZE' | 'ANALYSE' ) qname?
+    | 'ATTACH' 'DATABASE'? term 'AS' qname
     | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
     | createIndex
@@ -483,7 +488,6 @@ subterm
     | column                                                          # SubtermColumn
 
     // TODO: BINARY
-//    | subterm 'COLLATE' name sortDir?                                          # SubtermCOLLATE
     | subterm 'COLLATE' name                                         # SubtermCOLLATE
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
@@ -772,7 +776,10 @@ table
     : name ( '.' name )*;
 
 qname
-    : name ( '.' name )*;
+    : VARIABLE
+    | PARAMETER
+    | name ( '.' name )*
+    ;
 
 index
     : '[' ( term | term? ':' term? )? ']' ;
@@ -831,7 +838,7 @@ unreserved
 //        | 'MONTH'
 //        | 'NATURAL'
         | 'NOT'
-        | 'NULL'
+//        | 'NULL'
 //        | 'OF'
         | 'OFFSET'
         | 'ON'
@@ -927,10 +934,12 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-//    | BRACKETS
+    | BRACKETS
     | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
+    | VARIABLE
+    | PARAMETER
     | unreserved
     ;
 
@@ -953,7 +962,8 @@ NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
-    // TODO no newlines etc within STRINGs?
+    // TODO allow newlines within STRINGs?
+    // TODO allow newlines, but not whitespace, between STRINGs?
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 // TODO no newlines etc within IDs?
@@ -963,18 +973,11 @@ ID
     | [A-Z_#] [A-Z_#$@0-9]*
     ;
 
-// TODO add flag to disable
-//BRACKETS
-//    : '[' ~']'* ']';
+BRACKETS
+    : { bracketsEnabled }? '[' ~']'* ']' ;
 
 DOLLARS
     : '$$' .*? '$$' ;
-
-//BLOB
-//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
-//
-//    fragment HEXHEX
-//        : '\'' ( HEX HEX ' '? )* '\'' ;
 
 BITS
     : '0b' [01]+
@@ -985,6 +988,13 @@ BYTES
     : '0x' HEX+
     | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
     ;
+
+// TODO This variant ensures even number of digits. Does it matter?
+//BLOB
+//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
+//
+//    fragment HEXHEX
+//        : '\'' ( HEX HEX ' '? )* '\'' ;
 
  OCTALS
     : '0o' [0-7]+
@@ -1016,6 +1026,7 @@ VARIABLE
 COMMENT
     : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
 
+// TODO nested comments
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
