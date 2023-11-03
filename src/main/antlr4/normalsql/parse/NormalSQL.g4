@@ -31,7 +31,10 @@ statement
 //    | attach
     | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
     | 'COMMIT' 'TRANSACTION'?
-    | create
+    | createIndex
+    | createTable
+    | createTrigger
+    | createView
     | delete
     | 'DETACH' 'DATABASE'? term
     | drop
@@ -112,20 +115,39 @@ drop
         | 'VIEW'
         ;
 
-create
+createTable
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
-      | 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query
+      ;
+
+createTrigger
+     : 'CREATE' ( 'TEMP' | 'TEMPORARY' )? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+       ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
+       ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
+       'BEGIN' (( update | insert | delete | select ) ';' )+ 'END'?
+     ;
+
+createView
+      : 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query ;
+
+createIndex
+      : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
 //    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
 //    | 'CREATE' ROLE id (WITH ADMIN grantor)?
 //    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
-    ;
+
+
+    indexedColumn
+        : ( qname | term ) sortDir? ;
+
+    indexedColumns
+        : '(' indexedColumn ( ',' indexedColumn )* ')' ;
 
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
@@ -136,25 +158,22 @@ create
     columnStuff
         : ( 'CONSTRAINT' name )?
           ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
-// TODO                    | 'PRIMARY' 'KEY' index_parameters
-          // TODO 'NOT'?
-          | 'NOT' 'NULL' onConflict?
-//  TODO         | 'UNIQUE' ( 'NULLS' ( 'NOT' )? 'DISTINCT' )? index_parameters
+          | 'NOT'? 'NULL' onConflict?
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' ( literal | '(' term ')' )
           | 'COLLATE' name
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
-// TODO          | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) 'AS' 'IDENTITY' ( '(' sequence_options ')' )?
           )
         ;
 
+    // SQLite
     tableStuff
         : ( 'CONSTRAINT' name)?
-          ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) '(' terms ')' onConflict?
-          | 'CHECK' '(' term ')'
+          ( 'CHECK' '(' term ')'
           | 'FOREIGN' 'KEY' names foreignKey
+          | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict?
           )
           ;
 
@@ -162,11 +181,6 @@ create
             : 'ON' 'CONFLICT' afirr
             ;
 
-        /* TODO
-          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' ) )?
-            ( 'ON 'DELETE' referential_action )? ( 'ON 'UPDATE' referential_action )? )
-            ( 'DEFERRABLE' | 'NOT' 'DEFERRABLE' )? ( 'INITIALLY' 'DEFERRED' | 'INITIALLY' 'IMMEDIATE' )?
-   */
         foreignKey
             : 'REFERENCES' name names?
               ( 'ON' ( 'DELETE' | 'UPDATE' )
@@ -175,7 +189,8 @@ create
                 | 'RESTRICT'
                 | 'NO' 'ACTION'
                 )
-              | 'MATCH' name
+              | 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' )
+//              | 'MATCH' name
               )*
               ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))? )?
             ;
@@ -234,13 +249,12 @@ merge
 
 update
     : with? 'UPDATE' ( 'OR' afirr )?
-      qname ( 'AS' name )? indexedBy?
+      qname ( 'AS'? name )? indexedBy?
       'SET' setter ( ',' setter )* ( 'FROM' sources )?
       where? returning? orderBy? limit? offset?  ;
 
     setter
-//        : ( qname | qnames ) '=' term ;
-        : ( name | names ) '=' term ;
+        : ( qname | qnames ) '=' term ;
 
 afirr
     : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
@@ -323,7 +337,7 @@ select
             : ','
                 // TODO argh figure out correct, robust join operators
             | 'NATURAL'?
-                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )* | 'INNER' | 'CROSS' )?
+                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
               'JOIN'
             ;
 
@@ -469,7 +483,8 @@ subterm
     | column                                                          # SubtermColumn
 
     // TODO: BINARY
-    | subterm 'COLLATE' name sortDir?                                          # SubtermCOLLATE
+//    | subterm 'COLLATE' name sortDir?                                          # SubtermCOLLATE
+    | subterm 'COLLATE' name                                         # SubtermCOLLATE
     | subterm '&' subterm                                             # SubtermBinary
     | subterm '|' subterm                                             # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
@@ -698,8 +713,9 @@ literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
     | BITS
     | BYTES
-    | BLOB
-    | BLOB2
+    | OCTALS
+//    | BLOB
+//    | BLOB2
     | truth | boolean
     | 'DEFAULT'
     | 'DATE' string
@@ -858,7 +874,9 @@ unreserved
 //        | 'YEAR'
 
         // ...And exclude all the other tokens which cannot be a keyword or name
-        | INTEGER | FLOAT | BYTES | BLOB | BLOB2 | PARAMETER | VARIABLE
+        | INTEGER | FLOAT | BITS | BYTES | OCTALS
+//        | BLOB | BLOB2
+        | PARAMETER | VARIABLE
         | STRING | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
@@ -909,7 +927,7 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-    | BRACKETS
+//    | BRACKETS
     | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
@@ -946,28 +964,36 @@ ID
     ;
 
 // TODO add flag to disable
-BRACKETS
-    : '[' ~']'* ']';
+//BRACKETS
+//    : '[' ~']'* ']';
 
 DOLLARS
     : '$$' .*? '$$' ;
 
-// TODO fix BLOB & BLOB2 names
-BLOB
-    : 'X' HEXHEX ( ' ' HEXHEX )* ;
+//BLOB
+//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
+//
+//    fragment HEXHEX
+//        : '\'' ( HEX HEX ' '? )* '\'' ;
 
-    fragment HEXHEX
-        : '\'' ( HEX HEX ' '? )* '\'' ;
+BITS
+    : '0b' [01]+
+    | 'B' '\'' [01]+ '\''
+    ;
 
-BLOB2 : 'X' STRING ;
+BYTES
+    : '0x' HEX+
+    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
+    ;
 
-BITS  : 'B' '\'' [01]+ '\'' ;
-
-BYTES : '0x' HEX+ ;
+ OCTALS
+    : '0o' [0-7]+
+    ;
 
 fragment HEX
     : [A-F0-9] ;
 
+// TODO support underscore (visual grouping) in numbers
 INTEGER
     : DIGIT+ 'L'? ;
 
@@ -995,7 +1021,7 @@ BLOCK_COMMENT
 
 // \u000B line (vertical) tab
 // \u000C form feed
-WHITESPACE : [ \t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
 // TODO BOZO this crude OPERATOR token accepts way more than spec'd
 // Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
