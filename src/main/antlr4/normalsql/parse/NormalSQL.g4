@@ -134,7 +134,9 @@ createTrigger
      : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
-       'BEGIN' (( update | insert | delete | select ) ';' )+ 'END'?
+       'BEGIN' (( update | insert | delete | query ) ';' )+
+       // TODO remove '?' after testing!!
+       'END'?
      ;
 
 temporary : 'TEMP' | 'TEMPORARY' ;
