@@ -979,7 +979,46 @@ STRING
 ID
     : '"' ( ~'"' | '""' )* '"'
     | '`' ( ~'`' | '``' )* '`'
-    | [A-Z_#] [A-Z_#$@0-9]*
+    | HEAD BODY*
+    ;
+
+fragment HEAD options { caseInsensitive=false; }
+    : [a-zA-Z_]
+    // Valid characters from 0x80 to 0xFF
+    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
+
+        /*
+   | // these are the letters above 0xFF which only need a single UTF-16 code unit
+   [\u0100-\uD7FF\uE000-\uFFFF]
+   {charIsLetter()}?
+   | // letters which require multiple UTF-16 code units
+   [\uD800-\uDBFF] [\uDC00-\uDFFF]
+   {
+    CheckIfUtf32Letter()
+   }?
+*/
+
+//   | '\u00C0' .. '\u00D6'
+//   | '\u00D8' .. '\u00F6'
+
+//   | '\u00F8' .. '\u02FF'
+//   | '\u0370' .. '\u037D'
+//   | '\u037F' .. '\u1FFF'
+//   | '\u200C' .. '\u200D'
+//   | '\u2070' .. '\u218F'
+//   | '\u2C00' .. '\u2FEF'
+//   | '\u3001' .. '\uD7FF'
+//   | '\uF900' .. '\uFDCF'
+//   | '\uFDF0' .. '\uFFFD'
+    ;
+
+
+fragment BODY options { caseInsensitive=false; }
+    : [0-9]
+    | HEAD
+    | '\u00B7'
+    | '\u0300' .. '\u036F'
+    | '\u203F' .. '\u2040'
     ;
 
 BRACKETS
@@ -1029,13 +1068,14 @@ fragment DIGIT
 // TODO separate alts for each style & dialect
 VARIABLE
     : [:$] ( INTEGER | ID )
-    | '@' '@'? [A-Z_#] [A-Z_0-9]*
+    | '@' '@'? HEAD BODY*
     ;
 
 COMMENT
-    : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
+//    : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
+    // TODO is this better? cuz doesn't consume '\n' ?
+    : '--' ~ [\r\n]* -> channel( HIDDEN ) ;
 
-// TODO nested comments
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
