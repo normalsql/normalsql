@@ -126,6 +126,8 @@ createTable
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
+      // SQLite
+      'STRICT'?
       ;
 
 createTrigger
@@ -162,7 +164,7 @@ createIndex
 
     columnStuff
         : ( 'CONSTRAINT' name )?
-          ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
+          ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
           | 'NOT'? 'NULL' onConflict?
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
@@ -171,15 +173,19 @@ createIndex
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
           )
+          // SQLite undocumented
+          ( 'CONSTRAINT' name )*
         ;
 
     // SQLite
     tableStuff
         : ( 'CONSTRAINT' name)?
-          ( 'CHECK' '(' term ')'
-          | 'FOREIGN' 'KEY' names foreignKey
+          ( 'CHECK' '(' term ')' onConflict?
+          | ( 'FOREIGN' 'KEY' names foreignKey )
           | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict?
-          )
+          )+
+          // SQLite undocumented
+          ( 'CONSTRAINT' name )*
           ;
 
         onConflict
@@ -536,7 +542,7 @@ subterm
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' string )?      # PredicateLIKE
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' ( string | term ) )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
@@ -585,19 +591,20 @@ scalar
     | 'BIT' 'VARYING'? length?
     | chars length?
 
-    | 'BLOB'
+    | 'BLOB' precision?
     | 'CLOB'
     | 'NCLOB'
 
     | 'DATE'
-    | ( 'TIMESTAMP' | 'TIME' ) length? ( ( 'WITH' | 'WITHOUT' ) 'LOCAL'? 'TIME' 'ZONE' )?
+//    | ( 'TIMESTAMP' | 'TIME' ) length? ( ( 'WITH' | 'WITHOUT' ) 'LOCAL'? 'TIME' 'ZONE' )?
+    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
 
     | 'UUID'
     | 'JSON'
     | 'JSONB'
     | 'XML'
 
-    | name precision?
+    | name+ precision?
     ;
 
  chars
@@ -655,6 +662,7 @@ function
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+    | 'CURRENT_TIME'
     ;
 
 // TODO: Maybe archetype rules for agg, win, etc functions?
@@ -800,7 +808,7 @@ unreserved
 //        | 'CASE'
         | 'CAST'
         | 'CHECK'
-        | 'CONSTRAINT'
+//        | 'CONSTRAINT'
 //        | 'CROSS'
 //        | 'DAY'
 //        | 'DELETE'
@@ -815,6 +823,7 @@ unreserved
         | 'FOREIGN'
         | 'FROM'
 //        | 'FULL'
+        | 'GENERATED' // SQLite
         | 'GROUP'
 //        | 'GROUPS'
         | 'HAVING'
