@@ -168,7 +168,7 @@ createIndex
           | 'NOT'? 'NULL' onConflict?
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
-          | 'DEFAULT' ( literal | '(' term ')' )
+          | 'DEFAULT' ( literal | term )
           | 'COLLATE' name
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
@@ -183,6 +183,8 @@ createIndex
           ( 'CHECK' '(' term ')' onConflict?
           | ( 'FOREIGN' 'KEY' names foreignKey )
           | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict?
+          // SQLite per autoinc.test autoinc-7.1
+          | 'PRIMARY' 'KEY' '(' name 'AUTOINCREMENT' ')'
           )+
           // SQLite undocumented
           ( 'CONSTRAINT' name )*
@@ -488,7 +490,7 @@ subterm
     // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
     | subterm index+                                                  # SubtermIndex
-//    | function ( '.' function )*                                      # SubtermFunction
+    | function ( '.' function )*                                      # SubtermFunction
 
 //    | qname                                                          # SubtermQNAME
     | column                                                          # SubtermColumn
@@ -662,7 +664,9 @@ function
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+    | 'CURRENT_DATE'
     | 'CURRENT_TIME'
+    | 'CURRENT_TIMESTAMP'
     ;
 
 // TODO: Maybe archetype rules for agg, win, etc functions?
