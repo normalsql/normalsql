@@ -121,7 +121,7 @@ drop
         ;
 
 createTable
-    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? ( 'TEMP' | 'TEMPORARY' )? 'UNLOGGED'?
+    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
@@ -131,14 +131,19 @@ createTable
       ;
 
 createTrigger
-     : 'CREATE' ( 'TEMP' | 'TEMPORARY' )? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+     : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
        'BEGIN' (( update | insert | delete | select ) ';' )+ 'END'?
      ;
 
+temporary : 'TEMP' | 'TEMPORARY' ;
+
 createView
-      : 'CREATE' ( 'OR' 'REPLACE' )? 'VIEW' name 'AS' query ;
+      : 'CREATE' temporary?
+        // Postgres?
+        ( 'OR' 'REPLACE' )?
+        'VIEW' ifNotExists? qname columns? 'AS' query ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -340,7 +345,7 @@ select
         ;
 
     into
-        : 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
+        : 'INTO' ( temporary | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
     sources
         :  source ( join source ( 'ON' term | 'USING' columns )* | pivot | unpivot )* ;
