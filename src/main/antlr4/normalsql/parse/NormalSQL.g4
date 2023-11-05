@@ -40,6 +40,7 @@ statement
     | createTable
     | createTrigger
     | createView
+    | createVirtualTable
     | delete
     | 'DETACH' 'DATABASE'? term
     | drop
@@ -129,6 +130,18 @@ createTable
       // SQLite
       'STRICT'?
       ;
+
+// https://www.sqlite.org/vtab.html
+createVirtualTable
+    : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
+      'USING' qname ( '(' ( moduleArgument ( ',' moduleArgument?  )*  )? ')' )?
+    ;
+
+    moduleArgument
+        : ( name | literal | type )+
+        | ( name | literal )+ ( '=' ( name | literal )* )?
+        | compare | assign
+        ;
 
 createTrigger
      : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
@@ -832,7 +845,7 @@ unreserved
 //        | 'FALSE'
         | 'FOR'
         | 'FOREIGN'
-        | 'FROM'
+//        | 'FROM'
 //        | 'FULL'
         | 'GENERATED' // SQLite
         | 'GROUP'
@@ -863,10 +876,10 @@ unreserved
         | 'OFFSET'
         | 'ON'
         | 'OR'
-        | 'ORDER'
+//        | 'ORDER'
 //        | 'OVER'
 //        | 'PARTITION'
-        | 'PRIMARY'
+//        | 'PRIMARY'
         | 'QUALIFY'
 //        | 'RANGE'
 //        | 'REGEXP'
@@ -882,7 +895,7 @@ unreserved
         | 'SYMMETRIC'
 //        | 'SYSTEM_USER'
 //        | 'TABLE'
-        | 'TO'
+//        | 'TO'
 //        | 'TOP'
         | 'TRAILING'
 //        | 'TRUE'
@@ -993,6 +1006,8 @@ ID
     | HEAD BODY*
     ;
 
+
+
 fragment HEAD options { caseInsensitive=false; }
     : [a-zA-Z_]
     // Valid characters from 0x80 to 0xFF
@@ -1023,9 +1038,9 @@ fragment HEAD options { caseInsensitive=false; }
 //   | '\uFDF0' .. '\uFFFD'
     ;
 
-
+// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
 fragment BODY options { caseInsensitive=false; }
-    : [0-9]
+    : [0-9#$@]
     | HEAD
     | '\u00B7'
     | '\u0300' .. '\u036F'
