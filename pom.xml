@@ -40,7 +40,7 @@
         <!-- TODO: pick an older JDK -->
 <!--        <maven.compiler.source>20</maven.compiler.source>-->
 <!--        <maven.compiler.target>20</maven.compiler.target>-->
-        <antlr4.version>4.12.0</antlr4.version>
+        <antlr4.version>4.13.1</antlr4.version>
     </properties>
 
     <dependencies>

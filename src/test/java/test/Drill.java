@@ -11,6 +11,7 @@ import static normalsql.parse.NormalSQLParser.*;
 import normalsql.parse.NormalSQLVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.Tree;
 
@@ -23,34 +24,27 @@ public class Drill
 	{
 		String sql =
 		"""
-with rn as (
-  select rownum rn
-  from dual
-  connect by level <= (select max(cases) from t1))
-select pname
-from t1, rn
-where rn <= cases
-order by pname
-		"""
-//		"""
-//			-- whoops
-//			-- whoops
-//			gorp /* dang 'not this time' /* nested */ */ dorf -- bing
-//			-- whoops
-//			argh ('as -- oh boy /* hot dog */')
-//			/*
-//			big space gap
-//			*/
-//			SELECT 1, a.b.c FROM VALUES (), () gorp gorp;
-//		""";
-//		SELECT a.b.c;
-//                SELECT DATEADD(HOUR, 1, TIME '23:00:00');
+SELECT (t1.d- -c+e-f++case when a between case f when case when ~~~11-coalesce((select b from t1 where coalesce((select max(e) from t1 where not t1.d>= -11),a)+a between 11 and t1.a), -d)*17-a-13 & 13>=17 then a else 11 end then t1.a else t1.d end and t1.f then 19 else t1.a end) FROM t1 WHERE t1.f<> -13
+
+"""
 		;
 
-		parse( null, sql );
+		var drill = new Drill();
+		if( drill.parse( null, sql, true ))
+		{
+			drill.toStringTree(  );
+		}
 	}
 
-	public static boolean parse( Path p, String sql )
+	 NormalSQLParser parser = null;
+	 ScriptContext script = null;
+
+	public  boolean parse( Path p, String sql )
+	{
+		return parse( p, sql, false );
+	}
+
+	public  boolean parse( Path p, String sql, boolean bracketsEnabled )
 	{
 		class SyntaxError
 		{
@@ -67,8 +61,9 @@ order by pname
 
 		var chars = CharStreams.fromString( sql );
 		var lexer = new NormalSQLLexer( chars );
+		lexer.bracketsEnabled = bracketsEnabled;
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new NormalSQLParser( tokens );
+		parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
@@ -91,13 +86,13 @@ order by pname
 
 		} );
 
-		var script = parser.script();
+		script = parser.script();
 		if( errors.isEmpty() ) return true;
 
-		var visitor = new KnockoutVisitor();
-		visitor.parser = parser;
-		visitor.tokens = tokens;
-		visitor.visit( script );
+//		var visitor = new KnockoutVisitor();
+//		visitor.parser = parser;
+//		visitor.tokens = tokens;
+//		visitor.visit( script );
 
 		System.out.println();
 		if( p != null ) System.out.println( p );
@@ -113,17 +108,20 @@ order by pname
 //			System.out.printf( "%d: %s\n", i + 1, lines[i] );
 			System.out.println( lines[i] );
 		}
-//		System.out.println( sql );
 
-//		System.out.println();
-		System.out.println( toStringTree( script, parser ) );
-//		System.out.println(script.toInfoString( script, parser ) );
+		System.out.println( toStringTree( script ) );
 		return false;
 	}
 
-	public static String toStringTree( Tree parent, Parser recog )
+	public  String toStringTree( )
 	{
-		String[] ruleNames = recog.getRuleNames();
+		return toStringTree( script );
+	}
+
+
+	public  String toStringTree( Tree parent )
+	{
+		String[] ruleNames = parser.getRuleNames();
 		StringBuilder sb = new StringBuilder();
 		toStringTree( parent, ruleNames, sb );
 		return sb.toString();

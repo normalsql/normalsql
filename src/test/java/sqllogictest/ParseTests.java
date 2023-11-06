@@ -74,7 +74,8 @@ public class ParseTests
 //							int end = Math.min( 39, sql.length() );
 //							System.out.println(sql.substring(0, end ));
 //							System.out.println();
-							if( !Drill.parse( f, sql))
+                var drill = new Drill();
+							if( !drill.parse( f, sql))
 							{
 								errors++;
 								if( errors > 20 )

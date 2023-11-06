@@ -1,57 +1,58 @@
-package jsqlparser;
+package sqlite;
 
 import test.Drill;
 
 import java.io.IOException;
 import java.nio.file.*;
-import static java.nio.file.FileVisitResult.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-public class JSQLParserTests {
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
+
+public class SQLiteTests {
 
     public static void main( String[] args )
         throws IOException
     {
-        String dir = "/Users/jasonosgood/Projects/SQL/Parsers/JSqlParser/src/test/resources/net/sf/jsqlparser/statement/select/oracle-tests";
+        String dir = "/Users/jasonosgood/Projects/sqlite.org/sqlite/chat/";
         List<Path> files = getAllTheFiles( dir );
+        int count = 0;
+        int errors = 0;
+        int maxErrors = 100;
+        outer:
         for( Path f : files )
         {
-            var joiner = new StringJoiner( "\n" );
-            var original = Files.readAllLines( f );
-            for( String line : original )
+            var lines = Files.readAllLines( f );
+            for( var sql : lines )
             {
-                if( line.startsWith( "--" )) continue;
-                joiner.add( line );
-            }
-            String sql = joiner.toString();
-
-            if( sql.contains( "(+)" ))
-            {
-                System.out.println( "!! skipping legacy join syntax: " );
-                System.out.println( f );
-                continue;
-            }
-
-            if( sql.contains( "connect by" ))
-            {
-                System.out.println( "!! skipping legacy recursion syntax: " );
-                System.out.println( f );
-                continue;
-            }
-
-            if( sql.contains( "model" ))
-            {
-                System.out.println( "!! skipping whatever 'model' is: " );
-                System.out.println( f );
-                continue;
-            }
-
+                if( sql.startsWith( "--" )) continue;
+//                if( !sql.startsWith( "ALTER" )) continue;
+//                if( !sql.startsWith( "ANALYZE" )) continue;
+//                if( !sql.startsWith( "ATTACH" )) continue;
+//                if( !sql.startsWith( "CREATE" )) continue;
+//                if( !sql.startsWith( "EXPLAIN" )) continue;
                 var drill = new Drill();
-            drill.parse( f, sql );
+                if( drill.parse( f, sql, true ))
+                {
+                    count++;
+                }
+                else
+                {
+                    errors++;
+                    if( errors >= maxErrors )
+                    {
+                        break outer;
+                    }
+                }
+            }
         }
+        System.out.println( "parsed: "+ count );
+        System.out.println( "errors: "+ errors );
+        System.out.println( "done" );
+        System.exit( -1 );
     }
 
     public static List<Path> getAllTheFiles( String dir )
