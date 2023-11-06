@@ -80,7 +80,7 @@ explain
 alter
     : 'ALTER' 'TABLE' qname
       ( 'RENAME' ( 'COLUMN'? qname )? 'TO' qname
-      | 'ADD' 'COLUMN'? qname columnDef
+      | 'ADD' 'COLUMN'? columnDef
       | 'DROP' 'COLUMN'? qname
       )
     ;
