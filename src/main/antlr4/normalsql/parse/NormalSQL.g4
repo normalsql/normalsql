@@ -24,6 +24,7 @@ options { caseInsensitive=true; }
 @lexer::members
 {
     public boolean bracketsEnabled = false;
+    public boolean operatorEnabled = false;
 }
 
 script
@@ -1042,9 +1043,9 @@ fragment HEAD options { caseInsensitive=false; }
 fragment BODY options { caseInsensitive=false; }
     : [0-9#$@]
     | HEAD
-    | '\u00B7'
-    | '\u0300' .. '\u036F'
-    | '\u203F' .. '\u2040'
+//    | '\u00B7'
+//    | '\u0300' .. '\u036F'
+//    | '\u203F' .. '\u2040'
     ;
 
 BRACKETS
@@ -1114,7 +1115,7 @@ WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 OPERATOR
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
-    : [*/<>=~!@#%^&|`]+
+    : { operatorEnabled }? [*/<>=!@#%^&|`]+
     ;
 
 // END
