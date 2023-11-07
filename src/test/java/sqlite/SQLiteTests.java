@@ -34,6 +34,7 @@ public class SQLiteTests {
 //                if( !sql.startsWith( "ATTACH" )) continue;
 //                if( !sql.startsWith( "CREATE" )) continue;
 //                if( !sql.startsWith( "EXPLAIN" )) continue;
+                if( !sql.startsWith( "SELECT" )) continue;
                 var drill = new Drill();
                 if( drill.parse( f, sql, true ))
                 {
@@ -96,6 +97,4 @@ public class SQLiteTests {
 
         return files;
     }
-
-
 }

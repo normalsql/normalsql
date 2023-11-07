@@ -24,13 +24,23 @@ public class Drill
 	{
 		String sql =
 		"""
-SELECT (t1.d- -c+e-f++case when a between case f when case when ~~~11-coalesce((select b from t1 where coalesce((select max(e) from t1 where not t1.d>= -11),a)+a between 11 and t1.a), -d)*17-a-13 & 13>=17 then a else 11 end then t1.a else t1.d end and t1.f then 19 else t1.a end) FROM t1 WHERE t1.f<> -13
-
+SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1 AS curr LEFT JOIN t1 AS other GROUP BY curr.id1);
 """
 		;
 
+//		int count = 0;
+//		while( count < 1_000_000 )
+//		{
+//			var drill = new Drill();
+//			drill.parse( null, sql, false );
+//			count++;
+//			if( count % 200 == 0 )
+//			{
+//				System.out.println( count );
+//			}
+//		}
 		var drill = new Drill();
-		if( drill.parse( null, sql, true ))
+		if( drill.parse( null, sql, false ))
 		{
 			drill.toStringTree(  );
 		}

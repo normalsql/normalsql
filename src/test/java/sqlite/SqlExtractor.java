@@ -16,16 +16,17 @@ public class SqlExtractor
     {
         // Define the SQL statement prefixes
         String[] tests = {
-                "memdbsql",
-                "stepsql",
-                "execsql2",
-//                "explain_no_trace",
-//                "explain",
-//                "catchsql",
-                "execsql",
-                "do_execsql_test",
-//                "do_catchsql_test",
-                "do_timed_execsql_test",
+                "eval",
+//                "memdbsql",
+//                "stepsql",
+//                "execsql2",
+////                "explain_no_trace",
+////                "explain",
+////                "catchsql",
+//                "execsql",
+//                "do_execsql_test",
+////                "do_catchsql_test",
+//                "do_timed_execsql_test",
         };
 
         String root = "/Users/jasonosgood/Projects/sqlite.org/sqlite/test";
@@ -46,7 +47,7 @@ public class SqlExtractor
         var JOINER = Pattern.compile( "[\r]?[\n]" );
         var BLOCKS = Pattern.compile( "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/" );
 
-        var writer = new PrintWriter( root + "/dump.sql" );
+        var writer = new PrintWriter( root + "/dump2.sql" );
         var hashset = new HashSet<String>();
 
         for( var file : files )
@@ -141,7 +142,7 @@ public class SqlExtractor
                 }
             }
         }
-        var dedupe = new PrintWriter( root + "/dedupe.sql" );
+        var dedupe = new PrintWriter( root + "/dedupe2.sql" );
         var myTreeSet = new TreeSet<>( hashset );
         for( var line : myTreeSet )
         {

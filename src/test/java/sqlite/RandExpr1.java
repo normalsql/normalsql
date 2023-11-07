@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-public class IntegrationTest {
+public class RandExpr1 {
 
     // A counter that keeps track of the total amount of statements
     // parsed in the test below.
