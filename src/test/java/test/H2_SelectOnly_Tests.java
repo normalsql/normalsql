@@ -126,10 +126,15 @@ H2_SelectOnly_Tests
 		System.out.println();
 		System.out.println();
 
+		long start = System.currentTimeMillis();
+
 		for( Work w : workList )
 		{
 			parse( w.source, w.line, w.sql );
 		}
+		long stop = System.currentTimeMillis();
+
+		System.out.println( "elapsed: " + ( stop - start ));
 
 		for( String fail : fails )
 		{

@@ -49,7 +49,7 @@ statement
     | insert
     | merge
     | 'PRAGMA' qname ( '=' ( literal | name ) | '(' ( literal | name ) ')' )?
-    | query
+    | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
     | 'RESET' qname
@@ -126,7 +126,7 @@ createTable
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
+      | 'AS' select ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
       // SQLite
       'STRICT'?
@@ -148,7 +148,7 @@ createTrigger
      : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
-       'BEGIN' (( update | insert | delete | query ) ';' )+
+       'BEGIN' (( update | insert | delete | select ) ';' )+
        // TODO remove '?' after testing!!
        'END'?
      ;
@@ -159,7 +159,7 @@ createView
       : 'CREATE' temporary?
         // Postgres?
         ( 'OR' 'REPLACE' )?
-        'VIEW' ifNotExists? qname columns? 'AS' query ;
+        'VIEW' ifNotExists? qname columns? 'AS' select ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -236,7 +236,7 @@ with
     cte
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
-        '(' query ')'
+        '(' select ')'
         ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
         ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
         ;
@@ -304,23 +304,87 @@ returning
         : '*' | term ( 'AS'? alias )?
         ;
 
-query
-    : with? combine
-    // Because various dialects order these clauses differently
-    // TODO: Allow just one of each clause (somehow)
-    ( orderBy | offset | fetch | limit | forUpdate )*
+select
+    :  with? selectCore
+      // Because various dialects order these clauses differently
+      // TODO: Allow just one of each clause (somehow)
+      ( orderBy | offset | fetch | limit | forUpdate )*
+    | select ( unions select )+
+    | '(' select ')'
     ;
 
-    combine
-        : combine ( 'INTERSECT' | 'MINUS' ) combine
-        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
-        | combine 'MULTISET' combine
-        | select
+    selectCore
+        : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
+          ( 'FROM' sources )?
+          where? groupBy? having?
+          windows? qualify?
+        | 'VALUES' terms
         // MySQL table statement
         | 'TABLE' table
-        | values
-        | '(' query ')'
+
+//        | tableFunc
+//        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+//        // DB2 intermediate result table
+//        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+//        // PL/SQL table collection expression
+//        | 'TABLE' '(' term ')'
+//        | 'JSON_TABLE' // TODO
+//        | xmlTable
+//        | function
+//        | unnest
+//        | '(' source ')'
+
         ;
+
+    unions
+        : 'INTERSECT'
+        | 'MINUS'
+        | 'UNION' 'ALL'?
+        | 'EXCEPT'
+        | 'MULTISET'
+        ;
+
+    sources
+        : sources ( join sources ( 'ON' term | 'USING' columns )* | pivot | unpivot )+
+        | source
+        | '(' sources ')'
+        ;
+
+    source
+      : table ( 'AS'? alias names? )?
+        // H2
+        ( ( 'USE' 'INDEX' names )
+        // SQLite
+          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )
+        )?
+      | ( select
+        | '(' source ')'
+
+
+        | tableFunc
+        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+        // DB2 intermediate result table
+        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+        // PL/SQL table collection expression
+        | 'TABLE' '(' term ')'
+        | 'JSON_TABLE' // TODO
+        | xmlTable
+        | function
+        | unnest
+        )
+        ( 'AS'? alias names? )?
+        ;
+
+    // TODO: Should this part of rule 'function'?
+    unnest
+        : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
+
+    // H2 table function http://h2database.com/html/functions.html#table
+    tableFunc
+        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')' ;
+
+        tableFuncParam
+            : name ( type | qname | 'NULL' ) '=' subterm ;
 
     offset
         : 'OFFSET' term rowRows? ;
@@ -341,15 +405,9 @@ query
           ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
         ;
 
-select
-    : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-      ( 'FROM' sources )? where? groupBy? having? windows? qualify?
-    ;
-
     quantifier
         : 'DISTINCT' ( 'ON' '(' terms ')' )?
         | 'ALL'
-        | 'UNIQUE'
         ;
 
     top
@@ -362,9 +420,6 @@ select
 
     into
         : 'INTO' ( temporary | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
-
-    sources
-        :  source ( join source ( 'ON' term | 'USING' columns )* | pivot | unpivot )* ;
 
         join
             // TODO 'LATERAL'
@@ -388,7 +443,7 @@ select
               '('
                 aliasedFunction ( ',' aliasedFunction )*
                 'FOR' ( column | columns )
-                'IN' '(' ( query | 'ANY' ) ')'
+                'IN' '(' ( select | 'ANY' ) ')'
               ')'
             ;
 
@@ -425,40 +480,6 @@ select
 
     qualify
         : 'QUALIFY' term ;
-
-source
-    : ( unnest
-      | values
-      | tableFunc
-      // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
-      // DB2 intermediate result table
-      | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-      // PL/SQL table collection expression
-      | 'TABLE' '(' term ')'
-      | 'JSON_TABLE' // TODO
-      | xmlTable
-      | function
-      | '(' sources ')'
-      | table
-      | query
-      )
-      ( 'AS'? alias names? )?
-      // H2
-      ( 'USE' 'INDEX' names )?
-      // SQLite
-      ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )?
-    ;
-
-    // TODO: Should this part of rule 'function'?
-    unnest
-        : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
-
-    // H2 table function http://h2database.com/html/functions.html#table
-    tableFunc
-        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')' ;
-
-        tableFuncParam
-            : name ( type | qname | 'NULL' ) '=' subterm ;
 
     xmlTable
         : 'XMLTABLE'
@@ -528,12 +549,12 @@ subterm
     // PL/SQL, ODBC
     | subterm interval                                                # SubtermInterval
     | 'INTERVAL' subterm interval?                                    # SubtermInterval
-    | query                                                           # SubtermQuery
+    | select                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
-    | 'EXISTS' '(' query ')'                                          # SubtermEXISTS
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'       # SubtermUNIQUE
+    | 'EXISTS' '(' select ')'                                          # SubtermEXISTS
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     // PL/SQL
     | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
@@ -561,7 +582,7 @@ subterm
         | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
-        | 'NOT'? 'IN' '(' ( query | terms )? ')'                                   # PredicateIN
+        | 'NOT'? 'IN' '(' ( select | terms )? ')'                                   # PredicateIN
         // PL/SQL dialect
         | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
@@ -570,7 +591,7 @@ subterm
         ;
 
         compare
-            : '=' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
+            : '=' | '==' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
             // Postgres match regex
             | '~' | '~*' | '!~' | '!~*'
             | OPERATOR
@@ -670,7 +691,7 @@ function
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
     // Postgres
-    | 'ARRAY' '(' query ')'
+    | 'ARRAY' '(' select ')'
     | '{fn' function '}' //  ODBC style
     // Generic syntax for all analytic functions?
     | qname '(' term respectIgnore? ')' respectIgnore? over?
@@ -751,8 +772,6 @@ literal
     | BITS
     | BYTES
     | OCTALS
-//    | BLOB
-//    | BLOB2
     | truth | boolean
     | 'DEFAULT'
     | 'DATE' string
@@ -782,7 +801,7 @@ timeUnit
     | 'MILLISECOND' | 'MICROSECOND' | 'NANOSECOND' ;
 
 jsonArray
-    : 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')' ;
+    : 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')' ;
 
 jsonObject
     : 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')' ;
@@ -1006,8 +1025,6 @@ ID
     | '`' ( ~'`' | '``' )* '`'
     | HEAD BODY*
     ;
-
-
 
 fragment HEAD options { caseInsensitive=false; }
     : [a-zA-Z_]
