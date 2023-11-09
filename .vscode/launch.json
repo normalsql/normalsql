@@ -1,6 +1,75 @@
 {
-    "version": "2.0.0",
+    "version": "0.2.0",
     "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "JSQLParserTests",
+            "request": "launch",
+            "mainClass": "jsqlparser.JSQLParserTests",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "Tool",
+            "request": "launch",
+            "mainClass": "normalsql.Tool",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "IntegrationTest",
+            "request": "launch",
+            "mainClass": "sqlite.IntegrationTest",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "RandExpr1",
+            "request": "launch",
+            "mainClass": "sqlite.RandExpr1",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "SQLiteTests",
+            "request": "launch",
+            "mainClass": "sqlite.SQLiteTests",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "SqlExtractor",
+            "request": "launch",
+            "mainClass": "sqlite.SqlExtractor",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "ParseTests",
+            "request": "launch",
+            "mainClass": "sqllogictest.ParseTests",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "Drill",
+            "request": "launch",
+            "mainClass": "test.Drill",
+            "projectName": "normalsql"
+        },
+        {
+            "type": "java",
+            "name": "H2_SelectOnly_Tests",
+            "request": "launch",
+            "mainClass": "test.H2_SelectOnly_Tests",
+            "projectName": "normalsql"
+        },
         {
             "name": "Debug ANTLR4 grammar",
             "type": "antlr-debug",
