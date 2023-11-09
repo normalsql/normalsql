@@ -21,11 +21,11 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
-@lexer::members
-{
-    public boolean bracketsEnabled = false;
-    public boolean operatorEnabled = false;
-}
+ @lexer::members
+ {
+     public boolean bracketsEnabled = false;
+     public boolean operatorEnabled = false;
+ }
 
 script
     : statement? ( ';' statement? )* EOF ;
@@ -1066,7 +1066,9 @@ fragment BODY options { caseInsensitive=false; }
     ;
 
 BRACKETS
-    : { bracketsEnabled }? '[' ~']'* ']' ;
+    : 
+     { bracketsEnabled }?
+    '[' ~']'* ']' ;
 
 DOLLARS
     : '$$' .*? '$$' ;
@@ -1132,7 +1134,9 @@ WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 OPERATOR
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
 //    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
-    : { operatorEnabled }? [*/<>=!@#%^&|`]+
+    : 
+     { operatorEnabled }?
+    [*/<>=!@#%^&|`]+
     ;
 
 // END

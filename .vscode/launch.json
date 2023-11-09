@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "name": "Debug ANTLR4 grammar",
+            "type": "antlr-debug",
+            "request": "launch",
+            "input": "doc/classicmodels/InsertOops.sql",
+            "grammar": "src/main/antlr4/normalsql/parse/NormalSQL.g4",
+            "startRule": "script",
+            "printParseTree": true,
+            "visualParseTree": true
+        }
+    ]
+}

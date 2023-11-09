@@ -28,22 +28,22 @@ SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1
 """
 		;
 
-//		int count = 0;
-//		while( count < 1_000_000 )
-//		{
-//			var drill = new Drill();
-//			drill.parse( null, sql, false );
-//			count++;
-//			if( count % 200 == 0 )
-//			{
-//				System.out.println( count );
-//			}
-//		}
-		var drill = new Drill();
-		if( drill.parse( null, sql, false ))
+		int count = 0;
+		while( count < 1_000_000 )
 		{
-			drill.toStringTree(  );
+			var drill = new Drill();
+			drill.parse( null, sql, false );
+			count++;
+			if( count % 200 == 0 )
+			{
+				System.out.println( count );
+			}
 		}
+//		var drill = new Drill();
+//		if( drill.parse( null, sql, false ))
+//		{
+//			drill.toStringTree(  );
+//		}
 	}
 
 	 NormalSQLParser parser = null;
