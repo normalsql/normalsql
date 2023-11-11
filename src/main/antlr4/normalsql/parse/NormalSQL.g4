@@ -244,7 +244,8 @@ with
 delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
-      ( 'USING' sources ( ',' sources )* )?
+//      ( 'USING' sources ( ',' sources )* )?
+      ( 'USING' sources )?
       where? returning? orderBy? limit? offset?
       ;
 
@@ -359,8 +360,6 @@ select
         )?
       | ( select
         | '(' source ')'
-
-
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
         // DB2 intermediate result table
@@ -553,7 +552,7 @@ subterm
     | array                                                           # SubtermArray
     | case                                                            # SubtermCase
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
-    | 'EXISTS' '(' select ')'                                          # SubtermEXISTS
+    | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     // PL/SQL

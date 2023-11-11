@@ -21,7 +21,9 @@ public class IntegrationTest {
         int maxErrors = 100;
 
         // Retrieve all files from `src/test/resources` ending with ".sql".
-        var tests = new File("/Users/jasonosgood/Projects/SQL/Parsers/sqlite-parser/src/test/resources")
+
+        var tests = new File("/Users/jasonosgood/Projects/normalsql-resources/sqlite-parser/src/test/resources")
+//        var tests = new File("/Users/jasonosgood/Projects/SQL/Parsers/sqlite-parser/src/test/resources")
                 .listFiles(
                         file -> file.isFile() && file.getName().endsWith(".sql")
                                 && file.getName().startsWith( "rand" )
