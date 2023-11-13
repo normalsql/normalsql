@@ -40,18 +40,19 @@ extends
 	public Comparison( PredicateCompareContext context )
 	{
 		super( context );
-		op = operatorMap.get( context.compare().getText() );
-		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
-		SubtermContext right = context.subterm();
-		pattern = valueOf( Pattern.class, left, right );
-
-		if( !isMatched() ) return;
-
-		// TODO: Move this logic to Worker, like for BETWEEN predicates
-		switch( pattern )
-		{
-			case LiteralColumn -> { literal = left; column = right; }
-			case ColumnLiteral -> { literal = right; column = left; }
-		}
+////		op = operatorMap.get( context.compare().getText() );
+//		op = operatorMap.get( context.COMPARE().getText() );
+//		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
+//		SubtermContext right = context.subterm();
+//		pattern = valueOf( Pattern.class, left, right );
+//
+//		if( !isMatched() ) return;
+//
+//		// TODO: Move this logic to Worker, like for BETWEEN predicates
+//		switch( pattern )
+//		{
+//			case LiteralColumn -> { literal = left; column = right; }
+//			case ColumnLiteral -> { literal = right; column = left; }
+//		}
 	}
 }

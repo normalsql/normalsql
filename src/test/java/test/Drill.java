@@ -153,7 +153,7 @@ SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1
 		buf.append( '(' );
 		buf.append( ruleName );
 
-		if( t instanceof ColumnContext || t instanceof TableContext || t instanceof NameContext )
+		if( t instanceof QnameContext || t instanceof NameContext )
 		{
 			// Combine multiple names
 			String text = ((RuleContext) t ).getText();

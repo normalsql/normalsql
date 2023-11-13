@@ -143,7 +143,11 @@ createVirtualTable
     moduleArgument
         : ( name | literal | type )+
         | ( name | literal )+ ( '=' ( name | literal )* )?
-        | compare | assign
+//        | compare
+        | COMPARE
+//        | assign
+        | ASSIGN
+        | EQ
         ;
 
 createTrigger
@@ -161,7 +165,7 @@ createView
       : 'CREATE' temporary?
         // Postgres?
         ( 'OR' 'REPLACE' )?
-        'VIEW' ifNotExists? qname columns? 'AS' select ;
+        'VIEW' ifNotExists? qname qnames? 'AS' select ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -323,7 +327,7 @@ select
           windows? qualify?
         | 'VALUES' terms
         // MySQL table statement
-        | 'TABLE' table
+        | 'TABLE' qname
 
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
@@ -333,10 +337,9 @@ select
         | 'TABLE' '(' term ')'
         | 'JSON_TABLE' // TODO
         | xmlTable
-        | function
+//        | function
         | unnest
         | '(' source ')'
-
         ;
 
     unions
@@ -348,13 +351,13 @@ select
         ;
 
     sources
-        : sources ( join sources ( 'ON' term | 'USING' columns )* | pivot | unpivot )+
+        : sources ( join sources ( 'ON' term | 'USING' qnames )* | pivot | unpivot )+
         | source
         | '(' sources ')'
         ;
 
     source
-      : table ( 'AS'? alias names? )?
+      : qname ( 'AS'? alias names? )?
         // H2
         ( ( 'USE' 'INDEX' names )
         // SQLite
@@ -376,9 +379,8 @@ select
         ( 'AS'? alias names? )?
         ;
 
-    // TODO: Should this part of rule 'function'?
     unnest
-        : 'UNNEST' '(' array ( ',' array )* ')' ( 'WITH' 'ORDINALITY' )? ;
+        : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
 
     // H2 table function http://h2database.com/html/functions.html#table
     tableFunc
@@ -415,8 +417,12 @@ select
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : (( table '.' )? '*' ) ( 'EXCEPT' columns )?  # ItemTableRef
-        | term ( 'AS'? alias )?                        # ItemTerm
+//        : qname ( 'AS'? alias )?  # ItemTableRef
+//        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
+////        | term ( 'AS'? alias )?                        # ItemTerm
+        : term ( 'AS'? alias )?                        # ItemTerm
+        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
+//        |
         ;
 
     into
@@ -436,14 +442,14 @@ select
             : 'PIVOT'
               '('
                 aliasedFunction ( ',' aliasedFunction )*
-                'FOR' ( column | columns )
+                'FOR' ( qname | qnames )
                 'IN' '(' aliasedTerms ')'
               ')'
             // PL/SQL
             | 'PIVOT' 'XML'
               '('
                 aliasedFunction ( ',' aliasedFunction )*
-                'FOR' ( column | columns )
+                'FOR' ( qname | qnames )
                 'IN' '(' ( select | 'ANY' ) ')'
               ')'
             ;
@@ -453,8 +459,8 @@ select
         unpivot
             : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
               '('
-                ( column | columns )
-                'FOR' ( column | columns )
+                ( qname | qnames )
+                'FOR' ( qname | qnames )
                 'IN' '(' aliasedTerms ')'
               ')'
             ;
@@ -510,8 +516,9 @@ aliasedTerms
 // | row 'INTERSECTS' '(' term ',' term ')'
 
 term
-    : '(' term ')'
-    | subterm
+//    : '(' terms ')'
+//    | subterm
+    : subterm
     // TODO redundant w/ subterm unary. still ok?
     | 'NOT' term
     | term ( 'AND' | 'XOR' | 'OR' ) term
@@ -522,18 +529,19 @@ term
     // CrateDB ?
 //    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
 //    | VARIABLE assign term
+
+//    | qname ASSIGN term
    ;
 
-    assign
-        : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
+//    assign
+//        : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 
 subterm
     : literal                                                       # SubtermLiteral
-    | PARAMETER # SubtermLiteral
-    | VARIABLE # SubtermLiteral
-    | column                                                          # SubtermColumn
+    | qname                                                          # SubtermColumn
 
-    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm                               # SubtermUnary
+//    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm                               # SubtermUnary
+    | ( '+' | '-' | '!' | 'NOT' ) subterm                               # SubtermUnary
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
@@ -548,27 +556,23 @@ subterm
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
 
-//    | qname                                                          # SubtermQNAME
-
     // TODO: BINARY
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
     | subterm 'COLLATE' name                                         # SubtermCOLLATE
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
-//    | subterm interval                                                # SubtermInterval
-//    | 'INTERVAL' subterm interval?                                    # SubtermInterval
-//    | select                                                           # SubtermQuery
-//    | array                                                           # SubtermArray
+    | subterm timeCast                                                # SubtermInterval
+    | interval                                                          # SubtermInterval
+    | select                                                           # SubtermQuery
+    | array                                                           # SubtermArray
     | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
     | case                                                            # SubtermCase
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'       # SubtermUNIQUE
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname                     # SubtermSequence
     // PL/SQL
 //    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //   TODO  | sequenceValueExpression
-    // TODO these may need to be in a parent rule, for proper precedence
     | 'ROW'? '(' terms? ')' ( '.' name )?                             # SubtermRow
-    | function ( '.' function )*                                      # SubtermFunction
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     ;
 
@@ -578,9 +582,10 @@ subterm
         ;
 
     predicate
-        : compare subterm                                                          # PredicateCompare
+//        : compare subterm                                                          # PredicateCompare
+        : ( EQ | COMPARE | ASSIGN ) subterm                                           # PredicateCompare
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateIsNull
-        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
+//        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
@@ -589,18 +594,18 @@ subterm
         | 'IS' 'NOT'? term                                                         # PredicateIS
         | 'NOT'? 'IN' '(' ( select | terms )? ')'                                   # PredicateIN
         // PL/SQL dialect
-        | 'NOT'? 'IN' subterm                                                      # PredicateIN
+//        | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' ( string | term ) )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
-        compare
-            : '=' | '==' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
-            // Postgres match regex
-//            | '~' | '~*' | '!~' | '!~*'
-//            | OPERATOR
-            ;
+//        compare
+//            : '=' | '==' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
+//            // Postgres match regex
+////            | '~' | '~*' | '!~' | '!~*'
+////            | OPERATOR
+//            ;
 
         logicals
             : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
@@ -627,23 +632,20 @@ scalar
     | 'REAL'
     | 'DECFLOAT'
     | 'FLOAT' length?
-    | 'DOUBLE' 'PRECISION'
+    | 'DOUBLE' 'PRECISION'?
     | 'DECIMAL' precision?
     | 'DEC' precision?
     | 'NUMBER' precision?
     | 'NUMERIC' precision?
     | 'BOOL' | 'BOOLEAN'
-
     | 'INTERVAL'
     | 'VARBINARY'
     // Postgres?
     | 'BIT' 'VARYING'? length?
     | chars length?
-
     | 'BLOB' precision?
     | 'CLOB'
     | 'NCLOB'
-
     | 'DATE'
 //    | ( 'TIMESTAMP' | 'TIME' ) length? ( ( 'WITH' | 'WITHOUT' ) 'LOCAL'? 'TIME' 'ZONE' )?
     | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
@@ -684,7 +686,8 @@ function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'EXTRACT' '(' name 'FROM' .*? ')' // TODO
+//    | 'EXTRACT' '(' timeUnit 'FROM' ( interval | datetime ) ')'
+    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
@@ -702,18 +705,23 @@ function
     | qname '(' term respectIgnore? ')' respectIgnore? over?
     // Generic syntax for all aggregate functions?
     | qname
-      '(' ( ( table '.' )? '*' | allDistinct? terms orderBy?
+      '('
+      ( ( qname '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
       ( 'ON' 'OVERFLOW' 'ERROR' )?
-      ( 'SEPARATOR' term )? onNull? )? ')'
+      ( 'SEPARATOR' term )? onNull? )?
+      ')'
 //      ( 'SEPARATOR' term )? onNull? )? respectIgnore? ')' // TODO: Oracle
-      withinGroup? filter? ( 'FROM' firstLast )?
+      withinGroup?
+      filter?
+      ( 'FROM' firstLast )?
       respectIgnore? over?
 //    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
 //    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
     | 'CURRENT_DATE'
     | 'CURRENT_TIME'
     | 'CURRENT_TIMESTAMP'
+    | 'SIN' '(' subterm ')'
     ;
 
 // TODO: Maybe archetype rules for agg, win, etc functions?
@@ -769,20 +777,20 @@ orderBy
         : 'ASC'
         | 'DESC'
         // Postgres
-        | 'USING' compare
+//        | 'USING' compare
+        | 'USING' ( EQ | COMPARE )
         ;
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
-//    :  ( INTEGER | FLOAT )
     | BITS
     | BYTES
     | OCTALS
-    | truth | boolean
+//    | truth | boolean
+    | 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL'
+    | 'ON' | 'OFF'
     | 'DEFAULT'
-    | 'DATE' string
-    | ( '{d' | '{t' | '{ts' ) string '}'
-    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+    | datetime
     | jsonObject
     | jsonArray
     | PARAMETER
@@ -790,13 +798,20 @@ literal
     | string
     ;
 
-truth
-    : 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL' ;
+datetime
+    : 'DATE' string
+    | ( '{d' | '{t' | '{ts' ) string '}'
+    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+    ;
 
 boolean
     : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
 
 interval
+    : 'INTERVAL' subterm timeCast?
+    ;
+
+timeCast
     : timeUnit precision? ( 'TO' timeUnit precision? )?
     ;
 
@@ -804,7 +819,9 @@ timeUnit
     : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
     | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
     | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
-    | 'MILLISECOND' | 'MICROSECOND' | 'NANOSECOND' ;
+    | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
+    | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
+    | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')' ;
@@ -823,20 +840,8 @@ jsonObject
             jsonKey
                 : 'NULL' | string | name ;
 
-columns
-    : '(' column ( ',' column )* ')' ;
-
-// TODO: remove 'column' and 'table' rules, use 'qname' instead
-column
-    : name ( '.' name )*;
-
-table
-    : name ( '.' name )*;
-
 qname
-    : VARIABLE
-    | PARAMETER
-    | name ( '.' name )*
+    : name ( '.' name )*
     ;
 
 index
@@ -844,6 +849,7 @@ index
 
 // All tokens in this grammars which are unreserved SQL keywords. Keep up to
 // date manually. (Ugh.)
+/*
 unreserved
     : ~(
         // Exclude tokens which are SQL's reserved keywords...
@@ -943,10 +949,172 @@ unreserved
         | INTEGER | FLOAT | BITS | BYTES | OCTALS
 //        | BLOB | BLOB2
         | PARAMETER | VARIABLE
-        | STRING | UNICODE_STRING | NATIONAL_STRING
+        | STRING
+//        | UNICODE_STRING | NATIONAL_STRING
         | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
        )
     ;
+*/
+
+keyword
+ : 'A'
+ | 'ABORT'
+ | 'ACTION'
+ | 'ADD'
+ | 'AFTER'
+ | 'ALL'
+ | 'ALTER'
+ | 'ANALYZE'
+ | 'AND'
+ | 'ANY'
+ | 'AS'
+ | 'ASC'
+ | 'ATTACH'
+ | 'AUTOINCREMENT'
+ | 'BEFORE'
+ | 'BEGIN'
+ | 'BETWEEN'
+ | 'BY'
+ | 'CASCADE'
+ | 'CASE'
+ | 'CAST'
+ | 'CATEGORY'
+ | 'CENTURY'
+ | 'CHAR'
+ | 'CHECK'
+ | 'COLLATE'
+ | 'COLUMN'
+ | 'COLUMNS'
+ | 'COMMIT'
+ | 'CONFLICT'
+ | 'CONSTRAINT'
+ | 'COUNT'
+ | 'CREATE'
+ | 'CROSS'
+ | 'CURRENT_DATE'
+ | 'CURRENT_TIME'
+ | 'CURRENT_TIMESTAMP'
+ | 'DECADE'
+ | 'DATA'
+ | 'DATABASE'
+ | 'DAY'
+ | 'DEFAULT'
+ | 'DEFERRABLE'
+ | 'DEFERRED'
+ | 'DELETE'
+ | 'DESC'
+ | 'DETACH'
+ | 'DISTINCT'
+ | 'DROP'
+ | 'EACH'
+ | 'ELSE'
+ | 'END'
+ | 'ESCAPE'
+ | 'EXCEPT'
+ | 'EXCLUSIVE'
+ | 'EXISTS'
+ | 'EXPLAIN'
+ | 'EXTRACT'
+ | 'FAIL'
+ | 'FILTER'
+ | 'FIRST'
+ | 'FOR'
+ | 'FOREIGN'
+// | 'FROM'
+ | 'FULL'
+ | 'GLOB'
+ | 'GROUP'
+ | 'HAVING'
+ | 'HOUR'
+ | 'IF'
+ | 'IGNORE'
+ | 'IMMEDIATE'
+ | 'IN'
+ | 'INDEX'
+ | 'INDEXED'
+ | 'INITIALLY'
+ | 'INNER'
+ | 'INSERT'
+ | 'INSTEAD'
+ | 'INTERSECT'
+ | 'INT'
+ | 'INTO'
+ | 'IS'
+ | 'ISNULL'
+ | 'JOIN'
+ | 'KEY'
+ | 'LAST'
+ | 'LEFT'
+ | 'LIKE'
+ | 'LIMIT'
+ | 'MATCH'
+ | 'MILLENNIUM'
+ | 'MOD'
+ | 'MONTH'
+ | 'NAME'
+ | 'NATURAL'
+ | 'NO'
+ | 'NOT'
+ | 'NOTNULL'
+// | 'NULL'
+ | 'OF'
+ | 'OFFSET'
+ | 'ON'
+ | 'OR'
+ | 'ORDER'
+ | 'OUTER'
+ | 'PLAN'
+ | 'PRAGMA'
+ | 'PRIMARY'
+ | 'QUARTER'
+ | 'QUERY'
+ | 'RAISE'
+ | 'RECURSIVE'
+ | 'REFERENCES'
+ | 'REGEXP'
+ | 'REINDEX'
+ | 'RELEASE'
+ | 'RENAME'
+ | 'REPLACE'
+ | 'RESTRICT'
+ | 'RIGHT'
+ | 'ROLLBACK'
+ | 'ROW'
+ | 'SAVEPOINT'
+ | 'SCHEMA'
+ | 'SECOND'
+ | 'SELECT'
+ | 'SET'
+ | 'SETTINGS'
+ | 'SEQUENCE'
+ | 'SOME'
+ | 'SUBSTRING'
+ | 'TABLE'
+ | 'TEMP'
+ | 'TEMPORARY'
+ | 'TEST'
+ | 'THEN'
+ | 'TO'
+ | 'TRANSACTION'
+ | 'TRIGGER'
+ | 'TYPE'
+ | 'UNION'
+ | 'UNIQUE'
+ | 'UPDATE'
+ | 'USER'
+ | 'USING'
+ | 'VACUUM'
+ | 'VALUE'
+ | 'VALUES'
+ | 'VARCHAR'
+ | 'VIEW'
+ | 'VIRTUAL'
+ | 'WHEN'
+ | 'WHERE'
+ | 'WITH'
+ | 'WITHOUT'
+ | 'YEAR'
+ ;
 
 allDistinct
     : 'ALL' | 'DISTINCT' ;
@@ -979,7 +1147,8 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : name | string ;
+//    : name | string ;
+    : ID | STRING | | UNICODE_NAME uescape? | keyword;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -994,12 +1163,13 @@ qnames
 name
     : ID
     | BRACKETS
-    | STRING
+//    | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
-    | VARIABLE
-    | PARAMETER
-    | unreserved
+//    | VARIABLE
+//    | PARAMETER
+//    | unreserved
+    | keyword
     ;
 
 string
@@ -1023,7 +1193,7 @@ NATIONAL_STRING
 STRING
     // TODO allow newlines within STRINGs?
     // TODO allow newlines, but not whitespace, between STRINGs?
-    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 // TODO no newlines etc within IDs?
 ID
@@ -1064,7 +1234,7 @@ fragment HEAD options { caseInsensitive=false; }
 
 // TODO compare each dialect's rules for literals. eg SQLite allows ':'?
 fragment BODY options { caseInsensitive=false; }
-    : [0-9#$@]
+    : [0-9#$@_]
     | HEAD
 //    | '\u00B7'
 //    | '\u0300' .. '\u036F'
@@ -1135,14 +1305,28 @@ BLOCK_COMMENT
 // \u000C form feed
 WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
-// TODO BOZO this crude OPERATOR token accepts way more than spec'd
-// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
-OPERATOR
-//    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
-//    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
-    : 
-     { operatorEnabled }?
-    [*/<>=!@#%^&|`]+
+EQ : '=' ;
+
+COMPARE
+    : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
     ;
+
+ASSIGN
+    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
+    | '~' | '~*' | '!~' | '!~*'
+    ;
+
+
+// TODO BOZO this crude OPERATOR token accepts way more than spec'd
+
+// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+//OPERATOR
+////    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
+////    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
+//    :
+//     { operatorEnabled }?
+//    [*/<>=!@#%^&|`]+
+//    ;
+
 
 // END

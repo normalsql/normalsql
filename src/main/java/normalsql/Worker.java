@@ -225,7 +225,7 @@ public class Worker
 
 	public String getColumn( SubtermContext b )
 	{
-		RuleContext column = ( (SubtermColumnContext) b ).column();
+		RuleContext column = ( (SubtermColumnContext) b ).qname();
 		return _helper.getTrimmedText( column );
 	}
 

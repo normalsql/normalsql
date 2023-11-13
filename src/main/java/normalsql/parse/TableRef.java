@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.TableContext;
+//import normalsql.parse.NormalSQLParser.TableContext;
 
 /**
  * <p>TableRef class.</p>
@@ -19,12 +19,12 @@ public class
 	 *
 	 * @param context a {@link normalsql.parse.NormalSQLParser.TableContext} object
 	 */
-	public TableRef( TableContext context )
-	{
-//		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
-//		schema = context.schema != null ? context.schema.getTrimmedText() : null;
-//		table = context.table != null ? context.table.getTrimmedText() : null;
-	}
+//	public TableRef( TableContext context )
+//	{
+////		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
+////		schema = context.schema != null ? context.schema.getTrimmedText() : null;
+////		table = context.table != null ? context.table.getTrimmedText() : null;
+//	}
 
 	public String catalog;
 	public String schema;
