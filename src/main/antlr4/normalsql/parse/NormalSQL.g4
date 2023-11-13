@@ -19,7 +19,9 @@
 
 grammar NormalSQL;
 
-options { caseInsensitive=true; }
+options {
+ caseInsensitive=true;
+ }
 
  @lexer::members
  {
@@ -323,17 +325,17 @@ select
         // MySQL table statement
         | 'TABLE' table
 
-//        | tableFunc
-//        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
-//        // DB2 intermediate result table
-//        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-//        // PL/SQL table collection expression
-//        | 'TABLE' '(' term ')'
-//        | 'JSON_TABLE' // TODO
-//        | xmlTable
-//        | function
-//        | unnest
-//        | '(' source ')'
+        | tableFunc
+        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+        // DB2 intermediate result table
+        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
+        // PL/SQL table collection expression
+        | 'TABLE' '(' term ')'
+        | 'JSON_TABLE' // TODO
+        | xmlTable
+        | function
+        | unnest
+        | '(' source ')'
 
         ;
 
@@ -512,13 +514,14 @@ term
     | subterm
     // TODO redundant w/ subterm unary. still ok?
     | 'NOT' term
-    | term 'AND' term
-    | term 'XOR' term
+    | term ( 'AND' | 'XOR' | 'OR' ) term
+//    | term 'AND' term
+//    | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
-    | term 'OR' term
+//    | term 'OR' term
     // CrateDB ?
-    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-    | VARIABLE assign term
+//    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
+//    | VARIABLE assign term
    ;
 
     assign
@@ -526,7 +529,19 @@ term
 
 subterm
     : literal                                                       # SubtermLiteral
+    | PARAMETER # SubtermLiteral
+    | VARIABLE # SubtermLiteral
+    | column                                                          # SubtermColumn
+
     | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm                               # SubtermUnary
+    | subterm '||' subterm                                            # SubtermBinary
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
+    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
+//    | subterm '&' subterm                                             # SubtermBinary
+//    | subterm '|' subterm                                             # SubtermBinary
+//    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm                                 # SubtermBinary
+    | subterm predicate                                               # SubtermPredicate
     | subterm '::' type                                               # SubtermCast
     // Postgres?
     | subterm ( '::' subterm )+                                       # SubtermScope
@@ -534,36 +549,27 @@ subterm
     | function ( '.' function )*                                      # SubtermFunction
 
 //    | qname                                                          # SubtermQNAME
-    | column                                                          # SubtermColumn
 
     // TODO: BINARY
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
     | subterm 'COLLATE' name                                         # SubtermCOLLATE
-    | subterm '&' subterm                                             # SubtermBinary
-    | subterm '|' subterm                                             # SubtermBinary
-    | subterm predicate                                               # SubtermPredicate
-    | subterm '||' subterm                                            # SubtermBinary
-    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
-    | subterm ( '<<' | '>>' ) subterm                                 # SubtermBinary
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
     // PL/SQL, ODBC
-    | subterm interval                                                # SubtermInterval
-    | 'INTERVAL' subterm interval?                                    # SubtermInterval
-    | select                                                           # SubtermQuery
-    | array                                                           # SubtermArray
-    | case                                                            # SubtermCase
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
+//    | subterm interval                                                # SubtermInterval
+//    | 'INTERVAL' subterm interval?                                    # SubtermInterval
+//    | select                                                           # SubtermQuery
+//    | array                                                           # SubtermArray
     | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
+    | case                                                            # SubtermCase
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'       # SubtermUNIQUE
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' column                     # SubtermSequence
     // PL/SQL
-    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+//    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //   TODO  | sequenceValueExpression
     // TODO these may need to be in a parent rule, for proper precedence
     | 'ROW'? '(' terms? ')' ( '.' name )?                             # SubtermRow
     | function ( '.' function )*                                      # SubtermFunction
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
-    | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
     ;
 
     case
@@ -592,8 +598,8 @@ subterm
         compare
             : '=' | '==' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
             // Postgres match regex
-            | '~' | '~*' | '!~' | '!~*'
-            | OPERATOR
+//            | '~' | '~*' | '!~' | '!~*'
+//            | OPERATOR
             ;
 
         logicals
@@ -768,6 +774,7 @@ orderBy
 
 literal
     : ( '+' | '-' )? ( INTEGER | FLOAT )
+//    :  ( INTEGER | FLOAT )
     | BITS
     | BYTES
     | OCTALS
