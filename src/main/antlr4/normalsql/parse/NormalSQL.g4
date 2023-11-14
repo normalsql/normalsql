@@ -539,15 +539,11 @@ term
 subterm
     : literal                                                       # SubtermLiteral
     | qname                                                          # SubtermColumn
-
 //    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm                               # SubtermUnary
     | ( '+' | '-' | '!' | 'NOT' ) subterm                               # SubtermUnary
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-//    | subterm '&' subterm                                             # SubtermBinary
-//    | subterm '|' subterm                                             # SubtermBinary
-//    | subterm ( '->' | '->>' ) subterm                                # SubtermBinary
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm                                 # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
     | subterm '::' type                                               # SubtermCast
@@ -786,7 +782,6 @@ literal
     | BITS
     | BYTES
     | OCTALS
-//    | truth | boolean
     | 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL'
     | 'ON' | 'OFF'
     | 'DEFAULT'
@@ -821,6 +816,7 @@ timeUnit
     | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
     | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
     | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
+    | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
     | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
 
 jsonArray
@@ -846,115 +842,6 @@ qname
 
 index
     : '[' ( term | term? ':' term? )? ']' ;
-
-// All tokens in this grammars which are unreserved SQL keywords. Keep up to
-// date manually. (Ugh.)
-/*
-unreserved
-    : ~(
-        // Exclude tokens which are SQL's reserved keywords...
-//        'ALL'
-//        | 'AND'
-         'AND'
-//        | 'ANY'
-        | 'ARRAY'
-//        | 'AS'
-        | 'BETWEEN'
-        | 'BOTH'
-//        | 'CASE'
-        | 'CAST'
-        | 'CHECK'
-//        | 'CONSTRAINT'
-//        | 'CROSS'
-//        | 'DAY'
-//        | 'DELETE'
-        | 'DEFAULT'
-        | 'DISTINCT'
-        | 'ELSE'
-        | 'END'
-        | 'EXCEPT'
-        | 'EXISTS'
-//        | 'FALSE'
-        | 'FOR'
-        | 'FOREIGN'
-//        | 'FROM'
-//        | 'FULL'
-        | 'GENERATED' // SQLite
-        | 'GROUP'
-//        | 'GROUPS'
-        | 'HAVING'
-//        | 'HOUR'
-//        | 'IF'
-        | 'IN'
-//        | 'INNER'
-//        | 'INSERT'
-        | 'INTERSECT'
-        | 'INTERVAL'
-//        | 'INTO'
-        | 'IS'
-        | 'JOIN'
-//        | 'KEY'
-        | 'LEADING'
-//        | 'LEFT'
-//        | 'LIKE'
-//        | 'LIMIT'
-        | 'MINUS'
-//        | 'MINUTE'
-//        | 'MONTH'
-//        | 'NATURAL'
-        | 'NOT'
-//        | 'NULL'
-//        | 'OF'
-        | 'OFFSET'
-        | 'ON'
-        | 'OR'
-//        | 'ORDER'
-//        | 'OVER'
-//        | 'PARTITION'
-//        | 'PRIMARY'
-        | 'QUALIFY'
-//        | 'RANGE'
-//        | 'REGEXP'
-//        | 'RIGHT'
-//        | 'ROW'
-//        | 'ROWNUM'
-        | 'ROWS'
-//        | 'SECOND'
-        | 'SELECT'
-//        | 'SESSION_USER'
-//        | 'SET'
-//        | 'SOME'
-        | 'SYMMETRIC'
-//        | 'SYSTEM_USER'
-//        | 'TABLE'
-//        | 'TO'
-//        | 'TOP'
-        | 'TRAILING'
-//        | 'TRUE'
-        | 'UESCAPE'
-        | 'UNION'
-        | 'UNIQUE'
-        | 'UNKNOWN'
-//        | 'USER'
-        | 'USING'
-//        | 'VALUE'
-        | 'VALUES'
-        | 'WHEN'
-        | 'WHERE'
-//        | 'WINDOW'
-        | 'WITH'
-//        | 'YEAR'
-
-        // ...And exclude all the other tokens which cannot be a keyword or name
-        | INTEGER | FLOAT | BITS | BYTES | OCTALS
-//        | BLOB | BLOB2
-        | PARAMETER | VARIABLE
-        | STRING
-//        | UNICODE_STRING | NATIONAL_STRING
-        | ';' | '(' | ')' | '[' | ']' | ',' | '.' | '*' | '=' | ':=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-       )
-    ;
-*/
 
 keyword
  : 'A'
@@ -991,6 +878,7 @@ keyword
  | 'COUNT'
  | 'CREATE'
  | 'CROSS'
+ | 'CURRENT'
  | 'CURRENT_DATE'
  | 'CURRENT_TIME'
  | 'CURRENT_TIMESTAMP'
@@ -1041,6 +929,8 @@ keyword
  | 'INTO'
  | 'IS'
  | 'ISNULL'
+ | 'ISO_YEAR'
+ | 'ISO_DAY_OF_WEEK'
  | 'JOIN'
  | 'KEY'
  | 'LAST'
@@ -1049,6 +939,7 @@ keyword
  | 'LIMIT'
  | 'MATCH'
  | 'MILLENNIUM'
+ | 'MINUTE'
  | 'MOD'
  | 'MONTH'
  | 'NAME'
@@ -1148,7 +1039,7 @@ withWithout
 
 alias
 //    : name | string ;
-    : ID | STRING | | UNICODE_NAME uescape? | keyword;
+    : ID | STRING | UNICODE_NAME uescape? | keyword;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -1166,9 +1057,6 @@ name
 //    | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
-//    | VARIABLE
-//    | PARAMETER
-//    | unreserved
     | keyword
     ;
 
