@@ -24,26 +24,27 @@ public class Drill
 	{
 		String sql =
 		"""
-SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1 AS curr LEFT JOIN t1 AS other GROUP BY curr.id1);
+-- SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1 AS curr LEFT JOIN t1 AS other GROUP BY curr.id1);
+select * from (SELECT 1);
 """
 		;
 
-		int count = 0;
-		while( count < 1_000_000 )
-		{
-			var drill = new Drill();
-			drill.parse( null, sql, false );
-			count++;
-			if( count % 200 == 0 )
-			{
-				System.out.println( count );
-			}
-		}
-//		var drill = new Drill();
-//		if( drill.parse( null, sql, false ))
+//		int count = 0;
+//		while( count < 1_000_000 )
 //		{
-//			drill.toStringTree(  );
+//			var drill = new Drill();
+//			drill.parse( null, sql, false );
+//			count++;
+//			if( count % 200 == 0 )
+//			{
+//				System.out.println( count );
+//			}
 //		}
+		var drill = new Drill();
+		if( drill.parse( null, sql, false ))
+		{
+			drill.toStringTree(  );
+		}
 	}
 
 	 NormalSQLParser parser = null;
@@ -74,27 +75,28 @@ SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1
 		lexer.bracketsEnabled = bracketsEnabled;
 		var tokens = new CommonTokenStream( lexer );
 		parser = new NormalSQLParser( tokens );
-		parser.removeErrorListeners();
-		parser.addErrorListener( new BaseErrorListener() {
-			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer,
-									Object offendingSymbol,
-									int line,
-									int charPositionInLine,
-									String msg,
-									RecognitionException e)
-			{
-				var error = new SyntaxError();
-				error.recognizer = recognizer;
-				error.offendingSymbol = offendingSymbol;
-				error.line = line;
-				error.charPositionInLine = charPositionInLine;
-				error.msg = msg;
-				error.e = e;
-				errors.add( error );
-			}
-
-		} );
+//		parser.removeErrorListeners();
+		parser.addErrorListener( new DiagnosticErrorListener() );
+//		parser.addErrorListener( new BaseErrorListener() {
+//			@Override
+//			public void syntaxError(Recognizer<?, ?> recognizer,
+//									Object offendingSymbol,
+//									int line,
+//									int charPositionInLine,
+//									String msg,
+//									RecognitionException e)
+//			{
+//				var error = new SyntaxError();
+//				error.recognizer = recognizer;
+//				error.offendingSymbol = offendingSymbol;
+//				error.line = line;
+//				error.charPositionInLine = charPositionInLine;
+//				error.msg = msg;
+//				error.e = e;
+//				errors.add( error );
+//			}
+//
+//		} );
 
 		script = parser.script();
 		if( errors.isEmpty() ) return true;

@@ -251,7 +251,7 @@ delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
 //      ( 'USING' sources ( ',' sources )* )?
-      ( 'USING' sources )?
+//      ( 'USING' sources )?
       where? returning? orderBy? limit? offset?
       ;
 
@@ -260,7 +260,8 @@ insert
       ( 'INSERT' ( 'OR' afirr )? | 'REPLACE' )
       'INTO' qname ( 'AS' name )? names?
       overriding?
-      ( source upsert* | 'DEFAULT' 'VALUES' )
+//      ( source upsert* | 'DEFAULT' 'VALUES' )
+      ( select upsert* | 'DEFAULT' 'VALUES' )
       returning?
     ;
 
@@ -275,7 +276,8 @@ insert
 
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
-      'USING' 'ONLY'? source 'ON' terms
+//      'USING' 'ONLY'? source 'ON' terms
+      'USING' 'ONLY'? select 'ON' terms
       when*
     ;
 
@@ -291,7 +293,7 @@ merge
 update
     : with? 'UPDATE' ( 'OR' afirr )?
       qname ( 'AS'? name )? indexedBy?
-      'SET' setter ( ',' setter )* ( 'FROM' sources )?
+//      'SET' setter ( ',' setter )* ( 'FROM' sources )?
       where? returning? orderBy? limit? offset?  ;
 
     setter
@@ -312,35 +314,28 @@ returning
         ;
 
 select
-    :  with? selectCore
+//    :  with? selectCore
+    :  with?
+        selectCore ( unions selectCore )*
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-    | select ( unions select )+
-    | '(' select ')'
+    | '(' select  ( unions select )* ')'
     ;
 
     selectCore
         : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-          ( 'FROM' sources )?
+          ( 'FROM' sources  )?
           where? groupBy? having?
           windows? qualify?
-        | 'VALUES' terms
-        // MySQL table statement
-        | 'TABLE' qname
+//        | 'VALUES' terms
+//    | '(' selectCore ')'
 
-        | tableFunc
-        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
-        // DB2 intermediate result table
-        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-        // PL/SQL table collection expression
-        | 'TABLE' '(' term ')'
-        | 'JSON_TABLE' // TODO
-        | xmlTable
-//        | function
-        | unnest
-        | '(' source ')'
         ;
+
+    sources : table ( ',' table )* |  joiner ;
+
+    joiner : table ( join table ( 'ON' term | 'USING' qnames )* )* ;
 
     unions
         : 'INTERSECT'
@@ -350,21 +345,25 @@ select
         | 'MULTISET'
         ;
 
-    sources
-        : sources ( join sources ( 'ON' term | 'USING' qnames )* | pivot | unpivot )+
-        | source
-        | '(' sources ')'
-        ;
+//    sources
+////        : sources ( join sources ( 'ON' term | 'USING' qnames )* | pivot | unpivot )+
 
-    source
-      : qname ( 'AS'? alias names? )?
+
+//        ( 'AS'? alias names? )?
+
+    table
+        : qname ( 'AS'? alias names? )?
         // H2
         ( ( 'USE' 'INDEX' names )
         // SQLite
           | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )
         )?
-      | ( select
-        | '(' source ')'
+        | ( '(' select ')' // ( 'AS'? alias names? )?
+        | '(' sources ')'
+        | 'VALUES' terms  // ( 'AS'? alias names? )?
+
+        // MySQL table statement
+        | 'TABLE' qname
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
         // DB2 intermediate result table
@@ -375,9 +374,8 @@ select
         | xmlTable
         | function
         | unnest
-        )
-        ( 'AS'? alias names? )?
-        ;
+        ) ( 'AS'? alias names? )?
+    ;
 
     unnest
         : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
@@ -433,7 +431,8 @@ select
             : ','
                 // TODO argh figure out correct, robust join operators
             | 'NATURAL'?
-                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
+//                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
+                  ( 'LEFT' 'OUTER'? |  'INNER' | 'CROSS' )?
               'JOIN'
             ;
 
@@ -521,11 +520,11 @@ term
     : subterm
     // TODO redundant w/ subterm unary. still ok?
     | 'NOT' term
-    | term ( 'AND' | 'XOR' | 'OR' ) term
-//    | term 'AND' term
-//    | term 'XOR' term
+//    | term ( 'AND' | 'XOR' | 'OR' ) term
+    | term 'AND' term
+    | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
-//    | term 'OR' term
+    | term 'OR' term
     // CrateDB ?
 //    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
 //    | VARIABLE assign term
@@ -544,20 +543,17 @@ subterm
     | subterm '||' subterm                                            # SubtermBinary
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm             # SubtermBinary
     | subterm ( '+' | '-' ) subterm                                   # SubtermBinary
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm                                 # SubtermBinary
+//    | subterm ( '<<' | '>>' | '&' | '|' ) subterm                                 # SubtermBinary
+//    | subterm BOOLEAN subterm                                 # SubtermBinary
     | subterm predicate                                               # SubtermPredicate
     | subterm '::' type                                               # SubtermCast
-    // Postgres?
-    | subterm ( '::' subterm )+                                       # SubtermScope
+//    | subterm ( '::' subterm )+                                       # SubtermScope // Postgres?
     | subterm index+                                                  # SubtermIndex
     | function ( '.' function )*                                      # SubtermFunction
-
-    // TODO: BINARY
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
-    | subterm 'COLLATE' name                                         # SubtermCOLLATE
+//    | subterm 'COLLATE' name                                         # SubtermCOLLATE
     | subterm 'AT' ( 'LOCAL' | timeZone string )                      # SubtermTime
-    // PL/SQL, ODBC
-    | subterm timeCast                                                # SubtermInterval
+    | subterm timeCast                                                # SubtermInterval // PL/SQL, ODBC
     | interval                                                          # SubtermInterval
     | select                                                           # SubtermQuery
     | array                                                           # SubtermArray
@@ -697,8 +693,12 @@ function
     // Postgres
     | 'ARRAY' '(' select ')'
     | '{fn' function '}' //  ODBC style
+
+
     // Generic syntax for all analytic functions?
     | qname '(' term respectIgnore? ')' respectIgnore? over?
+
+
     // Generic syntax for all aggregate functions?
     | qname
       '('
@@ -717,10 +717,18 @@ function
     | 'CURRENT_DATE'
     | 'CURRENT_TIME'
     | 'CURRENT_TIMESTAMP'
+
+
     | 'SIN' '(' subterm ')'
+    | 'LEFT' '(' subterm ',' subterm ')'
+
+
+    | aggregateFunction
     ;
 
-// TODO: Maybe archetype rules for agg, win, etc functions?
+    aggregateFunction
+        : 'SUM' '(' allDistinct? term ')' filter? over?
+        ;
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -762,10 +770,10 @@ window
             ;
 
 orderBy
-    : 'ORDER' 'BY' orderByItem ( ',' orderByItem )*
+    : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )*
     ;
 
-    orderByItem
+    orderByTerm
         : term sortDir? ( 'NULLS' firstLast )?
         ;
 
@@ -782,6 +790,7 @@ literal
     | BITS
     | BYTES
     | OCTALS
+//    | truth | boolean
     | 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL'
     | 'ON' | 'OFF'
     | 'DEFAULT'
@@ -929,12 +938,12 @@ keyword
  | 'INTO'
  | 'IS'
  | 'ISNULL'
- | 'ISO_YEAR'
  | 'ISO_DAY_OF_WEEK'
- | 'JOIN'
+ | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
+// | 'JOIN'
  | 'KEY'
  | 'LAST'
- | 'LEFT'
+// | 'LEFT'
  | 'LIKE'
  | 'LIMIT'
  | 'MATCH'
@@ -953,7 +962,7 @@ keyword
  | 'ON'
  | 'OR'
  | 'ORDER'
- | 'OUTER'
+// | 'OUTER'
  | 'PLAN'
  | 'PRAGMA'
  | 'PRIMARY'
@@ -980,6 +989,7 @@ keyword
  | 'SEQUENCE'
  | 'SOME'
  | 'SUBSTRING'
+ | 'SUM'
  | 'TABLE'
  | 'TEMP'
  | 'TEMPORARY'
@@ -1039,7 +1049,9 @@ withWithout
 
 alias
 //    : name | string ;
-    : ID | STRING | UNICODE_NAME uescape? | keyword;
+    : ID | STRING | UNICODE_NAME uescape? | 'A'
+//    | keyword
+    ;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -1057,6 +1069,9 @@ name
 //    | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
+//    | VARIABLE
+//    | PARAMETER
+//    | unreserved
     | keyword
     ;
 
@@ -1204,6 +1219,7 @@ ASSIGN
     | '~' | '~*' | '!~' | '!~*'
     ;
 
+BOOLEAN : '<<' | '>>' | '&' | '|' ;
 
 // TODO BOZO this crude OPERATOR token accepts way more than spec'd
 
