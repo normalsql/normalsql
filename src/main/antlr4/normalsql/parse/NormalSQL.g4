@@ -314,30 +314,45 @@ returning
         ;
 
 select
-//    :  with? selectCore
-    :  with?
-        selectCore ( unions selectCore )*
+    :  with? selectCore ( combo selectCore )*
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-    | '(' select  ( unions select )* ')'
+    | '(' select  ( combo select )* ')'
     ;
 
     selectCore
         : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-          ( 'FROM' sources  )?
+          ( 'FROM' sources )?
           where? groupBy? having?
           windows? qualify?
-//        | 'VALUES' terms
+        | 'VALUES' terms
 //    | '(' selectCore ')'
 
         ;
 
-    sources : table ( ',' table )* |  joiner ;
+//    sources
+//        : table ( ',' table )*
+//        |  joiner
+//        ;
+//
+//    joiner : table ( join table ( 'ON' term | 'USING' qnames )* )* ;
 
-    joiner : table ( join table ( 'ON' term | 'USING' qnames )* )* ;
+    sources
+        : sources ',' sources
+        | sources join sources ( 'ON' term | 'USING' qnames )*
+        | source
+        | '(' sources ')'
+        ;
 
-    unions
+//    sources
+//        : table
+//          ( ( ',' table )+
+//          | ( join table ( 'ON' term | 'USING' qnames )* )+
+//          )?
+//        ;
+
+    combo
         : 'INTERSECT'
         | 'MINUS'
         | 'UNION' 'ALL'?
@@ -348,20 +363,18 @@ select
 //    sources
 ////        : sources ( join sources ( 'ON' term | 'USING' qnames )* | pivot | unpivot )+
 
-
-//        ( 'AS'? alias names? )?
+    source
+        : qname ( 'AS'? alias names? )?
+          // H2
+          ( ( 'USE' 'INDEX' names )
+          // SQLite
+          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )
+          )?
+        | table ( 'AS'? alias names? )?
+    ;
 
     table
-        : qname ( 'AS'? alias names? )?
-        // H2
-        ( ( 'USE' 'INDEX' names )
-        // SQLite
-          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )
-        )?
-        | ( '(' select ')' // ( 'AS'? alias names? )?
-        | '(' sources ')'
-        | 'VALUES' terms  // ( 'AS'? alias names? )?
-
+        : select
         // MySQL table statement
         | 'TABLE' qname
         | tableFunc
@@ -374,8 +387,7 @@ select
         | xmlTable
         | function
         | unnest
-        ) ( 'AS'? alias names? )?
-    ;
+        ;
 
     unnest
         : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
@@ -415,12 +427,8 @@ select
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-//        : qname ( 'AS'? alias )?  # ItemTableRef
-//        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
-////        | term ( 'AS'? alias )?                        # ItemTerm
         : term ( 'AS'? alias )?                        # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
-//        |
         ;
 
     into
@@ -428,9 +436,10 @@ select
 
         join
             // TODO 'LATERAL'
-            : ','
+//            : ','
                 // TODO argh figure out correct, robust join operators
-            | 'NATURAL'?
+//            | 'NATURAL'?
+            : 'NATURAL'?
 //                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
                   ( 'LEFT' 'OUTER'? |  'INNER' | 'CROSS' )?
               'JOIN'
@@ -581,10 +590,11 @@ subterm
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
+        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? scalar ( ',' scalar )* ')'              # PredicateOfType
+//        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
-        | 'NOT'? 'IN' '(' ( select | terms )? ')'                                   # PredicateIN
+        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
         // PL/SQL dialect
 //        | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
@@ -647,7 +657,7 @@ scalar
     | 'JSONB'
     | 'XML'
 
-    | name+ precision?
+//    | name+ precision?
     ;
 
  chars
@@ -1049,7 +1059,8 @@ withWithout
 
 alias
 //    : name | string ;
-    : ID | STRING | UNICODE_NAME uescape? | 'A'
+    : ID | STRING | UNICODE_NAME uescape?
+    | 'A' | 'CASE' | 'TEST' | 'SUM'
 //    | keyword
     ;
 
