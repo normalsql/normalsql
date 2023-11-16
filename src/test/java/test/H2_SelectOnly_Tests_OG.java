@@ -6,8 +6,6 @@ package test;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ScriptContext;
-import normalsql.parse.SplitSubtermLexer;
-import normalsql.parse.SplitSubtermParser;
 import org.antlr.v4.runtime.*;
 
 import java.nio.file.*;
@@ -22,7 +20,7 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class
-H2_SelectOnly_Tests
+H2_SelectOnly_Tests_OG
 {
 	static int count = 0;
 
@@ -106,7 +104,7 @@ H2_SelectOnly_Tests
 						Work w = new Work() {{ source=file;sql=gorp;line=argh;}};
 						workList.add( w );
 						sql.clear();
-						H2_SelectOnly_Tests.count();
+						H2_SelectOnly_Tests_OG.count();
 					}
 				}
 			}
@@ -154,10 +152,10 @@ H2_SelectOnly_Tests
 
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
-		var chars = CharStreams.fromString( sql );
-		var lexer = new SplitSubtermLexer( chars );
-		var tokens = new CommonTokenStream( lexer );
-		var parser = new SplitSubtermParser( tokens );
+		CharStream chars = CharStreams.fromString( sql );
+		NormalSQLLexer lexer = new NormalSQLLexer( chars );
+		CommonTokenStream tokens = new CommonTokenStream( lexer );
+		NormalSQLParser parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
@@ -187,6 +185,6 @@ H2_SelectOnly_Tests
 
 		} );
 
-		var result = parser.script();
+		ScriptContext result = parser.script();
 	}
 }

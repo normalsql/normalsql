@@ -29,8 +29,7 @@ options {
      public boolean operatorEnabled = false;
  }
 
-script
-    : statement? ( ';' statement? )* EOF ;
+script : statement? ( ';' statement? )* EOF ;
 
 statement
     : explain?
@@ -321,40 +320,6 @@ select
     | '(' select ( combo select )* ')'
     ;
 
-    selectCore
-        : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-          ( 'FROM' sources )?
-          where? groupBy? having?
-          windows? qualify?
-        | 'VALUES' terms
-        // MySQL table statement
-        | 'TABLE' qname
-
-//    | '(' selectCore ')'
-
-        ;
-
-//    sources
-//        : table ( ',' table )*
-//        |  joiner
-//        ;
-//
-//    joiner : table ( join table ( 'ON' term | 'USING' qnames )* )* ;
-
-    sources
-        : sources ',' sources
-        | sources join sources ( 'ON' term | 'USING' qnames )*
-        | source
-        | '(' sources ')'
-        ;
-
-//    sources
-//        : table
-//          ( ( ',' table )+
-//          | ( join table ( 'ON' term | 'USING' qnames )* )+
-//          )?
-//        ;
-
     combo
         : 'INTERSECT'
         | 'MINUS'
@@ -363,8 +328,32 @@ select
         | 'MULTISET'
         ;
 
+
+    selectCore
+        : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
+          ( 'FROM' sources  )?
+          where? groupBy? having?
+          windows? qualify?
+        | 'VALUES' terms
+        // MySQL table statement
+        | 'TABLE' qname
+
+//    | '(' selectCore ')'
+        ;
+
+    sources
+        : sources join sources ('ON' term)+
+        | sources join sources 'USING' qnames
+        | sources join sources
+        | sources ',' sources
+        | source
+        | pivot | unpivot
+        | '(' sources ')'
+        ;
+
+
 //    sources
-////        : sources ( join sources ( 'ON' term | 'USING' qnames )* | pivot | unpivot )+
+////        : sources ( join sources ( 'ON' term | 'USING' qnames )*  )+
 
     source
         : qname ( 'AS'? alias names? )?
@@ -439,12 +428,13 @@ select
 
         join
             // TODO 'LATERAL'
-//            : ','
                 // TODO argh figure out correct, robust join operators
-//            | 'NATURAL'?
             : 'NATURAL'?
 //                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
-                  ( 'LEFT' 'OUTER'? |  'INNER' | 'CROSS' )?
+              ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
+                |  'INNER'
+                | 'CROSS'
+              )?
               'JOIN'
             ;
 
@@ -544,9 +534,6 @@ term
 //    | qname ASSIGN term
    ;
 
-//    assign
-//        : '=' | ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
-
 subterm
 //    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm
     : ( '+' | '-' | '!' | 'NOT' ) subterm
@@ -555,45 +542,48 @@ subterm
     | subterm ( '+' | '-' ) subterm
     | <assoc=right> subterm '^' subterm
     | subterm predicate
-    | subterm '::' type
-    | subterm index+
-    | subterm 'AT' ( 'LOCAL' | timeZone string )
-    | subterm timeCast
+
 //    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
 //    | subterm BOOLEAN subterm
-    | crazy
+    | value
     ;
 
- crazy
-    : literal                                                       # SubtermLiteral
-    | qname                                                          # SubtermColumn
-//    | subterm ( '::' subterm )+                                       # SubtermScope // Postgres?
-    | function ( '.' function )*                                      # SubtermFunction
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'                  # SubtermCast
-//    | subterm 'COLLATE' name                                         # SubtermCOLLATE
-    | interval                                                          # SubtermInterval
-    | select                                                           # SubtermQuery
-//    | table                                                           # SubtermQuery
-    | array                                                           # SubtermArray
+ value
+    : literal
+    | qname
+    | value '::' type
+    | value index+
+    | value 'AT' ( 'LOCAL' | timeZone string )
+    | value timeCast
+    | value ( '::' value )+                                      // Postgres?
+    | function ( '.' function )*
+    | ( 'CAST' | 'TRY_CAST' ) '(' value 'AS' type ')'
+//    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
+//    | subterm 'COLLATE' name
+    | interval
+    | select
+//    | table
+    | array
 //    | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
-    | case                                                            # SubtermCase
-//    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'       # SubtermUNIQUE
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname                     # SubtermSequence
+    | case
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
     // PL/SQL
 //    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //   TODO  | sequenceValueExpression
-    | 'ROW'? '(' terms? ')' ( '.' name )?                             # SubtermRow
+    | 'ROW'? '(' terms? ')' ( '.' name )?
 //    | 'ANY' '(' ( table | terms ) ')'                             # SubtermANY
-    | 'ANY' '(' table ')'                             # SubtermANY
+    | 'ANY' '(' table ')'
+//    | '(' value ')'
     ;
 
     case
-        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
+        : 'CASE' term ( 'WHEN' predicate 'THEN' value )+ ( 'ELSE' value )? 'END'   // # CaseSimple
+//        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # CaseSearch
         ;
 
     predicate
-//        : compare subterm                                                          # PredicateCompare
         : ( EQ | COMPARE | ASSIGN ) subterm                                           # PredicateCompare
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateIsNull
 //        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
@@ -611,14 +601,8 @@ subterm
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' ( string | term ) )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+        | value # abc
         ;
-
-//        compare
-//            : '=' | '==' | '<>' | '!=' | '^=' | '<' | '<=' | '>' | '>=' | '&&'
-//            // Postgres match regex
-////            | '~' | '~*' | '!~' | '!~*'
-////            | OPERATOR
-//            ;
 
         logicals
             : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
@@ -701,21 +685,12 @@ function
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
 //    | 'EXTRACT' '(' timeUnit 'FROM' ( interval | datetime ) ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
+
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
-    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-    | 'XMLCONCAT' '(' terms ')'
-    | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
-    | 'XMLEXISTS' '(' subterm passing? ')'
-    | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-    | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
-    | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
-    | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
-    | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
+    | xmlFunction
     // Postgres
     | 'ARRAY' '(' select ')'
     | '{fn' function '}' //  ODBC style
-
-
     // Generic syntax for all analytic functions?
     | qname '(' term respectIgnore? ')' respectIgnore? over?
 
@@ -750,6 +725,19 @@ function
 
     aggregateFunction
         : 'SUM' '(' allDistinct? term ')' filter? over?
+        ;
+
+    xmlFunction
+        : 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+        | 'XMLCONCAT' '(' terms ')'
+        | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
+        | 'XMLEXISTS' '(' subterm passing? ')'
+
+        | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+        | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
+        | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
+        | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
+        | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
         ;
 
     withinGroup
@@ -894,7 +882,7 @@ keyword
  | 'BETWEEN'
  | 'BY'
  | 'CASCADE'
- | 'CASE'
+// | 'CASE' cuz ambig function
  | 'CAST'
  | 'CATEGORY'
  | 'CENTURY'
@@ -948,7 +936,7 @@ keyword
  | 'IF'
  | 'IGNORE'
  | 'IMMEDIATE'
- | 'IN'
+// | 'IN' cuz function
  | 'INDEX'
  | 'INDEXED'
  | 'INITIALLY'
@@ -974,7 +962,7 @@ keyword
  | 'MOD'
  | 'MONTH'
  | 'NAME'
- | 'NATURAL'
+ // | 'NATURAL' cuz
  | 'NO'
 // | 'NOT' cuz function ambig
  | 'NOTNULL'
@@ -1022,13 +1010,13 @@ keyword
  | 'TRIGGER'
  | 'TYPE'
  | 'UNION'
- | 'UNIQUE'
+// | 'UNIQUE' cuz function
  | 'UPDATE'
  | 'USER'
  | 'USING'
  | 'VACUUM'
  | 'VALUE'
- | 'VALUES'
+// | 'VALUES'  cuz function ambig
  | 'VARCHAR'
  | 'VIEW'
  | 'VIRTUAL'
@@ -1235,11 +1223,11 @@ EQ : '=' ;
 
 COMPARE
     : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
+    | '~' | '~*' | '!~' | '!~*'
     ;
 
 ASSIGN
     : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
-    | '~' | '~*' | '!~' | '!~*'
     ;
 
 BOOLEAN : '<<' | '>>' | '&' | '|' ;
