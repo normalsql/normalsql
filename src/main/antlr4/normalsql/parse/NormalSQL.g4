@@ -318,7 +318,7 @@ select
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-    | '(' select  ( combo select )* ')'
+    | '(' select ( combo select )* ')'
     ;
 
     selectCore
@@ -327,6 +327,9 @@ select
           where? groupBy? having?
           windows? qualify?
         | 'VALUES' terms
+        // MySQL table statement
+        | 'TABLE' qname
+
 //    | '(' selectCore ')'
 
         ;
@@ -376,7 +379,7 @@ select
     table
         : select
         // MySQL table statement
-        | 'TABLE' qname
+//        | 'TABLE' qname
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
         // DB2 intermediate result table
@@ -565,6 +568,7 @@ subterm
     | subterm timeCast                                                # SubtermInterval // PL/SQL, ODBC
     | interval                                                          # SubtermInterval
     | select                                                           # SubtermQuery
+//    | table                                                           # SubtermQuery
     | array                                                           # SubtermArray
     | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
     | case                                                            # SubtermCase
@@ -574,6 +578,8 @@ subterm
 //    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //   TODO  | sequenceValueExpression
     | 'ROW'? '(' terms? ')' ( '.' name )?                             # SubtermRow
+//    | 'ANY' '(' ( table | terms ) ')'                             # SubtermANY
+    | 'ANY' '(' table ')'                             # SubtermANY
     | <assoc=right> subterm '^' subterm                               # SubtermBinary
     ;
 
@@ -594,7 +600,8 @@ subterm
 //        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
-        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
+//        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
+        | 'NOT'? 'IN' '(' terms? ')'                                   # PredicateIN
         // PL/SQL dialect
 //        | 'NOT'? 'IN' subterm                                                      # PredicateIN
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
@@ -732,6 +739,7 @@ function
     | 'SIN' '(' subterm ')'
     | 'LEFT' '(' subterm ',' subterm ')'
 
+    | 'LOWER' '(' subterm ')'
 
     | aggregateFunction
     ;
@@ -872,7 +880,7 @@ keyword
  | 'ALTER'
  | 'ANALYZE'
  | 'AND'
- | 'ANY'
+// | 'ANY'
  | 'AS'
  | 'ASC'
  | 'ATTACH'
@@ -954,7 +962,7 @@ keyword
  | 'KEY'
  | 'LAST'
 // | 'LEFT'
- | 'LIKE'
+// | 'LIKE' cuz function ambig
  | 'LIMIT'
  | 'MATCH'
  | 'MILLENNIUM'
@@ -964,10 +972,10 @@ keyword
  | 'NAME'
  | 'NATURAL'
  | 'NO'
- | 'NOT'
+// | 'NOT' cuz function ambig
  | 'NOTNULL'
 // | 'NULL'
- | 'OF'
+// | 'OF' cuz function ambig
  | 'OFFSET'
  | 'ON'
  | 'OR'
