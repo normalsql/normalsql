@@ -314,11 +314,12 @@ returning
         ;
 
 select
-    :  with? selectCore ( combo selectCore )*
+    :  with? selectCore
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-    | '(' select ( combo select )* ')'
+    | select ( combo select )+
+    | '(' select  ')'
     ;
 
     combo
@@ -336,26 +337,23 @@ select
         | 'VALUES' terms
         // MySQL table statement
         | 'TABLE' qname
-
-//    | '(' selectCore ')'
         ;
 
     sources
-        : sources join sources ('ON' term)+
-        | sources join sources 'USING' qnames
+        : sources ',' sources
         | sources join sources
-        | sources ',' sources
+        | sources join sources 'ON' term
+        | sources join sources 'USING' qnames
         | source
-        | pivot | unpivot
-        | '(' sources ')'
         ;
 
     source
-        : qname ( 'AS'? alias names? )?
+        : ( qname | '(' qname ')' ) ( 'AS'? alias names? )?
           ( ( 'USE' 'INDEX' names ) // H2
           | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ) // SQLite
           )?
         | table ( 'AS'? alias names? )?
+        | '(' sources ')'
         ;
 
     table
@@ -370,16 +368,20 @@ select
         | 'TABLE' '(' term ')'
         | 'JSON_TABLE' // TODO
         | xmlTable
-        | function
         | unnest
+        | pivot
+        | unpivot
+        | '(' table ')'
         ;
 
     unnest
         : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
 
-    // H2 table function http://h2database.com/html/functions.html#table
     tableFunc
-        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')' ;
+        // H2 table function http://h2database.com/html/functions.html#table
+        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')'
+        |  'SYSTEM_RANGE' '(' term ',' term ( ',' term )? ')'
+        ;
 
         tableFuncParam
             : name ( type | qname | 'NULL' ) '=' subterm ;
@@ -515,22 +517,17 @@ term
     :
     subterm
     | 'NOT' term
-//    | term ( 'AND' | 'XOR' | 'OR' ) term
     | term 'AND' term
     | term 'XOR' term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
     // CrateDB ?
 //    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-//    | VARIABLE assign term
-
-//    | qname ASSIGN term
    ;
 
 subterm
-//    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm
     : value
-    | ( '+' | '-' | '!' | 'NOT' ) subterm
+    | ( '+' | '-' | '!' ) subterm
     | subterm '||' subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
     | subterm ( '+' | '-' ) subterm
@@ -551,12 +548,10 @@ subterm
     | value ( '::' value )+                                      // Postgres?
     | function ( '.' function )*
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
-//    | subterm 'COLLATE' name
     | interval
     | select
-//    | table
     | array
-//    | (( 'NOT' )? 'EXISTS' )? '(' select ')'                          # SubtermEXISTS
+    | 'EXISTS' '(' select ')'
     | case
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
@@ -564,13 +559,10 @@ subterm
 //    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //   TODO  | sequenceValueExpression
     | 'ROW'? '(' terms? ')' ( '.' name )?
-//    | 'ANY' '(' ( table | terms ) ')'                             # SubtermANY
-    | 'ANY' '(' table ')'
-//    | '(' value ')'
     ;
 
     case
-        : 'CASE' term ( 'WHEN' ( predicate | function | literal ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
+        : 'CASE' term ( 'WHEN' ( predicate | terms ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # CaseSearch
         ;
 
@@ -581,8 +573,7 @@ subterm
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
         | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? scalar ( ',' scalar )* ')'              # PredicateOfType
-//        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
+        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
 //        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
@@ -602,7 +593,6 @@ subterm
             : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 type
-//    : 'ROW' '(' name scalar ( ',' name scalar )* ')'
     : 'ROW' '(' name type ( ',' name type )* ')'
     | 'SETOF' type
     | type 'ARRAY' ( '[' INTEGER ']' )?
@@ -648,6 +638,7 @@ scalar
     : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
     | 'VARCHAR'
     | 'VARCHAR2'
+    | 'VARCHAR_IGNORECASE'
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
     ;
 
@@ -672,7 +663,6 @@ function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-//    | 'EXTRACT' '(' timeUnit 'FROM' ( interval | datetime ) ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | xmlFunction
@@ -692,9 +682,11 @@ function
     ;
 
     aggregateFunction
-        : 'SUM' '(' allDistinct? term ')' filter? over?
-    // Generic syntax for all aggregate functions?
-    | qname
+//        :
+//        'SUM' '(' allDistinct? term ')' filter? over?
+//    // Generic syntax for all aggregate functions?
+//    |
+    : qname
       '('
       ( ( qname '.' )? '*' | allDistinct? terms orderBy?
 //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
@@ -868,7 +860,7 @@ keyword
  | 'ALTER'
  | 'ANALYZE'
  | 'AND'
-// | 'ANY'
+ | 'ANY'
  | 'AS'
  | 'ASC'
  | 'ATTACH'
@@ -915,7 +907,7 @@ keyword
  | 'ESCAPE'
  | 'EXCEPT'
  | 'EXCLUSIVE'
- | 'EXISTS'
+// | 'EXISTS'  cuz ambig function
  | 'EXPLAIN'
  | 'EXTRACT'
  | 'FAIL'
@@ -994,7 +986,7 @@ keyword
  | 'SET'
  | 'SETTINGS'
  | 'SEQUENCE'
- | 'SOME'
+// | 'SOME'
  | 'SUBSTRING'
  | 'SUM'
  | 'TABLE'
@@ -1059,7 +1051,7 @@ alias
     // TODO sympred for aliases
     // hard coded to pass tests
     | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
-    | 'NTH' | 'TYPE'
+    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
 //    | keyword
     ;
 
