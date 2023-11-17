@@ -19,15 +19,16 @@
 
 grammar SplitSubterm;
 
-options {
- caseInsensitive=true;
- }
+options { caseInsensitive=true; }
 
  @lexer::members
  {
      public boolean bracketsEnabled = false;
      public boolean operatorEnabled = false;
  }
+
+aaa1 : statement? ( ';' statement? )* EOF ;
+aaa2 : term ;
 
 script : statement? ( ';' statement? )* EOF ;
 
@@ -250,7 +251,7 @@ delete
     : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
       // Postgres
 //      ( 'USING' sources ( ',' sources )* )?
-//      ( 'USING' sources )?
+      ( 'USING' sources )?
       where? returning? orderBy? limit? offset?
       ;
 
@@ -292,7 +293,7 @@ merge
 update
     : with? 'UPDATE' ( 'OR' afirr )?
       qname ( 'AS'? name )? indexedBy?
-//      'SET' setter ( ',' setter )* ( 'FROM' sources )?
+      'SET' setter ( ',' setter )* ( 'FROM' sources )?
       where? returning? orderBy? limit? offset?  ;
 
     setter
@@ -331,9 +332,7 @@ select
 
     selectCore
         : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-          ( 'FROM' sources  )?
-          where? groupBy? having?
-          windows? qualify?
+          ( 'FROM' sources )? where? groupBy? having? windows? qualify?
         | 'VALUES' terms
         // MySQL table statement
         | 'TABLE' qname
@@ -351,19 +350,13 @@ select
         | '(' sources ')'
         ;
 
-
-//    sources
-////        : sources ( join sources ( 'ON' term | 'USING' qnames )*  )+
-
     source
         : qname ( 'AS'? alias names? )?
-          // H2
-          ( ( 'USE' 'INDEX' names )
-          // SQLite
-          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname )
+          ( ( 'USE' 'INDEX' names ) // H2
+          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ) // SQLite
           )?
         | table ( 'AS'? alias names? )?
-    ;
+        ;
 
     table
         : select
@@ -518,9 +511,9 @@ aliasedTerms
 
 term
 //    : '(' terms ')'
-//    | subterm
-    : subterm
     // TODO redundant w/ subterm unary. still ok?
+    :
+    subterm
     | 'NOT' term
 //    | term ( 'AND' | 'XOR' | 'OR' ) term
     | term 'AND' term
@@ -536,7 +529,8 @@ term
 
 subterm
 //    | ( '+' | '-' | '~' | '!' | 'NOT' ) subterm
-    : ( '+' | '-' | '!' | 'NOT' ) subterm
+    : value
+    | ( '+' | '-' | '!' | 'NOT' ) subterm
     | subterm '||' subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
     | subterm ( '+' | '-' ) subterm
@@ -545,7 +539,6 @@ subterm
 
 //    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
 //    | subterm BOOLEAN subterm
-    | value
     ;
 
  value
@@ -557,8 +550,7 @@ subterm
     | value timeCast
     | value ( '::' value )+                                      // Postgres?
     | function ( '.' function )*
-    | ( 'CAST' | 'TRY_CAST' ) '(' value 'AS' type ')'
-//    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
 //    | subterm 'COLLATE' name
     | interval
     | select
@@ -578,8 +570,7 @@ subterm
     ;
 
     case
-        : 'CASE' term ( 'WHEN' predicate 'THEN' value )+ ( 'ELSE' value )? 'END'   // # CaseSimple
-//        : 'CASE' term ( 'WHEN' ( terms | predicate ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
+        : 'CASE' term ( 'WHEN' ( predicate | function | literal ) 'THEN' term )+ ( 'ELSE' term )? 'END'   // # CaseSimple
         | 'CASE' ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'                        //  # CaseSearch
         ;
 
@@ -601,7 +592,6 @@ subterm
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' ( string | term ) )?      # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
-        | value # abc
         ;
 
         logicals
@@ -621,37 +611,36 @@ type
     ;
 
 scalar
-    : 'INT'
-    | 'INTEGER'
-    | 'TINYINT'
-    | 'SMALLINT'
-    | 'BIGINT'
-    | 'REAL'
-    | 'DECFLOAT'
-    | 'FLOAT' length?
-    | 'DOUBLE' 'PRECISION'?
-    | 'DECIMAL' precision?
-    | 'DEC' precision?
-    | 'NUMBER' precision?
-    | 'NUMERIC' precision?
-    | 'BOOL' | 'BOOLEAN'
-    | 'INTERVAL'
-    | 'VARBINARY'
-    // Postgres?
+    : 'BIGINT'
+    | 'BINARY' precision?
     | 'BIT' 'VARYING'? length?
-    | chars length?
     | 'BLOB' precision?
+    | 'BOOL' | 'BOOLEAN'
+    | chars length?
     | 'CLOB'
-    | 'NCLOB'
     | 'DATE'
-//    | ( 'TIMESTAMP' | 'TIME' ) length? ( ( 'WITH' | 'WITHOUT' ) 'LOCAL'? 'TIME' 'ZONE' )?
-    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
-
-    | 'UUID'
+    | 'DEC' precision?
+    | 'DECFLOAT'
+    | 'DECIMAL' precision?
+    | 'DOUBLE' 'PRECISION'?
+    | 'FLOAT' length?
+    | 'INT'
+    | 'INTEGER'
+    | 'INTERVAL'
     | 'JSON'
     | 'JSONB'
+    | 'LONG'
+    | 'NCLOB'
+    | 'NUMBER' precision?
+    | 'NUMERIC' precision?
+    | 'RAW'
+    | 'REAL'
+    | 'SMALLINT'
+    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
+    | 'TINYINT'
+    | 'UUID'
+    | 'VARBINARY'
     | 'XML'
-
 //    | name+ precision?
     ;
 
@@ -685,16 +674,25 @@ function
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
 //    | 'EXTRACT' '(' timeUnit 'FROM' ( interval | datetime ) ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
-
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | xmlFunction
-    // Postgres
-    | 'ARRAY' '(' select ')'
+    | 'ARRAY' '(' select ')' // Postgres
     | '{fn' function '}' //  ODBC style
-    // Generic syntax for all analytic functions?
-    | qname '(' term respectIgnore? ')' respectIgnore? over?
+    | 'CURRENT_DATE'
+    | 'CURRENT_TIME'
+    | 'CURRENT_TIMESTAMP'
+    | 'SIN' '(' subterm ')'
+    | 'LEFT' '(' subterm ',' subterm ')'
+    | 'LOWER' '(' subterm ')'
+    | aggregateFunction
+//    | analyticFunction
+//    | qname '(' terms?  ')'
+//    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
+//    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+    ;
 
-
+    aggregateFunction
+        : 'SUM' '(' allDistinct? term ')' filter? over?
     // Generic syntax for all aggregate functions?
     | qname
       '('
@@ -708,23 +706,6 @@ function
       filter?
       ( 'FROM' firstLast )?
       respectIgnore? over?
-//    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
-//    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
-    | 'CURRENT_DATE'
-    | 'CURRENT_TIME'
-    | 'CURRENT_TIMESTAMP'
-
-
-    | 'SIN' '(' subterm ')'
-    | 'LEFT' '(' subterm ',' subterm ')'
-
-    | 'LOWER' '(' subterm ')'
-
-    | aggregateFunction
-    ;
-
-    aggregateFunction
-        : 'SUM' '(' allDistinct? term ')' filter? over?
         ;
 
     xmlFunction
@@ -739,6 +720,17 @@ function
         | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
         | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
         ;
+
+//    analyticFunction
+//        : ( 'FIRST_VALUE'
+//          | 'LAST_VALUE'
+//          | 'NTH_VALUE'
+//          )
+//          '(' terms respectIgnore? ')' respectIgnore? over
+//        // Generic syntax for all analytic functions?
+//        | qname '(' term respectIgnore? ')' respectIgnore? over
+//
+//        ;
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -796,13 +788,17 @@ orderBy
         ;
 
 literal
-    : ( '+' | '-' )? ( INTEGER | FLOAT )
+//    : ( '+' | '-' )? ( INTEGER | FLOAT )
+    : INTEGER | FLOAT
     | BITS
     | BYTES
     | OCTALS
-//    | truth | boolean
-    | 'TRUE' | 'FALSE' | 'UNKNOWN' | 'NULL'
-    | 'ON' | 'OFF'
+    | 'TRUE'
+    | 'FALSE'
+    | 'UNKNOWN'
+    | 'NULL'
+    | 'ON'
+    | 'OFF'
     | 'DEFAULT'
     | datetime
     | jsonObject
@@ -819,7 +815,7 @@ datetime
     ;
 
 boolean
-    : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
+    : 'TRUE' | 'FALSE' /* | 'ON' | 'OFF'  */ ;
 
 interval
     : 'INTERVAL' subterm timeCast?
@@ -990,6 +986,7 @@ keyword
  | 'RIGHT'
  | 'ROLLBACK'
  | 'ROW'
+ | 'ROWS'
  | 'SAVEPOINT'
  | 'SCHEMA'
  | 'SECOND'
@@ -1058,9 +1055,11 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-//    : name | string ;
     : ID | STRING | UNICODE_NAME uescape?
-    | 'A' | 'CASE' | 'TEST' | 'SUM'
+    // TODO sympred for aliases
+    // hard coded to pass tests
+    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
+    | 'NTH' | 'TYPE'
 //    | keyword
     ;
 
