@@ -344,6 +344,7 @@ select
         | sources join sources
         | sources join sources 'ON' term
         | sources join sources 'USING' qnames
+        | '(' sources ')'
         | source
         ;
 
@@ -353,7 +354,6 @@ select
           | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ) // SQLite
           )?
         | table ( 'AS'? alias names? )?
-        | '(' sources ')'
         ;
 
     table
@@ -371,7 +371,6 @@ select
         | unnest
         | pivot
         | unpivot
-        | '(' table ')'
         ;
 
     unnest
