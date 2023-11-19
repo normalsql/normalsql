@@ -140,24 +140,24 @@ public class Worker
 
 				case IN in ->
 				{
-					String column = getColumn( in.column );
-					for( int nth = 0; nth < in.literals.size(); nth++ )
-					{
-						SubtermLiteralContext l = in.literals.get( nth );
-						String temp = column + "_" + ( nth + 1 );
-						Accessor prop = _helper.create( l, temp );
-						work.statementAccessors.add( prop );
-					}
+//					String column = getColumn( in.column );
+//					for( int nth = 0; nth < in.literals.size(); nth++ )
+//					{
+//						SubtermValueContext l = in.literals.get( nth );
+//						String temp = column + "_" + ( nth + 1 );
+//						Accessor prop = _helper.create( l, temp );
+//						work.statementAccessors.add( prop );
+//					}
 				}
 
 				case Row row ->
 				{
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
-						SubtermLiteralContext l = row.literals.get( nth );
-						String col = row.insert.columns.get( nth ).getText();
-						Accessor prop = _helper.create( l, col );
-						work.statementAccessors.add( prop );
+//						SubtermLiteralContext l = row.literals.get( nth );
+//						String col = row.insert.columns.get( nth ).getText();
+//						Accessor prop = _helper.create( l, col );
+//						work.statementAccessors.add( prop );
 					}
 				}
 
@@ -225,7 +225,7 @@ public class Worker
 
 	public String getColumn( SubtermContext b )
 	{
-		RuleContext column = ( (SubtermColumnContext) b ).qname();
+		RuleContext column = ( (SubtermValueContext) b ).value().qname();
 		return _helper.getTrimmedText( column );
 	}
 

@@ -25,7 +25,8 @@ public class Drill
 		String sql =
 		"""
 -- SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1 AS curr LEFT JOIN t1 AS other GROUP BY curr.id1);
-select * from (SELECT 1);
+-- select * from (SELECT 1);
+select (  select 1 )
 """
 		;
 

@@ -199,7 +199,7 @@ extends
 		Knockout<?,?> k = switch( pc )
 		{
 			case PredicateBETWEENContext between -> new BETWEEN( between );
-			case PredicateCompareContext compare -> new Comparison( compare );
+			case PredicateOperatorContext compare -> new Comparison( compare );
 			case PredicateINContext in -> new IN( in );
 			case PredicateLIKEContext like -> new LIKE( like );
 			default -> null;

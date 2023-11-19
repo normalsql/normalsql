@@ -6,8 +6,6 @@ package test;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.ScriptContext;
-import normalsql.parse.SplitSubtermLexer;
-import normalsql.parse.SplitSubtermParser;
 import org.antlr.v4.runtime.*;
 
 import java.nio.file.*;
@@ -15,14 +13,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <p>H2_SelectOnly_Tests class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
-H2_SelectOnly_Tests
+	H2_SelectOnly_Tests
 {
 	static int count = 0;
 
@@ -155,9 +147,9 @@ H2_SelectOnly_Tests
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new SplitSubtermLexer( chars );
+		var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new SplitSubtermParser( tokens );
+		var parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {

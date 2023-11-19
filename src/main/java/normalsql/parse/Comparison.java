@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.PredicateCompareContext;
+import normalsql.parse.NormalSQLParser.PredicateOperatorContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class
 	Comparison
 extends
-	Knockout<PredicateCompareContext, Comparison.Pattern>
+	Knockout<PredicateOperatorContext, Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -37,7 +37,7 @@ extends
 	public SubtermContext literal;
 	public SubtermContext column;
 
-	public Comparison( PredicateCompareContext context )
+	public Comparison(NormalSQLParser.PredicateOperatorContext context )
 	{
 		super( context );
 ////		op = operatorMap.get( context.compare().getText() );
