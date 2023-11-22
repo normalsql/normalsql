@@ -17,7 +17,7 @@
 
 */
 
-grammar NormalSQL;
+grammar Combo;
 
 options { caseInsensitive=true; }
 
@@ -314,23 +314,28 @@ returning
         ;
 
 select
-    :
-    with?
-    selectCore
-      // Because various dialects order these clauses differently
-//      // TODO: Allow just one of each clause (somehow)
-      ( orderBy | offset | fetch | limit | forUpdate )*
-    | select ( combo select )+
-    | '(' select  ')'
+    : with? combine
+    // Because various dialects order these clauses differently
+    // TODO: Allow just one of each clause (somehow)
+    ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
-    combo
-        : 'INTERSECT'
-        | 'MINUS'
-        | 'UNION' 'ALL'?
-        | 'EXCEPT'
-        | 'MULTISET'
+    combine
+        : wrap ( 'INTERSECT' | 'MINUS' ) wrap
+        | wrap ( 'UNION' 'ALL'? | 'EXCEPT' ) wrap
+        | wrap 'MULTISET' wrap
+        | selectCore
         ;
+
+        wrap : selectCore | '(' selectCore ')' ;
+
+//    combo
+//        : 'INTERSECT'
+//        | 'MINUS'
+//        | 'UNION' 'ALL'?
+//        | 'EXCEPT'
+//        | 'MULTISET'
+//        ;
 
 
     selectCore
@@ -519,6 +524,7 @@ term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
     | term 'XOR' term
+    | '(' term ')'
     // CrateDB ?
 //    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
    ;
@@ -532,6 +538,7 @@ subterm
     | subterm ( '+' | '-' ) subterm                         # SubtermSum
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm           # SubtermBitwise
     | subterm predicate                                     # SubtermPredicate
+    | '(' subterm ')' # SubtermPredicate
     | value                                                 # SubtermValue
     ;
 
@@ -546,16 +553,17 @@ subterm
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
     | 'INTERVAL' value
     | value timeCast
-    | select
     | array
     | 'EXISTS' '(' select ')'
+    | '(' select ')'
+//    | '(' value ')'
     | case
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-    // PL/SQL
-//    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
-//   TODO  | sequenceValueExpression
-    | 'ROW'? '(' terms? ')' ( '.' name )?
+//    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
+//    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
+//    // PL/SQL
+////    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+////   TODO  | sequenceValueExpression
+//    | 'ROW'? '(' terms? ')' ( '.' name )?
     ;
 
     case
@@ -569,12 +577,12 @@ subterm
         caseElse : 'ELSE' term ;
 
     predicate
-        : ( EQ | COMPARE | ASSIGN ) subterm                                        # PredicateOperator
+        : ( EQ | COMPARE | ASSIGN ) term                                        # PredicateOperator
         | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNull
 //        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
         // PL/SQL dialect?
         | 'IS' 'NOT'? logicals                                                     # PredicateLogical
-        | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                    # PredicateDistinct
+        | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # PredicateDistinct
         | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
         | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
         | 'IS' 'NOT'? term                                                         # PredicateIS
@@ -582,8 +590,8 @@ subterm
         | 'NOT'? 'IN' '(' terms? ')'                                               # PredicateIN
         // PL/SQL dialect
 //        | 'NOT'? 'IN' subterm                                                      # PredicateIN
-        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm   # PredicateBETWEEN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm
+        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # PredicateBETWEEN
+        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
           ( 'ESCAPE' ( string | term ) )?                                          # PredicateLIKE
         | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
@@ -984,7 +992,7 @@ keyword
  | 'SAVEPOINT'
  | 'SCHEMA'
  | 'SECOND'
- | 'SELECT'
+// | 'SELECT'
  | 'SET'
  | 'SETTINGS'
  | 'SEQUENCE'
@@ -1100,7 +1108,7 @@ NATIONAL_STRING
 STRING
     // TODO allow newlines within STRINGs?
     // TODO allow newlines, but not whitespace, between STRINGs?
-    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 // TODO no newlines etc within IDs?
 ID
