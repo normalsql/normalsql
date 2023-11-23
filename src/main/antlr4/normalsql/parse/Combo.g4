@@ -524,7 +524,7 @@ term
 //    | term ( 'OR' | '||' ) term
     | term 'OR' term
     | term 'XOR' term
-    | '(' term ')'
+//    | '(' term ')'
     // CrateDB ?
 //    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
    ;
@@ -532,13 +532,28 @@ term
 subterm
     : <assoc=right> subterm '^' subterm                     # SubtermPower
     | ( '+' | '-' | '!' | '~' ) subterm                           # SubtermUnary
-    | subterm 'COLLATE' subterm                             # SubtermCOLLATE
-    | subterm  ( '||' | '->' | '->>' ) subterm              # SubtermConcat
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm           # SubtermBitwise
+//    | subterm  ( '||' | '->' | '->>' ) subterm              # SubtermConcat
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm   # SubtermFactor
     | subterm ( '+' | '-' ) subterm                         # SubtermSum
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm           # SubtermBitwise
-    | subterm predicate                                     # SubtermPredicate
-    | '(' subterm ')' # SubtermPredicate
+//    | subterm predicate                                     # SubtermPredicate
+    | subterm ( EQ | COMPARE | ASSIGN ) term                                        # abc
+        | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # abc
+        | subterm 'IS' 'NOT'? logicals                                                     # abc
+        | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # abc
+        | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # abc
+        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # abc
+        | subterm 'IS' 'NOT'? term                                                         # abc
+//        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
+        | subterm 'NOT'? 'IN' '(' terms? ')'                                               # abc
+        // PL/SQL dialect
+//        | 'NOT'? 'IN' subterm                                                      # PredicateIN
+        | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # abc
+        | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
+          ( 'ESCAPE' ( string | term ) )?                                          # abc
+//
+    | subterm 'COLLATE' subterm                             # SubtermCOLLATE
+    | '(' term ')' # SubtermPredicate
     | value                                                 # SubtermValue
     ;
 
@@ -593,7 +608,7 @@ subterm
         | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # PredicateBETWEEN
         | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
           ( 'ESCAPE' ( string | term ) )?                                          # PredicateLIKE
-        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+//        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
         ;
 
         logicals
