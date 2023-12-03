@@ -517,69 +517,175 @@ aliasedTerms
 // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
 // | row 'INTERSECTS' '(' term ',' term ')'
 
+termEOF : term EOF;
+
 term
-    : subterm
-    | 'NOT' term
+    : term 'OR' term
     | term 'AND' term
-//    | term ( 'OR' | '||' ) term
-    | term 'OR' term
-    | term 'XOR' term
+    | subterm
+    ;
+
+//term
+//    : 'NOT' term
+//    | term 'AND' term
+////    | term ( 'OR' | '||' ) term
+//    | term 'OR' term
+//    | term 'XOR' term
 //    | '(' term ')'
-    // CrateDB ?
-//    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-   ;
+//    | test
+////    | term ( '<<' | '>>' | '&' | '|' ) term
+//    // CrateDB ?
+////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
+//   ;
+
+//test
+//    :  subterm ( EQ | COMPARE | ASSIGN ) subterm
+//        | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
+//        | subterm 'IS' 'NOT'? logicals
+//        | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
+//        | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
+//        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
+//        | subterm 'IS' 'NOT'? subterm
+////        | subterm 'NOT'? 'IN' subterm
+////        | subterm 'NOT'? 'IN' '(' ( table | terms )? ')'
+//        | subterm 'NOT'? 'IN' '(' terms? ')'
+////        | subterm 'NOT'? 'IN' '(' subterm? ')'
+//        // PL/SQL dialect
+////        | 'NOT'? 'IN' subterm                                                      # PredicateIN
+//        | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
+//        | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm
+//          ( 'ESCAPE' ( string | subterm ) )?
+//        | subterm
+//;
+
+
+//subterm
+//    : <assoc=right> subterm '^' subterm
+//    | ( '+' | '-' | '!' | '~' ) subterm
+//    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
+////    | subterm  ( '||' | '->' | '->>' ) subterm
+//    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
+//    | subterm ( '+' | '-' ) subterm
+////    | term
+//    | value
+//    | '(' terms? ')'
+//    | '(' subterm ')'
+//    ;
 
 subterm
-    : <assoc=right> subterm '^' subterm                     # SubtermPower
-    | ( '+' | '-' | '!' | '~' ) subterm                           # SubtermUnary
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm           # SubtermBitwise
-//    | subterm  ( '||' | '->' | '->>' ) subterm              # SubtermConcat
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm   # SubtermFactor
-    | subterm ( '+' | '-' ) subterm                         # SubtermSum
-//    | subterm predicate                                     # SubtermPredicate
-    | subterm ( EQ | COMPARE | ASSIGN ) term                                        # abc
-        | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # abc
-        | subterm 'IS' 'NOT'? logicals                                                     # abc
-        | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # abc
-        | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # abc
-        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # abc
-        | subterm 'IS' 'NOT'? term                                                         # abc
-//        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
-        | subterm 'NOT'? 'IN' '(' terms? ')'                                               # abc
-        // PL/SQL dialect
-//        | 'NOT'? 'IN' subterm                                                      # PredicateIN
-        | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # abc
-        | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
-          ( 'ESCAPE' ( string | term ) )?                                          # abc
-//
-    | subterm 'COLLATE' subterm                             # SubtermCOLLATE
-    | '(' term ')' # SubtermPredicate
-    | value                                                 # SubtermValue
+    : value (( '.' name ) | ( '[' ( term | term? ':' term? )? ']' ))*
+    | ( '+' | '-' | '~' ) subterm
+    | subterm 'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
+    | subterm '|' subterm
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
+    | subterm ( '+' | '-' ) subterm
+    | subterm '||' subterm
+    | subterm '&' subterm
+    | subterm '^' subterm
+    | subterm ( '=' | '!=' | '<>' | '<' | '<=' | '>' | '>='  ) subterm
+    | subterm 'NOT'? ( 'LIKE' | 'RLIKE' | 'REGEXP' ) subterm
+    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
+    | subterm 'NOT'? 'IN' '(' ( select | terms  ) ')'
+    | subterm 'NOT'? 'BETWEEN' subterm 'AND' subterm
+    | 'EXISTS' '(' select ')'
+    | ( 'NOT' | '!' ) subterm
+//    | subQuerySelectorOperator ( 'ANY' | 'SOME' | 'ALL' ) LPAREN selectStatement RPAREN
     ;
 
- value
+predicate
+    :  'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
+    |  ( '=' | '!=' | '<>' | '<' | '<=' | '>' | '>='  ) subterm
+    |  'NOT'? ( 'LIKE' | 'RLIKE' | 'REGEXP' ) subterm
+    |  'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
+    |  'NOT'? 'IN' '(' (  select | terms  ) ')'
+    |  'NOT'? 'BETWEEN' subterm 'AND' subterm
+//    | 'EXISTS' LPAREN selectStatement RPAREN
+    ;
+
+// value
+//    : literal
+//    | qname
+//    | function ( '.' function )*
+//    | value 'COLLATE' value
+//    | value '::' type
+//    | value index+
+//    | value 'AT' ( 'LOCAL' | timeZone string )
+//    | value ( '::' value )+
+//    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
+//    | 'INTERVAL' value
+//    | value timeCast
+//    | array
+//    | 'EXISTS' '(' select ')'
+//    | '(' select ')'
+//    | '(' value ')'
+//    | case
+////    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
+////    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
+////    // PL/SQL
+//////    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+//////   TODO  | sequenceValueExpression
+////    | 'ROW'? '(' terms? ')' ( '.' name )?
+//    ;
+
+value
     : literal
-    | qname
-    | function ( '.' function )*
-    | value '::' type
-    | value index+
-    | value 'AT' ( 'LOCAL' | timeZone string )
-    | value ( '::' value )+
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ')'
     | 'INTERVAL' value
     | value timeCast
-    | array
-    | 'EXISTS' '(' select ')'
-    | '(' select ')'
-//    | '(' value ')'
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
+    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
+//    | floorExpression
     | case
-//    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
-//    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-//    // PL/SQL
-////    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
-////   TODO  | sequenceValueExpression
-//    | 'ROW'? '(' terms? ')' ( '.' name )?
+    | '(' select ')'
+//    | selectStatement
+    | function
+    | name
+//    | qname
+    | '(' terms ')'
     ;
+
+literal
+    : INTEGER
+    | FLOAT
+    | BITS
+    | BYTES
+    | OCTALS
+    | 'TRUE'
+    | 'FALSE'
+    | 'UNKNOWN'
+    | 'NULL'
+    | 'ON'
+    | 'OFF'
+    | 'DEFAULT'
+    | datetime
+    | jsonObject
+    | jsonArray
+    | PARAMETER
+    | VARIABLE
+    | string
+    ;
+
+datetime
+    : 'DATE' string
+    | ( '{d' | '{t' | '{ts' ) string '}'
+    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+    ;
+
+boolean
+    : 'TRUE' | 'FALSE' /* | 'ON' | 'OFF'  */ ;
+
+timeCast
+    : timeUnit precision? ( 'TO' timeUnit precision? )?
+    ;
+
+timeUnit
+    : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
+    | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
+    | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
+    | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
+    | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
+    | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
+    | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
+
 
     case
         : 'CASE' term whenSimple+ caseElse? 'END'  # CaseSimple
@@ -591,32 +697,32 @@ subterm
         caseThen : 'THEN' term ;
         caseElse : 'ELSE' term ;
 
-    predicate
-        : ( EQ | COMPARE | ASSIGN ) term                                        # PredicateOperator
-        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNull
-//        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
-        // PL/SQL dialect?
-        | 'IS' 'NOT'? logicals                                                     # PredicateLogical
-        | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # PredicateDistinct
-        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
-        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
-        | 'IS' 'NOT'? term                                                         # PredicateIS
-//        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
-        | 'NOT'? 'IN' '(' terms? ')'                                               # PredicateIN
-        // PL/SQL dialect
-//        | 'NOT'? 'IN' subterm                                                      # PredicateIN
-        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # PredicateBETWEEN
-        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
-          ( 'ESCAPE' ( string | term ) )?                                          # PredicateLIKE
-//        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
-        ;
+//    predicate
+//        : ( EQ | COMPARE | ASSIGN ) term                                        # PredicateOperator
+//        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNull
+////        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
+//        // PL/SQL dialect?
+//        | 'IS' 'NOT'? logicals                                                     # PredicateLogical
+//        | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # PredicateDistinct
+//        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
+//        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
+//        | 'IS' 'NOT'? term                                                         # PredicateIS
+////        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
+//        | 'NOT'? 'IN' '(' terms? ')'                                               # PredicateIN
+//        // PL/SQL dialect
+////        | 'NOT'? 'IN' subterm                                                      # PredicateIN
+//        | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? term 'AND' term   # PredicateBETWEEN
+//        | 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) term
+//          ( 'ESCAPE' ( string | term ) )?                                          # PredicateLIKE
+////        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+//        ;
 
-        logicals
-            : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
-            ;
-
-        jsonType
-            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
+//        logicals
+//            : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
+//            ;
+//
+//        jsonType
+//            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 type
     : 'ROW' '(' name type ( ',' name type )* ')'
@@ -690,7 +796,6 @@ function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | xmlFunction
     | 'ARRAY' '(' select ')' // Postgres
@@ -715,16 +820,18 @@ function
 //    |
     : qname
       '('
-      ( ( qname '.' )? '*' | allDistinct? terms orderBy?
-//    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-      ( 'ON' 'OVERFLOW' 'ERROR' )?
-      ( 'SEPARATOR' term )? onNull? )?
+//      ( ( qname '.' )? '*' | allDistinct?
+      terms
+//      orderBy?
+////    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+//      ( 'ON' 'OVERFLOW' 'ERROR' )?
+//      ( 'SEPARATOR' term )? onNull? )?
       ')'
-//      ( 'SEPARATOR' term )? onNull? )? respectIgnore? ')' // TODO: Oracle
-      withinGroup?
-      filter?
-      ( 'FROM' firstLast )?
-      respectIgnore? over?
+////      ( 'SEPARATOR' term )? onNull? )? respectIgnore? ')' // TODO: Oracle
+//      withinGroup?
+//      filter?
+//      ( 'FROM' firstLast )?
+//      respectIgnore? over?
         ;
 
     xmlFunction
@@ -806,49 +913,6 @@ orderBy
         | 'USING' ( EQ | COMPARE )
         ;
 
-literal
-//    : ( '+' | '-' )? ( INTEGER | FLOAT )
-    : INTEGER
-//    | FLOAT
-    | BITS
-    | BYTES
-    | OCTALS
-    | 'TRUE'
-    | 'FALSE'
-    | 'UNKNOWN'
-    | 'NULL'
-    | 'ON'
-    | 'OFF'
-    | 'DEFAULT'
-    | datetime
-    | jsonObject
-    | jsonArray
-    | PARAMETER
-    | VARIABLE
-    | string
-    ;
-
-datetime
-    : 'DATE' string
-    | ( '{d' | '{t' | '{ts' ) string '}'
-    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-    ;
-
-boolean
-    : 'TRUE' | 'FALSE' /* | 'ON' | 'OFF'  */ ;
-
-timeCast
-    : timeUnit precision? ( 'TO' timeUnit precision? )?
-    ;
-
-timeUnit
-    : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
-    | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
-    | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
-    | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
-    | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
-    | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
-    | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
 
 jsonArray
     : 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')' ;
@@ -1092,7 +1156,6 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-    | BRACKETS
 //    | STRING
     | UNICODE_NAME uescape?
     | DOLLARS
@@ -1170,11 +1233,6 @@ fragment BODY options { caseInsensitive=false; }
 //    | '\u0300' .. '\u036F'
 //    | '\u203F' .. '\u2040'
     ;
-
-BRACKETS
-    : 
-     { bracketsEnabled }?
-    '[' ~']'* ']' ;
 
 DOLLARS
     : '$$' .*? '$$' ;
