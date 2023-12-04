@@ -21,20 +21,20 @@ grammar Combo;
 
 options { caseInsensitive=true; }
 
- @lexer::members
- {
-     public boolean bracketsEnabled = false;
-     public boolean operatorEnabled = false;
- }
+// @lexer::members
+// {
+//     public boolean bracketsEnabled = false;
+//     public boolean operatorEnabled = false;
+// }
 
 // convenience for debugging
-aaa1 : script ;
+aaa1 : select ';'? EOF ;
 aaa2 : term ;
 
 script : statement? ( ';' statement? )* EOF ;
 
 statement
-    : explain?
+    : explain? select
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
     | 'ATTACH' 'DATABASE'? term 'AS' qname
@@ -145,10 +145,10 @@ createVirtualTable
         : ( name | literal | type )+
         | ( name | literal )+ ( '=' ( name | literal )* )?
 //        | compare
-        | COMPARE
+//        | COMPARE
 //        | assign
-        | ASSIGN
-        | EQ
+//        | ASSIGN
+//        | EQ
         ;
 
 createTrigger
@@ -248,12 +248,14 @@ with
         ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )? indexedBy?
+    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )?
+      indexedBy?
+      // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
       // Postgres
 //      ( 'USING' sources ( ',' sources )* )?
-      ( 'USING' sources )?
+//      ( 'USING' sources )?
       where? returning? orderBy? limit? offset?
-      ;
+    ;
 
 insert
     : with?
@@ -293,8 +295,11 @@ merge
 update
     : with? 'UPDATE' ( 'OR' afirr )?
       qname ( 'AS'? name )? indexedBy?
-      'SET' setter ( ',' setter )* ( 'FROM' sources )?
-      where? returning? orderBy? limit? offset?  ;
+      'SET' setter ( ',' setter )*
+      // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
+//      ( 'FROM' sources )?
+      where? returning? orderBy? limit? offset?
+    ;
 
     setter
         : ( qname | qnames ) '=' term ;
@@ -320,32 +325,33 @@ select
     ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
+    // this left-recursive rule honors precedence
     combine
-        : wrap ( 'INTERSECT' | 'MINUS' ) wrap
-        | wrap ( 'UNION' 'ALL'? | 'EXCEPT' ) wrap
-        | wrap 'MULTISET' wrap
+        : combine ( 'INTERSECT' | 'MINUS' ) combine
+        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
+        | combine 'MULTISET' combine
+        | '(' combine ')'
         | selectCore
         ;
 
-        wrap : selectCore | '(' selectCore ')' ;
-
-//    combo
-//        : 'INTERSECT'
-//        | 'MINUS'
-//        | 'UNION' 'ALL'?
-//        | 'EXCEPT'
-//        | 'MULTISET'
-//        ;
-
-
     selectCore
-        : 'SELECT' quantifier? top? ( item ( ',' item )* ','? )? into?
-          ( 'FROM' sources )? where? groupBy? having? windows? qualify?
+        : 'SELECT' quantifier?
+          top?
+          ( item ( ',' item )* ','? )?
+          into?
+          ( 'FROM' sources )?
+          where?
+          groupBy?
+          having?
+          windows?
+          qualify?
+        | '(' select ')'
         | 'VALUES' terms
 //        // MySQL table statement
         | 'TABLE' qname
         ;
 
+    // this left-recursive rule honors precedence
     sources
         : sources ',' sources
         | sources join sources
@@ -354,6 +360,17 @@ select
         | '(' sources ')'
         | source
         ;
+
+        join
+            // TODO 'LATERAL'
+            : 'NATURAL'?
+              ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
+                | ( 'RIGHT' | 'FULL' ) 'OUTER'?
+                |  'INNER'
+                | 'CROSS'
+              )?
+              'JOIN'
+            ;
 
     source
         : ( qname | '(' qname ')' ) ( 'AS'? alias names? )?
@@ -366,7 +383,7 @@ select
     table
         : select
         // MySQL table statement
-//        | 'TABLE' qname
+        | 'TABLE' qname
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
         // DB2 intermediate result table
@@ -417,7 +434,8 @@ select
         ;
 
     top
-        : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
+//        : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
+        : 'TOP' ( INTEGER | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
@@ -427,17 +445,6 @@ select
     into
         : 'INTO' ( temporary | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
-        join
-            // TODO 'LATERAL'
-            // TODO argh figure out correct, robust join operators
-            : 'NATURAL'?
-//                (  ( 'LEFT' | 'RIGHT' | 'FULL' | 'OUTER' )+ | 'INNER' | 'CROSS' )?
-              ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'?
-                |  'INNER'
-                | 'CROSS'
-              )?
-              'JOIN'
-            ;
 
         pivot
             // T-SQL, PL/SQL
@@ -466,7 +473,6 @@ select
                 'IN' '(' aliasedTerms ')'
               ')'
             ;
-
     where
         : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
@@ -474,7 +480,8 @@ select
         : 'GROUP' 'BY' allDistinct? groupByItem ( ',' groupByItem )* ;
 
         groupByItem
-            : terms | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
+            : terms
+            | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
             | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
             ;
 
@@ -517,22 +524,14 @@ aliasedTerms
 // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
 // | row 'INTERSECTS' '(' term ',' term ')'
 
-termEOF : term EOF;
-
+// TODO: '||' as logical OR
+// TODO: 'XOR'
 term
     : term 'OR' term
     | term 'AND' term
     | subterm
     ;
 
-//term
-//    : 'NOT' term
-//    | term 'AND' term
-////    | term ( 'OR' | '||' ) term
-//    | term 'OR' term
-//    | term 'XOR' term
-//    | '(' term ')'
-//    | test
 ////    | term ( '<<' | '>>' | '&' | '|' ) term
 //    // CrateDB ?
 ////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
@@ -573,8 +572,8 @@ term
 //    ;
 
 subterm
-    : value (( '.' name ) | ( '[' ( term | term? ':' term? )? ']' ))*
-    | ( '+' | '-' | '~' ) subterm
+    : ( '+' | '-' | '~' ) subterm
+    | value (( '.' name ) | ( '[' ( term | term? ':' term? )? ']' ))*
     | subterm 'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
     | subterm '|' subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
@@ -589,7 +588,7 @@ subterm
     | subterm 'NOT'? 'BETWEEN' subterm 'AND' subterm
     | 'EXISTS' '(' select ')'
     | ( 'NOT' | '!' ) subterm
-//    | subQuerySelectorOperator ( 'ANY' | 'SOME' | 'ALL' ) LPAREN selectStatement RPAREN
+////    | subQuerySelectorOperator ( 'ANY' | 'SOME' | 'ALL' ) LPAREN selectStatement RPAREN
     ;
 
 predicate
@@ -615,10 +614,8 @@ predicate
 //    | 'INTERVAL' value
 //    | value timeCast
 //    | array
-//    | 'EXISTS' '(' select ')'
 //    | '(' select ')'
 //    | '(' value ')'
-//    | case
 ////    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
 ////    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
 ////    // PL/SQL
@@ -629,45 +626,50 @@ predicate
 
 value
     : literal
-    | 'INTERVAL' value
-    | value timeCast
+//    | 'INTERVAL' value
+//    | value timeCast
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
-//    | floorExpression
     | case
     | '(' select ')'
-//    | selectStatement
     | function
-    | name
-//    | qname
+    | name // | qname
     | '(' terms ')'
     ;
 
 literal
     : INTEGER
-    | FLOAT
-    | BITS
-    | BYTES
-    | OCTALS
+//    | FLOAT
+    | datetime
+    | STRING
     | 'TRUE'
     | 'FALSE'
-    | 'UNKNOWN'
-    | 'NULL'
-    | 'ON'
-    | 'OFF'
-    | 'DEFAULT'
-    | datetime
-    | jsonObject
-    | jsonArray
-    | PARAMETER
-    | VARIABLE
-    | string
+
+//    | BITS
+//    | BYTES
+//    | OCTALS
+//    | 'UNKNOWN'
+//    | 'NULL'
+//    | 'ON'
+//    | 'OFF'
+//    | 'DEFAULT'
+//    | jsonObject
+//    | jsonArray
+//    | PARAMETER
+//    | VARIABLE
     ;
 
+//datetime
+//    : 'DATE' string
+//    | ( '{d' | '{t' | '{ts' ) string '}'
+//    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+//    ;
+
 datetime
-    : 'DATE' string
-    | ( '{d' | '{t' | '{ts' ) string '}'
-    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+    : 'DATE' STRING
+    | 'CURRENT_DATE'
+    | 'TIMESTAMP' STRING
+    | 'CURRENT_TIMESTAMP'
     ;
 
 boolean
@@ -685,7 +687,6 @@ timeUnit
     | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
     | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
     | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
-
 
     case
         : 'CASE' term whenSimple+ caseElse? 'END'  # CaseSimple
@@ -792,27 +793,55 @@ array
     arrayTerms : '[' ( terms | arrayNested )? ']' ;
     arrayNested : arrayTerms ( ',' arrayTerms )* ;
 
-function
-    : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')'
-    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
-    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
-    | xmlFunction
-    | 'ARRAY' '(' select ')' // Postgres
-    | '{fn' function '}' //  ODBC style
-    | 'CURRENT_DATE'
-    | 'CURRENT_TIME'
-    | 'CURRENT_TIMESTAMP'
-    | 'SIN' '(' subterm ')'
-    | 'LEFT' '(' subterm ',' subterm ')'
-    | 'LOWER' '(' subterm ')'
-    | aggregateFunction
-//    | analyticFunction
-//    | qname '(' terms?  ')'
-//    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
-//    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+
+sql11ReservedKeywordsUsedAsFunctionName
+    : 'ARRAY'
+    | 'BIGINT'
+    | 'BINARY'
+    | 'BOOLEAN'
+//    | 'CURRENT_DATE'
+//    | 'CURRENT_TIMESTAMP'
+    | 'DATE'
+    | 'DOUBLE'
+    | 'FLOAT'
+    | 'GROUPING'
+    | 'IF'
+    | 'INT'
+    | 'MAP'
+    | 'REAL'
+    | 'SMALLINT'
+    | 'TIMESTAMP'
     ;
 
+functionName
+    : name
+//    | sql11ReservedKeywordsUsedAsFunctionName
+    ;
+
+function
+    : trim
+    | functionName '(' ( term ( ',' term )* )? ')'
+//    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
+//    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
+//    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
+//    | xmlFunction
+//    | 'ARRAY' '(' select ')' // Postgres
+//    | '{fn' function '}' //  ODBC style
+//    | 'CURRENT_DATE'
+//    | 'CURRENT_TIME'
+//    | 'CURRENT_TIMESTAMP'
+//    | 'SIN' '(' subterm ')'
+//    | 'LEFT' '(' subterm ',' subterm ')'
+//    | 'LOWER' '(' subterm ')'
+//    | aggregateFunction
+////    | analyticFunction
+////    | qname '(' terms?  ')'
+////    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
+////    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+    ;
+
+trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM' term ')' ;
+/*
     aggregateFunction
 //        :
 //        'SUM' '(' allDistinct? term ')' filter? over?
@@ -857,6 +886,7 @@ function
 //        | qname '(' term respectIgnore? ')' respectIgnore? over
 //
 //        ;
+*/
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -910,7 +940,7 @@ orderBy
         | 'DESC'
         // Postgres
 //        | 'USING' compare
-        | 'USING' ( EQ | COMPARE )
+//        | 'USING' ( EQ | COMPARE )
         ;
 
 
@@ -935,8 +965,8 @@ qname
     : name ( '.' name )*
     ;
 
-index
-    : '[' ( term | term? ':' term? )? ']' ;
+//index
+//    : '[' ( term | term? ':' term? )? ']' ;
 
 keyword
  : 'A'
@@ -1136,13 +1166,17 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : ID | STRING | UNICODE_NAME uescape?
-    // TODO sympred for aliases
-    // hard coded to pass tests
-    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
-    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
-//    | keyword
+    : ID
     ;
+
+//alias
+//    : ID | STRING | UNICODE_NAME uescape?
+//    // TODO sympred for aliases
+//    // hard coded to pass tests
+//    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
+//    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
+////    | keyword
+//    ;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -1156,96 +1190,106 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-//    | STRING
-    | UNICODE_NAME uescape?
-    | DOLLARS
-//    | VARIABLE
-//    | PARAMETER
-//    | unreserved
+////    | STRING
+//    | UNICODE_NAME uescape?
+//    | DOLLARS
+////    | VARIABLE
+////    | PARAMETER
+////    | unreserved
     | keyword
+//    | 'A'
     ;
 
 string
     : STRING+
-    | UNICODE_STRING STRING* uescape?
-    | NATIONAL_STRING STRING*
+//    | UNICODE_STRING STRING* uescape?
+//    | NATIONAL_STRING STRING*
     ;
 
-    uescape
-        : 'UESCAPE' STRING ;
+//    uescape
+//        : 'UESCAPE' STRING ;
 
-UNICODE_NAME
-    : 'U&' ID ;
+//UNICODE_NAME
+//    : 'U&' ID ;
+//
+//UNICODE_STRING
+//    : 'U&' STRING ;
 
-UNICODE_STRING
-    : 'U&' STRING ;
-
-NATIONAL_STRING
-    :  [NE] STRING ;
+//NATIONAL_STRING
+//    :  [NE] STRING ;
 
 STRING
     // TODO allow newlines within STRINGs?
     // TODO allow newlines, but not whitespace, between STRINGs?
-    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
-
+//    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
+//    : ( '\'' ( ~( '\'' | '\\' ) | ( '\\' . ) )* '\'' )+
+    : ( '\'' ( ~( '\'' | '\\' ) | ( '\\' . ) )* '\''
+    | '"' ( ~( '"' | '\\' ) | ( '\\' . ) )* '"'
+     )+
+    ;
 // TODO no newlines etc within IDs?
+//ID
+//    : '"' ( ~'"' | '""' )* '"'
+//    | '`' ( ~'`' | '``' )* '`'
+//    | HEAD BODY*
+//    ;
 ID
-    : '"' ( ~'"' | '""' )* '"'
-    | '`' ( ~'`' | '``' )* '`'
-    | HEAD BODY*
+//    : HEAD BODY*
+    : [A-Z_] [A-Z0-9_]*
+//    | '`'  ( '``' | ~'`' )* '`'
     ;
 
-fragment HEAD options { caseInsensitive=false; }
-    : [a-zA-Z_]
-    // Valid characters from 0x80 to 0xFF
-    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
+//fragment HEAD //options { caseInsensitive=false; }
+//    : [a-zA-Z_]
+//    // Valid characters from 0x80 to 0xFF
+////    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
+//
+//        /*
+//   | // these are the letters above 0xFF which only need a single UTF-16 code unit
+//   [\u0100-\uD7FF\uE000-\uFFFF]
+//   {charIsLetter()}?
+//   | // letters which require multiple UTF-16 code units
+//   [\uD800-\uDBFF] [\uDC00-\uDFFF]
+//   {
+//    CheckIfUtf32Letter()
+//   }?
+//*/
+//
+////   | '\u00C0' .. '\u00D6'
+////   | '\u00D8' .. '\u00F6'
+//
+////   | '\u00F8' .. '\u02FF'
+////   | '\u0370' .. '\u037D'
+////   | '\u037F' .. '\u1FFF'
+////   | '\u200C' .. '\u200D'
+////   | '\u2070' .. '\u218F'
+////   | '\u2C00' .. '\u2FEF'
+////   | '\u3001' .. '\uD7FF'
+////   | '\uF900' .. '\uFDCF'
+////   | '\uFDF0' .. '\uFFFD'
+//    ;
+//
+//// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
+//fragment BODY options { caseInsensitive=false; }
+//    : [0-9#$@_]
+//    | HEAD
+////    | '\u00B7'
+////    | '\u0300' .. '\u036F'
+////    | '\u203F' .. '\u2040'
+//    ;
 
-        /*
-   | // these are the letters above 0xFF which only need a single UTF-16 code unit
-   [\u0100-\uD7FF\uE000-\uFFFF]
-   {charIsLetter()}?
-   | // letters which require multiple UTF-16 code units
-   [\uD800-\uDBFF] [\uDC00-\uDFFF]
-   {
-    CheckIfUtf32Letter()
-   }?
-*/
+//DOLLARS
+//    : '$$' .*? '$$' ;
 
-//   | '\u00C0' .. '\u00D6'
-//   | '\u00D8' .. '\u00F6'
-
-//   | '\u00F8' .. '\u02FF'
-//   | '\u0370' .. '\u037D'
-//   | '\u037F' .. '\u1FFF'
-//   | '\u200C' .. '\u200D'
-//   | '\u2070' .. '\u218F'
-//   | '\u2C00' .. '\u2FEF'
-//   | '\u3001' .. '\uD7FF'
-//   | '\uF900' .. '\uFDCF'
-//   | '\uFDF0' .. '\uFFFD'
-    ;
-
-// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
-fragment BODY options { caseInsensitive=false; }
-    : [0-9#$@_]
-    | HEAD
-//    | '\u00B7'
-//    | '\u0300' .. '\u036F'
-//    | '\u203F' .. '\u2040'
-    ;
-
-DOLLARS
-    : '$$' .*? '$$' ;
-
-BITS
-    : '0b' [01]+
-    | 'B' '\'' [01]+ '\''
-    ;
-
-BYTES
-    : '0x' HEX+
-    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
-    ;
+//BITS
+//    : '0b' [01]+
+//    | 'B' '\'' [01]+ '\''
+//    ;
+//
+//BYTES
+//    : '0x' HEX+
+//    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
+//    ;
 
 // TODO This variant ensures even number of digits. Does it matter?
 //BLOB
@@ -1254,32 +1298,48 @@ BYTES
 //    fragment HEXHEX
 //        : '\'' ( HEX HEX ' '? )* '\'' ;
 
- OCTALS
-    : '0o' [0-7]+
+// OCTALS
+//    : '0o' [0-7]+
+//    ;
+
+//fragment HEX
+//    : [A-F0-9] ;
+
+INTEGER
+    : DIGIT+ // ( '.' DIGIT* EXPO? | EXPO )?
     ;
 
-fragment HEX
-    : [A-F0-9] ;
+//FLOAT : INTEGER ;
 
-// TODO support underscore (visual grouping) in numbers
-INTEGER
-    : DIGIT+ 'L'? ;
+fragment
+EXPO
+    : 'E' (  PLUS | MINUS  )? DIGIT+
+    ;
 
-// matches "0.e1" or ".0e1", but not ".e1"
-FLOAT
-    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
+//// TODO support underscore (visual grouping) in numbers
+//INTEGER
+//    : DIGIT+ 'L'? ;
+//
+//// matches "0.e1" or ".0e1", but not ".e1"
+//FLOAT
+//    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
-PARAMETER
-    : '?' DIGIT* ;
+//PARAMETER
+//    : '?' // DIGIT*
+//    ;
 
 fragment DIGIT
     : [0-9] ;
 
 // TODO separate alts for each style & dialect
-VARIABLE
-    : [:$] ( INTEGER | ID )
-    | '@' '@'? HEAD BODY*
-    ;
+//VARIABLE
+//    : [:$] ( INTEGER | ID )
+//    | '@' '@'? HEAD BODY*
+//    ;
+
+// \u000B line (vertical) tab
+// \u000C form feed
+WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
 
 COMMENT
 //    : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
@@ -1289,20 +1349,16 @@ COMMENT
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
-// \u000B line (vertical) tab
-// \u000C form feed
-WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
-
-EQ : '=' ;
-
-COMPARE
-    : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-    | '~' | '~*' | '!~' | '!~*'
-    ;
-
-ASSIGN
-    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
-    ;
+//EQ : '=' ;
+//
+//COMPARE
+//    : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
+//    | '~' | '~*' | '!~' | '!~*'
+//    ;
+//
+//ASSIGN
+//    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
+//    ;
 
 // TODO BOZO this crude OPERATOR token accepts way more than spec'd
 
