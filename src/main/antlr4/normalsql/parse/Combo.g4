@@ -34,7 +34,7 @@ aaa2 : term ;
 script : statement? ( ';' statement? )* EOF ;
 
 statement
-    : explain? select
+    : explain?
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
     | 'ATTACH' 'DATABASE'? term 'AS' qname
@@ -667,8 +667,10 @@ literal
 
 datetime
     : 'DATE' STRING
+    | ( '{d' | '{t' | '{ts' ) string '}'
     | 'CURRENT_DATE'
     | 'TIMESTAMP' STRING
+    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
     | 'CURRENT_TIMESTAMP'
     ;
 
@@ -1165,18 +1167,18 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-alias
-    : ID
-    ;
-
 //alias
-//    : ID | STRING | UNICODE_NAME uescape?
-//    // TODO sympred for aliases
-//    // hard coded to pass tests
-//    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
-//    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
-////    | keyword
+//    : ID
 //    ;
+
+alias
+    : ID | STRING | UNICODE_NAME uescape?
+    // TODO sympred for aliases
+    // hard coded to pass tests
+    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
+    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
+//    | keyword
+    ;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -1190,33 +1192,33 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-////    | STRING
-//    | UNICODE_NAME uescape?
-//    | DOLLARS
-////    | VARIABLE
-////    | PARAMETER
-////    | unreserved
+//    | STRING
+    | UNICODE_NAME uescape?
+    | DOLLARS
+//    | VARIABLE
+//    | PARAMETER
+//    | unreserved
     | keyword
 //    | 'A'
     ;
 
 string
     : STRING+
-//    | UNICODE_STRING STRING* uescape?
-//    | NATIONAL_STRING STRING*
+    | UNICODE_STRING STRING* uescape?
+    | NATIONAL_STRING STRING*
     ;
 
-//    uescape
-//        : 'UESCAPE' STRING ;
+    uescape
+        : 'UESCAPE' STRING ;
 
-//UNICODE_NAME
-//    : 'U&' ID ;
-//
-//UNICODE_STRING
-//    : 'U&' STRING ;
+UNICODE_NAME
+    : 'U&' ID ;
 
-//NATIONAL_STRING
-//    :  [NE] STRING ;
+UNICODE_STRING
+    : 'U&' STRING ;
+
+NATIONAL_STRING
+    :  [NE] STRING ;
 
 STRING
     // TODO allow newlines within STRINGs?
@@ -1228,55 +1230,55 @@ STRING
      )+
     ;
 // TODO no newlines etc within IDs?
-//ID
-//    : '"' ( ~'"' | '""' )* '"'
-//    | '`' ( ~'`' | '``' )* '`'
-//    | HEAD BODY*
-//    ;
 ID
-//    : HEAD BODY*
-    : [A-Z_] [A-Z0-9_]*
-//    | '`'  ( '``' | ~'`' )* '`'
+    : '"' ( ~'"' | '""' )* '"'
+    | '`' ( ~'`' | '``' )* '`'
+    | HEAD BODY*
+    ;
+//ID
+////    : HEAD BODY*
+//    : [A-Z_] [A-Z0-9_]*
+////    | '`'  ( '``' | ~'`' )* '`'
+//    ;
+
+fragment HEAD //options { caseInsensitive=false; }
+    : [a-zA-Z_]
+    // Valid characters from 0x80 to 0xFF
+//    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
+
+        /*
+   | // these are the letters above 0xFF which only need a single UTF-16 code unit
+   [\u0100-\uD7FF\uE000-\uFFFF]
+   {charIsLetter()}?
+   | // letters which require multiple UTF-16 code units
+   [\uD800-\uDBFF] [\uDC00-\uDFFF]
+   {
+    CheckIfUtf32Letter()
+   }?
+*/
+
+//   | '\u00C0' .. '\u00D6'
+//   | '\u00D8' .. '\u00F6'
+
+//   | '\u00F8' .. '\u02FF'
+//   | '\u0370' .. '\u037D'
+//   | '\u037F' .. '\u1FFF'
+//   | '\u200C' .. '\u200D'
+//   | '\u2070' .. '\u218F'
+//   | '\u2C00' .. '\u2FEF'
+//   | '\u3001' .. '\uD7FF'
+//   | '\uF900' .. '\uFDCF'
+//   | '\uFDF0' .. '\uFFFD'
     ;
 
-//fragment HEAD //options { caseInsensitive=false; }
-//    : [a-zA-Z_]
-//    // Valid characters from 0x80 to 0xFF
-////    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
-//
-//        /*
-//   | // these are the letters above 0xFF which only need a single UTF-16 code unit
-//   [\u0100-\uD7FF\uE000-\uFFFF]
-//   {charIsLetter()}?
-//   | // letters which require multiple UTF-16 code units
-//   [\uD800-\uDBFF] [\uDC00-\uDFFF]
-//   {
-//    CheckIfUtf32Letter()
-//   }?
-//*/
-//
-////   | '\u00C0' .. '\u00D6'
-////   | '\u00D8' .. '\u00F6'
-//
-////   | '\u00F8' .. '\u02FF'
-////   | '\u0370' .. '\u037D'
-////   | '\u037F' .. '\u1FFF'
-////   | '\u200C' .. '\u200D'
-////   | '\u2070' .. '\u218F'
-////   | '\u2C00' .. '\u2FEF'
-////   | '\u3001' .. '\uD7FF'
-////   | '\uF900' .. '\uFDCF'
-////   | '\uFDF0' .. '\uFFFD'
-//    ;
-//
-//// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
-//fragment BODY options { caseInsensitive=false; }
-//    : [0-9#$@_]
-//    | HEAD
-////    | '\u00B7'
-////    | '\u0300' .. '\u036F'
-////    | '\u203F' .. '\u2040'
-//    ;
+// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
+fragment BODY options { caseInsensitive=false; }
+    : [0-9#$@_]
+    | HEAD
+//    | '\u00B7'
+//    | '\u0300' .. '\u036F'
+//    | '\u203F' .. '\u2040'
+    ;
 
 //DOLLARS
 //    : '$$' .*? '$$' ;
@@ -1313,7 +1315,7 @@ INTEGER
 
 fragment
 EXPO
-    : 'E' (  PLUS | MINUS  )? DIGIT+
+    : 'E' (  '+' | '-'  )? DIGIT+
     ;
 
 //// TODO support underscore (visual grouping) in numbers
@@ -1332,10 +1334,11 @@ fragment DIGIT
     : [0-9] ;
 
 // TODO separate alts for each style & dialect
-//VARIABLE
-//    : [:$] ( INTEGER | ID )
+
+VARIABLE
+    : [:$] ( INTEGER | ID )
 //    | '@' '@'? HEAD BODY*
-//    ;
+    ;
 
 // \u000B line (vertical) tab
 // \u000C form feed
