@@ -143,7 +143,7 @@ createVirtualTable
 
     moduleArgument
         : ( name | literal | type )+
-        | ( name | literal )+ ( '=' ( name | literal )* )?
+        | ( name | literal )+ ( EQ ( name | literal )* )?
 //        | compare
 //        | COMPARE
 //        | assign
@@ -330,7 +330,8 @@ select
         : combine ( 'INTERSECT' | 'MINUS' ) combine
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
-        | '(' combine ')'
+//        | '(' combine ')'
+        | '(' select ')'
         | selectCore
         ;
 
@@ -345,7 +346,7 @@ select
           having?
           windows?
           qualify?
-        | '(' select ')'
+//        | '(' select ')'
         | 'VALUES' terms
 //        // MySQL table statement
         | 'TABLE' qname
@@ -359,15 +360,16 @@ select
         | sources join sources 'USING' qnames
         | '(' sources ')'
         | source
+//        | select
         ;
 
         join
             // TODO 'LATERAL'
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
-                | ( 'RIGHT' | 'FULL' ) 'OUTER'?
-                |  'INNER'
-                | 'CROSS'
+              | ( 'RIGHT' | 'FULL' ) 'OUTER'?
+              |  'INNER'
+              | 'CROSS'
               )?
               'JOIN'
             ;
@@ -382,8 +384,8 @@ select
 
     table
         : select
-        // MySQL table statement
-        | 'TABLE' qname
+//        // MySQL table statement
+//        | 'TABLE' qname
         | tableFunc
         // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
         // DB2 intermediate result table
@@ -407,7 +409,8 @@ select
         ;
 
         tableFuncParam
-            : name ( type | qname | 'NULL' ) '=' subterm ;
+//            : name ( type | qname | 'NULL' ) '=' subterm ;
+            : name ( type | 'NULL' ) '=' subterm ;
 
     offset
         : 'OFFSET' term rowRows? ;
@@ -542,7 +545,6 @@ term
 //        | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
 //        | subterm 'IS' 'NOT'? logicals
 //        | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
-//        | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
 //        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
 //        | subterm 'IS' 'NOT'? subterm
 ////        | subterm 'NOT'? 'IN' subterm
@@ -552,8 +554,7 @@ term
 //        // PL/SQL dialect
 ////        | 'NOT'? 'IN' subterm                                                      # PredicateIN
 //        | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
-//        | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm
-//          ( 'ESCAPE' ( string | subterm ) )?
+//        | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) subterm ( 'ESCAPE' ( string | subterm ) )?
 //        | subterm
 //;
 
@@ -573,31 +574,44 @@ term
 
 subterm
     : ( '+' | '-' | '~' ) subterm
+//    : ( '+' | '-' ) subterm
+    | value '::' type
     | value (( '.' name ) | ( '[' ( term | term? ':' term? )? ']' ))*
-    | subterm 'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
+    | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
+    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
     | subterm '|' subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
     | subterm ( '+' | '-' ) subterm
     | subterm '||' subterm
     | subterm '&' subterm
     | subterm '^' subterm
-    | subterm ( '=' | '!=' | '<>' | '<' | '<=' | '>' | '>='  ) subterm
-    | subterm 'NOT'? ( 'LIKE' | 'RLIKE' | 'REGEXP' ) subterm
+    | subterm ( EQ | COMPARE | MATCH ) subterm
+
+//    | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
+    | subterm 'NOT'? likes subterm 'ESCAPE' subterm // workaround ANTLR's left-recursion pattern matching
+    | subterm 'NOT'? likes subterm
+
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    | subterm 'NOT'? 'IN' '(' ( select | terms  ) ')'
+//    | subterm 'NOT'? 'IN' '(' ( select | terms  ) ')'
+    | subterm 'NOT'? 'IN' '(' terms? ')'
     | subterm 'NOT'? 'BETWEEN' subterm 'AND' subterm
     | 'EXISTS' '(' select ')'
     | ( 'NOT' | '!' ) subterm
-////    | subQuerySelectorOperator ( 'ANY' | 'SOME' | 'ALL' ) LPAREN selectStatement RPAREN
+//    | subterm COMPARE ( 'ANY' | 'SOME' | 'ALL' ) LPAREN select RPAREN
+//    | ( 'ANY' | 'SOME' | 'ALL' ) LPAREN select RPAREN
     ;
 
+likes : ( 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ) ;
+
 predicate
-    :  'IS' 'NOT'? ( 'NULL' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
-    |  ( '=' | '!=' | '<>' | '<' | '<=' | '>' | '>='  ) subterm
-    |  'NOT'? ( 'LIKE' | 'RLIKE' | 'REGEXP' ) subterm
-    |  'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    |  'NOT'? 'IN' '(' (  select | terms  ) ')'
-    |  'NOT'? 'BETWEEN' subterm 'AND' subterm
+    : 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' 'FROM' )
+    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
+    | ( EQ | COMPARE | MATCH ) subterm
+    | 'NOT'? likes subterm ( 'ESCAPE' ( string | subterm ) )?
+    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
+//    | 'NOT'? 'IN' '(' (  select | terms  ) ')'
+    | 'NOT'? 'IN' '(' terms? ')'
+    | 'NOT'? 'BETWEEN' subterm 'AND' subterm
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
 
@@ -632,29 +646,31 @@ value
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | case
     | '(' select ')'
+//    | select
     | function
     | name // | qname
-    | '(' terms ')'
+    | '(' terms? ')'
     ;
 
 literal
     : INTEGER
-//    | FLOAT
+    | FLOAT
     | datetime
-    | STRING
+//    | string
+//    | STRING
     | 'TRUE'
     | 'FALSE'
 
-//    | BITS
-//    | BYTES
-//    | OCTALS
+    | BITS
+    | BYTES
+    | OCTALS
 //    | 'UNKNOWN'
-//    | 'NULL'
+    | 'NULL'
 //    | 'ON'
 //    | 'OFF'
 //    | 'DEFAULT'
-//    | jsonObject
-//    | jsonArray
+    | jsonObject
+    | jsonArray
 //    | PARAMETER
 //    | VARIABLE
     ;
@@ -666,10 +682,10 @@ literal
 //    ;
 
 datetime
-    : 'DATE' STRING
+    : 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
     | 'CURRENT_DATE'
-    | 'TIMESTAMP' STRING
+    | 'TIMESTAMP' string
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
     | 'CURRENT_TIMESTAMP'
     ;
@@ -822,13 +838,21 @@ functionName
 
 function
     : trim
-    | functionName '(' ( term ( ',' term )* )? ')'
-//    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
-//    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-//    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
-//    | xmlFunction
-//    | 'ARRAY' '(' select ')' // Postgres
-//    | '{fn' function '}' //  ODBC style
+    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
+    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
+    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
+    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
+    | xmlFunction
+    | 'ARRAY' '(' select ')' // Postgres
+    | '{fn' function '}' //  ODBC style
+    | functionName '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
+      ( ')' withinGroup
+      | ')' nullTreatment? over
+      | nullTreatment ')' over
+      | ')'
+      )
+
+
 //    | 'CURRENT_DATE'
 //    | 'CURRENT_TIME'
 //    | 'CURRENT_TIMESTAMP'
@@ -864,7 +888,7 @@ trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM' term ')' ;
 //      ( 'FROM' firstLast )?
 //      respectIgnore? over?
         ;
-
+*/
     xmlFunction
         : 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
         | 'XMLCONCAT' '(' terms ')'
@@ -888,7 +912,7 @@ trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM' term ')' ;
 //        | qname '(' term respectIgnore? ')' respectIgnore? over
 //
 //        ;
-*/
+
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -1109,7 +1133,7 @@ keyword
  | 'SEQUENCE'
 // | 'SOME'
  | 'SUBSTRING'
- | 'SUM'
+// | 'SUM'
  | 'TABLE'
  | 'TEMP'
  | 'TEMPORARY'
@@ -1149,7 +1173,7 @@ formatJson
 onNull
     : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
-respectIgnore
+nullTreatment
     : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 
 rowRows
@@ -1167,15 +1191,13 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-//alias
-//    : ID
-//    ;
-
 alias
-    : ID | STRING | UNICODE_NAME uescape?
+    : ID | string | UNICODE_NAME uescape?
     // TODO sympred for aliases
     // hard coded to pass tests
-    | 'A' | 'CASE' | 'TEST' | 'SUM' | 'FIRST' | 'LAST'
+    | 'A' | 'CASE' | 'TEST'
+//    | 'SUM'
+    | 'FIRST' | 'LAST'
     | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
 //    | keyword
     ;
@@ -1192,11 +1214,11 @@ qnames
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
 name
     : ID
-//    | STRING
+    | string
     | UNICODE_NAME uescape?
     | DOLLARS
-//    | VARIABLE
-//    | PARAMETER
+    | VARIABLE
+    | PARAMETER
 //    | unreserved
     | keyword
 //    | 'A'
@@ -1226,9 +1248,10 @@ STRING
 //    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
 //    : ( '\'' ( ~( '\'' | '\\' ) | ( '\\' . ) )* '\'' )+
     : ( '\'' ( ~( '\'' | '\\' ) | ( '\\' . ) )* '\''
-    | '"' ( ~( '"' | '\\' ) | ( '\\' . ) )* '"'
+//    | '"' ( ~( '"' | '\\' ) | ( '\\' . ) )* '"'
      )+
     ;
+
 // TODO no newlines etc within IDs?
 ID
     : '"' ( ~'"' | '""' )* '"'
@@ -1242,7 +1265,7 @@ ID
 //    ;
 
 fragment HEAD //options { caseInsensitive=false; }
-    : [a-zA-Z_]
+    : [A-Z_]
     // Valid characters from 0x80 to 0xFF
 //    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
 
@@ -1280,43 +1303,44 @@ fragment BODY options { caseInsensitive=false; }
 //    | '\u203F' .. '\u2040'
     ;
 
-//DOLLARS
-//    : '$$' .*? '$$' ;
+DOLLARS
+    : '$$' .*? '$$' ;
 
-//BITS
-//    : '0b' [01]+
-//    | 'B' '\'' [01]+ '\''
-//    ;
-//
-//BYTES
-//    : '0x' HEX+
-//    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
-//    ;
+BITS
+    : '0b' [01]+
+    | 'B' '\'' [01]+ '\''
+    ;
+
+BYTES
+    : '0x' HEX+
+    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
+    ;
 
 // TODO This variant ensures even number of digits. Does it matter?
-//BLOB
-//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
-//
-//    fragment HEXHEX
-//        : '\'' ( HEX HEX ' '? )* '\'' ;
+BLOB
+    : 'X' HEXHEX ( ' ' HEXHEX )* ;
 
-// OCTALS
-//    : '0o' [0-7]+
-//    ;
+    fragment HEXHEX
+        : '\'' ( HEX HEX ' '? )* '\'' ;
 
-//fragment HEX
-//    : [A-F0-9] ;
+ OCTALS
+    : '0o' [0-7]+
+    ;
+
+fragment HEX
+    : [A-F0-9] ;
 
 INTEGER
-    : DIGIT+ // ( '.' DIGIT* EXPO? | EXPO )?
+    : DIGIT+ 'L'?
     ;
 
-//FLOAT : INTEGER ;
+FLOAT
+    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
-fragment
-EXPO
-    : 'E' (  '+' | '-'  )? DIGIT+
-    ;
+//fragment
+//EXPO
+//    : 'E' (  '+' | '-'  )? DIGIT+
+//    ;
 
 //// TODO support underscore (visual grouping) in numbers
 //INTEGER
@@ -1326,9 +1350,9 @@ EXPO
 //FLOAT
 //    : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
-//PARAMETER
-//    : '?' // DIGIT*
-//    ;
+PARAMETER
+    : '?' DIGIT*
+    ;
 
 fragment DIGIT
     : [0-9] ;
@@ -1352,16 +1376,17 @@ COMMENT
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
-//EQ : '=' ;
-//
-//COMPARE
-//    : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&'
-//    | '~' | '~*' | '!~' | '!~*'
-//    ;
-//
-//ASSIGN
-//    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
-//    ;
+EQ : '=' ;
+
+COMPARE
+    : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' // | '&&'
+    ;
+
+MATCH : '~' | '~*' | '!~' | '!~*' ;
+
+ASSIGN
+    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
+    ;
 
 // TODO BOZO this crude OPERATOR token accepts way more than spec'd
 
