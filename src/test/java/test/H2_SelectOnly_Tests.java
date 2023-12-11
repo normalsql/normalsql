@@ -3,9 +3,7 @@
 
 package test;
 
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
-import normalsql.parse.NormalSQLParser.ScriptContext;
+import normalsql.parse.*;
 import org.antlr.v4.runtime.*;
 
 import java.nio.file.*;

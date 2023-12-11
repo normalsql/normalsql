@@ -24,7 +24,7 @@ public class RandExpr1 {
         var tests = new File("/Users/jasonosgood/Projects/SQL/Parsers/sqlite-parser/src/test/resources")
                 .listFiles(
                         file -> file.isFile() && file.getName().endsWith(".sql")
-                                && file.getName().startsWith( "rand" )
+                                && !file.getName().startsWith( "rand" )
                 );
 
 //        var f = new File("/Users/jasonosgood/Projects/SQL/Parsers/sqlite-parser/src/test/resources/randexpr1.test_2534.sql");

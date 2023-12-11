@@ -1,6 +1,6 @@
 package spare;
 
-import normalsql.jdbc.Param;
+//import normalsql.jdbc.Param;
 
 import java.sql.DriverManager;
 import java.sql.*;
@@ -53,22 +53,27 @@ public class FFS
 //		PreparedStatement ps = conn.prepareStatement( "SELECT count(*) FROM customers WHERE country = ?" );
 		PreparedStatement ps = conn.prepareStatement( "INSERT INTO OOPS  (id, ook) VALUES(?, ?);" );
 		ParameterMetaData pmd = ps.getParameterMetaData();
-		ArrayList<Param> params = new ArrayList<>();
-		for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
-		{
-			Param param = new Param();
-			param.nth = nth;
-			param.type = pmd.getParameterType( nth );
-			param.typeName = pmd.getParameterTypeName( nth );
-			param.isNullable = pmd.isNullable( nth );
-			param.isSigned = pmd.isSigned( nth );
-			param.scaled = pmd.getScale( nth );
-			param.precision = pmd.getPrecision( nth );
-			param.mode = pmd.getParameterMode( nth );
-			param.className = pmd.getParameterClassName( nth );
-			params.add( param );
-			System.out.println( param );
-		}
+
+
+//		ArrayList<Param> params = new ArrayList<>();
+//		for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
+//		{
+//			Param param = new Param();
+//			param.nth = nth;
+//			param.type = pmd.getParameterType( nth );
+//			param.typeName = pmd.getParameterTypeName( nth );
+//			param.isNullable = pmd.isNullable( nth );
+//			param.isSigned = pmd.isSigned( nth );
+//			param.scaled = pmd.getScale( nth );
+//			param.precision = pmd.getPrecision( nth );
+//			param.mode = pmd.getParameterMode( nth );
+//			param.className = pmd.getParameterClassName( nth );
+//			params.add( param );
+//			System.out.println( param );
+//		}
+
+
+
 //		ps.setString( 1, "USA" );
 //		if( ps.execute() )
 //		{
