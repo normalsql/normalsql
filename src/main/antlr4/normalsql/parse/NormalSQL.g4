@@ -575,7 +575,7 @@ subterm
     | ( 'NOT' | '!' ) subterm
     | value ( '.' name | '[' ( term | term? ':' term? )? ']' | '::' type )*
     | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
-    | subterm 'NOT' 'NULL'
+    | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
     | subterm '|' subterm
@@ -607,6 +607,7 @@ likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 // BOZO always update these alts as subterm's (related) alts change
 predicate
     : 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
+    | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' term
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
     | ( compare | match ) subterm
@@ -666,10 +667,6 @@ value
 
 // value
 //    | function ( '.' function )*
-//    | value index+
-//    | value ( '::' value )+
-//    | 'INTERVAL' value
-//    | value timeCast
 ////    // PL/SQL
 //////    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //////   TODO  | sequenceValueExpression
@@ -683,7 +680,6 @@ literal
 //    | STRING
     | 'TRUE'
     | 'FALSE'
-
     | BITS
     | BYTES
     | OCTALS
