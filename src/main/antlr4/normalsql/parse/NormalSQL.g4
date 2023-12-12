@@ -28,7 +28,7 @@ options { caseInsensitive=true; }
 // }
 
 // convenience for debugging
-aaa1 : select ';'? EOF ;
+aaa1 : script ;
 aaa2 : term ;
 
 script : statement? ( ';' statement? )* EOF ;
@@ -179,7 +179,8 @@ createIndex
 
     indexedColumn
 //        : ( qname | term ) sortDir? ;
-        : qname sortDir? ;
+//        : qname sortDir? ;
+        : term sortDir? ;
 
     indexedColumns
         : '(' indexedColumn ( ',' indexedColumn )* ')' ;
@@ -326,7 +327,6 @@ select
     ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
-    // this left-recursive rule honors precedence
     combine
         : combine ( 'INTERSECT' | 'MINUS' ) combine
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
@@ -349,11 +349,10 @@ select
           qualify?
 //        | '(' select ')'
         | 'VALUES' terms
-//        // MySQL table statement
+        // MySQL table statement
         | 'TABLE' qname
         ;
 
-    // this left-recursive rule honors precedence
     sources
         : sources ',' sources
         | sources join sources
@@ -642,6 +641,7 @@ predicate
 //            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 
+// TODO merge 'value' w/ 'subterm'?
 value
     : literal
     | name // | qname
@@ -659,13 +659,12 @@ value
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | function
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
+    | value 'COLLATE' value
     | '(' terms? ')'
     ;
 
 // value
 //    | function ( '.' function )*
-//    | value 'COLLATE' value
-//    | value '::' type
 //    | value index+
 //    | value ( '::' value )+
 //    | 'INTERVAL' value
@@ -768,6 +767,7 @@ scalar
     | 'RAW'
     | 'REAL'
     | 'SMALLINT'
+    | 'TEXT'
     | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
     | 'TINYINT'
     | 'UUID'
@@ -1006,6 +1006,7 @@ keyword
  | 'BEFORE'
  | 'BEGIN'
  | 'BETWEEN'
+ | 'BINARY'
  | 'BY'
  | 'CASCADE'
 // | 'CASE' cuz ambig function
@@ -1132,6 +1133,7 @@ keyword
  | 'TEMP'
  | 'TEMPORARY'
  | 'TEST'
+ | 'TEXT'
  | 'THEN'
  | 'TO'
  | 'TRANSACTION'
@@ -1209,8 +1211,11 @@ qnames
 name
     : ID
     | string
+    | QUOTED
+    | BACKTICKS
     | UNICODE_NAME uescape?
     | DOLLARS
+    | '[' ( ID | keyword | compare | '-' | '+' )+ ']'
 //    | VARIABLE
 //    | PARAMETER
 //    | unreserved
@@ -1242,10 +1247,12 @@ STRING
     : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
 ID
-    : '"' ( ~'"' | '""' )* '"'
-    | '`' ( ~'`' | '``' )* '`'
-    | HEAD BODY*
+    : HEAD BODY*
     ;
+
+BACKTICKS : '`' ( ~'`' | '``' )* '`' ;
+
+QUOTED : '"' ( ~'"' | '""' )* '"' ;
 
 fragment HEAD //options { caseInsensitive=false; }
     : [A-Z_]
