@@ -1215,7 +1215,7 @@ name
     | BACKTICKS
     | UNICODE_NAME uescape?
     | DOLLARS
-    | '[' ( ID | keyword | compare | '-' | '+' )+ ']'
+    | '[' ( ID | keyword | compare | '-' | '+' | '"' | '\'' | '`' )+ ']'
 //    | VARIABLE
 //    | PARAMETER
 //    | unreserved
@@ -1244,15 +1244,15 @@ NATIONAL_STRING
 STRING
 //    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
     // NOTE: Accept any string. No validation of content.
-    : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+    : '\'' ( ~( '\'' | '\n' | '\r' ) | '\'\'' )* '\'' ;
 
 ID
     : HEAD BODY*
     ;
 
-BACKTICKS : '`' ( ~'`' | '``' )* '`' ;
+BACKTICKS : '`' ( ~( '`' | '\n' | '\r' ) | '``' )* '`' ;
 
-QUOTED : '"' ( ~'"' | '""' )* '"' ;
+QUOTED : '"' ( ~( '"' | '\n' | '\r' ) | '""' )* '"' ;
 
 fragment HEAD //options { caseInsensitive=false; }
     : [A-Z_]
