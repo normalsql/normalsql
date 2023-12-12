@@ -37,8 +37,8 @@ statement
     : explain?
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
-    | 'ATTACH' 'DATABASE'? term 'AS' qname
-    | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'?
+    | 'ATTACH' 'DATABASE'? term 'AS' ( qname | 'NULL' )
+    | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'? name?
     | 'COMMIT' 'TRANSACTION'?
     | createIndex
     | createTable
@@ -51,7 +51,7 @@ statement
     | 'END' 'TRANSACTION'?
     | insert
     | merge
-    | 'PRAGMA' qname ( '=' ( literal | name ) | '(' ( literal | name ) ')' )?
+    | 'PRAGMA' qname ( '=' value | '(' value ')' )?
     | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
@@ -194,6 +194,8 @@ createIndex
     columnStuff
         : ( 'CONSTRAINT' name )?
           ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
+          | 'AUTOINCREMENT'
+          | 'COUNTER'
           | 'NOT'? 'NULL' onConflict?
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
@@ -570,10 +572,13 @@ compare
 
 match : '~' | '~*' | '!~' | '!~*' ;
 
+// TODO verify precedences
 subterm
     : ( '+' | '-' | '~' ) subterm
     | ( 'NOT' | '!' ) subterm
+    | function
     | value ( '.' name | '[' ( term | term? ':' term? )? ']' | '::' type )*
+    | subterm 'COLLATE' subterm
     | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
@@ -611,7 +616,7 @@ predicate
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' term
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
     | ( compare | match ) subterm
-    | 'NOT'? likes subterm ( 'ESCAPE' ( string | subterm ) )?
+    | 'NOT'? likes subterm ( 'ESCAPE' subterm )?
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
     | 'NOT'? 'IN' '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
@@ -660,9 +665,7 @@ value
 //    | select
     | array
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
-    | function
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-    | value 'COLLATE' value
     | '(' terms? ')'
     ;
 
@@ -747,6 +750,7 @@ scalar
     | chars precision?
     | 'CLOB'
     | 'DATE'
+    | 'DATETIME'
     | 'DEC' precision?
     | 'DECFLOAT'
     | 'DECIMAL' precision?
@@ -769,6 +773,7 @@ scalar
     | 'TINYINT'
     | 'UUID'
     | 'VARBINARY'
+    | 'VARINT'
     | 'XML'
 //    | name+ precision?
     ;
@@ -779,6 +784,7 @@ scalar
     | 'VARCHAR2'
     | 'VARCHAR_IGNORECASE'
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+    | 'STRING'
     ;
 
 length
@@ -816,12 +822,13 @@ sql11ReservedKeywordsUsedAsFunctionName
     | 'MAP'
     | 'REAL'
     | 'SMALLINT'
+    | 'TIME'
     | 'TIMESTAMP'
     ;
 
 functionName
     : name
-//    | sql11ReservedKeywordsUsedAsFunctionName
+    | sql11ReservedKeywordsUsedAsFunctionName
     ;
 
 function
@@ -977,7 +984,7 @@ jsonObject
             ;
 
             jsonKey
-                : 'NULL' | string | name ;
+                : 'NULL' | name ;
 
 qname
     : name ( '.' name )*
@@ -1005,6 +1012,7 @@ keyword
  | 'BEGIN'
  | 'BETWEEN'
  | 'BINARY'
+ | 'BLOB'
  | 'BY'
  | 'CASCADE'
  | 'CASE'
@@ -1019,6 +1027,7 @@ keyword
  | 'COMMIT'
  | 'CONFLICT'
  | 'CONSTRAINT'
+ | 'CONTENT'
  | 'COUNT'
  | 'CREATE'
  | 'CROSS'
@@ -1038,6 +1047,7 @@ keyword
  | 'DETACH'
  | 'DISTINCT'
  | 'DROP'
+ | 'DOCUMENT'
  | 'EACH'
  | 'ELSE'
  | 'END'
@@ -1052,7 +1062,7 @@ keyword
  | 'FIRST'
  | 'FOR'
  | 'FOREIGN'
-// | 'FROM'
+ | 'FROM'
  | 'FULL'
  | 'GLOB'
  | 'GROUP'
@@ -1089,12 +1099,15 @@ keyword
  | 'MONTH'
  | 'NAME'
  | 'NEW'
+ | 'NEXT'
  // | 'NATURAL' cuz
  | 'NO'
 // | 'NOT' cuz function ambig
  | 'NOTNULL'
+ | 'NUMERIC'
 // | 'NULL'
 // | 'OF' cuz function ambig
+ | 'OFF'
  | 'OFFSET'
  | 'ON'
  | 'OLD'
@@ -1150,11 +1163,13 @@ keyword
  | 'VARCHAR'
  | 'VIEW'
  | 'VIRTUAL'
+ | 'WAL'
  | 'WHEN'
  | 'WHERE'
  | 'WITH'
  | 'WITHOUT'
  | 'YEAR'
+ | 'YES'
  ;
 
 allDistinct
@@ -1214,12 +1229,8 @@ id
     | BACKTICKS
     | UNICODE_ID uescape?
     | DOLLARS
-    | '[' ( ID | keyword | compare | '-' | '+' | '"' | '\'' | '`' )+ ']'
-//    | VARIABLE
-//    | PARAMETER
-//    | unreserved
+    | '[' ( ID | string | QUOTED | BACKTICKS | keyword | compare | '-' | '+' | '"' | '\'' | '`' )+ ']'
     | keyword
-//    | 'A'
     ;
 
 string
