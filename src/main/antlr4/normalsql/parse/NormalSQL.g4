@@ -573,8 +573,7 @@ match : '~' | '~*' | '!~' | '!~*' ;
 subterm
     : ( '+' | '-' | '~' ) subterm
     | ( 'NOT' | '!' ) subterm
-    | value '::' type
-    | value (( '.' name ) | ( '[' ( term | term? ':' term? )? ']' ))*
+    | value ( '.' name | '[' ( term | term? ':' term? )? ']' | '::' type )*
     | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
