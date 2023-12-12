@@ -646,7 +646,8 @@ predicate
 // TODO merge 'value' w/ 'subterm'?
 value
     : literal
-    | name // | qname
+    | id
+    // | qname
 //    | 'INTERVAL' value
 //    | value timeCast
 //    | 'INTERVAL' string timeCast
@@ -676,8 +677,7 @@ literal
     : INTEGER
     | FLOAT
     | datetime
-//    | string
-//    | STRING
+    | string
     | 'TRUE'
     | 'FALSE'
     | BITS
@@ -691,7 +691,7 @@ literal
     | jsonObject
     | jsonArray
     | PARAMETER
-//    | VARIABLE
+    | VARIABLE
     ;
 
 datetime
@@ -1188,14 +1188,8 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : ID | string | UNICODE_NAME uescape?
-    // TODO sympred for aliases
-    // hard coded to pass tests
-    | 'A' | 'CASE' | 'TEST'
-    | 'SUM'
-    | 'FIRST' | 'LAST'
-    | 'NTH' | 'TYPE' | 'FILTER' | 'TEMP'
-//    | keyword
+    : name
+//    // TODO sympred for aliases
     ;
 
 names
@@ -1208,9 +1202,14 @@ qnames
     : '(' qname ( ',' qname )* ')' ;
 
 // TODO separate rules for valid identifiers, valid aliases, and valid function names
+
 name
-    : ID
+    : id
     | string
+    ;
+
+id
+    : ID
     | QUOTED
     | BACKTICKS
     | UNICODE_NAME uescape?
