@@ -178,7 +178,8 @@ createIndex
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
 
     indexedColumn
-        : ( qname | term ) sortDir? ;
+//        : ( qname | term ) sortDir? ;
+        : qname sortDir? ;
 
     indexedColumns
         : '(' indexedColumn ( ',' indexedColumn )* ')' ;
@@ -643,6 +644,7 @@ predicate
 
 value
     : literal
+    | name // | qname
 //    | 'INTERVAL' value
 //    | value timeCast
 //    | 'INTERVAL' string timeCast
@@ -657,7 +659,6 @@ value
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | function
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-    | name // | qname
     | '(' terms? ')'
     ;
 
@@ -694,7 +695,7 @@ literal
     | jsonObject
     | jsonArray
     | PARAMETER
-    | VARIABLE
+//    | VARIABLE
     ;
 
 datetime
