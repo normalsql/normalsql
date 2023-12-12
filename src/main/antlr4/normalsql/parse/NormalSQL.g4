@@ -1082,7 +1082,7 @@ keyword
  | 'KEY'
  | 'LAST'
  | 'LEFT'
-// | 'LIKE' cuz function ambig
+ | 'LIKE'
  | 'LIMIT'
  | 'MATCH'
  | 'MILLENNIUM'
@@ -1090,6 +1090,7 @@ keyword
  | 'MOD'
  | 'MONTH'
  | 'NAME'
+ | 'NEW'
  // | 'NATURAL' cuz
  | 'NO'
 // | 'NOT' cuz function ambig
@@ -1098,6 +1099,7 @@ keyword
 // | 'OF' cuz function ambig
  | 'OFFSET'
  | 'ON'
+ | 'OLD'
  | 'OR'
  | 'ORDER'
 // | 'OUTER'
