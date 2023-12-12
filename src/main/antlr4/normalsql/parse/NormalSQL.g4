@@ -748,7 +748,7 @@ scalar
     | 'BLOB' precision?
     | 'BOOL'
     | 'BOOLEAN'
-    | chars length?
+    | chars precision?
     | 'CLOB'
     | 'DATE'
     | 'DEC' precision?
@@ -790,7 +790,8 @@ length
 
 precision
     // TODO can this just be two INTEGERs?
-    : '(' subterm ( ',' subterm )? ')'
+//    : '(' subterm ( ',' subterm )? ')'
+    : '(' INTEGER ( ',' INTEGER )? ')'
     ;
 
 values
