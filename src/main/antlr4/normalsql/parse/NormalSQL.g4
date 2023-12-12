@@ -1007,7 +1007,7 @@ keyword
  | 'BINARY'
  | 'BY'
  | 'CASCADE'
-// | 'CASE' cuz ambig function
+ | 'CASE'
  | 'CAST'
  | 'CATEGORY'
  | 'CENTURY'
@@ -1212,7 +1212,7 @@ id
     : ID
     | QUOTED
     | BACKTICKS
-    | UNICODE_NAME uescape?
+    | UNICODE_ID uescape?
     | DOLLARS
     | '[' ( ID | keyword | compare | '-' | '+' | '"' | '\'' | '`' )+ ']'
 //    | VARIABLE
@@ -1231,8 +1231,8 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
-UNICODE_NAME
-    : 'U&' ID ;
+UNICODE_ID
+    : 'U&' QUOTED ;
 
 UNICODE_STRING
     : 'U&' STRING ;
@@ -1245,13 +1245,11 @@ STRING
     // NOTE: Accept any string. No validation of content.
     : '\'' ( ~( '\'' | '\n' | '\r' ) | '\'\'' )* '\'' ;
 
-ID
-    : HEAD BODY*
-    ;
-
 BACKTICKS : '`' ( ~( '`' | '\n' | '\r' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' | '\n' | '\r' ) | '""' )* '"' ;
+
+ID : HEAD BODY* ;
 
 fragment HEAD //options { caseInsensitive=false; }
     : [A-Z_]
