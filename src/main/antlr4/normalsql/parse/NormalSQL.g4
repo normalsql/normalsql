@@ -51,12 +51,13 @@ statement
     | 'END' 'TRANSACTION'?
     | insert
     | merge
-    | 'PRAGMA' qname ( '=' value | '(' value ')' )?
+    | 'PRAGMA' qname ( '=' subterm | '(' subterm ')' )?
     | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
     | 'RESET' qname
-    | 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
+    | 'ROLLBACK' 'TRANSACTION'? (( 'TO' 'SAVEPOINT'? )? name )?
+//    | 'ROLLBACK' 'TRANSACTION'? 'TO'? name?
     | 'SAVEPOINT' qname
     | set
     | update
@@ -200,7 +201,8 @@ createIndex
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' ( literal | term )
-          | 'COLLATE' name
+//          | 'COLLATE' name
+          | 'COLLATE' type
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
           )
@@ -357,13 +359,21 @@ select
 
     sources
         : sources ',' sources
+        // TODO validate this. added to pass sqlite's tkt2141.test
+        | sources ',' sources 'ON' term
         | sources join sources
         | sources join sources 'ON' term
         | sources join sources 'USING' qnames
         | '(' sources ')'
+        | '(' sources ')' sourceAlias
+//        | sources sourceAlias
+//        | sources 'USE' 'INDEX' names // H2
+//        | sources 'NOT' 'INDEXED'
+//        | sources 'INDEXED' 'BY' qname  // SQLite
         | source
 //        | select
         ;
+
 
         join
             // TODO 'LATERAL'
@@ -377,12 +387,14 @@ select
             ;
 
     source
-        : ( qname | '(' qname ')' ) ( 'AS'? alias names? )?
-          ( ( 'USE' 'INDEX' names ) // H2
-          | ( 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ) // SQLite
+        : ( qname | '(' qname ')' )  sourceAlias?
+         ( ( 'USE' 'INDEX' names ) // H2
+         | indexedBy // SQLite
           )?
-        | table ( 'AS'? alias names? )?
+        | table sourceAlias?
         ;
+
+        sourceAlias : 'AS'? alias names? ;
 
     table
         : select
@@ -440,7 +452,6 @@ select
 
     top
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
-//        : 'TOP' ( INTEGER | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
@@ -525,15 +536,12 @@ aliasedTerm
 aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
 
-// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-// | row 'INTERSECTS' '(' term ',' term ')'
-
-// TODO: '||' as logical OR
-// TODO: 'XOR'
 term
     : term 'OR' term
     | term 'AND' term
     | subterm
+    // TODO: '||' as logical OR
+    // TODO: 'XOR'
     ;
 
 //test
@@ -546,68 +554,46 @@ term
 ////        | subterm 'NOT'? 'IN' '(' ( table | terms )? ')'
 //        | subterm 'NOT'? 'IN' '(' terms? ')'
 ////        | subterm 'NOT'? 'IN' '(' subterm? ')'
-//        // PL/SQL dialect
-////        | 'NOT'? 'IN' subterm                                                      # PredicateIN
-//        | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
-//;
 
 
-//subterm
-//    : <assoc=right> subterm '^' subterm
-//    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
-////    | subterm  ( '||' | '->' | '->>' ) subterm
-//    ;
-////    | term ( '<<' | '>>' | '&' | '|' ) term
 //    // CrateDB ?
 ////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-//   ;
+// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+// | row 'INTERSECTS' '(' term ',' term ')'
 
-assign
-    : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
-    ;
-
-compare
-    : '=' | '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' // | '&&'
-    ;
-
-match : '~' | '~*' | '!~' | '!~*' ;
 
 // TODO verify precedences
 subterm
     : ( '+' | '-' | '~' ) subterm
     | ( 'NOT' | '!' ) subterm
-    | function
-    | value ( '.' name | '[' ( term | term? ':' term? )? ']' | '::' type )*
-    | subterm 'COLLATE' subterm
+    | value ( '.' name | index | '::' type )*
+    | subterm 'COLLATE' type
+    | <assoc=right> subterm '^' subterm
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
+    | subterm  ( '||' | '->' | '->>' ) subterm
     | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
-    | subterm '|' subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
     | subterm ( '+' | '-' ) subterm
-    | subterm '||' subterm
-    | subterm '&' subterm
-    | subterm '^' subterm
     | subterm ( compare | match ) subterm
 
-    // ANTLR's left-recursion magic doesn't match this...
-    // | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
-    // ... so manually split alts as workaround
+    /* BOZO ANTLR's left-recursion magic doesn't match this...
+     | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
+      ... so manually split alts as workaround
+    */
     | subterm 'NOT'? likes subterm 'ESCAPE' subterm
     | subterm 'NOT'? likes subterm
 
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    | subterm 'NOT'? 'IN' '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
     | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')'
     | VARIABLE ':=' subterm
     | 'EXISTS' '(' select ')'
-//        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+////        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
     ;
-
-
-likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
 // BOZO always update these alts as subterm's (related) alts change
 predicate
@@ -618,7 +604,7 @@ predicate
     | ( compare | match ) subterm
     | 'NOT'? likes subterm ( 'ESCAPE' subterm )?
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    | 'NOT'? 'IN' '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+    | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )?
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
     | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')'
 //    | 'EXISTS' LPAREN selectStatement RPAREN
@@ -648,25 +634,38 @@ predicate
 //            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
 
+    likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
+
+//    assign
+//        : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
+//        ;
+
+    compare
+        : '=' | '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' // | '&&'
+        ;
+
+    match : '~' | '~*' | '!~' | '!~*' ;
+
+
+
 // TODO merge 'value' w/ 'subterm'?
 value
     : literal
     | id
-    // | qname
-//    | 'INTERVAL' value
-//    | value timeCast
-//    | 'INTERVAL' string timeCast
+    | function
+    | case
     | 'INTERVAL' subterm timeCast
     | value 'AT' ( 'LOCAL' | timeZone string )
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
     | 'EXTRACT' '(' timeUnit 'FROM' 'INTERVAL' subterm timeCast ')'
-    | case
-    | '(' select ')'
-//    | select
     | array
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-    | '(' terms? ')'
+
+    | '(' select ')'
+//    | '(' terms? ')'
+//    | '(' ( select | terms ) ')'
+    | 'ROW'? '(' terms? ')'
     ;
 
 // value
@@ -745,6 +744,7 @@ scalar
     | 'BINARY' precision?
     | 'BIT' 'VARYING'? length?
     | 'BLOB' precision?
+//    | 'LARGE'? 'BLOB' precision?
     | 'BOOL'
     | 'BOOLEAN'
     | chars precision?
@@ -757,17 +757,20 @@ scalar
     | 'DOUBLE' 'PRECISION'?
     | 'FLOAT' length?
     | 'INT'
-    | 'INTEGER'
+    | 'BIG'? 'INTEGER'
+//    | 'INTEGER'
     | 'INTERVAL'
     | 'JSON'
     | 'JSONB'
     | 'LONG'
     | 'NCLOB'
+    | 'NUM' precision?
     | 'NUMBER' precision?
     | 'NUMERIC' precision?
     | 'RAW'
     | 'REAL'
     | 'SMALLINT'
+    | 'STR'
     | 'TEXT'
     | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
     | 'TINYINT'
@@ -775,7 +778,7 @@ scalar
     | 'VARBINARY'
     | 'VARINT'
     | 'XML'
-//    | name+ precision?
+    | id+ precision?
     ;
 
  chars
@@ -791,10 +794,10 @@ length
     : ( '(' INTEGER ')' ) ;
 
 precision
-    // TODO can this just be two INTEGERs?
-//    : '(' subterm ( ',' subterm )? ')'
-    : '(' INTEGER ( ',' INTEGER )? ')'
+    : '(' signedInteger ( ',' signedInteger )? ')'
     ;
+
+signedInteger : ( '+' | '-' )? INTEGER ;
 
 values
     : 'VALUES' terms ;
@@ -912,7 +915,6 @@ trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')' ;
 //
 //        ;
 
-
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
 
@@ -990,8 +992,8 @@ qname
     : name ( '.' name )*
     ;
 
-//index
-//    : '[' ( term | term? ':' term? )? ']' ;
+index
+    : '[' ( term | term? ':' term? )? ']' ;
 
 keyword
  : 'A'
@@ -1011,6 +1013,7 @@ keyword
  | 'BEFORE'
  | 'BEGIN'
  | 'BETWEEN'
+ | 'BIG'
  | 'BINARY'
  | 'BLOB'
  | 'BY'
@@ -1029,6 +1032,7 @@ keyword
  | 'CONSTRAINT'
  | 'CONTENT'
  | 'COUNT'
+ | 'COUNTER'
  | 'CREATE'
  | 'CROSS'
  | 'CURRENT'
@@ -1038,6 +1042,8 @@ keyword
  | 'DECADE'
  | 'DATA'
  | 'DATABASE'
+ | 'DATE'
+ | 'DATETIME'
  | 'DAY'
  | 'DEFAULT'
  | 'DEFERRABLE'
@@ -1045,7 +1051,7 @@ keyword
  | 'DELETE'
  | 'DESC'
  | 'DETACH'
- | 'DISTINCT'
+// | 'DISTINCT'
  | 'DROP'
  | 'DOCUMENT'
  | 'EACH'
@@ -1079,6 +1085,7 @@ keyword
  | 'INSERT'
  | 'INSTEAD'
  | 'INTERSECT'
+ | 'INTERGER'
  | 'INTERVAL'
  | 'INT'
  | 'INTO'
@@ -1092,7 +1099,9 @@ keyword
  | 'LEFT'
  | 'LIKE'
  | 'LIMIT'
+ | 'LONG'
  | 'MATCH'
+ | 'MEMORY'
  | 'MILLENNIUM'
  | 'MINUTE'
  | 'MOD'
@@ -1104,6 +1113,8 @@ keyword
  | 'NO'
 // | 'NOT' cuz function ambig
  | 'NOTNULL'
+ | 'NUM'
+ | 'NUMBER'
  | 'NUMERIC'
 // | 'NULL'
 // | 'OF' cuz function ambig
@@ -1114,6 +1125,8 @@ keyword
  | 'OR'
  | 'ORDER'
 // | 'OUTER'
+ | 'PARTIAL'
+ | 'PATH'
  | 'PLAN'
  | 'PRAGMA'
  | 'PRIMARY'
@@ -1139,17 +1152,25 @@ keyword
  | 'SET'
  | 'SETTINGS'
  | 'SEQUENCE'
+ | 'SIMPLE'
  | 'SOME'
+ | 'STR'
+ | 'STRING'
+// | 'SUBSTR'
  | 'SUBSTRING'
  | 'SUM'
+ | 'SUMMARY'
  | 'TABLE'
  | 'TEMP'
  | 'TEMPORARY'
+ | 'TEMPLATE'
  | 'TEST'
  | 'TEXT'
  | 'THEN'
+ | 'TIMESTAMP'
  | 'TO'
  | 'TRANSACTION'
+ | 'TRIM'
  | 'TRIGGER'
  | 'TYPE'
  | 'UNION'
@@ -1161,6 +1182,7 @@ keyword
  | 'VALUE'
 // | 'VALUES'  cuz function ambig
  | 'VARCHAR'
+ | 'VERSION'
  | 'VIEW'
  | 'VIRTUAL'
  | 'WAL'
@@ -1229,7 +1251,7 @@ id
     | BACKTICKS
     | UNICODE_ID uescape?
     | DOLLARS
-    | '[' ( ID | string | QUOTED | BACKTICKS | keyword | compare | '-' | '+' | '"' | '\'' | '`' )+ ']'
+    | '[' .*? ']'
     | keyword
     ;
 
@@ -1253,12 +1275,11 @@ NATIONAL_STRING
 
 STRING
 //    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
-    // NOTE: Accept any string. No validation of content.
-    : '\'' ( ~( '\'' | '\n' | '\r' ) | '\'\'' )* '\'' ;
+    : '\'' ( ~( '\'' ) | '\'\'' )* '\'' ;
 
-BACKTICKS : '`' ( ~( '`' | '\n' | '\r' ) | '``' )* '`' ;
+BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
-QUOTED : '"' ( ~( '"' | '\n' | '\r' ) | '""' )* '"' ;
+QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
 ID : HEAD BODY* ;
 
@@ -1362,6 +1383,7 @@ COMMENT
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
+OTHER : . ;
 
 // TODO BOZO this crude OPERATOR token accepts way more than spec'd
 
@@ -1375,4 +1397,3 @@ BLOCK_COMMENT
 //    ;
 
 
-// END
