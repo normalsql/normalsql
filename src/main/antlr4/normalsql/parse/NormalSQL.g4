@@ -564,49 +564,49 @@ term
 
 // TODO verify precedences
 subterm
-    : ( '+' | '-' | '~' ) subterm
-    | ( 'NOT' | '!' ) subterm
-    | value ( '.' name | index | '::' type )*
-    | subterm 'COLLATE' type
-    | <assoc=right> subterm '^' subterm
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
-    | subterm  ( '||' | '->' | '->>' ) subterm
-    | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
-    | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
-    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm
-    | subterm ( '+' | '-' ) subterm
-    | subterm ( compare | match ) subterm
+    : ( '+' | '-' | '~' ) subterm # SubtermFixme
+    | ( 'NOT' | '!' ) subterm # SubtermFixme
+    | value ( '.' name | index | '::' type )* # SubtermValue
+    | subterm 'COLLATE' type # SubtermFixme
+    | <assoc=right> subterm '^' subterm # SubtermFixme
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermFixme
+    | subterm  ( '||' | '->' | '->>' ) subterm # SubtermFixme
+    | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ) # SubtermFixme
+    | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # SubtermFixme
+    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # SubtermFixme
+    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # SubtermFixme
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermFixme
+    | subterm ( '+' | '-' ) subterm # SubtermFixme
+    | subterm ( compare | match ) subterm # SubtermFixme
 
     /* BOZO ANTLR's left-recursion magic doesn't match this...
      | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
       ... so manually split alts as workaround
     */
-    | subterm 'NOT'? likes subterm 'ESCAPE' subterm
-    | subterm 'NOT'? likes subterm
+    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermFixme
+    | subterm 'NOT'? likes subterm # SubtermFixme
 
-    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )
-    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
-    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')'
-    | VARIABLE ':=' subterm
-    | 'EXISTS' '(' select ')'
+    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermFixme
+    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name ) # SubtermFixme
+    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
+    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | VARIABLE ':=' subterm # SubtermFixme
+    | 'EXISTS' '(' select ')' # SubtermFixme
 ////        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
     ;
 
 // BOZO always update these alts as subterm's (related) alts change
 predicate
-    : 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' )
-    | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-    | 'IS' 'NOT'? 'DISTINCT' 'FROM' term
-    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'
-    | ( compare | match ) subterm
-    | 'NOT'? likes subterm ( 'ESCAPE' subterm )?
-    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'
-    | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )?
-    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm
-    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')'
+    : 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ) # PredicateFixme
+    | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # PredicateFixme
+    | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateFixme
+    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateFixme
+    | ( compare | match ) subterm # PredicateFixme
+    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
+    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # PredicateFixme
+    | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # PredicateIN
+    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
+    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
 

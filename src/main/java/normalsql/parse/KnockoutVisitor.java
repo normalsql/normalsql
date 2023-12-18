@@ -190,28 +190,28 @@ extends
 //		return super.visitSubtermRow( context );
 //	}
 
-	@Override
-	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
-	{
-		PredicateContext pc = ctx.predicate();
-//			// TODO: ANY
-//			case PredicateAnyContext any -> {}
-		Knockout<?,?> k = switch( pc )
-		{
-			case PredicateBETWEENContext between -> new BETWEEN( between );
-			case PredicateOperatorContext compare -> new Comparison( compare );
-			case PredicateINContext in -> new IN( in );
-			case PredicateLIKEContext like -> new LIKE( like );
-			default -> null;
-		};
-
-		if( k != null && k.isMatched() )
-		{
-			statementStack.peek().knockouts.add( k );
-			knockouts.add( k );
-			return null;
-		}
-
-		return super.visitSubtermPredicate( ctx );
-	}
+//	@Override
+//	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
+//	{
+//		PredicateContext pc = ctx.predicate();
+////			// TODO: ANY
+////			case PredicateAnyContext any -> {}
+//		Knockout<?,?> k = switch( pc )
+//		{
+//			case PredicateBETWEENContext between -> new BETWEEN( between );
+//			case PredicateOperatorContext compare -> new Comparison( compare );
+//			case PredicateINContext in -> new IN( in );
+//			case PredicateLIKEContext like -> new LIKE( like );
+//			default -> null;
+//		};
+//
+//		if( k != null && k.isMatched() )
+//		{
+//			statementStack.peek().knockouts.add( k );
+//			knockouts.add( k );
+//			return null;
+//		}
+//
+//		return super.visitSubtermPredicate( ctx );
+//	}
 }
