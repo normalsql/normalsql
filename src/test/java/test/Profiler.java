@@ -3,22 +3,19 @@
 
 package test;
 
-import normalsql.parse.KnockoutVisitor;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
-import static normalsql.parse.NormalSQLParser.*;
-
-import normalsql.parse.NormalSQLVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.Tree;
 
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class Drill
+import static normalsql.parse.NormalSQLParser.*;
+
+public class Profiler
 {
 	public static void main( String... args )
 	{
@@ -28,18 +25,7 @@ SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1
 """
 		;
 
-//		int count = 0;
-//		while( count < 1_000_000 )
-//		{
-//			var drill = new Drill();
-//			drill.parse( null, sql, false );
-//			count++;
-//			if( count % 200 == 0 )
-//			{
-//				System.out.println( count );
-//			}
-//		}
-		var drill = new Drill();
+		var drill = new Profiler();
 		if( drill.parse( null, sql, false ))
 		{
 			drill.toStringTree(  );
@@ -56,71 +42,26 @@ SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1
 
 	public  boolean parse( Path p, String sql, boolean bracketsEnabled )
 	{
-		class SyntaxError
-		{
-			Recognizer<?, ?> recognizer;
-			Object offendingSymbol;
-			int line;
-			int charPositionInLine;
-			String msg;
-			RecognitionException e;
-		}
-
-
-		var errors = new ArrayList<SyntaxError>();
-
 		var chars = CharStreams.fromString( sql );
 		var lexer = new NormalSQLLexer( chars );
 		lexer.bracketsEnabled = bracketsEnabled;
 		var tokens = new CommonTokenStream( lexer );
 		parser = new NormalSQLParser( tokens );
 		parser.setProfile( true );
-//		parser.removeErrorListeners();
-//		parser.addErrorListener( new BaseErrorListener() {
-//			@Override
-//			public void syntaxError(Recognizer<?, ?> recognizer,
-//									Object offendingSymbol,
-//									int line,
-//									int charPositionInLine,
-//									String msg,
-//									RecognitionException e)
-//			{
-//				var error = new SyntaxError();
-//				error.recognizer = recognizer;
-//				error.offendingSymbol = offendingSymbol;
-//				error.line = line;
-//				error.charPositionInLine = charPositionInLine;
-//				error.msg = msg;
-//				error.e = e;
-//				errors.add( error );
-//			}
-//
-//		} );
 
 		script = parser.script();
-		var info = parser.getParseInfo();
-		System.out.println( info );
-		if( errors.isEmpty() ) return true;
+		var parseinfo = parser.getParseInfo();
+		for( var di : parseinfo.getDecisionInfo() )
+		{
+//			if( di.ambiguities.size
+		}
 
-//		var visitor = new KnockoutVisitor();
-//		visitor.parser = parser;
-//		visitor.tokens = tokens;
-//		visitor.visit( script );
+
+//		System.out.println( info );
 
 		System.out.println();
 		if( p != null ) System.out.println( p );
-		for( var e : errors )
-		{
-			System.out.println( "ERROR line " + e.line + ":" + e.charPositionInLine + " " + e.msg );
-		}
 
-		System.out.println();
-		var lines = sql.split( "\\n" );
-		for( int i = 0; i < lines.length ; i++ )
-		{
-//			System.out.printf( "%d: %s\n", i + 1, lines[i] );
-			System.out.println( lines[i] );
-		}
 
 		System.out.println( toStringTree( script ) );
 		return false;

@@ -37,9 +37,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- TODO: pick an older JDK -->
-<!--        <maven.compiler.source>20</maven.compiler.source>-->
-<!--        <maven.compiler.target>20</maven.compiler.target>-->
         <antlr4.version>4.13.1</antlr4.version>
     </properties>
 
@@ -152,9 +149,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <target>17</target>
-                    <source>17</source>
-                    <compilerArgs>--enable-preview</compilerArgs>
+                    <target>21</target>
+                    <source>21</source>
+<!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
                 </configuration>
             </plugin>
 
