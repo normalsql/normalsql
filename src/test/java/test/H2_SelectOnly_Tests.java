@@ -5,10 +5,13 @@ package test;
 
 import normalsql.parse.*;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 public class
@@ -40,7 +43,7 @@ public class
 		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
 
 		ArrayList<Path> files = new ArrayList<>();
-		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
+		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
 			{
 				@Override
 				public FileVisitResult visitFile( Path sourceFile, BasicFileAttributes attrs )
@@ -165,18 +168,58 @@ public class
 					fails.add( msg );
 					fails.add( sql );
 					last = sql;
-//					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
-//					System.out.println( sourceFile );
-//					System.out.println( "line: " + nth );
-//					System.out.println( sql );
-
-//					System.out.println( );
-
 				}
 			}
+				@Override
+	public void reportAmbiguity(Parser recognizer,
+								DFA dfa,
+								int startIndex,
+								int stopIndex,
+								boolean exact,
+								BitSet ambigAlts,
+								ATNConfigSet configs)
+	{
+		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+	}
+
+	@Override
+	public void reportAttemptingFullContext(Parser recognizer,
+											DFA dfa,
+											int startIndex,
+											int stopIndex,
+											BitSet conflictingAlts,
+											ATNConfigSet configs)
+	{
+//		fails.add( "full " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+
+	}
+
+	@Override
+	public void reportContextSensitivity(Parser recognizer,
+										 DFA dfa,
+										 int startIndex,
+										 int stopIndex,
+										 int prediction,
+										 ATNConfigSet configs)
+	{
+//		fails.add( "sensitive " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+	}
 
 		} );
 
+		parser.setProfile( true );
 		var result = parser.script();
+//		var pi = parser.getParseInfo();
+//		var dia = pi.getDecisionInfo();
+//		for( var di : dia )
+//		{
+//			if( di.ambiguities.size() > 0 || di.contextSensitivities.size() > 0 )
+//			{
+//
+//			}
+//
+//		}
+
+
 	}
 }

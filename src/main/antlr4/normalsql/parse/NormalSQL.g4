@@ -21,12 +21,6 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
-// @lexer::members
-// {
-//     public boolean bracketsEnabled = false;
-//     public boolean operatorEnabled = false;
-// }
-
 // convenience for debugging
 aaa1 : script ;
 aaa2 : term ;
@@ -326,9 +320,9 @@ returning
 
 select
     : with? combine
-    // Because various dialects order these clauses differently
-    // TODO: Allow just one of each clause (somehow)
-    ( orderBy | offset | fetch | limit | forUpdate )*
+      // Because various dialects order these clauses differently
+      // TODO: Allow just one of each clause (somehow)
+      ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
     combine
@@ -359,28 +353,19 @@ select
 
     sources
         : sources ',' sources
-        // TODO validate this. added to pass sqlite's tkt2141.test
-        | sources ',' sources 'ON' term
-        | sources join sources
-        | sources join sources 'ON' term
-        | sources join sources 'USING' qnames
-        | '(' sources ')'
-        | '(' sources ')' sourceAlias
-//        | sources sourceAlias
-//        | sources 'USE' 'INDEX' names // H2
-//        | sources 'NOT' 'INDEXED'
-//        | sources 'INDEXED' 'BY' qname  // SQLite
+          // TODO validate this. added ON clause to pass sqlite's tkt2141.test
+          ( 'ON' term )?
+        | sources join sources ( 'ON' term | 'USING' qnames )?
+        | '(' sources ')' sourceAlias?
         | source
-//        | select
         ;
 
-
+        // TODO 'LATERAL'
         join
-            // TODO 'LATERAL'
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
               | ( 'RIGHT' | 'FULL' ) 'OUTER'?
-              |  'INNER'
+              | 'INNER'
               | 'CROSS'
               )?
               'JOIN'
@@ -388,8 +373,8 @@ select
 
     source
         : ( qname | '(' qname ')' )  sourceAlias?
-         ( ( 'USE' 'INDEX' names ) // H2
-         | indexedBy // SQLite
+          ( ( 'USE' 'INDEX' names ) // H2
+          | indexedBy // SQLite
           )?
         | table sourceAlias?
         ;
@@ -455,6 +440,7 @@ select
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
+//        : term ( 'AS'? name )?                       # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
 
@@ -544,16 +530,6 @@ term
     // TODO: 'XOR'
     ;
 
-//test
-//        | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-//        | subterm 'IS' 'NOT'? logicals
-//        | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm
-//        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
-//        | subterm 'IS' 'NOT'? subterm
-////        | subterm 'NOT'? 'IN' subterm
-////        | subterm 'NOT'? 'IN' '(' ( table | terms )? ')'
-//        | subterm 'NOT'? 'IN' '(' terms? ')'
-////        | subterm 'NOT'? 'IN' '(' subterm? ')'
 
 
 //    // CrateDB ?
@@ -609,6 +585,11 @@ predicate
     | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
+
+//test
+//        | subterm 'IS' 'NOT'? logicals
+//        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
+//        | subterm 'IS' 'NOT'? subterm
 
 //    predicate
 //        : ( EQ | COMPARE | ASSIGN ) term                                        # PredicateOperator
@@ -741,43 +722,43 @@ type
 
 scalar
     : 'BIGINT'
-    | 'BINARY' precision?
-    | 'BIT' 'VARYING'? length?
-    | 'BLOB' precision?
-//    | 'LARGE'? 'BLOB' precision?
-    | 'BOOL'
-    | 'BOOLEAN'
-    | chars precision?
-    | 'CLOB'
-    | 'DATE'
-    | 'DATETIME'
-    | 'DEC' precision?
-    | 'DECFLOAT'
-    | 'DECIMAL' precision?
-    | 'DOUBLE' 'PRECISION'?
-    | 'FLOAT' length?
-    | 'INT'
-    | 'BIG'? 'INTEGER'
-//    | 'INTEGER'
-    | 'INTERVAL'
-    | 'JSON'
-    | 'JSONB'
-    | 'LONG'
-    | 'NCLOB'
-    | 'NUM' precision?
-    | 'NUMBER' precision?
-    | 'NUMERIC' precision?
-    | 'RAW'
-    | 'REAL'
-    | 'SMALLINT'
-    | 'STR'
-    | 'TEXT'
+//    | 'BINARY' precision?
+//    | 'BIT' 'VARYING'? length?
+//    | 'BLOB' precision?
+////    | 'LARGE'? 'BLOB' precision?
+//    | 'BOOL'
+//    | 'BOOLEAN'
+//    | chars precision?
+//    | 'CLOB'
+//    | 'DATE'
+//    | 'DATETIME'
+//    | 'DEC' precision?
+//    | 'DECFLOAT'
+//    | 'DECIMAL' precision?
+//    | 'DOUBLE' 'PRECISION'?
+//    | 'FLOAT' length?
+//    | 'INT'
+//    | 'BIG'? 'INTEGER'
+////    | 'INTEGER'
+//    | 'INTERVAL'
+//    | 'JSON'
+//    | 'JSONB'
+//    | 'LONG'
+//    | 'NCLOB'
+//    | 'NUM' precision?
+//    | 'NUMBER' precision?
+//    | 'NUMERIC' precision?
+//    | 'RAW'
+//    | 'REAL'
+//    | 'SMALLINT'
+//    | 'STR'
+//    | 'TEXT'
     | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
-    | 'TINYINT'
-    | 'UUID'
-    | 'VARBINARY'
-    | 'VARINT'
-    | 'XML'
+//    | 'TINYINT'
+//    | 'UUID'
+//    | 'VARBINARY'
+//    | 'VARINT'
+//    | 'XML'
     | id+ precision?
     ;
 
@@ -809,29 +790,29 @@ array
     arrayNested : arrayTerms ( ',' arrayTerms )* ;
 
 
-sql11ReservedKeywordsUsedAsFunctionName
-    : 'ARRAY'
-    | 'BIGINT'
-    | 'BINARY'
-    | 'BOOLEAN'
-//    | 'CURRENT_DATE'
-//    | 'CURRENT_TIMESTAMP'
-    | 'DATE'
-    | 'DOUBLE'
-    | 'FLOAT'
-    | 'GROUPING'
-    | 'IF'
-    | 'INT'
-    | 'MAP'
-    | 'REAL'
-    | 'SMALLINT'
-    | 'TIME'
-    | 'TIMESTAMP'
-    ;
+//sql11ReservedKeywordsUsedAsFunctionName
+//    : 'ARRAY'
+//    | 'BIGINT'
+//    | 'BINARY'
+//    | 'BOOLEAN'
+////    | 'CURRENT_DATE'
+////    | 'CURRENT_TIMESTAMP'
+//    | 'DATE'
+//    | 'DOUBLE'
+//    | 'FLOAT'
+//    | 'GROUPING'
+//    | 'IF'
+//    | 'INT'
+//    | 'MAP'
+//    | 'REAL'
+//    | 'SMALLINT'
+//    | 'TIME'
+//    | 'TIMESTAMP'
+//    ;
 
 functionName
     : name
-    | sql11ReservedKeywordsUsedAsFunctionName
+//    | sql11ReservedKeywordsUsedAsFunctionName
     ;
 
 function
@@ -869,7 +850,7 @@ function
 
 
 // TODO fix to prevent term term
-trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM'? term ')' ;
+trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM' term ')' ;
 
 
     aggregateFunction
@@ -1006,7 +987,7 @@ keyword
  | 'ANALYZE'
  | 'AND'
  | 'ANY'
- | 'AS'
+// | 'AS'
  | 'ASC'
  | 'ATTACH'
  | 'AUTOINCREMENT'
@@ -1133,6 +1114,7 @@ keyword
  | 'QUARTER'
  | 'QUERY'
  | 'RAISE'
+// | 'REAL'
  | 'RECURSIVE'
  | 'REFERENCES'
  | 'REGEXP'
@@ -1164,7 +1146,7 @@ keyword
  | 'TEMP'
  | 'TEMPORARY'
  | 'TEMPLATE'
- | 'TEST'
+// | 'TEST'
  | 'TEXT'
  | 'THEN'
  | 'TIMESTAMP'
