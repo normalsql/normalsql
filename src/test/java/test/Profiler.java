@@ -9,6 +9,7 @@ import org.antlr.v4.gui.TreeTextProvider;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.AmbiguityInfo;
+import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
@@ -31,9 +32,7 @@ public class Profiler
 		"""
 				--select * from (SELECT 1);
 				--SELECT LENGTH(TRIM(B)), LENGTH(TRIM(FROM B)) FROM TEST;
-						SELECT REGR_INTERCEPT(Y, X) OVER (ORDER BY R) FROM (VALUES
-						    (9, 11, 7)
-						) T(R, Y, X) ORDER BY R;
+						select * from test where id in ((select id from test));
 				"""
 		;
 
@@ -46,10 +45,8 @@ public class Profiler
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
-		out.println( parser.getInterpreter().getPredictionMode());
+//		out.println( parser.getInterpreter().getPredictionMode());
 	    var script = parser.script();
-
-		InterpreterTreeTextProvider nodeTextProvider = new InterpreterTreeTextProvider(parser.getRuleNames());
 
 		var pi = parser.getParseInfo();
 
@@ -60,28 +57,20 @@ public class Profiler
 //			{
 //				out.println( di );
 //			}
-			for( var sense : di.contextSensitivities )
-			{
-				out.println( sense );
-			}
+//			for( var sense : di.contextSensitivities )
+//			{
+//				out.println( sense );
+//			}
 			for( var ai : di.ambiguities )
 			{
-				out.println( ai );
+//				out.println( ai );
 				var trees =
-				getAllPossibleParseTrees(
-															  parser,
-															  tokens,
-															  ai,
-//															  ai.decision,
-//															  ai.ambigAlts,
-//															  ai.startIndex,
-//															  ai.stopIndex,
-															  script.getRuleIndex());
+				getAllPossibleParseTrees( parser, tokens, ai, script.getRuleIndex() );
 
 				for( var tree : trees )
 				{
 //					out.println( tree );
-					out.println( org.antlr.v4.gui.Trees.toStringTree(tree, nodeTextProvider));
+					out.println( toStringTree(tree, Arrays.asList( parser.getRuleNames() ) ));
 				}
 			}
 		}
@@ -161,14 +150,11 @@ public class Profiler
 	 *  @throws RecognitionException Throws upon syntax error while matching
 	 *                               ambig input.
 	 */
-	public static List<ParserRuleContext> getAllPossibleParseTrees(
+	public static
+	List<ParserRuleContext> getAllPossibleParseTrees(
 	                                                               Parser originalParser,
 	                                                               TokenStream tokens,
 																   AmbiguityInfo ai,
-//	                                                               int decision,
-//	                                                               BitSet alts,
-//	                                                               int startIndex,
-//	                                                               int stopIndex,
 	                                                               int startRuleIndex)
 		throws RecognitionException
 	{
@@ -232,22 +218,38 @@ public class Profiler
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 		return parser;
 	}
-}
 
-class InterpreterTreeTextProvider implements TreeTextProvider {
-	public List<String> _ruleNames;
-	public InterpreterTreeTextProvider(String[] ruleNames)
+	public static
+	String toStringTree( Tree t, List<String> gosh )
 	{
-		_ruleNames = Arrays.asList(ruleNames);
+		if( t == null )
+		{
+			return "null";
+		}
+
+		String s = Utils.escapeWhitespace( Trees.getNodeText( t, gosh ), false );
+		if( t.getChildCount() == 0 )
+		{
+			return s;
+		}
+
+		StringBuilder buf = new StringBuilder();
+//		buf.append( '❰' );
+		buf.append( '「' );
+		buf.append( s );
+		buf.append( ' ' );
+		for( int i = 0; i < t.getChildCount(); i++ )
+		{
+			if( i > 0 )
+			{
+				buf.append( ' ' );
+			}
+			buf.append( toStringTree( t.getChild( i ), gosh ) );
+		}
+//		buf.append( '❱' );
+		buf.append( '」' );
+		return buf.toString();
 	}
 
-	@Override
-	public String getText(Tree node) {
-		if ( node==null ) return "null";
-		String nodeText = Trees.getNodeText(node, _ruleNames);
-		if ( node instanceof ErrorNode) {
-			return "<error "+nodeText+">";
-		}
-		return nodeText;
-	}
 }
+

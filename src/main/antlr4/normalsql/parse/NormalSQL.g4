@@ -323,14 +323,25 @@ select
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
+    | '(' select ')'
     ;
+
+//    combine
+//        : combine ( 'INTERSECT' | 'MINUS' ) combine
+//        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
+//        | combine 'MULTISET' combine
+////        | '(' combine ')'
+//        | '(' select ')'
+//        | selectCore
+//        ;
 
     combine
         : combine ( 'INTERSECT' | 'MINUS' ) combine
+        | '(' combine ( 'INTERSECT' | 'MINUS' ) combine ')'
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
+        | '(' combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine ')'
         | combine 'MULTISET' combine
-//        | '(' combine ')'
-        | '(' select ')'
+        | '(' combine 'MULTISET' combine ')'
         | selectCore
         ;
 
@@ -356,7 +367,8 @@ select
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
         | sources join sources ( 'ON' term | 'USING' qnames )?
-        | '(' sources ')' sourceAlias?
+        | '(' sources join sources ( 'ON' term | 'USING' qnames )? ')' sourceAlias?
+//        | '(' sources ')' sourceAlias?
         | source
         ;
 
@@ -563,7 +575,8 @@ subterm
     | subterm 'NOT'? likes subterm # SubtermFixme
 
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermFixme
-    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name ) # SubtermFixme
+//    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name ) # SubtermFixme
+    | subterm 'NOT'? 'IN' ( '(' ( term ( ',' term )* )? ')' | name ) # SubtermFixme
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
     | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
     | VARIABLE ':=' subterm # SubtermFixme
@@ -643,7 +656,8 @@ value
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
 
-    | '(' select ')'
+//    | '(' select ')'
+    | select
 //    | '(' terms? ')'
 //    | '(' ( select | terms ) ')'
     | 'ROW'? '(' terms? ')'
