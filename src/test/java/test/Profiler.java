@@ -30,9 +30,7 @@ public class Profiler
 	{
 		String sql =
 		"""
-				--select * from (SELECT 1);
-				--SELECT LENGTH(TRIM(B)), LENGTH(TRIM(FROM B)) FROM TEST;
-						select * from test where id in ((select id from test));
+				select * from test where id in ((select id from test));
 				"""
 		;
 

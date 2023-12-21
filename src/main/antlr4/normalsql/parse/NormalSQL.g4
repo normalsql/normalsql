@@ -323,27 +323,27 @@ select
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-    | '(' select ')'
-    ;
-
-//    combine
-//        : combine ( 'INTERSECT' | 'MINUS' ) combine
-//        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
-//        | combine 'MULTISET' combine
-////        | '(' combine ')'
 //        | '(' select ')'
-//        | selectCore
-//        ;
+    ;
 
     combine
         : combine ( 'INTERSECT' | 'MINUS' ) combine
-        | '(' combine ( 'INTERSECT' | 'MINUS' ) combine ')'
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
-        | '(' combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine ')'
         | combine 'MULTISET' combine
-        | '(' combine 'MULTISET' combine ')'
+//        | '(' combine ')'
+//        | '(' select ')'
         | selectCore
         ;
+
+//    combine
+//        : combine ( 'INTERSECT' | 'MINUS' ) combine
+//        | '(' combine ( 'INTERSECT' | 'MINUS' ) combine ')'
+//        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
+//        | '(' combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine ')'
+//        | combine 'MULTISET' combine
+//        | '(' combine 'MULTISET' combine ')'
+//        | selectCore
+//        ;
 
     selectCore
         : 'SELECT' quantifier?
@@ -356,7 +356,7 @@ select
           having?
           windows?
           qualify?
-//        | '(' select ')'
+        | '(' select ')'
         | 'VALUES' terms
         // MySQL table statement
         | 'TABLE' qname
@@ -366,9 +366,12 @@ select
         : sources ',' sources
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
-        | sources join sources ( 'ON' term | 'USING' qnames )?
-        | '(' sources join sources ( 'ON' term | 'USING' qnames )? ')' sourceAlias?
-//        | '(' sources ')' sourceAlias?
+        | sources join sources  ( 'ON' term | 'USING' qnames )?
+//        | sources join '(' sources ')' ( 'ON' term | 'USING' qnames )?
+////        | sources join ( source | '(' sources ')' ) ( 'ON' term | 'USING' qnames )?
+//        | '(' sources ')' join sources ( 'ON' term | 'USING' qnames )?
+//        | '(' sources ')' join '(' sources ')' ( 'ON' term | 'USING' qnames )?
+        | '(' sources ')'
         | source
         ;
 
@@ -394,7 +397,8 @@ select
         sourceAlias : 'AS'? alias names? ;
 
     table
-        : select
+        : '(' select ')'
+        | 'VALUES' terms
 //        // MySQL table statement
 //        | 'TABLE' qname
         | tableFunc
@@ -575,8 +579,7 @@ subterm
     | subterm 'NOT'? likes subterm # SubtermFixme
 
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermFixme
-//    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name ) # SubtermFixme
-    | subterm 'NOT'? 'IN' ( '(' ( term ( ',' term )* )? ')' | name ) # SubtermFixme
+    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # SubtermFixme
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
     | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
     | VARIABLE ':=' subterm # SubtermFixme
@@ -656,8 +659,8 @@ value
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
 
-//    | '(' select ')'
-    | select
+    | '(' select ')'
+//    | select
 //    | '(' terms? ')'
 //    | '(' ( select | terms ) ')'
     | 'ROW'? '(' terms? ')'
@@ -776,14 +779,14 @@ scalar
     | id+ precision?
     ;
 
- chars
-    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
-    | 'VARCHAR'
-    | 'VARCHAR2'
-    | 'VARCHAR_IGNORECASE'
-    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
-    | 'STRING'
-    ;
+// chars
+//    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
+//    | 'VARCHAR'
+//    | 'VARCHAR2'
+//    | 'VARCHAR_IGNORECASE'
+//    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+//    | 'STRING'
+//    ;
 
 length
     : ( '(' INTEGER ')' ) ;
@@ -863,9 +866,7 @@ function
     ;
 
 
-// TODO fix to prevent term term
-trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? term? 'FROM' term ')' ;
-
+trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')' ;
 
     aggregateFunction
 //        :
@@ -991,7 +992,7 @@ index
     : '[' ( term | term? ':' term? )? ']' ;
 
 keyword
- : 'A'
+ : 'AZZ'
  | 'ABORT'
  | 'ACTION'
  | 'ADD'
@@ -1076,7 +1077,7 @@ keyword
  | 'INDEX'
  | 'INDEXED'
  | 'INITIALLY'
- | 'INNER'
+// | 'INNER'
  | 'INSERT'
  | 'INSTEAD'
  | 'INTERSECT'
@@ -1177,7 +1178,7 @@ keyword
  | 'VACUUM'
  | 'VALUE'
 // | 'VALUES'  cuz function ambig
- | 'VARCHAR'
+// | 'VARCHAR'
  | 'VERSION'
  | 'VIEW'
  | 'VIRTUAL'
@@ -1310,8 +1311,8 @@ fragment HEAD //options { caseInsensitive=false; }
     ;
 
 // TODO compare each dialect's rules for literals. eg SQLite allows ':'?
-fragment BODY options { caseInsensitive=false; }
-    : [0-9#$@_]
+fragment BODY// options //{ caseInsensitive=false; }
+    : [0-9#$@]
     | HEAD
 //    | '\u00B7'
 //    | '\u0300' .. '\u036F'

@@ -179,13 +179,13 @@ public class
 								BitSet ambigAlts,
 								ATNConfigSet configs)
 	{
-//		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
-//		if( !sql.equals( last ))
-//		{
-////			error();
-//			fails.add( sql );
-//			last = sql;
-//		}
+		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+		if( !sql.equals( last ))
+		{
+//			error();
+			fails.add( sql );
+			last = sql;
+		}
 	}
 
 	@Override

@@ -1040,7 +1040,7 @@ select count(*) from test where id = ((select id from test));
 select count(*) from test where id = ARRAY [(select id from test), 1];
 select count(*) from test where id = ((select id from test fetch first row only), 1);
 select (select id from test where 1=0) from test;
-select select a from test order by id;
+-- select select a from test order by id;
 select max(id) from test where id = max(id) group by id;
 select * from test where a=TRUE=a;
 SELECT T.ID FROM TEST "T";
@@ -2808,7 +2808,7 @@ SELECT
         (3, (2, NULL), (1, NULL)),
         (4, (1, 1), (1, 2))
     ) T(N, A, B) ORDER BY N;
-select select decode(1, 2, 'a', 'else');
+-- select select decode(1, 2, 'a', 'else');
 select decode(1, 1, '1', 1, '11') from dual;
 select user() x_sa, current_user() x_sa2;
 SELECT CURRENT_USER;
