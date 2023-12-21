@@ -30,7 +30,7 @@ public class Profiler
 	{
 		String sql =
 		"""
-				select * from test where id in ((select id from test));
+				SELECT DATE '201231';
 				"""
 		;
 

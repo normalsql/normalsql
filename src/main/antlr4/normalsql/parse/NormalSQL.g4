@@ -330,20 +330,8 @@ select
         : combine ( 'INTERSECT' | 'MINUS' ) combine
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
-//        | '(' combine ')'
-//        | '(' select ')'
         | selectCore
         ;
-
-//    combine
-//        : combine ( 'INTERSECT' | 'MINUS' ) combine
-//        | '(' combine ( 'INTERSECT' | 'MINUS' ) combine ')'
-//        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
-//        | '(' combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine ')'
-//        | combine 'MULTISET' combine
-//        | '(' combine 'MULTISET' combine ')'
-//        | selectCore
-//        ;
 
     selectCore
         : 'SELECT' quantifier?
@@ -367,10 +355,6 @@ select
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
         | sources join sources  ( 'ON' term | 'USING' qnames )?
-//        | sources join '(' sources ')' ( 'ON' term | 'USING' qnames )?
-////        | sources join ( source | '(' sources ')' ) ( 'ON' term | 'USING' qnames )?
-//        | '(' sources ')' join sources ( 'ON' term | 'USING' qnames )?
-//        | '(' sources ')' join '(' sources ')' ( 'ON' term | 'USING' qnames )?
         | '(' sources ')'
         | source
         ;
@@ -547,13 +531,6 @@ term
     ;
 
 
-
-//    // CrateDB ?
-////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
-// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
-// | row 'INTERSECTS' '(' term ',' term ')'
-
-
 // TODO verify precedences
 subterm
     : ( '+' | '-' | '~' ) subterm # SubtermFixme
@@ -583,8 +560,12 @@ subterm
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
     | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
     | VARIABLE ':=' subterm # SubtermFixme
-    | 'EXISTS' '(' select ')' # SubtermFixme
-////        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+//        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
+//   | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
+//    // CrateDB ?
+////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
+// TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
+// | row 'INTERSECTS' '(' term ',' term ')'
     ;
 
 // BOZO always update these alts as subterm's (related) alts change
@@ -643,35 +624,19 @@ predicate
 
     match : '~' | '~*' | '!~' | '!~*' ;
 
-
-
 // TODO merge 'value' w/ 'subterm'?
 value
     : literal
-    | id
-    | function
     | case
     | 'INTERVAL' subterm timeCast
     | value 'AT' ( 'LOCAL' | timeZone string )
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
-    | 'EXTRACT' '(' timeUnit 'FROM' 'INTERVAL' subterm timeCast ')'
-    | array
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-
+    | array
     | '(' select ')'
-//    | select
-//    | '(' terms? ')'
-//    | '(' ( select | terms ) ')'
+    | function
+    | id
     | 'ROW'? '(' terms? ')'
     ;
-
-// value
-//    | function ( '.' function )*
-////    // PL/SQL
-//////    | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
-//////   TODO  | sequenceValueExpression
-////    | 'ROW'? '(' terms? ')' ( '.' name )?
 
 literal
     : INTEGER
@@ -700,7 +665,7 @@ datetime
     | 'CURRENT_DATE'
     | 'TIMESTAMP' string
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-    | 'CURRENT_TIMESTAMP'
+//    | 'CURRENT_TIMESTAMP'
     ;
 
 boolean
@@ -747,7 +712,7 @@ scalar
 //    | 'BOOLEAN'
 //    | chars precision?
 //    | 'CLOB'
-//    | 'DATE'
+    | 'DATE'
 //    | 'DATETIME'
 //    | 'DEC' precision?
 //    | 'DECFLOAT'
@@ -836,6 +801,9 @@ function
     : trim
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
+    | 'EXISTS' '(' select ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | xmlFunction
@@ -1034,11 +1002,11 @@ keyword
  | 'CURRENT'
  | 'CURRENT_DATE'
  | 'CURRENT_TIME'
- | 'CURRENT_TIMESTAMP'
+// | 'CURRENT_TIMESTAMP'
  | 'DECADE'
  | 'DATA'
  | 'DATABASE'
- | 'DATE'
+// | 'DATE'
  | 'DATETIME'
  | 'DAY'
  | 'DEFAULT'
@@ -1092,7 +1060,7 @@ keyword
 // | 'JOIN'
  | 'KEY'
  | 'LAST'
- | 'LEFT'
+// | 'LEFT'
  | 'LIKE'
  | 'LIMIT'
  | 'LONG'
@@ -1164,7 +1132,7 @@ keyword
 // | 'TEST'
  | 'TEXT'
  | 'THEN'
- | 'TIMESTAMP'
+// | 'TIMESTAMP'
  | 'TO'
  | 'TRANSACTION'
  | 'TRIM'
@@ -1278,6 +1246,7 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
+// TODO figure out why 'varchar_whatever' isn't an ID token
 ID : HEAD BODY* ;
 
 fragment HEAD //options { caseInsensitive=false; }
@@ -1365,7 +1334,7 @@ fragment DIGIT
 
 VARIABLE
     : [:$] ( INTEGER | ID )
-    | '@' '@'? HEAD BODY*
+    | '@' '@'? ID*
     ;
 
 // \u000B line (vertical) tab

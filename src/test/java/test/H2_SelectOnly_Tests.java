@@ -25,10 +25,15 @@ public class
 	}
 
 	static int error = 0;
+	static int ambig = 0;
 
 	static public void error()
 	{
 		error++;
+	}
+	static public void ambig()
+	{
+		ambig++;
 	}
 
 	static class Work {
@@ -139,6 +144,7 @@ public class
 
 		System.out.println( "statements found: " + count );
 		System.out.println( "errors found: " + error );
+		System.out.println( "ambigs found: " + ambig );
 		System.out.println( new java.util.Date() );
 	}
 
@@ -165,7 +171,7 @@ public class
 				if( !sql.equals( last ))
 				{
 					error();
-					fails.add( msg );
+//					fails.add( msg );
 					fails.add( sql );
 					last = sql;
 				}
@@ -179,10 +185,11 @@ public class
 								BitSet ambigAlts,
 								ATNConfigSet configs)
 	{
-		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+		var span = sql.substring( startIndex, stopIndex );
+		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
 		if( !sql.equals( last ))
 		{
-//			error();
+			ambig();
 			fails.add( sql );
 			last = sql;
 		}
