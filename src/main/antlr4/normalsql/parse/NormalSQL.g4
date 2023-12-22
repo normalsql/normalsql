@@ -21,9 +21,20 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
+@members
+{
+    boolean xyz( String text ) {
+        return true;
+    }
+}
+
 // convenience for debugging
+aa : name doc ;
+doc : { xyz( $start.getText() ) }? ugh='abc' ;
+
 aaa1 : script ;
 aaa2 : term ;
+
 
 script : statement? ( ';' statement? )* EOF ;
 
