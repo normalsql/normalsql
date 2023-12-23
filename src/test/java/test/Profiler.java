@@ -30,7 +30,10 @@ public class Profiler
 	{
 		String sql =
 		"""
-				SELECT DATE '201231';
+    SELECT CAST (TIMESTAMP '1000000000-12-31 00:00:00' AS DATE);
+				-- SELECT DATE '201231';
+				-- SELECT * FROM t LIMIT 0;
+				-- SELECT ADD_MONTHS('2003-08-01', 3);
 				"""
 		;
 

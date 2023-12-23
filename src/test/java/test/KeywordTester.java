@@ -36,7 +36,7 @@ public class KeywordTester
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		out.println( parser.getInterpreter().getPredictionMode());
-	    var aa = parser.aa();
+//	    var aa = parser.aa();
 
 
 	}

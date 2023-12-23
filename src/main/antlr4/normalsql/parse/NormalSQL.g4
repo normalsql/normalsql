@@ -29,12 +29,9 @@ options { caseInsensitive=true; }
 }
 
 // convenience for debugging
-aa : name doc ;
-doc : { xyz( $start.getText() ) }? ugh='abc' ;
 
 aaa1 : script ;
 aaa2 : term ;
-
 
 script : statement? ( ';' statement? )* EOF ;
 
@@ -541,10 +538,10 @@ term
     // TODO: 'XOR'
     ;
 
-
 // TODO verify precedences
+// TODO combine operators into lexer rules
 subterm
-    : ( '+' | '-' | '~' ) subterm # SubtermFixme
+    : ( '+' | '-' | TILDE ) subterm # SubtermFixme
     | ( 'NOT' | '!' ) subterm # SubtermFixme
     | value ( '.' name | index | '::' type )* # SubtermValue
     | subterm 'COLLATE' type # SubtermFixme
@@ -557,10 +554,11 @@ subterm
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # SubtermFixme
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermFixme
     | subterm ( '+' | '-' ) subterm # SubtermFixme
-    | subterm ( compare | match ) subterm # SubtermFixme
+    | subterm compare subterm # SubtermFixme
 
-    /* BOZO ANTLR's left-recursion magic doesn't match this...
-     | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
+    /*
+     ANTLR's left-recursion magic doesn't match this...
+        | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
       ... so manually split alts as workaround
     */
     | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermFixme
@@ -569,8 +567,9 @@ subterm
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermFixme
     | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # SubtermFixme
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
-    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
-    | VARIABLE ':=' subterm # SubtermFixme
+//    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | VARIABLE assign subterm # SubtermFixme
 //        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
 //   | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //    // CrateDB ?
@@ -585,12 +584,12 @@ predicate
     | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # PredicateFixme
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateFixme
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateFixme
-    | ( compare | match ) subterm # PredicateFixme
+    | compare subterm # PredicateFixme
     | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # PredicateFixme
     | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # PredicateIN
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
-    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
+//    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
 
@@ -625,15 +624,13 @@ predicate
 
     likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
-//    assign
-//        : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|='
-//        ;
-
-    compare
-        : '=' | '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' // | '&&'
+    assign
+        : ASSIGN
         ;
 
-    match : '~' | '~*' | '!~' | '!~*' ;
+    compare
+        : EQ | COMPARE | TILDE | MATCH
+        ;
 
 // TODO merge 'value' w/ 'subterm'?
 value
@@ -676,7 +673,7 @@ datetime
     | 'CURRENT_DATE'
     | 'TIMESTAMP' string
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-//    | 'CURRENT_TIMESTAMP'
+    | 'CURRENT_TIMESTAMP'
     ;
 
 boolean
@@ -765,7 +762,7 @@ scalar
 //    ;
 
 length
-    : ( '(' INTEGER ')' ) ;
+    : '(' INTEGER ')' ;
 
 precision
     : '(' signedInteger ( ',' signedInteger )? ')'
@@ -783,47 +780,103 @@ array
     arrayNested : arrayTerms ( ',' arrayTerms )* ;
 
 
-//sql11ReservedKeywordsUsedAsFunctionName
-//    : 'ARRAY'
-//    | 'BIGINT'
-//    | 'BINARY'
-//    | 'BOOLEAN'
-////    | 'CURRENT_DATE'
-////    | 'CURRENT_TIMESTAMP'
-//    | 'DATE'
-//    | 'DOUBLE'
-//    | 'FLOAT'
-//    | 'GROUPING'
-//    | 'IF'
-//    | 'INT'
-//    | 'MAP'
-//    | 'REAL'
-//    | 'SMALLINT'
-//    | 'TIME'
-//    | 'TIMESTAMP'
-//    ;
-
 functionName
     : name
-//    | sql11ReservedKeywordsUsedAsFunctionName
+    | 'RIGHT'
+    | 'LEFT'
+    | 'SECOND'
+    | 'YEAR'
+    | 'MINUTE'
+    | 'MONTH'
+    | 'HOUR'
+    | 'SET'
+    | 'ANY'
+    | 'SOME'
     ;
 
+params : '(' INTEGER? ')' ;
+
 function
-    : trim
+    : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
+    | 'CURRENT_DATE' params?
+    | 'CURRENT_TIME' params?
+    | 'CURRENT_TIMESTAMP' params?
+    | 'LOCALTIME' params?
+    | 'LOCALTIMESTAMP' params?
+    | 'CURRENT_USER' params?
+    | 'USER' params?
+    | 'CURRENT_ROLE'
+    | 'SESSION_USER'
+    | 'CURRENT_CATALOG'
+    | 'CURRENT_SCHEMA'
+    | 'SYSTEM_USER'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | 'EXISTS' '(' select ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
+    | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
+    | 'TIMESTAMPDIFF' '(' timeUnit ',' string ',' string ')'
+    | 'DATEADD' '(' timeUnit ',' signedInteger ',' datetime ')'
+    | 'DATE_TRUNC' '(' timeUnit ',' datetime ')'
     | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
-    | xmlFunction
+
+    | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+    | 'XMLCONCAT' '(' terms ')'
+    | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
+//   | 'XMLELEMENT' '(' 'NAME' collabel (',' (xml_attributes | expr_list))? ')'
+    | 'XMLEXISTS' '(' subterm passing? ')'
+    | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
+    | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
+    | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
+    | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
+    | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
+
     | 'ARRAY' '(' select ')' // Postgres
     | '{fn' function '}' //  ODBC style
     | aggregateFunction
+    ;
 
-//    | functionName '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
-//      orderBy?
+
+    // TODO Postgres functions
+ /*
+   : 'COLLATION' 'FOR' '(' a_expr ')'
+
+   | 'NORMALIZE' '(' a_expr (',' unicode_normal_form)? ')'
+   | 'OVERLAY' '(' a_expr 'PLACING' a_expr 'FROM' a_expr ('FOR' a_expr)? ')'
+   | 'POSITION' '(' (subterm 'IN' subterm)? ')'
+   | 'SUBSTRING' '(' substr_list? ')'
+   | 'TREAT' '(' a_expr 'AS' type ')'
+   | 'TRIM' '(' ('BOTH' | 'LEADING' | 'TRAILING')? trim_list ')'
+   | 'NULLIF' '(' a_expr ',' a_expr ')'
+   | 'COALESCE' '(' expr_list ')'
+   | 'GREATEST' '(' expr_list ')'
+   | 'LEAST' '(' expr_list ')'
+ */
+//    | 'SIN' '(' subterm ')'
+//    | 'LEFT' '(' subterm ',' subterm ')'
+//    | 'LOWER' '(' subterm ')'
+////    | analyticFunction
+////    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
+////    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
+//        'SUM' '(' allDistinct? term ')' filter? over?
+
+    aggregateFunction
+        : functionName
+          '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
+          orderBy?
+    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+          ( 'ON' 'OVERFLOW' 'ERROR' )?
+          ( 'SEPARATOR' term )? onNull?
+    //      respectIgnore?  // TODO: Oracle
+          ')'
+          withinGroup?
+          filter?
+          ( 'FROM' firstLast )?
+          nullTreatment? over?
+        ;
+
 //      ( ')' withinGroup
 //      | ')' nullTreatment? over
 //      | nullTreatment ')' over
@@ -831,55 +884,7 @@ function
 //      )
 
 
-//    | 'CURRENT_DATE'
-//    | 'CURRENT_TIME'
-//    | 'CURRENT_TIMESTAMP'
-//    | 'SIN' '(' subterm ')'
-//    | 'LEFT' '(' subterm ',' subterm ')'
-//    | 'LOWER' '(' subterm ')'
-//    | aggregateFunction
-////    | analyticFunction
-////    | qname '(' terms?  ')'
-////    | keyword? 'FUNCTION' keyword '(' terms? ')' // TODO: T-SQL style
-////    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
-    ;
-
-
-trim : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')' ;
-
-    aggregateFunction
-//        :
-//        'SUM' '(' allDistinct? term ')' filter? over?
-//    // Generic syntax for all aggregate functions?
-//    |
-    : functionName
-      '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
-      orderBy?
-//    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-      ( 'ON' 'OVERFLOW' 'ERROR' )?
-      ( 'SEPARATOR' term )? onNull?
-//      respectIgnore?  // TODO: Oracle
-      ')'
-      withinGroup?
-      filter?
-      ( 'FROM' firstLast )?
-      nullTreatment? over?
-    ;
-
-    xmlFunction
-        : 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-        | 'XMLCONCAT' '(' terms ')'
-        | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
-        | 'XMLEXISTS' '(' subterm passing? ')'
-
-        | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
-        | 'XMLPARSE' '(' xmlContent term ( 'PRESERVE' | 'STRIP' ) 'WHITESPACE' ')'
-        | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
-        | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
-        | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
-        ;
-
-//    analyticFunction
+    //    analyticFunction
 //        : ( 'FIRST_VALUE'
 //          | 'LAST_VALUE'
 //          | 'NTH_VALUE'
@@ -963,212 +968,9 @@ jsonObject
             jsonKey
                 : 'NULL' | name ;
 
-qname
-    : name ( '.' name )*
-    ;
 
 index
     : '[' ( term | term? ':' term? )? ']' ;
-
-keyword
- : 'AZZ'
- | 'ABORT'
- | 'ACTION'
- | 'ADD'
- | 'AFTER'
- | 'ALL'
- | 'ALTER'
- | 'ANALYZE'
- | 'AND'
- | 'ANY'
-// | 'AS'
- | 'ASC'
- | 'ATTACH'
- | 'AUTOINCREMENT'
- | 'BEFORE'
- | 'BEGIN'
- | 'BETWEEN'
- | 'BIG'
- | 'BINARY'
- | 'BLOB'
- | 'BY'
- | 'CASCADE'
- | 'CASE'
- | 'CAST'
- | 'CATEGORY'
- | 'CENTURY'
- | 'CHAR'
- | 'CHECK'
- | 'COLLATE'
- | 'COLUMN'
- | 'COLUMNS'
- | 'COMMIT'
- | 'CONFLICT'
- | 'CONSTRAINT'
- | 'CONTENT'
- | 'COUNT'
- | 'COUNTER'
- | 'CREATE'
- | 'CROSS'
- | 'CURRENT'
- | 'CURRENT_DATE'
- | 'CURRENT_TIME'
-// | 'CURRENT_TIMESTAMP'
- | 'DECADE'
- | 'DATA'
- | 'DATABASE'
-// | 'DATE'
- | 'DATETIME'
- | 'DAY'
- | 'DEFAULT'
- | 'DEFERRABLE'
- | 'DEFERRED'
- | 'DELETE'
- | 'DESC'
- | 'DETACH'
-// | 'DISTINCT'
- | 'DROP'
- | 'DOCUMENT'
- | 'EACH'
- | 'ELSE'
- | 'END'
- | 'ESCAPE'
- | 'EXCEPT'
- | 'EXCLUSIVE'
-// | 'EXISTS'  cuz ambig function
- | 'EXPLAIN'
- | 'EXTRACT'
- | 'FAIL'
- | 'FILTER'
- | 'FIRST'
- | 'FOR'
- | 'FOREIGN'
- | 'FROM'
- | 'FULL'
- | 'GLOB'
- | 'GROUP'
- | 'HAVING'
- | 'HOUR'
- | 'IF'
- | 'IGNORE'
- | 'IMMEDIATE'
-// | 'IN' cuz function
- | 'INDEX'
- | 'INDEXED'
- | 'INITIALLY'
-// | 'INNER'
- | 'INSERT'
- | 'INSTEAD'
- | 'INTERSECT'
- | 'INTERGER'
- | 'INTERVAL'
- | 'INT'
- | 'INTO'
- | 'IS'
- | 'ISNULL'
- | 'ISO_DAY_OF_WEEK'
- | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
-// | 'JOIN'
- | 'KEY'
- | 'LAST'
-// | 'LEFT'
- | 'LIKE'
- | 'LIMIT'
- | 'LONG'
- | 'MATCH'
- | 'MEMORY'
- | 'MILLENNIUM'
- | 'MINUTE'
- | 'MOD'
- | 'MONTH'
- | 'NAME'
- | 'NEW'
- | 'NEXT'
- // | 'NATURAL' cuz
- | 'NO'
-// | 'NOT' cuz function ambig
- | 'NOTNULL'
- | 'NUM'
- | 'NUMBER'
- | 'NUMERIC'
-// | 'NULL'
-// | 'OF' cuz function ambig
- | 'OFF'
- | 'OFFSET'
- | 'ON'
- | 'OLD'
- | 'OR'
- | 'ORDER'
-// | 'OUTER'
- | 'PARTIAL'
- | 'PATH'
- | 'PLAN'
- | 'PRAGMA'
- | 'PRIMARY'
- | 'QUARTER'
- | 'QUERY'
- | 'RAISE'
-// | 'REAL'
- | 'RECURSIVE'
- | 'REFERENCES'
- | 'REGEXP'
- | 'REINDEX'
- | 'RELEASE'
- | 'RENAME'
- | 'REPLACE'
- | 'RESTRICT'
- | 'RIGHT'
- | 'ROLLBACK'
- | 'ROW'
- | 'ROWS'
- | 'SAVEPOINT'
- | 'SCHEMA'
- | 'SECOND'
-// | 'SELECT'
- | 'SET'
- | 'SETTINGS'
- | 'SEQUENCE'
- | 'SIMPLE'
- | 'SOME'
- | 'STR'
- | 'STRING'
-// | 'SUBSTR'
- | 'SUBSTRING'
- | 'SUM'
- | 'SUMMARY'
- | 'TABLE'
- | 'TEMP'
- | 'TEMPORARY'
- | 'TEMPLATE'
-// | 'TEST'
- | 'TEXT'
- | 'THEN'
-// | 'TIMESTAMP'
- | 'TO'
- | 'TRANSACTION'
- | 'TRIM'
- | 'TRIGGER'
- | 'TYPE'
- | 'UNION'
-// | 'UNIQUE' cuz function
- | 'UPDATE'
- | 'USER'
- | 'USING'
- | 'VACUUM'
- | 'VALUE'
-// | 'VALUES'  cuz function ambig
-// | 'VARCHAR'
- | 'VERSION'
- | 'VIEW'
- | 'VIRTUAL'
- | 'WAL'
- | 'WHEN'
- | 'WHERE'
- | 'WITH'
- | 'WITHOUT'
- | 'YEAR'
- | 'YES'
- ;
 
 allDistinct
     : 'ALL' | 'DISTINCT' ;
@@ -1201,12 +1003,8 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : name
-//    // TODO sympred for aliases
+    : id | string
     ;
-
-names
-    : '(' name ( ',' name )* ')' ;
 
 qnames0
     : qname ( ',' qname )* ;
@@ -1214,22 +1012,21 @@ qnames0
 qnames
     : '(' qname ( ',' qname )* ')' ;
 
-// TODO separate rules for valid identifiers, valid aliases, and valid function names
+qname
+    : name ( '.' name )*
+    ;
 
 name
     : id
     | string
     ;
 
-id
-    : ID
-    | QUOTED
-    | BACKTICKS
-    | UNICODE_ID uescape?
-    | DOLLARS
-    | '[' .*? ']'
-    | keyword
-    ;
+names
+    : '(' name ( ',' name )* ')' ;
+
+//id
+//    : ID
+//    | '[' .*? ']'
 
 string
     : STRING+
@@ -1240,6 +1037,146 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
+id :
+    // exclude punctuation
+    ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
+    | '!' | '+' | '-' | '*' | '/' | '%' | '^'
+    | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
+    | '.' | ':' | '::' | ';'
+    | '(' | ')' | '{' | '}' | ','
+    // and everything else
+    | OTHER
+
+
+    // all tokens except ID
+    | UNICODE_ID
+    | STRING
+    | NATIONAL_STRING
+    | UNICODE_STRING
+//    | QUOTED
+//    | BACKTICKS
+    | DOLLARS
+    | BITS
+    | BYTES
+    | BLOB
+    | OCTALS
+    | INTEGER
+    | FLOAT
+    | PARAMETER
+    | VARIABLE
+
+    // SQL reserved keywords
+    | 'ALL'
+    | 'AND'
+    | 'ANY'
+    | 'ARRAY'
+    | 'AS'
+    | 'ASYMMETRIC'
+    | 'AUTHORIZATION'
+    | 'BETWEEN'
+    | 'BOTH'
+    | 'CASE'
+    | 'CAST'
+    | 'CHECK'
+    | 'CONSTRAINT'
+    | 'CROSS'
+    | 'CURRENT_CATALOG'
+    | 'CURRENT_DATE'
+    | 'CURRENT_PATH'
+    | 'CURRENT_ROLE'
+    | 'CURRENT_SCHEMA'
+    | 'CURRENT_TIME'
+    | 'CURRENT_TIMESTAMP'
+    | 'CURRENT_USER'
+    | 'DAY'
+    | 'DEFAULT'
+    | 'DISTINCT'
+    | 'ELSE'
+    | 'END'
+    | 'EXCEPT'
+    | 'EXISTS'
+    | 'FALSE'
+    | 'FETCH'
+    | 'FOR'
+    | 'FOREIGN'
+    | 'FROM'
+    | 'FULL'
+    | 'GROUP'
+    | 'GROUPS'
+    | 'HAVING'
+    | 'HOUR'
+//    | 'IF'
+//    | 'ILIKE'
+    | 'IN'
+    | 'INNER'
+    | 'INTERSECT'
+    | 'INTERVAL'
+    | 'IS'
+    | 'JOIN'
+//    | 'KEY'
+    | 'LEADING'
+    | 'LEFT'
+    | 'LIKE'
+    | 'LIMIT'
+    | 'LOCALTIME'
+    | 'LOCALTIMESTAMP'
+//    | 'MINUS'
+    | 'MINUTE'
+    | 'MONTH'
+    | 'NATURAL'
+    | 'NOT'
+    | 'NULL'
+    | 'OFFSET'
+    | 'ON'
+    | 'OR'
+    | 'ORDER'
+    | 'OVER'
+    | 'PARTITION'
+    | 'PRIMARY'
+//    | 'QUALIFY'
+    | 'RANGE'
+    | 'REGEXP'
+    | 'RIGHT'
+    | 'ROW'
+//    | 'ROWNUM'
+    | 'ROWS'
+    | 'SECOND'
+    | 'SELECT'
+    | 'SESSION_USER'
+    | 'SET'
+    | 'SOME'
+    | 'SYMMETRIC'
+    | 'SYSTEM_USER'
+    | 'TABLE'
+    | 'TO'
+    | 'TOP'
+    | 'TRAILING'
+    | 'TRUE'
+    | 'UESCAPE'
+    | 'UNION'
+    | 'UNIQUE'
+    | 'UNKNOWN'
+    | 'USER'
+    | 'USING'
+    | 'VALUE'
+    | 'VALUES'
+    | 'WHEN'
+    | 'WHERE'
+    | 'WINDOW'
+    | 'WITH'
+    | 'YEAR'
+//    | '_ROWID_'
+    )
+    | UNICODE_ID uescape?
+    ;
+
+
+EQ      : '=' ;
+ASSIGN  : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
+COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
+TILDE   : '~' ;
+MATCH   : '~*' | '!~' | '!~*' ;
+
 UNICODE_ID
     : 'U&' QUOTED ;
 
@@ -1249,6 +1186,7 @@ UNICODE_STRING
 NATIONAL_STRING
     :  [NE] STRING ;
 
+// TODO combine strings
 STRING
 //    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
     : '\'' ( ~( '\'' ) | '\'\'' )* '\'' ;
@@ -1257,6 +1195,7 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
+// TODO combine IDs
 // TODO figure out why 'varchar_whatever' isn't an ID token
 ID : HEAD BODY* ;
 

@@ -122,13 +122,13 @@ public class Worker
 						}
 					}
 				}
-				case Comparison c ->
-				{
-					// TODO add operator to method signature
-					String column = getColumn( c.column );
-					Accessor prop = _helper.create( c.literal, column );
-					work.statementAccessors.add( prop );
-				}
+//				case Comparison c ->
+//				{
+//					// TODO add operator to method signature
+//					String column = getColumn( c.column );
+//					Accessor prop = _helper.create( c.literal, column );
+//					work.statementAccessors.add( prop );
+//				}
 				case LIKE m ->
 				{
 					String column = getColumn( m.column );

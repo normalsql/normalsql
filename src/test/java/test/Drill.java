@@ -75,7 +75,7 @@ select (  select 1 )
 		parser = new NormalSQLParser( tokens );
 //		parser.removeErrorListeners();
 
-		parser.addErrorListener( new DiagnosticErrorListener() );
+//		parser.addErrorListener( new DiagnosticErrorListener() );
 
 //		parser.addErrorListener( new BaseErrorListener() {
 //			@Override

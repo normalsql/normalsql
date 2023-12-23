@@ -222,17 +222,5 @@ public class
 
 		parser.setProfile( true );
 		var result = parser.script();
-//		var pi = parser.getParseInfo();
-//		var dia = pi.getDecisionInfo();
-//		for( var di : dia )
-//		{
-//			if( di.ambiguities.size() > 0 || di.contextSensitivities.size() > 0 )
-//			{
-//
-//			}
-//
-//		}
-
-
 	}
 }
