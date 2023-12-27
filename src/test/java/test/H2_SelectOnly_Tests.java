@@ -116,15 +116,6 @@ public class
 		System.out.println();
 		System.out.printf( "statements found %d\n", workList.size() );
 
-		System.out.println();
-
-//		for( Work w : workList )
-//		{
-//			System.out.println( w.sql );
-//		}
-
-		System.out.println();
-		System.out.println();
 
 		long start = System.currentTimeMillis();
 
@@ -185,14 +176,14 @@ public class
 								BitSet ambigAlts,
 								ATNConfigSet configs)
 	{
-		var span = sql.substring( startIndex, stopIndex );
-		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
-		if( !sql.equals( last ))
-		{
-			ambig();
-			fails.add( sql );
-			last = sql;
-		}
+//		var span = sql.substring( startIndex, stopIndex );
+//		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
+//		if( !sql.equals( last ))
+//		{
+//			ambig();
+//			fails.add( sql );
+//			last = sql;
+//		}
 	}
 
 	@Override

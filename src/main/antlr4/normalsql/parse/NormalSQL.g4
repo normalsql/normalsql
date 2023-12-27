@@ -54,6 +54,7 @@ statement
     | insert
     | merge
     | 'PRAGMA' qname ( '=' subterm | '(' subterm ')' )?
+    | 'PRAGMA' 'AUTO_VACUUM' '=' 'FULL' // TODO need rule for keywords
     | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
@@ -658,20 +659,21 @@ literal
     | OCTALS
     | 'UNKNOWN'
     | 'NULL'
-//    | 'ON'
-//    | 'OFF'
+    | 'ON'
+    | 'OFF'
 //    | 'DEFAULT'
-    | jsonObject
-    | jsonArray
     | PARAMETER
     | VARIABLE
     ;
 
 datetime
+    // TODO value or literal
     : 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
+
+    // TODO function
     | 'CURRENT_DATE'
-    | 'TIMESTAMP' string
+//    | 'TIMESTAMP' string
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
     | 'CURRENT_TIMESTAMP'
     ;
@@ -711,7 +713,7 @@ type
     ;
 
 scalar
-    : 'BIGINT'
+//    : 'BIGINT'
 //    | 'BINARY' precision?
 //    | 'BIT' 'VARYING'? length?
 //    | 'BLOB' precision?
@@ -720,7 +722,7 @@ scalar
 //    | 'BOOLEAN'
 //    | chars precision?
 //    | 'CLOB'
-    | 'DATE'
+//    | 'DATE'
 //    | 'DATETIME'
 //    | 'DEC' precision?
 //    | 'DECFLOAT'
@@ -743,7 +745,8 @@ scalar
 //    | 'SMALLINT'
 //    | 'STR'
 //    | 'TEXT'
-    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
+//    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
+    : ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
 //    | 'TINYINT'
 //    | 'UUID'
 //    | 'VARBINARY'
@@ -812,6 +815,8 @@ function
     | 'SYSTEM_USER'
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
+    | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
+    | 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')'
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
     | 'EXISTS' '(' select ')'
@@ -835,6 +840,7 @@ function
 
     | 'ARRAY' '(' select ')' // Postgres
     | '{fn' function '}' //  ODBC style
+
     | aggregateFunction
     ;
 
@@ -925,12 +931,14 @@ window
         ;
 
         preceding
-            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+//            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+            : term 'PRECEDING'
             | 'CURRENT' 'ROW'
             ;
 
         following
-            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+//            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+            : term 'FOLLOWING'
             | preceding
             ;
 
@@ -951,13 +959,7 @@ orderBy
         ;
 
 
-jsonArray
-    : 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')' ;
-
-jsonObject
-    : 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')' ;
-
-    jsonPairs
+jsonPairs
         : jsonPair ( ',' jsonPair )* ;
 
         jsonPair
@@ -1044,9 +1046,9 @@ id :
     | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
     | '.' | ':' | '::' | ';'
     | '(' | ')' | '{' | '}' | ','
+    | '['
     // and everything else
     | OTHER
-
 
     // all tokens except ID
     | UNICODE_ID
@@ -1168,7 +1170,10 @@ id :
 //    | '_ROWID_'
     )
     | UNICODE_ID uescape?
+    | '[' .*? ']'
     ;
+
+
 
 
 EQ      : '=' ;
