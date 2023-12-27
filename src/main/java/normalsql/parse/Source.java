@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.SubtermRowContext;
+//import normalsql.parse.NormalSQLParser.SubtermRowContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,5 +12,5 @@ public class Source
 {
 //	public TableRef tableRef;
 	public String alias;
-	public List<SubtermRowContext> rows = new ArrayList<>();
+//	public List<SubtermRowContext> rows = new ArrayList<>();
 }

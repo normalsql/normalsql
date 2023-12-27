@@ -37,6 +37,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <antlr4.version>4.13.1</antlr4.version>
     </properties>
 
@@ -45,6 +47,21 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4</artifactId>
+            <version>${antlr4.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-tool-testsuite</artifactId>
+            <version>${antlr4.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime-testsuite</artifactId>
             <version>${antlr4.version}</version>
         </dependency>
         <dependency>
@@ -148,11 +165,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
-                <configuration>
-                    <target>21</target>
-                    <source>21</source>
+<!--                <configuration>-->
+<!--                    <target>17</target>-->
+<!--                    <source>17</source>-->
 <!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
-                </configuration>
+<!--                </configuration>-->
             </plugin>
 
             <plugin>

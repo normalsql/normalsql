@@ -3,50 +3,38 @@
 
 package test;
 
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
-import static normalsql.parse.NormalSQLParser.*;
-
-import org.antlr.v4.runtime.*;
+import normalsql.parse.*;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.Tree;
 
-import java.nio.file.*;
-import java.util.ArrayList;
+import java.nio.file.Path;
 
-public class Drill
+import static normalsql.parse.NormalSQLParser.NameContext;
+import static normalsql.parse.NormalSQLParser.QnameContext;
+
+public class Combo
 {
 	public static void main( String... args )
 	{
 		String sql =
-		"""
--- SELECT (SELECT sum(value2==xyz) FROM t2) FROM (SELECT curr.value1 as xyz FROM t1 AS curr LEFT JOIN t1 AS other GROUP BY curr.id1);
--- select * from (SELECT 1);
-select (  select 1 )
-"""
+		"SELECT coalesce((select max(11- -19-f-t1.b+a) from t1 where exists(select 1 from t1 where 11-~(d)-c*a*~t1.a-t1.e-t1.e+coalesce((select coalesce((select t1.c from t1 where case (c) when d then e else 11 end=t1.f),t1.d) from t1 where (t1.d)>b), -11) | f+t1.f not in (((c)),b,13))),f) FROM t1 WHERE case when 19+c>=t1.a then t1.c when not case when not exists(select 1 from t1 where +f | b*b*19+19*13-a | case when t1.e not in (t1.f,t1.c,b) then 11 when 17>t1.c then a else e end<>e) then b when 17=t1.e then b else e end<>t1.b then a else d end-t1.b=(13)"
 		;
 
-//		int count = 0;
-//		while( count < 1_000_000 )
-//		{
-//			var drill = new Drill();
-//			drill.parse( null, sql, false );
-//			count++;
-//			if( count % 200 == 0 )
-//			{
-//				System.out.println( count );
-//			}
-//		}
-		var drill = new Drill();
+		var drill = new Combo();
 		if( drill.parse( null, sql, false ))
 		{
-			drill.toStringTree(  );
+//			drill.toStringTree(  );
 		}
 	}
 
-	 NormalSQLParser parser = null;
-	 ScriptContext script = null;
+//	 exprParser.ExprContext expr = null;
 
 	public  boolean parse( Path p, String sql )
 	{
@@ -55,28 +43,30 @@ select (  select 1 )
 
 	public  boolean parse( Path p, String sql, boolean bracketsEnabled )
 	{
-		class SyntaxError
-		{
-			Recognizer<?, ?> recognizer;
-			Object offendingSymbol;
-			int line;
-			int charPositionInLine;
-			String msg;
-			RecognitionException e;
-		}
+//		class SyntaxError
+//		{
+//			Recognizer<?, ?> recognizer;
+//			Object offendingSymbol;
+//			int line;
+//			int charPositionInLine;
+//			String msg;
+//			RecognitionException e;
+//		}
 
 
-		var errors = new ArrayList<SyntaxError>();
+//		var errors = new ArrayList<SyntaxError>();
 
 		var chars = CharStreams.fromString( sql );
 		var lexer = new NormalSQLLexer( chars );
-//		lexer.bracketsEnabled = bracketsEnabled;
 		var tokens = new CommonTokenStream( lexer );
-		parser = new NormalSQLParser( tokens );
+		var parser = new NormalSQLParser( tokens );
+//		parser.getInterpreter().setPredictionMode( PredictionMode.SLL );
+//		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
+		parser.getInterpreter().setPredictionMode( PredictionMode.LL );
+		parser.setProfile( true );
+		parser.setTrace( true );
 //		parser.removeErrorListeners();
-
-//		parser.addErrorListener( new DiagnosticErrorListener() );
-
+		parser.addErrorListener( new DiagnosticErrorListener() );
 //		parser.addErrorListener( new BaseErrorListener() {
 //			@Override
 //			public void syntaxError(Recognizer<?, ?> recognizer,
@@ -98,8 +88,8 @@ select (  select 1 )
 //
 //		} );
 
-		script = parser.script();
-		if( errors.isEmpty() ) return true;
+		var expr = parser.aaa1();
+//		if( errors.isEmpty() ) return true;
 
 //		var visitor = new KnockoutVisitor();
 //		visitor.parser = parser;
@@ -108,10 +98,10 @@ select (  select 1 )
 
 		System.out.println();
 		if( p != null ) System.out.println( p );
-		for( var e : errors )
-		{
-			System.out.println( "ERROR line " + e.line + ":" + e.charPositionInLine + " " + e.msg );
-		}
+//		for( var e : errors )
+//		{
+//			System.out.println( "ERROR line " + e.line + ":" + e.charPositionInLine + " " + e.msg );
+//		}
 
 		System.out.println();
 		var lines = sql.split( "\\n" );
@@ -121,19 +111,19 @@ select (  select 1 )
 			System.out.println( lines[i] );
 		}
 
-		System.out.println( toStringTree( script ) );
+		System.out.println( toStringTree( parser, expr ) );
 		return false;
 	}
 
-	public  String toStringTree( )
-	{
-		return toStringTree( script );
-	}
+//	public  String toStringTree( )
+//	{
+//		return toStringTree( expr );
+//	}
 
 
-	public  String toStringTree( Tree parent )
+	public  String toStringTree( Parser p, ParseTree parent )
 	{
-		String[] ruleNames = parser.getRuleNames();
+		String[] ruleNames = p.getRuleNames();
 		StringBuilder sb = new StringBuilder();
 		toStringTree( parent, ruleNames, sb );
 		return sb.toString();

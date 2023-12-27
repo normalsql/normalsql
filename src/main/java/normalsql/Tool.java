@@ -57,7 +57,7 @@ public class
 
 		FileReader reader = new FileReader( file );
 		Config config = Config.load( reader );
-		config.setPropertiesFile( file.toURL() );
+		config.setPropertiesFile( file.toURI().toURL() );
 
 		init( config );
 		System.out.println( "done" );

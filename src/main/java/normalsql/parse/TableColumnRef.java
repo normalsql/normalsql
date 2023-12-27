@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.ColumnContext;
+//import normalsql.parse.NormalSQLParser.ColumnContext;
 
 /**
  * <p>TableColumnRef class.</p>
@@ -19,13 +19,13 @@ public class
 	 *
 	 * @param context a {@link normalsql.parse.NormalSQLParser.ColumnContext} object
 	 */
-	public TableColumnRef( ColumnContext context )
-	{
-//		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
-//		schema = context.schema != null ? context.schema.getTrimmedText() : null;
-//		table = context.table != null ? context.table.getTrimmedText() : null;
-//		column = context.column != null ? context.column.getTrimmedText() : null;
-	}
+//	public TableColumnRef( ColumnContext context )
+//	{
+////		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;
+////		schema = context.schema != null ? context.schema.getTrimmedText() : null;
+////		table = context.table != null ? context.table.getTrimmedText() : null;
+////		column = context.column != null ? context.column.getTrimmedText() : null;
+//	}
 
 	public String catalog;
 	public String schema;

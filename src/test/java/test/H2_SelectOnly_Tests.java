@@ -3,24 +3,19 @@
 
 package test;
 
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
-import normalsql.parse.NormalSQLParser.ScriptContext;
+import normalsql.parse.*;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
-/**
- * <p>H2_SelectOnly_Tests class.</p>
- *
- * @author jasonosgood
- * @version $Id: $Id
- */
 public class
-H2_SelectOnly_Tests
+	H2_SelectOnly_Tests
 {
 	static int count = 0;
 
@@ -30,10 +25,15 @@ H2_SelectOnly_Tests
 	}
 
 	static int error = 0;
+	static int ambig = 0;
 
 	static public void error()
 	{
 		error++;
+	}
+	static public void ambig()
+	{
+		ambig++;
 	}
 
 	static class Work {
@@ -48,7 +48,7 @@ H2_SelectOnly_Tests
 		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
 
 		ArrayList<Path> files = new ArrayList<>();
-		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<Path>()
+		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
 			{
 				@Override
 				public FileVisitResult visitFile( Path sourceFile, BasicFileAttributes attrs )
@@ -116,20 +116,16 @@ H2_SelectOnly_Tests
 		System.out.println();
 		System.out.printf( "statements found %d\n", workList.size() );
 
-		System.out.println();
 
-//		for( Work w : workList )
-//		{
-//			System.out.println( w.sql );
-//		}
-
-		System.out.println();
-		System.out.println();
+		long start = System.currentTimeMillis();
 
 		for( Work w : workList )
 		{
 			parse( w.source, w.line, w.sql );
 		}
+		long stop = System.currentTimeMillis();
+
+		System.out.println( "elapsed: " + ( stop - start ));
 
 		for( String fail : fails )
 		{
@@ -139,6 +135,7 @@ H2_SelectOnly_Tests
 
 		System.out.println( "statements found: " + count );
 		System.out.println( "errors found: " + error );
+		System.out.println( "ambigs found: " + ambig );
 		System.out.println( new java.util.Date() );
 	}
 
@@ -147,10 +144,10 @@ H2_SelectOnly_Tests
 
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
-		CharStream chars = CharStreams.fromString( sql );
-		NormalSQLLexer lexer = new NormalSQLLexer( chars );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		NormalSQLParser parser = new NormalSQLParser( tokens );
+		var chars = CharStreams.fromString( sql );
+		var lexer = new NormalSQLLexer( chars );
+		var tokens = new CommonTokenStream( lexer );
+		var parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
@@ -165,21 +162,56 @@ H2_SelectOnly_Tests
 				if( !sql.equals( last ))
 				{
 					error();
-					fails.add( msg );
+//					fails.add( msg );
 					fails.add( sql );
 					last = sql;
-//					System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
-//					System.out.println( sourceFile );
-//					System.out.println( "line: " + nth );
-//					System.out.println( sql );
-
-//					System.out.println( );
-
 				}
 			}
+				@Override
+	public void reportAmbiguity(Parser recognizer,
+								DFA dfa,
+								int startIndex,
+								int stopIndex,
+								boolean exact,
+								BitSet ambigAlts,
+								ATNConfigSet configs)
+	{
+//		var span = sql.substring( startIndex, stopIndex );
+//		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
+//		if( !sql.equals( last ))
+//		{
+//			ambig();
+//			fails.add( sql );
+//			last = sql;
+//		}
+	}
+
+	@Override
+	public void reportAttemptingFullContext(Parser recognizer,
+											DFA dfa,
+											int startIndex,
+											int stopIndex,
+											BitSet conflictingAlts,
+											ATNConfigSet configs)
+	{
+//		fails.add( "full " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+
+	}
+
+	@Override
+	public void reportContextSensitivity(Parser recognizer,
+										 DFA dfa,
+										 int startIndex,
+										 int stopIndex,
+										 int prediction,
+										 ATNConfigSet configs)
+	{
+//		fails.add( "sensitive " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+	}
 
 		} );
 
-		ScriptContext result = parser.script();
+		parser.setProfile( true );
+		var result = parser.script();
 	}
 }

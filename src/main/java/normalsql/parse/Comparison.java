@@ -3,15 +3,15 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.PredicateCompareContext;
+//import normalsql.parse.NormalSQLParser.PredicateOperatorContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
 import java.util.HashMap;
 
 public class
 	Comparison
-extends
-	Knockout<PredicateCompareContext, Comparison.Pattern>
+//extends
+//	Knockout<PredicateOperatorContext, Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -37,21 +37,22 @@ extends
 	public SubtermContext literal;
 	public SubtermContext column;
 
-	public Comparison( PredicateCompareContext context )
-	{
-		super( context );
-		op = operatorMap.get( context.compare().getText() );
-		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
-		SubtermContext right = context.subterm();
-		pattern = valueOf( Pattern.class, left, right );
-
-		if( !isMatched() ) return;
-
-		// TODO: Move this logic to Worker, like for BETWEEN predicates
-		switch( pattern )
-		{
-			case LiteralColumn -> { literal = left; column = right; }
-			case ColumnLiteral -> { literal = right; column = left; }
-		}
-	}
+//	public Comparison(NormalSQLParser.PredicateOperatorContext context )
+//	{
+//		super( context );
+//////		op = operatorMap.get( context.compare().getText() );
+////		op = operatorMap.get( context.COMPARE().getText() );
+////		SubtermContext left = (SubtermContext) context.parent.getChild( 0 );
+////		SubtermContext right = context.subterm();
+////		pattern = valueOf( Pattern.class, left, right );
+////
+////		if( !isMatched() ) return;
+////
+////		// TODO: Move this logic to Worker, like for BETWEEN predicates
+////		switch( pattern )
+////		{
+////			case LiteralColumn -> { literal = left; column = right; }
+////			case ColumnLiteral -> { literal = right; column = left; }
+////		}
+//	}
 }

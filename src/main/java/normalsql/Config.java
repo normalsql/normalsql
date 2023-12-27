@@ -248,7 +248,7 @@ public class Config
 		{
 			FileReader reader = new FileReader( file );
 			Config props = load( reader );
-			props._url = file.toURL();
+			props._url = file.toURI().toURL();
 			return props;
 		}
 		throw new FileNotFoundException( file.toString() );

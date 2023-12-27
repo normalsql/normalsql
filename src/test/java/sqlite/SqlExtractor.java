@@ -39,7 +39,7 @@ public class SqlExtractor
             System.exit( -1 );
         }
 
-        Pattern spaces = Pattern.compile("\\s+(?=(?:[^\\'\"]*[\\'\"][^\\'\"]*[\\'\"])*[^\\'\"]*$)", Pattern.DOTALL);
+        var spaces = Pattern.compile("\\s+(?=(?:[^\\'\"]*[\\'\"][^\\'\"]*[\\'\"])*[^\\'\"]*$)", Pattern.DOTALL);
         String biff = ";(?=(?:[^\\']*[\\'][^\\']*[\\'])*[^\\']*$)";
 //        var COMMENT1 = Pattern.compile( "(?m)[^:]//.*$" );
         var COMMENT1 = Pattern.compile( "(?m)\\s//.*$" );

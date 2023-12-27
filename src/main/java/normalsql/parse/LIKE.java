@@ -11,7 +11,7 @@ import normalsql.parse.NormalSQLParser.*;
 public class
 	LIKE
 extends
-		Knockout<PredicateLIKEContext, LIKE.Pattern>
+	Knockout<PredicateLIKEContext, LIKE.Pattern>
 {
 	public enum Pattern
 	{
@@ -25,7 +25,7 @@ extends
 	{
 		super( context );
 		column = (SubtermContext) context.parent.getChild( 0 );
-		literal = context.subterm();
+		literal = context.subterm().get( 0 );
 		pattern = valueOf( Pattern.class, literal );
 	}
 }

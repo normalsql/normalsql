@@ -197,7 +197,7 @@ public class CommandLineOptions
 			{
 				FileReader reader = new FileReader( file );
 				me._props = Config.load( reader );
-				me._props.setPropertiesFile( file.toURL() );
+				me._props.setPropertiesFile( file.toURI().toURL() );
 				me._loaded = true;
 			}
 			else
