@@ -60,22 +60,22 @@ extends
 		return null;
 	}
 
-	@Override
-	public Void visitItemTerm( ItemTermContext context )
-	{
-		// TODO: Could or should these be inlined into visitSelect?
-		Item item = new Item();
-		item.context = context;
-		item.source = tokens.getText( context );
-		item.name = tokens.getText( context.term() );
-		if( context.alias() != null )
-		{
-			item.alias = tokens.getText( context.alias() );
-		}
-		statementStack.peek().items.add( item );
-		super.visitItemTerm( context );
-		return null;
-	}
+//	@Override
+//	public Void visitItemTerm( ItemTermContext context )
+//	{
+//		// TODO: Could or should these be inlined into visitSelect?
+//		Item item = new Item();
+//		item.context = context;
+//		item.source = tokens.getText( context );
+//		item.name = tokens.getText( context.term() );
+//		if( context.alias() != null )
+//		{
+//			item.alias = tokens.getText( context.alias() );
+//		}
+//		statementStack.peek().items.add( item );
+//		super.visitItemTerm( context );
+//		return null;
+//	}
 
 	@Override
 	public Void visitInsert( InsertContext context )

@@ -28,14 +28,17 @@ public class Profiler
 {
 	public static void main( String... args )
 	{
-		String sql =
-		"""
-				SELECT YAY;                                                                      
-				    
-				-- SELECT DATE '201231';
-				-- SELECT * FROM t LIMIT 0;
-				-- SELECT ADD_MONTHS('2003-08-01', 3);
-				"""
+//		String sql = "one two";
+//		String sql = "SELECT two";
+		String sql = "UNLOGGED two";
+
+//		"""
+//				SELECT YAY;
+//
+//				-- SELECT DATE '201231';
+//				-- SELECT * FROM t LIMIT 0;
+//				-- SELECT ADD_MONTHS('2003-08-01', 3);
+//		"""
 		;
 
 		var chars = CharStreams.fromString( sql );
@@ -48,34 +51,38 @@ public class Profiler
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		out.println( parser.getInterpreter().getPredictionMode());
-	    var script = parser.script();
 
-		var pi = parser.getParseInfo();
+//	    var script = parser.script();
+	    var script = parser.item();
+//	    var script = parser.stuff();
+		System.out.println( toStringTree( script, Arrays.asList(parser.getRuleNames() )));
 
-		var dis = pi.getDecisionInfo();
-		for( var di : dis )
-		{
-//			if( di.invocations > 0 )
+//		var pi = parser.getParseInfo();
+//
+//		var dis = pi.getDecisionInfo();
+//		for( var di : dis )
+//		{
+////			if( di.invocations > 0 )
+////			{
+////				out.println( di );
+////			}
+////			for( var sense : di.contextSensitivities )
+////			{
+////				out.println( sense );
+////			}
+//			for( var ai : di.ambiguities )
 //			{
-//				out.println( di );
+////				out.println( ai );
+//				var trees =
+//				getAllPossibleParseTrees( parser, tokens, ai, script.getRuleIndex() );
+//
+//				for( var tree : trees )
+//				{
+////					out.println( tree );
+//					out.println( toStringTree(tree, Arrays.asList( parser.getRuleNames() ) ));
+//				}
 //			}
-//			for( var sense : di.contextSensitivities )
-//			{
-//				out.println( sense );
-//			}
-			for( var ai : di.ambiguities )
-			{
-//				out.println( ai );
-				var trees =
-				getAllPossibleParseTrees( parser, tokens, ai, script.getRuleIndex() );
-
-				for( var tree : trees )
-				{
-//					out.println( tree );
-					out.println( toStringTree(tree, Arrays.asList( parser.getRuleNames() ) ));
-				}
-			}
-		}
+//		}
 
 	}
 

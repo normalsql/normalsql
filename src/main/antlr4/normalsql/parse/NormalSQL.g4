@@ -21,11 +21,24 @@ grammar NormalSQL;
 
 options { caseInsensitive=true; }
 
-@members
+@parser::members
 {
-    boolean xyz( String text ) {
-        return true;
+
+void fixID()
+{
+    var t1 = (CommonToken) getCurrentToken();
+    if( t1.getType() == ID ) return;
+
+    var text = t1.getText();
+    if( Reserved.isWord( text ) )
+    {
+        if( !Reserved.keywords.contains( text ) )
+        {
+            t1.setType( ID );
+        }
     }
+}
+
 }
 
 // convenience for debugging
@@ -447,8 +460,16 @@ select
     top
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
+    stuff :
+        { fixID(); } item ;
+
     item
-        : term ( 'AS'? alias )?                       # ItemTerm
+        :
+        term
+        (
+        'AS'?
+        alias
+        )?                       # ItemTerm
 //        : term ( 'AS'? name )?                       # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
@@ -643,7 +664,7 @@ value
     | array
     | '(' select ')'
     | function
-    | id
+    | { fixID(); } id
     | 'ROW'? '(' terms? ')'
     ;
 
@@ -1005,7 +1026,8 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : id | string
+//    : id | string
+    : ID | STRING
     ;
 
 qnames0
@@ -1039,7 +1061,9 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
-id :
+id : ID ;
+
+idABC :
     // exclude punctuation
     ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
     | '!' | '+' | '-' | '*' | '/' | '%' | '^'
