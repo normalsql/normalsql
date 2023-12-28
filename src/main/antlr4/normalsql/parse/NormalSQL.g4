@@ -36,10 +36,6 @@ void fixID()
         {
             t1.setType( RESERVED );
         }
-//        if( !Reserved.keywords.contains( text ) )
-//        {
-//            t1.setType( ID );
-//        }
     }
 }
 
@@ -349,7 +345,6 @@ select
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
-//        | '(' select ')'
     ;
 
     combine
@@ -464,16 +459,8 @@ select
     top
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
-    stuff :
-        { fixID(); } item ;
-
     item
-        :
-        term
-        (
-        'AS'?
-        alias
-        )?                       # ItemTerm
+        : term ( 'AS'? alias )?                       # ItemTerm
 //        : term ( 'AS'? name )?                       # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
@@ -1030,8 +1017,7 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-//    : id | string
-    : ID | STRING
+    : id | string
     ;
 
 qnames0
@@ -1052,10 +1038,6 @@ name
 names
     : '(' name ( ',' name )* ')' ;
 
-//id
-//    : ID
-//    | '[' .*? ']'
-
 string
     : STRING+
     | UNICODE_STRING STRING* uescape?
@@ -1065,20 +1047,16 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
-//id : ID ;
-
 id :
-    // exclude punctuation
+    // exclude punctuation tokens
     ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
     | '!' | '+' | '-' | '*' | '/' | '%' | '^'
     | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
     | '.' | ':' | '::' | ';'
     | '(' | ')' | '{' | '}' | ','
     | '['
-    // and everything else
-    | OTHER
 
-    // all tokens except ID
+    // all tokens except IDs
     | UNICODE_ID
     | STRING
     | NATIONAL_STRING
@@ -1095,111 +1073,15 @@ id :
     | PARAMETER
     | VARIABLE
 
-    | RESERVED
+    // and anything lexer doesn't recognize
+    | OTHER
 
-//    // SQL reserved keywords
-//    | 'ALL'
-//    | 'AND'
-//    | 'ANY'
-//    | 'ARRAY'
-//    | 'AS'
-//    | 'ASYMMETRIC'
-//    | 'AUTHORIZATION'
-//    | 'BETWEEN'
-//    | 'BOTH'
-//    | 'CASE'
-//    | 'CAST'
-//    | 'CHECK'
-//    | 'CONSTRAINT'
-//    | 'CROSS'
-//    | 'CURRENT_CATALOG'
-//    | 'CURRENT_DATE'
-//    | 'CURRENT_PATH'
-//    | 'CURRENT_ROLE'
-//    | 'CURRENT_SCHEMA'
-//    | 'CURRENT_TIME'
-//    | 'CURRENT_TIMESTAMP'
-//    | 'CURRENT_USER'
-//    | 'DAY'
-//    | 'DEFAULT'
-//    | 'DISTINCT'
-//    | 'ELSE'
-//    | 'END'
-//    | 'EXCEPT'
-//    | 'EXISTS'
-//    | 'FALSE'
-//    | 'FETCH'
-//    | 'FOR'
-//    | 'FOREIGN'
-//    | 'FROM'
-//    | 'FULL'
-//    | 'GROUP'
-//    | 'GROUPS'
-//    | 'HAVING'
-//    | 'HOUR'
-////    | 'IF'
-////    | 'ILIKE'
-//    | 'IN'
-//    | 'INNER'
-//    | 'INTERSECT'
-//    | 'INTERVAL'
-//    | 'IS'
-//    | 'JOIN'
-////    | 'KEY'
-//    | 'LEADING'
-//    | 'LEFT'
-//    | 'LIKE'
-//    | 'LIMIT'
-//    | 'LOCALTIME'
-//    | 'LOCALTIMESTAMP'
-////    | 'MINUS'
-//    | 'MINUTE'
-//    | 'MONTH'
-//    | 'NATURAL'
-//    | 'NOT'
-//    | 'NULL'
-//    | 'OFFSET'
-//    | 'ON'
-//    | 'OR'
-//    | 'ORDER'
-//    | 'OVER'
-//    | 'PARTITION'
-//    | 'PRIMARY'
-////    | 'QUALIFY'
-//    | 'RANGE'
-//    | 'REGEXP'
-//    | 'RIGHT'
-//    | 'ROW'
-////    | 'ROWNUM'
-//    | 'ROWS'
-//    | 'SECOND'
-//    | 'SELECT'
-//    | 'SESSION_USER'
-//    | 'SET'
-//    | 'SOME'
-//    | 'SYMMETRIC'
-//    | 'SYSTEM_USER'
-//    | 'TABLE'
-//    | 'TO'
-//    | 'TOP'
-//    | 'TRAILING'
-//    | 'TRUE'
-//    | 'UESCAPE'
-//    | 'UNION'
-//    | 'UNIQUE'
-//    | 'UNKNOWN'
-//    | 'USER'
-//    | 'USING'
-//    | 'VALUE'
-//    | 'VALUES'
-//    | 'WHEN'
-//    | 'WHERE'
-//    | 'WINDOW'
-//    | 'WITH'
-//    | 'YEAR'
-////    | '_ROWID_'
+    // finally, tokens we setType( RESERVED )
+    | RESERVED
     )
+    // special rule to accept UNICODE IDs
     | UNICODE_ID uescape?
+    // special rule to accept T-SQL style brackets
     | '[' .*? ']'
     ;
 

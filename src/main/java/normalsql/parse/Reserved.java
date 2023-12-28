@@ -5,6 +5,7 @@ import java.util.Set;
 public
 class Reserved
 {
+	// SQL reserved words. Must be quoted to be used as either table or column names.
 	public static Set<String> keywords = Set.of
     (
 		"ALL",

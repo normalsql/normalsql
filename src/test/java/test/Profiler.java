@@ -31,7 +31,7 @@ public class Profiler
 //		String sql = "one two";
 //		String sql = "SELECT two";
 //		String sql = "UNLOGGED two";
-		String sql = "SELECT COUNT(1) FROM TEST FILTER WHERE X <> 1;";
+		String sql = "SELECT CASE WHEN TRUE THEN 1 END CASE;";
 
 //		"""
 //				SELECT YAY;
@@ -49,7 +49,7 @@ public class Profiler
 		parser.setProfile( true );
 //		parser.setTrace( true );
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
-		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
+//		parser.getInterpreter().setPredictionMode( PredictionMode.LL );
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		out.println( parser.getInterpreter().getPredictionMode());
 

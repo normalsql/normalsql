@@ -402,7 +402,7 @@ select x, case when x=0 then 'zero' end y from system_range(0, 1);
 select x, case x when 0 then 'zero' else 'not zero' end y from system_range(0, 1);
 select x, case x when 0 then 'zero' when 1 then 'one' end y from system_range(0, 2);
 SELECT X, CASE X WHEN 1 THEN 10 WHEN 2, 3 THEN 25 WHEN 4, 5, 6 THEN 50 ELSE 90 END C FROM SYSTEM_RANGE(1, 7);
-skip SELECT CASE WHEN TRUE THEN 1 END CASE;
+SELECT CASE WHEN TRUE THEN 1 END CASE;
 SELECT S, CASE S
     WHEN IS NULL THEN 1
     WHEN LOWER('A') THEN 2
@@ -1271,7 +1271,7 @@ SELECT A_INT FROM A_TEST;
 SELECT * FROM CHILD;
 SELECT * FROM INVOICE_LINE;
 SELECT USER_NAME, IS_ADMIN FROM INFORMATION_SCHEMA.USERS;
-skip select 0 from ((select 0 as f from dual u1 where null in (?, ?, ?, ?, ?) select 0 as f from dual u1 where null in (?, ?, ?, ?, ?)) union all (select u2.f from (select u2.f from (select 0 as f from (select 0 as f from (select 0 from dual u2f1f1 where now() = ?select 0 from dual u2f1f1 where now() = ?) u2f1) u2)) where f = 12345;
+select 0 from (( select 0 as f from dual u1 where null in (?, ?, ?, ?, ?) ) union all ( select u2.f from ( select 0 as f from ( select 0 from dual u2f1f1 where now() = ? ) u2f1 ) u2 )) where f = 12345;
 select b from x;
 select * from test where "YEAR" in (select distinct "YEAR" from test order by "YEAR" desc limit 1 offset 0);
 select 1000L / 10;
