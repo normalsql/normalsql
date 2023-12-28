@@ -66,8 +66,7 @@ statement
     | 'END' 'TRANSACTION'?
     | insert
     | merge
-    | 'PRAGMA' qname ( '=' subterm | '(' subterm ')' )?
-    | 'PRAGMA' 'AUTO_VACUUM' '=' 'FULL' // TODO need rule for keywords
+    | pragma
     | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
@@ -80,6 +79,10 @@ statement
     | 'VACUUM' qname? ( 'INTO' term )?
     )
     ;
+
+    pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
+        pragmaValue : signedNumber | name | string ;
+
 
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
@@ -376,11 +379,11 @@ select
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
         | sources join sources  ( 'ON' term | 'USING' qnames )?
-        | '(' sources ')'
+        | '(' sources ')' sourceAlias?
         | source
         ;
 
-        // TODO 'LATERAL'
+        // TODO add 'LATERAL'
         join
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
@@ -783,7 +786,9 @@ precision
     : '(' signedInteger ( ',' signedInteger )? ')'
     ;
 
+signedNumber : signedInteger | signedFloat ;
 signedInteger : ( '+' | '-' )? INTEGER ;
+signedFloat : ( '+' | '-' )? FLOAT ;
 
 values
     : 'VALUES' terms ;
