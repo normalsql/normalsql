@@ -30,7 +30,8 @@ public class Profiler
 	{
 //		String sql = "one two";
 //		String sql = "SELECT two";
-		String sql = "UNLOGGED two";
+//		String sql = "UNLOGGED two";
+		String sql = "SELECT COUNT(1) FROM TEST FILTER WHERE X <> 1;";
 
 //		"""
 //				SELECT YAY;
@@ -52,8 +53,8 @@ public class Profiler
 //		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		out.println( parser.getInterpreter().getPredictionMode());
 
-//	    var script = parser.script();
-	    var script = parser.item();
+	    var script = parser.script();
+//	    var script = parser.item();
 //	    var script = parser.stuff();
 		System.out.println( toStringTree( script, Arrays.asList(parser.getRuleNames() )));
 
