@@ -81,6 +81,7 @@ statement
     ;
 
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
+
         pragmaValue : signedNumber | name | string ;
 
 
@@ -557,35 +558,41 @@ term
 // TODO verify precedences
 // TODO combine operators into lexer rules
 subterm
-    : ( '+' | '-' | TILDE ) subterm # SubtermFixme
-    | ( 'NOT' | '!' ) subterm # SubtermFixme
+    : ( '+' | '-' | TILDE ) subterm # SubtermUnary
+    | ( 'NOT' | '!' ) subterm # SubtermUnary
     | value ( '.' name | index | '::' type )* # SubtermValue
-    | subterm 'COLLATE' type # SubtermFixme
-    | <assoc=right> subterm '^' subterm # SubtermFixme
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermFixme
-    | subterm  ( '||' | '->' | '->>' ) subterm # SubtermFixme
-    | subterm 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ) # SubtermFixme
+    | subterm 'COLLATE' type # SubtermCollate
+    | <assoc=right> subterm '^' subterm # SubtermOperator
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermOperator
+    | subterm  ( '||' | '->' | '->>' ) subterm # SubtermOperator
+
+    // these alts repeated under rule predicate
+    | subterm 'IS' 'NOT'? logicals # SubtermLogical
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # SubtermFixme
-    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # SubtermFixme
-    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # SubtermFixme
-    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermFixme
-    | subterm ( '+' | '-' ) subterm # SubtermFixme
-    | subterm compare subterm # SubtermFixme
+    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # SubtermDistinct
+    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # SubtermOfType
+    | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
+    | subterm ( '+' | '-' ) subterm # SubtermOperator
+    | subterm compare subterm # SubtermCompare
 
     /*
      ANTLR's left-recursion magic doesn't match this...
         | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
       ... so manually split alts as workaround
     */
-    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermFixme
-    | subterm 'NOT'? likes subterm # SubtermFixme
+    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermLike
+    | subterm 'NOT'? likes subterm # SubtermLike
 
-    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermFixme
-    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # SubtermFixme
-    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermFixme
+    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermLikeTerms
+    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # SubtermIN
+    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermBetween
+
+
 //    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
-    | VARIABLE assign subterm # SubtermFixme
+
+
+    | VARIABLE assign subterm # SubtermAssign
 //        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
 //   | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //    // CrateDB ?
@@ -594,23 +601,24 @@ subterm
 // | row 'INTERSECTS' '(' term ',' term ')'
     ;
 
+logicals : 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ;
+
 // BOZO always update these alts as subterm's (related) alts change
 predicate
-    : 'IS' 'NOT'? ( 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ) # PredicateFixme
+    : 'IS' 'NOT'? logicals # PredicateLogical
     | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # PredicateFixme
-    | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateFixme
-    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateFixme
-    | compare subterm # PredicateFixme
-    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
-    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # PredicateFixme
+    | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateDistinct
+    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateOfType
+    | compare subterm # PredicateCompare
+    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLike
+    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # PredicateLikeTerms
     | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # PredicateIN
-    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
+    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBetween
 //    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
 
 //test
-//        | subterm 'IS' 'NOT'? logicals
 //        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
 //        | subterm 'IS' 'NOT'? subterm
 
