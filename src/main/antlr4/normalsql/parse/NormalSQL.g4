@@ -15,6 +15,9 @@
       2. Per DRY, create subrule for 3 (sometimes 2) or more copypastas. Except when doing so
          conflicts with #1.
 
+Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. See rules
+'subterm' and 'predicate'. TODO Maybe use underscores as separator.
+
 */
 
 grammar NormalSQL;
@@ -24,6 +27,7 @@ options { caseInsensitive=true; }
 @parser::members
 {
 
+// TODO move to helper class, rename to "morphKeywords()" or something
 void fixID()
 {
     var t1 = (CommonToken) getCurrentToken();
@@ -580,12 +584,18 @@ subterm
         | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
       ... so manually split alts as workaround
     */
-    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermLike
-    | subterm 'NOT'? likes subterm # SubtermLike
+    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermLIKE
+    | subterm 'NOT'? likes subterm # SubtermLIKE
 
-    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # SubtermLikeTerms
-    | subterm 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # SubtermIN
-    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermBetween
+    // Trying out underscores for alt labels. hmmm...
+    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Subterm_LIKE_Terms
+    | subterm 'NOT'? 'IN'
+      ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+      // PL/SQL
+      | name
+      )?
+      # SubtermIN // turrible formatting style, but I don't have a better solution
+    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermBETWEEN
 
 
 //    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
@@ -601,7 +611,6 @@ subterm
 // | row 'INTERSECTS' '(' term ',' term ')'
     ;
 
-logicals : 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT' ;
 
 // BOZO always update these alts as subterm's (related) alts change
 predicate
@@ -610,10 +619,16 @@ predicate
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateDistinct
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateOfType
     | compare subterm # PredicateCompare
-    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLike
-    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # PredicateLikeTerms
-    | 'NOT'? 'IN' ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')' | name )? # PredicateIN
-    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBetween
+    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
+    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Predicate_LIKE_Terms
+    | 'NOT'? 'IN'
+       ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+       // PL/SQL
+       | name
+       )?
+       # PredicateIN // turrible formatting style, but I don't have a better solution
+    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
+
 //    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
 //    | 'EXISTS' LPAREN selectStatement RPAREN
     ;
@@ -632,24 +647,22 @@ predicate
 //        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
 //        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
 //        | 'IS' 'NOT'? term                                                         # PredicateIS
-////        | 'NOT'? 'IN' '(' ( table | terms )? ')'                                   # PredicateIN
-//        | 'NOT'? 'IN' '(' terms? ')'                                               # PredicateIN
-//        // PL/SQL dialect
-////        | 'NOT'? 'IN' subterm                                                      # PredicateIN
 //        ;
 
-//        logicals
-//            : 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
-//            ;
-//
 //        jsonType
 //            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
+
+    logicals
+        : 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT'
+        // PL/SQL
+        | 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
+        ;
 
 
     likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
     assign
-        : ASSIGN
+        : EQ | ASSIGN
         ;
 
     compare
@@ -1099,6 +1112,7 @@ id :
     ;
 
 
+// separate token because EQ is used both for assignments and comparisons. (TODO right?)
 EQ      : '=' ;
 ASSIGN  : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
@@ -1114,8 +1128,8 @@ UNICODE_STRING
 NATIONAL_STRING
     :  [NE] STRING ;
 
-// TODO combine strings
 STRING
+// TODO combine strings
 //    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
     : '\'' ( ~( '\'' ) | '\'\'' )* '\'' ;
 
@@ -1124,7 +1138,7 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
 // TODO combine IDs
-// TODO figure out why 'varchar_whatever' isn't an ID token
+// TODO figure out why "varchar_whatever" isn't an ID token
 ID : HEAD BODY* ;
 
 fragment HEAD //options { caseInsensitive=false; }
@@ -1217,7 +1231,7 @@ VARIABLE
 
 // \u000B line (vertical) tab
 // \u000C form feed
-WHITESPACE : [ \b\t\r\n\u000B\u000C] -> channel ( HIDDEN ) ;
+WHITESPACE : [ \b\t\r\n\u000B\u000C]+ -> channel ( HIDDEN ) ;
 
 COMMENT
 //    : '--' .*? ( '\n' | EOF ) -> channel( HIDDEN ) ;
