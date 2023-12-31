@@ -12,40 +12,39 @@ import java.util.List;
 public class
     IN
 extends
-    Knockout<PredicateINContext, IN.Pattern>
+    Knockout<SubtermINContext, IN.Pattern>
 {
     public enum Pattern
     {
         Literals
     }
 
-    public SubtermValueContext column;
-    public List<ValueContext> literals = new ArrayList<>();
+    public SubtermContext column;
+    public List<SubtermValueContext> literals = new ArrayList<>();
 
-    public IN( PredicateINContext context )
+    public IN( SubtermINContext context )
     {
         super( context );
 
-//        // TODO: fix when parent is CASE
-//        column = context.parent.getChild(0);
-//        if( !( column instanceof ValueContext )) return;
-//
-//        if( context.terms() != null && context.terms().term() != null )
-//        {
-//            for( TermContext term : context.terms().term() )
-//            {
-//                SubtermContext sc = term.subterm();
-//                if( sc instanceof SubtermLiteralContext )
-//                {
-//                    literals.add( (SubtermLiteralContext) sc );
-//                }
-//            }
-//
-//            // Verify all the terms are literals
-//            if( context.terms().term().size() == literals.size() )
-//            {
-//                pattern = Pattern.Literals;
-//            }
-//        }
+        column = context.subterm();
+        if( !( column instanceof SubtermValueContext )) return;
+
+        if( context.terms() != null && context.terms().term() != null )
+        {
+            for( TermContext term : context.terms().term() )
+            {
+                SubtermContext sc = term.subterm();
+                if( sc instanceof SubtermValueContext )
+                {
+                    literals.add( (SubtermValueContext) sc );
+                }
+            }
+
+            // Verify all the terms are literals
+            if( context.terms().term().size() == literals.size() )
+            {
+                pattern = Pattern.Literals;
+            }
+        }
     }
 }

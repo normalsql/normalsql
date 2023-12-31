@@ -590,7 +590,8 @@ subterm
     // Trying out underscores for alt labels. hmmm...
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Subterm_LIKE_Terms
     | subterm 'NOT'? 'IN'
-      ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+      ( '(' ( select | terms )? ')'
+//      ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
       // PL/SQL
       | name
       )?
@@ -611,7 +612,6 @@ subterm
 // | row 'INTERSECTS' '(' term ',' term ')'
     ;
 
-
 // BOZO always update these alts as subterm's (related) alts change
 predicate
     : 'IS' 'NOT'? logicals # PredicateLogical
@@ -622,7 +622,8 @@ predicate
     | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Predicate_LIKE_Terms
     | 'NOT'? 'IN'
-       ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
+       ( '(' ( select | terms )? ')'
+//       ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
        // PL/SQL
        | name
        )?

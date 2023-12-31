@@ -6,6 +6,9 @@ package normalsql.parse;
 import org.antlr.v4.runtime.ParserRuleContext;
 import normalsql.parse.NormalSQLParser.SubtermContext;
 
+// TODO Create subclasses for subterm and predicate rules. Specialize valueOf method accordingly.
+
+
 /**
  * A Knockout references a parse tree containing literals to be considered
  * for replacement by a placeholder question mark '?' by the code generator.
@@ -14,8 +17,10 @@ import normalsql.parse.NormalSQLParser.SubtermContext;
  * their corresponding accessors.
  */
 
+
 public abstract class
 	Knockout<T extends ParserRuleContext, E extends Enum<E>>
+//	Knockout<T extends SubtermContext, E extends Enum<E>>
 {
 	public T context;
 	public ParserRuleContext parent;

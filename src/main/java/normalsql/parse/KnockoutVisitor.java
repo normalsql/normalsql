@@ -60,83 +60,84 @@ extends
 		return null;
 	}
 
-//	@Override
-//	public Void visitItemTerm( ItemTermContext context )
-//	{
-//		// TODO: Could or should these be inlined into visitSelect?
-//		Item item = new Item();
-//		item.context = context;
-//		item.source = tokens.getText( context );
-//		item.name = tokens.getText( context.term() );
-//		if( context.alias() != null )
-//		{
-//			item.alias = tokens.getText( context.alias() );
-//		}
-//		statementStack.peek().items.add( item );
-//		super.visitItemTerm( context );
-//		return null;
-//	}
+	@Override
+	public Void visitItemTerm( ItemTermContext context )
+	{
+		// TODO: Could or should these be inlined into visitSelect?
+		Item item = new Item();
+		item.context = context;
+		item.source = tokens.getText( context );
+		item.name = tokens.getText( context.term() );
+		if( context.alias() != null )
+		{
+			item.alias = tokens.getText( context.alias() );
+		}
+		statementStack.peek().items.add( item );
+		super.visitItemTerm( context );
+		return null;
+	}
 
 	@Override
 	public Void visitInsert( InsertContext context )
 	{
-//		try
-//		{
-//			// TODO this method chaining SUCKS, bring back the globber
-//			// Drill down to first row
-//			var termList = context.source().values().terms().term();
-//			var subterm = termList.get( 0 ).subterm();
-//
-//
-//			if( subterm instanceof SubtermRowContext )
-//			{
-////				var found = new ArrayList<LiteralContext>();
-//				var found = new ArrayList<SubtermLiteralContext>();
-////				List<TermContext> maybes = ((SubtermRowContext) subterm).terms().term();
-//				var maybes = ((SubtermRowContext) subterm).terms().term();
-//				for( TermContext term : maybes )
-//				{
-//					SubtermContext sc = term.subterm();
-//					if( sc instanceof SubtermLiteralContext )
-//					{
-////						found.add( ((SubtermLiteralContext) sc).literal() );
-//						found.add( (SubtermLiteralContext) sc );
-//					}
-//					else
-//					{
-//						break;
-//					}
-//				}
-//
-//				if( found.size() == maybes.size() )
-//				{
-//					Insert child = new Insert();
-//					if( context.qname() != null )
-//					{
-//						child.table = context.qname();
-//					}
-//
-//					if( context.names() != null )
-//					{
-//						child.columns = context.names().name();
-//					}
-//
-//					Row row = new Row( context, child );
-//					row.literals = found;
-//
-//					child.knockouts.add( row );
-//					knockouts.add( row );
-//
-//					Statement parent = statementStack.peek();
-//					parent.add( child );
-//					statementStack.push( child );
-//
-//					return null;
-//				}
-//			}
-//		}
-//		// ignore
-//		catch( NullPointerException npe ) {}
+		try
+		{
+			// TODO this method chaining SUCKS, bring back the globber
+			// Drill down to first row
+			var termList = context.
+//				source().values().terms().term();
+			var subterm = termList.get( 0 ).subterm();
+
+
+			if( subterm instanceof SubtermRowContext )
+			{
+//				var found = new ArrayList<LiteralContext>();
+				var found = new ArrayList<SubtermLiteralContext>();
+//				List<TermContext> maybes = ((SubtermRowContext) subterm).terms().term();
+				var maybes = ((SubtermRowContext) subterm).terms().term();
+				for( TermContext term : maybes )
+				{
+					SubtermContext sc = term.subterm();
+					if( sc instanceof SubtermLiteralContext )
+					{
+//						found.add( ((SubtermLiteralContext) sc).literal() );
+						found.add( (SubtermLiteralContext) sc );
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				if( found.size() == maybes.size() )
+				{
+					Insert child = new Insert();
+					if( context.qname() != null )
+					{
+						child.table = context.qname();
+					}
+
+					if( context.names() != null )
+					{
+						child.columns = context.names().name();
+					}
+
+					Row row = new Row( context, child );
+					row.literals = found;
+
+					child.knockouts.add( row );
+					knockouts.add( row );
+
+					Statement parent = statementStack.peek();
+					parent.add( child );
+					statementStack.push( child );
+
+					return null;
+				}
+			}
+		}
+		// ignore
+		catch( NullPointerException npe ) {}
 
 		return super.visitInsert( context );
 	}

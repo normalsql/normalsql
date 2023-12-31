@@ -3,13 +3,12 @@
 
 package normalsql.parse;
 
-import normalsql.parse.NormalSQLParser.PredicateBETWEENContext;
-import normalsql.parse.NormalSQLParser.SubtermContext;
+import normalsql.parse.NormalSQLParser.*;
 
 public class
 	BETWEEN
 extends
-	Knockout<PredicateBETWEENContext, BETWEEN.Pattern>
+	Knockout<SubtermBETWEENContext, BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
@@ -35,7 +34,7 @@ extends
 	public SubtermContext low;
 	public SubtermContext high;
 
-	public BETWEEN( PredicateBETWEENContext context )
+	public BETWEEN( SubtermBETWEENContext context )
 	{
 		super( context );
 		test = (SubtermContext) context.parent.getChild( 0 );

@@ -8,10 +8,11 @@ import normalsql.parse.NormalSQLParser.*;
 /*
 	Represents LIKE, ILIKE, and REGEXP predicates.
  */
+
 public class
 	LIKE
 extends
-	Knockout<PredicateLIKEContext, LIKE.Pattern>
+	Knockout<SubtermLIKEContext, LIKE.Pattern>
 {
 	public enum Pattern
 	{
@@ -21,7 +22,7 @@ extends
 	public SubtermContext column;
 	public SubtermContext literal;
 
-	public LIKE( PredicateLIKEContext context )
+	public LIKE( SubtermLIKEContext context )
 	{
 		super( context );
 		column = (SubtermContext) context.parent.getChild( 0 );
