@@ -165,33 +165,33 @@ extends
 //		return super.visitSource( context );
 //	}
 
-	@Override
-	public Void visitSubtermRow( SubtermRowContext context )
-	{
-		if( context.terms() == null || context.terms().term() == null )
-		{
-			return null;
-		}
-
-		var temp = new ArrayList<SubtermLiteralContext>();
-		for( TermContext term : context.terms().term() )
-		{
-			SubtermContext sc = term.subterm();
-			if( sc instanceof SubtermLiteralContext )
-			{
-				temp.add( (SubtermLiteralContext) sc );
-			}
-		}
-
-		if( temp.size() == context.terms().term().size() )
-		{
-			// TODO also add literals to parent Statement
-			literals.addAll( temp );
-			return null;
-		}
-
-		return super.visitSubtermRow( context );
-	}
+//	@Override
+//	public Void visitSubtermRow( SubtermRowContext context )
+//	{
+//		if( context.terms() == null || context.terms().term() == null )
+//		{
+//			return null;
+//		}
+//
+//		var temp = new ArrayList<SubtermLiteralContext>();
+//		for( TermContext term : context.terms().term() )
+//		{
+//			SubtermContext sc = term.subterm();
+//			if( sc instanceof SubtermLiteralContext )
+//			{
+//				temp.add( (SubtermLiteralContext) sc );
+//			}
+//		}
+//
+//		if( temp.size() == context.terms().term().size() )
+//		{
+//			// TODO also add literals to parent Statement
+//			literals.addAll( temp );
+//			return null;
+//		}
+//
+//		return super.visitSubtermRow( context );
+//	}
 
 	@Override
 	public Void visit( ParseTree tree )

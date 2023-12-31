@@ -71,7 +71,7 @@ statement
     | insert
     | merge
     | pragma
-    | select
+    | query
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
     | 'RESET' qname
@@ -154,7 +154,7 @@ createTable
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' select ( 'WITH' 'NO'? 'DATA' )?
+      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
       // SQLite
       'STRICT'?
@@ -180,7 +180,7 @@ createTrigger
      : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
-       'BEGIN' (( update | insert | delete | select ) ';' )+
+       'BEGIN' (( update | insert | delete | query ) ';' )+
        // TODO remove '?' after testing!!
        'END'?
      ;
@@ -191,7 +191,7 @@ createView
       : 'CREATE' temporary?
         // Postgres?
         ( 'OR' 'REPLACE' )?
-        'VIEW' ifNotExists? qname qnames? 'AS' select ;
+        'VIEW' ifNotExists? qname qnames? 'AS' query ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -272,7 +272,7 @@ with
     cte
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
-        '(' select ')'
+        '(' query ')'
         ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
         ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
         ;
@@ -293,7 +293,7 @@ insert
       'INTO' qname ( 'AS' name )? names?
       overriding?
 //      ( source upsert* | 'DEFAULT' 'VALUES' )
-      ( select upsert* | 'DEFAULT' 'VALUES' )
+      ( query upsert* | 'DEFAULT' 'VALUES' )
       returning?
     ;
 
@@ -309,7 +309,7 @@ insert
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
 //      'USING' 'ONLY'? source 'ON' terms
-      'USING' 'ONLY'? select 'ON' terms
+      'USING' 'ONLY'? query 'ON' terms
       when*
     ;
 
@@ -348,7 +348,7 @@ returning
         : '*' | term ( 'AS'? alias )?
         ;
 
-select
+query
     : with? combine
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
@@ -359,37 +359,53 @@ select
         : combine ( 'INTERSECT' | 'MINUS' ) combine
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
-        | selectCore
+        | select
         ;
 
-    selectCore
+    select
         : 'SELECT' quantifier?
           top?
           ( item ( ',' item )* ','? )?
           into?
-          ( 'FROM' sources )?
+          ( 'FROM' tables )?
           where?
           groupBy?
           having?
           windows?
           qualify?
-        | '(' select ')'
-        | 'VALUES' terms
+        | '(' query ')'
+        | values
         // MySQL table statement
         | 'TABLE' qname
         ;
 
-    sources
-        : sources ',' sources
+    tables
+        : tables ',' tables
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
-        | sources join sources  ( 'ON' term | 'USING' qnames )?
-        | '(' sources ')' sourceAlias?
-        | source
+        | tables join tables  ( 'ON' term | 'USING' qnames )?
+        | '(' tables ')' tableAlias?
+
+        | ( qname | '(' qname ')' ) tableAlias?
+          ( ( 'USE' 'INDEX' names ) // H2
+          | indexedBy // SQLite
+          )?
+
+        | ( '(' query ')'
+          | values
+          | tableFunc
+          | deltaTable
+          | tableCollection
+          | 'JSON_TABLE' // TODO
+          | xmlTable
+          | unnest
+          | pivot
+          | unpivot
+          ) tableAlias?
         ;
 
-        // TODO add 'LATERAL'
         join
+            // TODO add 'LATERAL'
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
               | ( 'RIGHT' | 'FULL' ) 'OUTER'?
@@ -399,33 +415,16 @@ select
               'JOIN'
             ;
 
-    source
-        : ( qname | '(' qname ')' )  sourceAlias?
-          ( ( 'USE' 'INDEX' names ) // H2
-          | indexedBy // SQLite
-          )?
-        | table sourceAlias?
-        ;
+    tableAlias : 'AS'? alias names? ;
 
-        sourceAlias : 'AS'? alias names? ;
+    values : 'VALUES' terms ;
 
-    table
-        : '(' select ')'
-        | 'VALUES' terms
-//        // MySQL table statement
-//        | 'TABLE' qname
-        | tableFunc
-        // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
-        // DB2 intermediate result table
-        | ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')'
-        // PL/SQL table collection expression
-        | 'TABLE' '(' term ')'
-        | 'JSON_TABLE' // TODO
-        | xmlTable
-        | unnest
-        | pivot
-        | unpivot
-        ;
+    // H2 data change delta table http://h2database.com/html/grammar.html#data_change_delta_table
+    // DB2 intermediate result table
+    deltaTable : ( 'NEW' | 'OLD' | 'FINAL' ) 'TABLE' '(' ( delete | insert | merge | update ) ')' ;
+
+    // PL/SQL table collection expression
+    tableCollection : 'TABLE' '(' term ')' ;
 
     unnest
         : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
@@ -489,7 +488,7 @@ select
               '('
                 aliasedFunction ( ',' aliasedFunction )*
                 'FOR' ( qname | qnames )
-                'IN' '(' ( select | 'ANY' ) ')'
+                'IN' '(' ( query | 'ANY' ) ')'
               ')'
             ;
 
@@ -503,6 +502,7 @@ select
                 'IN' '(' aliasedTerms ')'
               ')'
             ;
+
     where
         : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
@@ -590,7 +590,7 @@ subterm
     // Trying out underscores for alt labels. hmmm...
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Subterm_LIKE_Terms
     | subterm 'NOT'? 'IN'
-      ( '(' ( select | terms )? ')'
+      ( '(' ( query | terms )? ')'
 //      ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
       // PL/SQL
       | name
@@ -600,7 +600,7 @@ subterm
 
 
 //    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
-    | ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
 
 
     | VARIABLE assign subterm # SubtermAssign
@@ -622,7 +622,7 @@ predicate
     | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Predicate_LIKE_Terms
     | 'NOT'? 'IN'
-       ( '(' ( select | terms )? ')'
+       ( '(' ( query | terms )? ')'
 //       ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
        // PL/SQL
        | name
@@ -678,7 +678,7 @@ value
     | value 'AT' ( 'LOCAL' | timeZone string )
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
     | array
-    | '(' select ')'
+    | '(' query ')'
     | function
     | { fixID(); } id
     | 'ROW'? '(' terms? ')'
@@ -811,8 +811,8 @@ signedNumber : signedInteger | signedFloat ;
 signedInteger : ( '+' | '-' )? INTEGER ;
 signedFloat : ( '+' | '-' )? FLOAT ;
 
-values
-    : 'VALUES' terms ;
+//values
+//    : 'VALUES' terms ;
 
 array
     : 'ARRAY' arrayTerms  ;
@@ -854,10 +854,10 @@ function
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
-    | 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')'
+    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
-    | 'EXISTS' '(' select ')'
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'
+    | 'EXISTS' '(' query ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
     | 'TIMESTAMPDIFF' '(' timeUnit ',' string ',' string ')'
@@ -876,7 +876,7 @@ function
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
-    | 'ARRAY' '(' select ')' // Postgres
+    | 'ARRAY' '(' query ')' // Postgres
     | '{fn' function '}' //  ODBC style
 
     | aggregateFunction
