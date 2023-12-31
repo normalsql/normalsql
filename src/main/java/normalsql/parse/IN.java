@@ -20,23 +20,23 @@ extends
     }
 
     public SubtermContext column;
-    public List<SubtermValueContext> literals = new ArrayList<>();
+    public List<SubtermLiteralContext> literals = new ArrayList<>();
 
     public IN( SubtermINContext context )
     {
         super( context );
 
         column = context.subterm();
-        if( !( column instanceof SubtermValueContext )) return;
+        if( !( column instanceof SubtermLiteralContext )) return;
 
         if( context.terms() != null && context.terms().term() != null )
         {
             for( TermContext term : context.terms().term() )
             {
                 SubtermContext sc = term.subterm();
-                if( sc instanceof SubtermValueContext )
+                if( sc instanceof SubtermLiteralContext )
                 {
-                    literals.add( (SubtermValueContext) sc );
+                    literals.add( (SubtermLiteralContext) sc );
                 }
             }
 

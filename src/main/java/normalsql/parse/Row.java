@@ -16,7 +16,7 @@ extends
     }
 
     public Insert insert;
-    public List<SubtermValueContext> literals = new ArrayList<>();
+    public List<SubtermLiteralContext> literals = new ArrayList<>();
 
     public Row( InsertContext context, Insert insert )
     {

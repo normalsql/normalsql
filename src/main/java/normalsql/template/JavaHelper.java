@@ -8,9 +8,7 @@
 */
 package normalsql.template;
 
-import normalsql.parse.NormalSQLParser;
-import normalsql.parse.NormalSQLParser.SubtermContext;
-import normalsql.parse.NormalSQLParser.SubtermValueContext;
+import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.RuleContext;
 
 import static java.lang.Character.toLowerCase;
@@ -69,7 +67,7 @@ public class
 	public Accessor create(SubtermContext context, String... method )
 	{
 		Accessor prop = new Accessor();
-		prop.context = ((SubtermValueContext) context).value().literal();
+		prop.context = ((SubtermLiteralContext) context).literal();
 		prop.original = prop.context.getText();
 		prop.trimmed = getTrimmedText( prop.context );
 		prop.variable = toVariableCase( method );

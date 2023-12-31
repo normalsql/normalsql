@@ -88,7 +88,6 @@ statement
 
         pragmaValue : signedNumber | name | string ;
 
-
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
     | 'EXPLAIN' 'QUERY' 'PLAN'
@@ -564,7 +563,16 @@ term
 subterm
     : ( '+' | '-' | TILDE ) subterm # SubtermUnary
     | ( 'NOT' | '!' ) subterm # SubtermUnary
-    | value ( '.' name | index | '::' type )* # SubtermValue
+    | literal  ( '::' type )* # SubtermLiteral
+    | case # SubtermCase
+    | 'INTERVAL' subterm timeCast # SubtermInterval
+    | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
+    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
+    | array # SubtermArray
+    | '(' query ')' # SubtermSubquery
+    | function ( '.' name | index | '::' type )* # SubtermFunction
+    | { fixID(); } id ( '.' name )* # SubtermColumn
+    | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
     | subterm 'COLLATE' type # SubtermCollate
     | <assoc=right> subterm '^' subterm # SubtermOperator
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermOperator
@@ -659,7 +667,6 @@ predicate
         | 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
         ;
 
-
     likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
     assign
@@ -669,20 +676,6 @@ predicate
     compare
         : EQ | COMPARE | TILDE | MATCH
         ;
-
-// TODO merge 'value' w/ 'subterm'?
-value
-    : literal
-    | case
-    | 'INTERVAL' subterm timeCast
-    | value 'AT' ( 'LOCAL' | timeZone string )
-    | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname
-    | array
-    | '(' query ')'
-    | function
-    | { fixID(); } id
-    | 'ROW'? '(' terms? ')'
-    ;
 
 literal
     : INTEGER
@@ -704,12 +697,8 @@ literal
     ;
 
 datetime
-    // TODO value or literal
     : 'DATE' string
     | ( '{d' | '{t' | '{ts' ) string '}'
-
-    // TODO function
-    | 'CURRENT_DATE'
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
     | 'CURRENT_TIMESTAMP'
     ;
@@ -811,31 +800,12 @@ signedNumber : signedInteger | signedFloat ;
 signedInteger : ( '+' | '-' )? INTEGER ;
 signedFloat : ( '+' | '-' )? FLOAT ;
 
-//values
-//    : 'VALUES' terms ;
-
 array
     : 'ARRAY' arrayTerms  ;
 
     arrayTerms : '[' ( terms | arrayNested )? ']' ;
+
     arrayNested : arrayTerms ( ',' arrayTerms )* ;
-
-
-functionName
-    : name
-    | 'RIGHT'
-    | 'LEFT'
-    | 'SECOND'
-    | 'YEAR'
-    | 'MINUTE'
-    | 'MONTH'
-    | 'HOUR'
-    | 'SET'
-    | 'ANY'
-    | 'SOME'
-    ;
-
-params : '(' INTEGER? ')' ;
 
 function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
@@ -881,6 +851,9 @@ function
 
     | aggregateFunction
     ;
+
+    params : '(' INTEGER? ')' ;
+
 
 
     // TODO Postgres functions
@@ -938,6 +911,22 @@ function
 //        | qname '(' term respectIgnore? ')' respectIgnore? over
 //
 //        ;
+
+
+    functionName
+        : name
+        | 'RIGHT'
+        | 'LEFT'
+        | 'SECOND'
+        | 'YEAR'
+        | 'MINUTE'
+        | 'MONTH'
+        | 'HOUR'
+        | 'SET'
+        | 'ANY'
+        | 'SOME'
+        ;
+
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
