@@ -39,11 +39,12 @@ public class
 		if( text == null ) return null;
 		switch( text.charAt( 0 ) )
 		{
-			case '[':
-			case '"':
-			case '\'':
-			case '`':
-				// Lexer already ensured token has matching quotes front and back
+			case '[': // T-SQL style
+			case '"': // SQL identifier
+			case '\'': // SQL string
+			case '`': // MySQL?
+				// No sanity checks. Lexer already ensured token has
+				// matching quotes front and back
 				text = text.substring( 1, text.length() - 1 );
 				break;
 			default:

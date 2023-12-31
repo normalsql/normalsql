@@ -710,7 +710,6 @@ datetime
 
     // TODO function
     | 'CURRENT_DATE'
-//    | 'TIMESTAMP' string
     | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
     | 'CURRENT_TIMESTAMP'
     ;
@@ -1083,7 +1082,7 @@ id :
     | '(' | ')' | '{' | '}' | ','
     | '['
 
-    // all tokens except IDs
+    // exclude all other tokens except ID
     | UNICODE_ID
     | STRING
     | NATIONAL_STRING
@@ -1100,15 +1099,18 @@ id :
     | PARAMETER
     | VARIABLE
 
-    // and anything lexer doesn't recognize
+    // and exclude anything lexer doesn't recognize
     | OTHER
 
-    // finally, tokens we setType( RESERVED )
+    // finally, exclude tokens we manually set to type RESERVED.
+    // TODO See Reserved.fixID() (method name will change)
     | RESERVED
     )
-    // special rule to accept UNICODE IDs
+
+    // accept UNICODE IDs
     | UNICODE_ID uescape?
-    // special rule to accept T-SQL style brackets
+
+    // accept T-SQL style bracketed names
     | '[' .*? ']'
     ;
 

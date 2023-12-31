@@ -6,6 +6,7 @@ package normalsql.parse;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -77,70 +78,71 @@ extends
 		return null;
 	}
 
-	@Override
-	public Void visitInsert( InsertContext context )
-	{
-		try
-		{
-			// TODO this method chaining SUCKS, bring back the globber
-			// Drill down to first row
-			var termList = context.
-//				source().values().terms().term();
-			var subterm = termList.get( 0 ).subterm();
+	// TODO restore visitInsert after resolving ambiguity in 'insert' rule
 
-
-			if( subterm instanceof SubtermRowContext )
-			{
-//				var found = new ArrayList<LiteralContext>();
-				var found = new ArrayList<SubtermLiteralContext>();
-//				List<TermContext> maybes = ((SubtermRowContext) subterm).terms().term();
-				var maybes = ((SubtermRowContext) subterm).terms().term();
-				for( TermContext term : maybes )
-				{
-					SubtermContext sc = term.subterm();
-					if( sc instanceof SubtermLiteralContext )
-					{
-//						found.add( ((SubtermLiteralContext) sc).literal() );
-						found.add( (SubtermLiteralContext) sc );
-					}
-					else
-					{
-						break;
-					}
-				}
-
-				if( found.size() == maybes.size() )
-				{
-					Insert child = new Insert();
-					if( context.qname() != null )
-					{
-						child.table = context.qname();
-					}
-
-					if( context.names() != null )
-					{
-						child.columns = context.names().name();
-					}
-
-					Row row = new Row( context, child );
-					row.literals = found;
-
-					child.knockouts.add( row );
-					knockouts.add( row );
-
-					Statement parent = statementStack.peek();
-					parent.add( child );
-					statementStack.push( child );
-
-					return null;
-				}
-			}
-		}
-		// ignore
-		catch( NullPointerException npe ) {}
-
-		return super.visitInsert( context );
-	}
+//	@Override
+//	public Void visitInsert( InsertContext context )
+//	{
+//		try
+//		{
+//			// TODO this method chaining SUCKS, bring back the globber
+//			// Drill down to first row
+//			var termList = context.source().values().terms().term();
+//			var subterm = termList.get( 0 ).subterm();
+//
+//
+//			if( subterm instanceof SubtermRowContext )
+//			{
+////				var found = new ArrayList<LiteralContext>();
+//				var found = new ArrayList<SubtermLiteralContext>();
+////				List<TermContext> maybes = ((SubtermRowContext) subterm).terms().term();
+//				var maybes = ((SubtermRowContext) subterm).terms().term();
+//				for( TermContext term : maybes )
+//				{
+//					SubtermContext sc = term.subterm();
+//					if( sc instanceof SubtermLiteralContext )
+//					{
+////						found.add( ((SubtermLiteralContext) sc).literal() );
+//						found.add( (SubtermLiteralContext) sc );
+//					}
+//					else
+//					{
+//						break;
+//					}
+//				}
+//
+//				if( found.size() == maybes.size() )
+//				{
+//					Insert child = new Insert();
+//					if( context.qname() != null )
+//					{
+//						child.table = context.qname();
+//					}
+//
+//					if( context.names() != null )
+//					{
+//						child.columns = context.names().name();
+//					}
+//
+//					Row row = new Row( context, child );
+//					row.literals = found;
+//
+//					child.knockouts.add( row );
+//					knockouts.add( row );
+//
+//					Statement parent = statementStack.peek();
+//					parent.add( child );
+//					statementStack.push( child );
+//
+//					return null;
+//				}
+//			}
+//		}
+//		// ignore
+//		catch( NullPointerException npe ) {}
+//
+//		return super.visitInsert( context );
+//	}
 
 
 //	// TODO verify this is needed
@@ -163,35 +165,56 @@ extends
 //		return super.visitSource( context );
 //	}
 
-//	@Override
-//	public Void visitSubtermRow( SubtermRowContext context )
-//	{
-//		if( context.terms() == null || context.terms().term() == null )
-//		{
-//			return null;
-//		}
-//
-//		var temp = new ArrayList<SubtermLiteralContext>();
-//		for( TermContext term : context.terms().term() )
-//		{
-//			SubtermContext sc = term.subterm();
-//			if( sc instanceof SubtermLiteralContext )
-//			{
-//				temp.add( (SubtermLiteralContext) sc );
-//			}
-//		}
-//
-//		if( temp.size() == context.terms().term().size() )
-//		{
-//			// TODO also add literals to parent Statement
-//			literals.addAll( temp );
-//			return null;
-//		}
-//
-//		return super.visitSubtermRow( context );
-//	}
+	@Override
+	public Void visitSubtermRow( SubtermRowContext context )
+	{
+		if( context.terms() == null || context.terms().term() == null )
+		{
+			return null;
+		}
 
-//	@Override
+		var temp = new ArrayList<SubtermLiteralContext>();
+		for( TermContext term : context.terms().term() )
+		{
+			SubtermContext sc = term.subterm();
+			if( sc instanceof SubtermLiteralContext )
+			{
+				temp.add( (SubtermLiteralContext) sc );
+			}
+		}
+
+		if( temp.size() == context.terms().term().size() )
+		{
+			// TODO also add literals to parent Statement
+			literals.addAll( temp );
+			return null;
+		}
+
+		return super.visitSubtermRow( context );
+	}
+
+	@Override
+	public Void visit( ParseTree tree )
+	{
+		Knockout<?,?> k = switch( tree )
+		{
+			case SubtermBETWEENContext between -> new BETWEEN( between );
+			case SubtermCompareContext compare -> new Comparison( compare );
+			case SubtermINContext in -> new IN( in );
+			case SubtermLIKEContext like -> new LIKE( like );
+			default -> null;
+		};
+
+		if( k != null && k.isMatched() )
+		{
+			statementStack.peek().knockouts.add( k );
+			knockouts.add( k );
+			return null;
+		}
+
+		return super.visit( tree );
+	}
+
 //	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
 //	{
 //		PredicateContext pc = ctx.predicate();

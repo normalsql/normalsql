@@ -6,9 +6,8 @@ package normalsql.parse;
 import normalsql.parse.NormalSQLParser.*;
 
 /*
-	Represents LIKE, ILIKE, and REGEXP predicates.
+	Represents LIKE, ILIKE, REGEXP, etc. expressions
  */
-
 public class
 	LIKE
 extends

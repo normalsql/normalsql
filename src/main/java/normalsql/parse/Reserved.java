@@ -5,7 +5,26 @@ import java.util.Set;
 public
 class Reserved
 {
-	// SQL reserved words. Must be quoted to be used as either table or column names.
+	// Just ~100 SQL reserved keywords. Versus the 100s of all keywords.
+	// These are the keywords which must be quoted to be used as either
+	// table or column names.
+	//
+	// Pulling this list out of the grammar eases maintenance.
+	//
+	// Generally, because of the current limitations of ANTLR v4's NOT '~' operator,
+	// SQL grammars hard-code the list of allowable (unreserved)
+	// keywords. Meaning [all-tokens] - [reserved-words] = [unreserved-keywords].
+	// Maintenance hell. There are many more allowable keywords, so the rule for
+	// unreserved words becomes huge. That strategy is brittle (error-prone)
+	// as the grammar is updated to accommodate language changes.
+	//
+	// Also, the list of reserved keywords is now
+	// dynamic (changeable at runtime). This should make it easier to support
+	// multiple SQL standards (SQL-92 thru SQL:2016) and dialects (SQLite, T-SQL, etc)
+	// without changing the hard-coded grammar.
+	//
+	// If this explanation fails, please help me fix it. Thanks. -- Jason
+
 	public static Set<String> keywords = Set.of
     (
 		"ALL",
@@ -110,6 +129,11 @@ class Reserved
 		"_ROWID_"
 	);
 
+	// Rolled my own tester. Mostly because I couldn't quickly fathom
+	// Character.isAlphabetic(...) and the like. But also because
+	// this is just needs to distinguish identifiers (ID, STRING, etc) from
+	// everything else (mostly meaning punctuation).
+
 	public static boolean isWord( String text )
 	{
 		var c = text.charAt( 0 );
@@ -129,8 +153,7 @@ class Reserved
 			case '|':
 			case '}':
 			case '~':
-			case 0x7F:
-
+			case 0x7F: // ASCII 'DEL' character
 				return false;
 
 			default:
