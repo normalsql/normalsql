@@ -22,7 +22,10 @@ Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. 
 
 grammar NormalSQL;
 
-options { caseInsensitive=true; }
+options {
+caseInsensitive=true;
+contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
+}
 
 @parser::members
 {
@@ -551,9 +554,11 @@ aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
 
 term
-    : term 'OR' term
+    : literal
+//    : subterm
+    | term 'BETWEEN' term 'AND' term
+    | term 'OR' term
     | term 'AND' term
-    | subterm
     // TODO: '||' as logical OR
     // TODO: 'XOR'
     ;
@@ -586,6 +591,7 @@ subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm # SubtermOperator
     | subterm compare subterm # SubtermCompare
+//    | subterm compare term # SubtermCompare
 
     /*
      ANTLR's left-recursion magic doesn't match this...

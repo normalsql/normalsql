@@ -33,9 +33,8 @@ public class Profiler
 //		String sql = "UNLOGGED two";
 //		String sql = "SELECT CASE WHEN TRUE THEN 1 END CASE;";
 
-		String sql = """
-		             PRAGMA synchronous = FULL;
-				"""
+//		String sql = "PRAGMA synchronous = FULL;"
+		String sql = "1 between 2 and 3 and 4"
 		;
 
 		var chars = CharStreams.fromString( sql );
@@ -49,37 +48,37 @@ public class Profiler
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
 //		out.println( parser.getInterpreter().getPredictionMode());
 
-	    var script = parser.script();
+//	    var script = parser.script();
 //	    var script = parser.item();
-//	    var script = parser.stuff();
+	    var script = parser.term();
 		System.out.println( toStringTree( script, Arrays.asList(parser.getRuleNames() )));
 
-//		var pi = parser.getParseInfo();
-//
-//		var dis = pi.getDecisionInfo();
-//		for( var di : dis )
-//		{
-////			if( di.invocations > 0 )
-////			{
-////				out.println( di );
-////			}
-////			for( var sense : di.contextSensitivities )
-////			{
-////				out.println( sense );
-////			}
-//			for( var ai : di.ambiguities )
+		var pi = parser.getParseInfo();
+
+		var dis = pi.getDecisionInfo();
+		for( var di : dis )
+		{
+//			if( di.invocations > 0 )
 //			{
-////				out.println( ai );
-//				var trees =
-//				getAllPossibleParseTrees( parser, tokens, ai, script.getRuleIndex() );
-//
-//				for( var tree : trees )
-//				{
-////					out.println( tree );
-//					out.println( toStringTree(tree, Arrays.asList( parser.getRuleNames() ) ));
-//				}
+//				out.println( di );
 //			}
-//		}
+//			for( var sense : di.contextSensitivities )
+//			{
+//				out.println( sense );
+//			}
+			for( var ai : di.ambiguities )
+			{
+//				out.println( ai );
+				var trees =
+				getAllPossibleParseTrees( parser, tokens, ai, script.getRuleIndex() );
+
+				for( var tree : trees )
+				{
+//					out.println( tree );
+					out.println( toStringTree(tree, Arrays.asList( parser.getRuleNames() ) ));
+				}
+			}
+		}
 
 	}
 

@@ -33,11 +33,11 @@ extends
         {
             for( TermContext term : context.terms().term() )
             {
-                SubtermContext sc = term.subterm();
-                if( sc instanceof SubtermLiteralContext )
-                {
-                    literals.add( (SubtermLiteralContext) sc );
-                }
+//                SubtermContext sc = term.subterm();
+//                if( sc instanceof SubtermLiteralContext )
+//                {
+//                    literals.add( (SubtermLiteralContext) sc );
+//                }
             }
 
             // Verify all the terms are literals

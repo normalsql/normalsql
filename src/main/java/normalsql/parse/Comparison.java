@@ -20,6 +20,12 @@ extends
 
 	static HashMap<String, String> operatorMap = new HashMap<>();
 
+
+	// TODO add missing operators, verify
+	// TILDE   : '~' ;
+	// MATCH   : '~*' | '!~' | '!~*' ;
+
+	// TODO maybe there's a new constructor
 	static {
 		operatorMap.put( "=", "EQ" );
 		operatorMap.put( ":=", "EQ" );
@@ -31,6 +37,7 @@ extends
 		operatorMap.put( ">=", "GTE" );
 		operatorMap.put( "&&", "OVERLAP" );
 	}
+
 
 	public String op;
 	public SubtermContext literal;
