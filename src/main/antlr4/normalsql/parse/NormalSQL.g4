@@ -619,15 +619,14 @@ predicate
         | 'NAN' | 'INFINITE' | 'PRESENT' | 'A' 'SET' | 'EMPTY'
         ;
 
-    likes : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
+    likes
+        : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
     assign
-        : EQ | ASSIGN
-        ;
+        : EQ | ASSIGN ;
 
     compare
-        : EQ | COMPARE | TILDE | MATCH
-        ;
+        : EQ | COMPARE | TILDE | MATCH ;
 
 literal
     : INTEGER
@@ -659,8 +658,7 @@ boolean
     : 'TRUE' | 'FALSE' /* | 'ON' | 'OFF'  */ ;
 
 timeCast
-    : timeUnit precision? ( 'TO' timeUnit precision? )?
-    ;
+    : timeUnit precision? ( 'TO' timeUnit precision? )? ;
 
 timeUnit
     : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
@@ -745,8 +743,7 @@ length
     : '(' INTEGER ')' ;
 
 precision
-    : '(' signedInteger ( ',' signedInteger )? ')'
-    ;
+    : '(' signedInteger ( ',' signedInteger )? ')' ;
 
 signedNumber : signedInteger | signedFloat ;
 signedInteger : ( '+' | '-' )? INTEGER ;
@@ -755,9 +752,11 @@ signedFloat : ( '+' | '-' )? FLOAT ;
 array
     : 'ARRAY' arrayTerms  ;
 
-    arrayTerms : '[' ( terms | arrayNested )? ']' ;
+    arrayTerms
+        : '[' ( terms | arrayNested )? ']' ;
 
-    arrayNested : arrayTerms ( ',' arrayTerms )* ;
+    arrayNested
+        : arrayTerms ( ',' arrayTerms )* ;
 
 function
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
@@ -804,7 +803,8 @@ function
     | aggregateFunction
     ;
 
-    params : '(' INTEGER? ')' ;
+    params
+        : '(' INTEGER? ')' ;
 
     // TODO Postgres functions
  /*
@@ -862,7 +862,6 @@ function
 //
 //        ;
 
-
     functionName
         : name
         | 'RIGHT'
@@ -876,7 +875,6 @@ function
         | 'ANY'
         | 'SOME'
         ;
-
 
     withinGroup
         : 'WITHIN' 'GROUP' '(' orderBy ')' ;
@@ -920,12 +918,10 @@ window
             ;
 
 orderBy
-    : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )*
-    ;
+    : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )* ;
 
     orderByTerm
-        : term sortDir? ( 'NULLS' firstLast )?
-        ;
+        : term sortDir? ( 'NULLS' firstLast )? ;
 
     sortDir
         : 'ASC'
@@ -936,16 +932,16 @@ orderBy
         ;
 
 
-jsonPairs
+    jsonPairs
         : jsonPair ( ',' jsonPair )* ;
 
-        jsonPair
-            : jsonKey ':' term
-            | 'KEY'? jsonKey 'VALUE' term
-            ;
+    jsonPair
+        : jsonKey ':' term
+        | 'KEY'? jsonKey 'VALUE' term
+        ;
 
-            jsonKey
-                : 'NULL' | name ;
+    jsonKey
+        : 'NULL' | name ;
 
 
 index
@@ -991,8 +987,7 @@ qnames
     : '(' qname ( ',' qname )* ')' ;
 
 qname
-    : name ( '.' name )*
-    ;
+    : name ( '.' name )* ;
 
 names
     : '(' name ( ',' name )* ')' ;
@@ -1139,8 +1134,7 @@ BLOB
         : '\'' ( HEX HEX ' '? )* '\'' ;
 
  OCTALS
-    : '0o' [0-7]+
-    ;
+    : '0o' [0-7]+ ;
 
 fragment HEX
     : [A-F0-9] ;
@@ -1154,8 +1148,7 @@ FLOAT
     : ( DIGIT+ ( '.' DIGIT* )? | '.' DIGIT+ ) ( 'E' [-+]? DIGIT+ )? [FD]?;
 
 PARAMETER
-    : '?' DIGIT*
-    ;
+    : '?' DIGIT* ;
 
 fragment DIGIT
     : [0-9] ;
