@@ -10,10 +10,14 @@
 
    Heuristics:
 
-      1. Create subrules to ease parse tree navigation.
+      1. Use alt labels, subrules, or both, to ease parse tree navigation.
+         Versus using element labels.
 
-      2. Per DRY, create subrule for 3 (sometimes 2) or more copypastas. Except when doing so
-         conflicts with #1.
+      2. Per DRY, create subrule for 3 (sometimes 2) or more copypastas.
+         Except when doing so conflicts with #1 or #3.
+
+      3. Inline lists to ease processing parse trees, eg comma separated
+         items or terms?
 
 Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. See rules
 'subterm' and 'predicate'. TODO Maybe use underscores as separator.
@@ -22,10 +26,7 @@ Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. 
 
 grammar NormalSQL;
 
-options {
-caseInsensitive=true;
-contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
-}
+options { caseInsensitive=true; }
 
 @parser::members
 {
@@ -49,9 +50,7 @@ void fixID()
 }
 
 // convenience for debugging
-
 aaa1 : script ;
-aaa2 : term ;
 
 script : statement? ( ';' statement? )* EOF ;
 
@@ -470,7 +469,6 @@ query
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
-//        : term ( 'AS'? name )?                       # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
 
@@ -554,11 +552,9 @@ aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
 
 term
-    : literal
-//    : subterm
-    | term 'BETWEEN' term 'AND' term
-    | term 'OR' term
+    : term 'OR' term
     | term 'AND' term
+    | subterm
     // TODO: '||' as logical OR
     // TODO: 'XOR'
     ;
@@ -576,96 +572,46 @@ subterm
     | array # SubtermArray
     | '(' query ')' # SubtermSubquery
     | function ( '.' name | index | '::' type )* # SubtermFunction
-    | { fixID(); } id ( '.' name )* # SubtermColumn
+    | { fixID(); } qname # SubtermColumn
     | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
     | subterm 'COLLATE' type # SubtermCollate
     | <assoc=right> subterm '^' subterm # SubtermOperator
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermOperator
     | subterm  ( '||' | '->' | '->>' ) subterm # SubtermOperator
-
-    // these alts repeated under rule predicate
-    | subterm 'IS' 'NOT'? logicals # SubtermLogical
-    | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # SubtermFixme
-    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm # SubtermDistinct
-    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # SubtermOfType
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm # SubtermOperator
-    | subterm compare subterm # SubtermCompare
-//    | subterm compare term # SubtermCompare
-
-    /*
-     ANTLR's left-recursion magic doesn't match this...
-        | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?
-      ... so manually split alts as workaround
-    */
-    | subterm 'NOT'? likes subterm 'ESCAPE' subterm # SubtermLIKE
-    | subterm 'NOT'? likes subterm # SubtermLIKE
-
-    // Trying out underscores for alt labels. hmmm...
-    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Subterm_LIKE_Terms
-    | subterm 'NOT'? 'IN'
-      ( '(' ( query | terms )? ')'
-//      ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
-      // PL/SQL
-      | name
-      )?
-      # SubtermIN // turrible formatting style, but I don't have a better solution
-    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # SubtermBETWEEN
-
-
-//    | subterm compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | subterm predicate #SubtermPredicate
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
-
-
     | VARIABLE assign subterm # SubtermAssign
+    ;
+
+predicate
+    : compare subterm                                                         # PredicateCompare
+    | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # PredicateFixme
+    | 'IS' 'NOT'? logicals                                                    # PredicateLogical
+    | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # PredicateDistinct
+    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
+    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # PredicateOfType
+    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # PredicateBETWEEN
+    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # PredicateIN
+    | 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # PredicateLIKE
+    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'                           # PredicateLIKETerms
+    ;
+
 //        | 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' string) ')'  # PredicateRaise
 //   | '(' subterm ',' subterm ')' 'OVERLAPS' '(' subterm ',' subterm ')' # SubtermOverlaps
 //    // CrateDB ?
 ////    | 'MATCH' '(' name ',' string ')' 'USING' qname 'WITH' '(' subterm ')'
 // TODO: H2's INTERSECTS for 2D bounding boxes. Better as a function?
 // | row 'INTERSECTS' '(' term ',' term ')'
-    ;
-
-// BOZO always update these alts as subterm's (related) alts change
-predicate
-    : 'IS' 'NOT'? logicals # PredicateLogical
-    | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) # PredicateFixme
-    | 'IS' 'NOT'? 'DISTINCT' 'FROM' term # PredicateDistinct
-    | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')' # PredicateOfType
-    | compare subterm # PredicateCompare
-    | 'NOT'? likes subterm ( 'ESCAPE' subterm )? # PredicateLIKE
-    | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')' # Predicate_LIKE_Terms
-    | 'NOT'? 'IN'
-       ( '(' ( query | terms )? ')'
-//       ( '(' ( ( term | select ) ( ',' ( term | select ) )* )? ')'
-       // PL/SQL
-       | name
-       )?
-       # PredicateIN // turrible formatting style, but I don't have a better solution
-    | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm # PredicateBETWEEN
-
-//    | compare ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # PredicateOperator
-//    | 'EXISTS' LPAREN selectStatement RPAREN
-    ;
-
-//test
-//        | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?
-//        | subterm 'IS' 'NOT'? subterm
 
 //    predicate
-//        : ( EQ | COMPARE | ASSIGN ) term                                        # PredicateOperator
-//        | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                  # PredicateNull
 ////        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
-//        // PL/SQL dialect?
-//        | 'IS' 'NOT'? logicals                                                     # PredicateLogical
-//        | 'IS' 'NOT'? 'DISTINCT' 'FROM' term                                    # PredicateDistinct
-//        | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'              # PredicateOfType
-//        | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
 //        | 'IS' 'NOT'? term                                                         # PredicateIS
 //        ;
 
-//        jsonType
-//            : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
+    jsonType
+        : 'VALUE' | 'ARRAY' | 'OBJECT' | 'SCALAR' ;
 
     logicals
         : 'NULL' | 'UNKNOWN' | 'TRUE' | 'FALSE' | 'DISTINCT'
@@ -860,8 +806,6 @@ function
 
     params : '(' INTEGER? ')' ;
 
-
-
     // TODO Postgres functions
  /*
    : 'COLLATION' 'FOR' '(' a_expr ')'
@@ -1038,8 +982,7 @@ withWithout
     : 'WITH' | 'WITHOUT' ;
 
 alias
-    : id | string
-    ;
+    : id | string ;
 
 qnames0
     : qname ( ',' qname )* ;
@@ -1051,13 +994,11 @@ qname
     : name ( '.' name )*
     ;
 
-name
-    : id
-    | string
-    ;
-
 names
     : '(' name ( ',' name )* ')' ;
+
+name
+    : id | string ;
 
 string
     : STRING+
@@ -1108,7 +1049,6 @@ id :
     // accept T-SQL style bracketed names
     | '[' .*? ']'
     ;
-
 
 // separate token because EQ is used both for assignments and comparisons. (TODO right?)
 EQ      : '=' ;
@@ -1191,7 +1131,7 @@ BYTES
     | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
     ;
 
-// TODO This variant ensures even number of digits. Does it matter?
+// TODO Ensures even number of digits. Does it matter?
 BLOB
     : 'X' HEXHEX ( ' ' HEXHEX )* ;
 
@@ -1221,7 +1161,6 @@ fragment DIGIT
     : [0-9] ;
 
 // TODO separate alts for each style & dialect
-
 VARIABLE
     : [:$] ( INTEGER | ID )
     | '@' '@'? ID*
@@ -1239,8 +1178,7 @@ COMMENT
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
-
-RESERVED : '\u007F';
+RESERVED : '\u007F'; // Placeholder value
 
 OTHER : . ;
 
