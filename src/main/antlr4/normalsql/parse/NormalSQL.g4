@@ -27,27 +27,9 @@ Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. 
 grammar NormalSQL;
 
 options { caseInsensitive=true; }
+tokens { RESERVED }
 
-@parser::members
-{
-
-// TODO move to helper class, rename to "morphKeywords()" or something
-void fixID()
-{
-    var t1 = (CommonToken) getCurrentToken();
-    if( t1.getType() == ID ) return;
-
-    var text = t1.getText();
-    if( Reserved.isWord( text ) )
-    {
-        if( Reserved.keywords.contains( text ) )
-        {
-            t1.setType( RESERVED );
-        }
-    }
-}
-
-}
+@parser::header { import static normalsql.parse.Reserved.*; }
 
 // convenience for debugging
 aaa1 : script ;
@@ -572,7 +554,7 @@ subterm
     | array # SubtermArray
     | '(' query ')' # SubtermSubquery
     | function ( '.' name | index | '::' type )* # SubtermFunction
-    | { fixID(); } qname # SubtermColumn
+    | { fixID( this ); } qname # SubtermColumn
     | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
     | subterm 'COLLATE' type # SubtermCollate
     | <assoc=right> subterm '^' subterm # SubtermOperator
@@ -977,6 +959,7 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
+// TODO does alias rule need to call fixID()?
 alias
     : id | string ;
 
@@ -1170,8 +1153,6 @@ COMMENT
 
 BLOCK_COMMENT
     : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
-
-RESERVED : '\u007F'; // Placeholder value
 
 OTHER : . ;
 

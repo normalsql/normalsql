@@ -1,10 +1,63 @@
 package normalsql.parse;
 
+import static normalsql.parse.NormalSQLParser.*;
+import org.antlr.v4.runtime.CommonToken;
+
 import java.util.Set;
 
 public
 class Reserved
 {
+	// TODO move to helper class, rename to "morphKeywords()" or something
+	static public void fixID( NormalSQLParser p )
+	{
+		var t1 = (CommonToken) p.getCurrentToken();
+		if( t1.getType() == ID ) return;
+
+		var text = t1.getText().toUpperCase();
+		if( Reserved.isID( text ) )
+		{
+			if( Reserved.keywords.contains( text ) )
+			{
+				t1.setType( RESERVED );
+			}
+		}
+	}
+
+	// Rolled my own tester. Mostly because I couldn't quickly fathom
+	// Character.isAlphabetic(...) and the like. But also because
+	// this is just needs to distinguish identifiers (ID, STRING, etc) from
+	// everything else (mostly meaning punctuation).
+
+	public static boolean isID(String text )
+	{
+		var c = text.charAt( 0 );
+		switch( c )
+		{
+			case '\'':
+			case '"':
+			case '[':
+			case '`':
+				return true;
+
+			case '\\':
+			case ']':
+			case '^':
+
+			case '{':
+			case '|':
+			case '}':
+			case '~':
+			case 0x7F: // ASCII 'DEL' character
+				return false;
+
+			default:
+				if( c < 'A' ) return false;
+		}
+
+		return true;
+	}
+
 	// Just ~100 SQL reserved keywords. Versus the 100s of all keywords.
 	// These are the keywords which must be quoted to be used as either
 	// table or column names.
@@ -129,37 +182,4 @@ class Reserved
 		"_ROWID_"
 	);
 
-	// Rolled my own tester. Mostly because I couldn't quickly fathom
-	// Character.isAlphabetic(...) and the like. But also because
-	// this is just needs to distinguish identifiers (ID, STRING, etc) from
-	// everything else (mostly meaning punctuation).
-
-	public static boolean isWord( String text )
-	{
-		var c = text.charAt( 0 );
-		switch( c )
-		{
-			case '\'':
-			case '"':
-			case '[':
-			case '`':
-				return true;
-
-			case '\\':
-			case ']':
-			case '^':
-
-			case '{':
-			case '|':
-			case '}':
-			case '~':
-			case 0x7F: // ASCII 'DEL' character
-				return false;
-
-			default:
-				if( c < 'A' ) return false;
-		}
-
-		return true;
-	}
 }
