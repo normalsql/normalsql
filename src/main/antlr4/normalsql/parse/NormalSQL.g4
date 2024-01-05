@@ -1001,12 +1001,9 @@ id :
     | STRING
     | NATIONAL_STRING
     | UNICODE_STRING
-//    | QUOTED
-//    | BACKTICKS
-    | DOLLARS
     | BITS
     | BYTES
-    | BLOB
+//    | BLOB
     | OCTALS
     | INTEGER
     | FLOAT
@@ -1016,8 +1013,8 @@ id :
     // and exclude anything lexer doesn't recognize
     | OTHER
 
-    // finally, exclude tokens we manually set to type RESERVED.
-    // TODO See Reserved.fixID() (method name will change)
+    // finally, exclude tokens we've manually set to type RESERVED.
+    // See method Reserved.fixID()
     | RESERVED
     )
 
@@ -1035,8 +1032,7 @@ COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 TILDE   : '~' ;
 MATCH   : '~*' | '!~' | '!~*' ;
 
-UNICODE_ID
-    : 'U&' QUOTED ;
+// TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
 UNICODE_STRING
     : 'U&' STRING ;
@@ -1045,59 +1041,24 @@ NATIONAL_STRING
     :  [NE] STRING ;
 
 STRING
-// TODO combine strings
-//    : ( 'U&' | 'N' | 'E' )? '\'' ( ~'\'' | '\'\'' )* '\'' ;
-    : '\'' ( ~( '\'' ) | '\'\'' )* '\'' ;
-
-BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
-
-QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
-
-// TODO combine IDs
-// TODO figure out why "varchar_whatever" isn't an ID token
-ID : HEAD BODY* ;
-
-fragment HEAD //options { caseInsensitive=false; }
-    : [A-Z_]
-    // Valid characters from 0x80 to 0xFF
-//    | [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
-
-        /*
-   | // these are the letters above 0xFF which only need a single UTF-16 code unit
-   [\u0100-\uD7FF\uE000-\uFFFF]
-   {charIsLetter()}?
-   | // letters which require multiple UTF-16 code units
-   [\uD800-\uDBFF] [\uDC00-\uDFFF]
-   {
-    CheckIfUtf32Letter()
-   }?
-*/
-
-//   | '\u00C0' .. '\u00D6'
-//   | '\u00D8' .. '\u00F6'
-
-//   | '\u00F8' .. '\u02FF'
-//   | '\u0370' .. '\u037D'
-//   | '\u037F' .. '\u1FFF'
-//   | '\u200C' .. '\u200D'
-//   | '\u2070' .. '\u218F'
-//   | '\u2C00' .. '\u2FEF'
-//   | '\u3001' .. '\uD7FF'
-//   | '\uF900' .. '\uFDCF'
-//   | '\uFDF0' .. '\uFFFD'
+    : '\'' ( ~'\'' | '\'\'' )* '\''
+    // Postgres
+    | '$$' .*? '$$'
     ;
 
-// TODO compare each dialect's rules for literals. eg SQLite allows ':'?
-fragment BODY// options //{ caseInsensitive=false; }
-    : [0-9#$@]
-    | HEAD
-//    | '\u00B7'
-//    | '\u0300' .. '\u036F'
-//    | '\u203F' .. '\u2040'
+//BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
+//
+//QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
+//
+
+ID
+    : [A-Z_] [A-Z_0-9#$@]*
+    | '`' ( ~( '`' ) | '``' )* '`'
+    | '"' ( ~( '"' ) | '""' )* '"'
     ;
 
-DOLLARS
-    : '$$' .*? '$$' ;
+UNICODE_ID
+    : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
 
 BITS
     : '0b' [01]+
@@ -1105,22 +1066,19 @@ BITS
     ;
 
 BYTES
-    : '0x' HEX+
-    | 'X' '\'' ( HEX | ' ' | '\'\'' )* '\''
+    : '0x' [A-F0-9]+
+    | 'X' '\'' ( [A-F0-9] | ' ' | '\'\'' )* '\''
     ;
 
-// TODO Ensures even number of digits. Does it matter?
-BLOB
-    : 'X' HEXHEX ( ' ' HEXHEX )* ;
-
-    fragment HEXHEX
-        : '\'' ( HEX HEX ' '? )* '\'' ;
+//// TODO Ensures even number of digits. Does it matter?
+//BLOB
+//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
+//
+//    fragment HEXHEX
+//        : '\'' ( HEX HEX ' '? )* '\'' ;
 
  OCTALS
     : '0o' [0-7]+ ;
-
-fragment HEX
-    : [A-F0-9] ;
 
 // TODO support underscore (visual grouping) in numbers
 INTEGER
