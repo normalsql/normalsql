@@ -30,7 +30,6 @@ options {
 caseInsensitive=true;
 contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
 }
-tokens { RESERVED }
 
 @parser::header { import static normalsql.parse.Reserved.*; }
 
@@ -63,7 +62,6 @@ statement
     | 'RELEASE' 'SAVEPOINT'? qname
     | 'RESET' qname
     | 'ROLLBACK' 'TRANSACTION'? (( 'TO' 'SAVEPOINT'? )? name )?
-//    | 'ROLLBACK' 'TRANSACTION'? 'TO'? name?
     | 'SAVEPOINT' qname
     | set
     | update
@@ -199,7 +197,7 @@ createIndex
     ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnDef
-        : name type? columnStuff*  // TODO (COMMENT string)? (WITH properties)?
+        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
         ;
 
     columnStuff
@@ -214,6 +212,7 @@ createIndex
           | 'COLLATE' collationName
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
+          | 'HIDDEN'
           )
           // SQLite undocumented
           ( 'CONSTRAINT' name )*
@@ -631,7 +630,7 @@ predicate
         : EQ | COMPARE | TILDE | MATCH ;
 
     collationName
-        : 'BINARY' | 'NOCASE' | 'RTRIM' | id ;
+        : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
 
 literal
     : INTEGER
@@ -640,22 +639,9 @@ literal
     | BYTES
     | OCTALS
     | datetime
-
-//    | 'TRUE'
-//    | 'FALSE'
-//    | 'UNKNOWN'
-//    | 'NULL'
-//    | 'ON'
-//    | 'OFF'
-
-//    | 'DEFAULT'
     | PARAMETER
     | VARIABLE
-//    | string
-//    | id
-//    | { fixID( this ); } name '.' name ( '.' name )* //# SubtermColumn
-//    | { fixID( this ); } qname //# SubtermColumn
-    | qname //# SubtermColumn
+    | qname
     ;
 
 datetime
@@ -666,7 +652,7 @@ datetime
     ;
 
 boolean
-    : 'TRUE' | 'FALSE' /* | 'ON' | 'OFF'  */ ;
+    : 'TRUE' | 'FALSE' ;
 
 timeCast
     : timeUnit precision? ( 'TO' timeUnit precision? )? ;
@@ -697,8 +683,7 @@ scalar
     : 'BIGINT'
     | 'BINARY' precision?
     | 'BIT' 'VARYING'? length?
-    | 'BLOB' precision?
-//    | 'LARGE'? 'BLOB' precision?
+    | 'LARGE'? 'BLOB' precision?
     | 'BOOL'
     | 'BOOLEAN'
     | chars precision?
@@ -725,13 +710,16 @@ scalar
     | 'REAL'
     | 'SMALLINT'
     | 'STR'
-    | 'TEXT'
+    | 'TEXT' length?
     | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
     | 'TINYINT'
     | 'UUID'
     | 'VARBINARY'
     | 'VARINT'
     | 'XML'
+//    | ID+ precision?
+//    | ID precision?
+    | id precision?
 //    | id+ precision?
     ;
 
@@ -984,7 +972,8 @@ withWithout
 
 // TODO does alias rule need to call fixID()?
 alias
-    : id | string ;
+//    : id | string ;
+    : name ;
 
 qnames0
     : qname ( ',' qname )* ;
@@ -999,7 +988,16 @@ names
     : '(' name ( ',' name )* ')' ;
 
 name
-    : id | string ;
+    : id
+    | QUOTED
+    | BACKTICKS
+    | string
+    | UNICODE_ID uescape?
+    // T-SQL
+    | brackets
+    ;
+
+brackets : '[' .*? ']' ;
 
 string
     : STRING+
@@ -1010,8 +1008,9 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
+// Exclude everything but this grammar's tokens and ID tokens.
 id :
-    // exclude punctuation tokens
+    // exclude punctuation
     ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
     | '!' | '+' | '-' | '*' | '/' | '%' | '^'
     | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
@@ -1019,42 +1018,24 @@ id :
     | '(' | ')' | '{' | '}' | ','
     | '['
 
-    // exclude all other tokens except ID
+    // exclude literals
     | UNICODE_ID
+    | QUOTED
+    | BACKTICKS
     | STRING
     | NATIONAL_STRING
     | UNICODE_STRING
     | BITS
     | BYTES
-//    | BLOB
     | OCTALS
     | INTEGER
     | FLOAT
     | PARAMETER
     | VARIABLE
-    // TODO add some more keywords here...?
-//    | 'SELECT'
-
-//    | 'TRUE'
-//    | 'FALSE'
-//    | 'UNKNOWN'
-//    | 'NULL'
-//    | 'ON'
-//    | 'OFF'
 
     // and exclude anything lexer doesn't recognize
     | OTHER
-
-    // finally, exclude tokens we've manually set to type RESERVED.
-    // See method Reserved.fixID()
-    | RESERVED
     )
-
-    // accept UNICODE IDs
-    | UNICODE_ID uescape?
-
-    // accept T-SQL style bracketed names
-    | '[' .*? ']'
     ;
 
 // separate token because EQ is used both for assignments and comparisons. (TODO right?)
@@ -1078,15 +1059,13 @@ STRING
     | '$$' .*? '$$'
     ;
 
-//BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
-//
-//QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
-//
+BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
+
+QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
+
 
 ID
     : [A-Z_] [A-Z_0-9#$@]*
-    | '`' ( ~( '`' ) | '``' )* '`'
-    | '"' ( ~( '"' ) | '""' )* '"'
     ;
 
 UNICODE_ID
@@ -1101,13 +1080,6 @@ BYTES
     : '0x' [A-F0-9]+
     | 'X' '\'' ( [A-F0-9] | ' ' | '\'\'' )* '\''
     ;
-
-//// TODO Ensures even number of digits. Does it matter?
-//BLOB
-//    : 'X' HEXHEX ( ' ' HEXHEX )* ;
-//
-//    fragment HEXHEX
-//        : '\'' ( HEX HEX ' '? )* '\'' ;
 
  OCTALS
     : '0o' [0-7]+ ;

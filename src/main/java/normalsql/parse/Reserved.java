@@ -23,7 +23,7 @@ class Reserved
 		{
 			if( Reserved.keywordsH2.contains( text ) )
 			{
-				t1.setType( RESERVED );
+//				t1.setType( RESERVED );
 			}
 		}
 	}
