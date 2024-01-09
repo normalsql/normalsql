@@ -8,7 +8,9 @@ import normalsql.parse.NormalSQLParser;
 import org.antlr.v4.gui.TreeTextProvider;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.AmbiguityInfo;
+import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.Tree;
@@ -28,14 +30,9 @@ public class Profiler
 {
 	public static void main( String... args )
 	{
-//		String sql = "one two";
-//		String sql = "SELECT two";
-//		String sql = "UNLOGGED two";
-//		String sql = "SELECT CASE WHEN TRUE THEN 1 END CASE;";
-
-//		String sql = "PRAGMA synchronous = FULL;"
-		String sql = "1 between 2 and 3 and 4"
-		;
+//		String sql = "SELECT (19*b)+11*~f-coalesce(t)";
+		String sql = "SELECT 19+11*f";
+//		String sql = "SELECT case when (19*b)+11*~f-coalesce((select max(11) from t1 where f<>case when case 17 when 11 then 17 else c end-11 in (t1.c,c,t1.e) and 19=t1.a or 17<=e or e<=19 then 19 | c when t1.b=t1.f then d else 19 end or t1.e not in (13,19,c)),b) |  -c not between  -e and  -a then (t1.c) else t1.d end FROM t1 WHERE c in (select case abs((count(*))) when  -max(t1.c) | abs(abs(+count(*)))-~case (case  -max(e) when max(11)- -count(*) then ((max(t1.e))) else count(*) end) when count(distinct t1.e) then cast(avg(f) AS integer) else cast(avg(t1.c) AS integer) end* -cast(avg(f) AS integer) then max(f) else (max(b)) end from t1 union select (max(13)) from t1) and not exists(select 1 from t1 where case when t1.e<=19-b then c else c end in (select c from t1 union select (select  -((count(distinct t1.d))) from t1)-t1.b from t1))";
 
 		var chars = CharStreams.fromString( sql );
 		var lexer = new NormalSQLLexer( chars );
@@ -43,15 +40,30 @@ public class Profiler
 		var parser = new NormalSQLParser( tokens );
 		parser.setProfile( true );
 //		parser.setTrace( true );
-//		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
-//		parser.getInterpreter().setPredictionMode( PredictionMode.LL );
 		parser.getInterpreter().setPredictionMode( PredictionMode.LL_EXACT_AMBIG_DETECTION );
-//		out.println( parser.getInterpreter().getPredictionMode());
+//		parser.getInterpreter().setPredictionMode( PredictionMode.SLL );
+		System.out.println( parser.getInterpreter().getPredictionMode() );
+		parser.addErrorListener( new BaseErrorListener() {
+public void reportAmbiguity( Parser parser,
+								DFA dfa,
+								int startIndex,
+								int stopIndex,
+								boolean exact,
+								BitSet ambigAlts,
+								ATNConfigSet configs)
+	{
+		var t1 = parser.getInputStream().get( startIndex );
+		var t2 = parser.getInputStream().get( stopIndex );
+		var span = parser.getInputStream().getText( t1, t2 );
+		System.out.println( "ambig " + startIndex + ":" + stopIndex + " token " + parser.getCurrentToken() + "   " + span );
+	}
 
-//	    var script = parser.script();
+		});
+	    var script = parser.script();
 //	    var script = parser.item();
-	    var script = parser.term();
+//	    var script = parser.stuff();
 		System.out.println( toStringTree( script, Arrays.asList(parser.getRuleNames() )));
+		System.out.println();
 
 		var pi = parser.getParseInfo();
 
@@ -79,7 +91,6 @@ public class Profiler
 				}
 			}
 		}
-
 	}
 
 
@@ -185,17 +196,15 @@ public class Profiler
 			parser.addDecisionOverride(ai.decision, ai.startIndex, alt);
 			ParserRuleContext t = parser.parse(startRuleIndex);
 
-			var ambigSubTree =
-				Trees.getRootOfSubtreeEnclosingRegion(t, ai.startIndex, stopIndex);
-
+			var ambigSubTree = Trees.getRootOfSubtreeEnclosingRegion(t, ai.startIndex, stopIndex);
 
 			// Use higher of overridden decision tree or tree enclosing all tokens
-			if ( Trees.isAncestorOf(parser.getOverrideDecisionRoot(), ambigSubTree) )
+			if ( Trees.isAncestorOf( parser.getOverrideDecisionRoot(), ambigSubTree ) )
 			{
 				ambigSubTree =  parser.getOverrideDecisionRoot();
 			}
-			trees.add(ambigSubTree);
-			alt =  ai.ambigAlts.nextSetBit(alt+1);
+			trees.add( ambigSubTree );
+			alt =  ai.ambigAlts.nextSetBit( alt + 1 );
 		}
 
 		return trees;
@@ -239,9 +248,14 @@ public class Profiler
 		}
 
 		StringBuilder buf = new StringBuilder();
-//		buf.append( '❰' );
-		buf.append( '「' );
+		buf.append( '❰' );
+//		buf.append( '「' );
 		buf.append( s );
+//		if( t instanceof RuleContextWithAltNum )
+//		{
+//			buf.append( ':' );
+//			buf.append( ((RuleContextWithAltNum) t).getAltNumber() );
+//		}
 		buf.append( ' ' );
 		for( int i = 0; i < t.getChildCount(); i++ )
 		{
@@ -251,8 +265,8 @@ public class Profiler
 			}
 			buf.append( toStringTree( t.getChild( i ), gosh ) );
 		}
-//		buf.append( '❱' );
-		buf.append( '」' );
+		buf.append( '❱' );
+//		buf.append( '」' );
 		return buf.toString();
 	}
 

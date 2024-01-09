@@ -10,8 +10,8 @@ import normalsql.parse.NormalSQLParser.*;
  */
 public class
 	LIKE
-extends
-	Knockout<SubtermLIKEContext, LIKE.Pattern>
+//extends
+//	Knockout<SubtermLIKEContext, LIKE.Pattern>
 {
 	public enum Pattern
 	{
@@ -21,11 +21,11 @@ extends
 	public SubtermContext column;
 	public SubtermContext literal;
 
-	public LIKE( SubtermLIKEContext context )
-	{
-		super( context );
-		column = (SubtermContext) context.parent.getChild( 0 );
-		literal = context.subterm().get( 0 );
-		pattern = valueOf( Pattern.class, literal );
-	}
+//	public LIKE( SubtermLIKEContext context )
+//	{
+//		super( context );
+//		column = (SubtermContext) context.parent.getChild( 0 );
+//		literal = context.subterm().get( 0 );
+//		pattern = valueOf( Pattern.class, literal );
+//	}
 }

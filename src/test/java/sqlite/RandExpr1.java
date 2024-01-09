@@ -42,11 +42,12 @@ public class RandExpr1 {
 		long start = System.currentTimeMillis();
 
         outer:
-        for (File test : tests) {
-
+        for( File test : tests )
+		{
             testCounter++;
 
-            try {
+            try
+			{
                 Path path = test.toPath();
 //                System.out.println( path );
 
@@ -148,7 +149,7 @@ public class RandExpr1 {
 				}
 			}
 				@Override
-	public void reportAmbiguity(Parser recognizer,
+	public void reportAmbiguity( Parser parser,
 								DFA dfa,
 								int startIndex,
 								int stopIndex,
@@ -156,14 +157,18 @@ public class RandExpr1 {
 								BitSet ambigAlts,
 								ATNConfigSet configs)
 	{
-//		var span = sql.substring( startIndex, stopIndex );
-//		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
-//		if( !sql.equals( last ))
-//		{
-//			ambig();
-//			fails.add( sql );
-//			last = sql;
-//		}
+		if( !sql.equals( last ))
+		{
+			ambig();
+			fails.add( "###" );
+			fails.add( sql );
+			last = sql;
+		}
+		var t1 = parser.getInputStream().get( startIndex );
+		var t2 = parser.getInputStream().get( stopIndex );
+		var span = parser.getInputStream().getText( t1, t2 );
+		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + parser.getCurrentToken() + "   " + span );
+
 	}
 
 	@Override

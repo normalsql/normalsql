@@ -341,7 +341,8 @@ class Reserved
 	public static Set<String> keywordsH2 = Set.of( h2 );
 	public static Set<String> keywordsSQLite = Set.of( sqlite );
 
-	public static Set<String> keywords = keywordsSQLite;
+	public static Set<String> keywords = keywordsH2;
+//	public static Set<String> keywords = keywordsSQLite;
 //	public static Set<String> keywords = keywordsH2.retainAll( keywordsSQLite );
 
 

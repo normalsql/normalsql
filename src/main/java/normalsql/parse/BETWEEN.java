@@ -7,8 +7,9 @@ import normalsql.parse.NormalSQLParser.*;
 
 public class
 	BETWEEN
-extends
-	Knockout<SubtermBETWEENContext, BETWEEN.Pattern>
+//extends
+//	Knockout<SubtermContext, BETWEEN.Pattern>
+//	Knockout<SubtermBETWEENContext, BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
@@ -34,12 +35,12 @@ extends
 	public SubtermContext low;
 	public SubtermContext high;
 
-	public BETWEEN( SubtermBETWEENContext context )
-	{
-		super( context );
-		test = (SubtermContext) context.parent.getChild( 0 );
-		low = context.subterm( 0 );
-		high = context.subterm( 1 );
-		pattern = valueOf( Pattern.class, test, low, high );
-	}
+//	public BETWEEN( SubtermBETWEENContext context )
+//	{
+//		super( context );
+//		test = (SubtermContext) context.parent.getChild( 0 );
+//		low = context.subterm( 0 );
+//		high = context.subterm( 1 );
+//		pattern = valueOf( Pattern.class, test, low, high );
+//	}
 }

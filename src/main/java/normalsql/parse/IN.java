@@ -11,8 +11,8 @@ import java.util.List;
 
 public class
     IN
-extends
-    Knockout<SubtermINContext, IN.Pattern>
+//extends
+//    Knockout<SubtermINContext, IN.Pattern>
 {
     public enum Pattern
     {
@@ -22,29 +22,29 @@ extends
     public SubtermContext column;
     public List<SubtermLiteralContext> literals = new ArrayList<>();
 
-    public IN( SubtermINContext context )
-    {
-        super( context );
-
-        column = context.subterm();
-        if( !( column instanceof SubtermLiteralContext )) return;
-
-        if( context.terms() != null && context.terms().term() != null )
-        {
-            for( TermContext term : context.terms().term() )
-            {
+//    public IN( SubtermINContext context )
+//    {
+//        super( context );
+//
+//        column = context.subterm();
+//        if( !( column instanceof SubtermLiteralContext )) return;
+//
+//        if( context.terms() != null && context.terms().term() != null )
+//        {
+//            for( TermContext term : context.terms().term() )
+//            {
 //                SubtermContext sc = term.subterm();
 //                if( sc instanceof SubtermLiteralContext )
 //                {
 //                    literals.add( (SubtermLiteralContext) sc );
 //                }
-            }
-
-            // Verify all the terms are literals
-            if( context.terms().term().size() == literals.size() )
-            {
-                pattern = Pattern.Literals;
-            }
-        }
-    }
+//            }
+//
+//            // Verify all the terms are literals
+//            if( context.terms().term().size() == literals.size() )
+//            {
+//                pattern = Pattern.Literals;
+//            }
+//        }
+//    }
 }

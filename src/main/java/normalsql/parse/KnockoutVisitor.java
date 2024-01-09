@@ -196,21 +196,21 @@ extends
 	@Override
 	public Void visit( ParseTree tree )
 	{
-		Knockout<?,?> k = switch( tree )
-		{
-			case SubtermBETWEENContext between -> new BETWEEN( between );
-			case SubtermCompareContext compare -> new Comparison( compare );
-			case SubtermINContext in -> new IN( in );
-			case SubtermLIKEContext like -> new LIKE( like );
-			default -> null;
-		};
-
-		if( k != null && k.isMatched() )
-		{
-			statementStack.peek().knockouts.add( k );
-			knockouts.add( k );
-			return null;
-		}
+//		Knockout<?,?> k = switch( tree )
+//		{
+////			case SubtermBETWEENContext between -> new BETWEEN( between );
+//			case SubtermCompareContext compare -> new Comparison( compare );
+//			case SubtermINContext in -> new IN( in );
+//			case SubtermLIKEContext like -> new LIKE( like );
+//			default -> null;
+//		};
+//
+//		if( k != null && k.isMatched() )
+//		{
+//			statementStack.peek().knockouts.add( k );
+//			knockouts.add( k );
+//			return null;
+//		}
 
 		return super.visit( tree );
 	}

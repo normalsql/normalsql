@@ -26,7 +26,10 @@ Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. 
 
 grammar NormalSQL;
 
-options { caseInsensitive=true; }
+options {
+caseInsensitive=true;
+contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
+}
 tokens { RESERVED }
 
 @parser::header { import static normalsql.parse.Reserved.*; }
@@ -70,7 +73,7 @@ statement
 
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
 
-        pragmaValue : signedNumber | name | string ;
+        pragmaValue : signedNumber | name ;
 
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
@@ -521,8 +524,7 @@ query
             : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
 
         xmlColumn
-           : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' )
-           ;
+           : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' ) ;
 
 terms
     : term ( ',' term )* ;
@@ -544,26 +546,43 @@ term
 // TODO verify precedences
 // TODO combine operators into lexer rules
 subterm
-    : ( '+' | '-' | TILDE ) subterm # SubtermUnary
+    : literal # SubtermLiteral
+    | ( '+' | '-' | TILDE ) subterm # SubtermUnary
+
     | ( 'NOT' | '!' ) subterm # SubtermUnary
-    | literal  ( '::' type )* # SubtermLiteral
-    | case # SubtermCase
-    | 'INTERVAL' subterm timeCast # SubtermInterval
+    | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
+    | function ( '.' name )* # SubtermFunction
+//    | function ( '.' name | index | '::' type )* # SubtermFunction
+    | subterm index # SubtermIndex
+    | subterm '::' type  # SubtermTypecast
+    | 'CASE' term whenSimple+ caseElse? 'END'       # CaseSimple
+    | 'CASE' whenSearch+ caseElse? 'END'            # CaseSearch
+    | 'INTERVAL' subterm timeCast                   # SubtermInterval
     | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
     | array # SubtermArray
     | '(' query ')' # SubtermSubquery
-    | function ( '.' name | index | '::' type )* # SubtermFunction
-    | { fixID( this ); } qname # SubtermColumn
     | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
     | subterm 'COLLATE' type # SubtermCollate
+
+    | subterm compare subterm                                                         # SubtermCompare
+    | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
+    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
+    | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # SubtermDistinct
+    | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # SubtermJSON
+    | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # SubtermOfType
+    | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # SubtermBETWEEN
+    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # SubtermIN
+//    | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # SubtermLIKE
+    | subterm 'NOT'? likes subterm 'ESCAPE' subterm                                   # SubtermLIKE
+    | subterm 'NOT'? likes subterm                                                    # SubtermLIKE
+    | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'                           # SubtermLIKETerms
+
     | <assoc=right> subterm '^' subterm # SubtermOperator
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermOperator
     | subterm  ( '||' | '->' | '->>' ) subterm # SubtermOperator
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm # SubtermOperator
-    | subterm predicate #SubtermPredicate
-    | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
     | VARIABLE assign subterm # SubtermAssign
     ;
 
@@ -572,7 +591,7 @@ predicate
     | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # PredicateFixme
     | 'IS' 'NOT'? logicals                                                    # PredicateLogical
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # PredicateDistinct
-    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                 # PredicateJSON
+    | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # PredicateJSON
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # PredicateOfType
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # PredicateBETWEEN
     | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # PredicateIN
@@ -613,20 +632,26 @@ predicate
 literal
     : INTEGER
     | FLOAT
-    | datetime
-    | string
-    | 'TRUE'
-    | 'FALSE'
     | BITS
     | BYTES
     | OCTALS
-    | 'UNKNOWN'
-    | 'NULL'
-    | 'ON'
-    | 'OFF'
+    | datetime
+
+//    | 'TRUE'
+//    | 'FALSE'
+//    | 'UNKNOWN'
+//    | 'NULL'
+//    | 'ON'
+//    | 'OFF'
+
 //    | 'DEFAULT'
     | PARAMETER
     | VARIABLE
+//    | string
+//    | id
+//    | { fixID( this ); } name '.' name ( '.' name )* //# SubtermColumn
+//    | { fixID( this ); } qname //# SubtermColumn
+    | qname //# SubtermColumn
     ;
 
 datetime
@@ -651,12 +676,7 @@ timeUnit
     | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
     | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
 
-    case
-        : 'CASE' term whenSimple+ caseElse? 'END'  # CaseSimple
-        | 'CASE' whenSearch+ caseElse? 'END'       # CaseSearch
-        ;
-
-        whenSimple : 'WHEN' ( predicate | terms ) caseThen ;
+    whenSimple : 'WHEN' ( predicate | terms ) caseThen ;
         whenSearch : 'WHEN' term caseThen ;
         caseThen : 'THEN' term ;
         caseElse : 'ELSE' term ;
@@ -670,56 +690,55 @@ type
     ;
 
 scalar
-//    : 'BIGINT'
-//    | 'BINARY' precision?
-//    | 'BIT' 'VARYING'? length?
-//    | 'BLOB' precision?
-////    | 'LARGE'? 'BLOB' precision?
-//    | 'BOOL'
-//    | 'BOOLEAN'
-//    | chars precision?
-//    | 'CLOB'
-//    | 'DATE'
-//    | 'DATETIME'
-//    | 'DEC' precision?
-//    | 'DECFLOAT'
-//    | 'DECIMAL' precision?
-//    | 'DOUBLE' 'PRECISION'?
-//    | 'FLOAT' length?
-//    | 'INT'
-//    | 'BIG'? 'INTEGER'
-////    | 'INTEGER'
-//    | 'INTERVAL'
-//    | 'JSON'
-//    | 'JSONB'
-//    | 'LONG'
-//    | 'NCLOB'
-//    | 'NUM' precision?
-//    | 'NUMBER' precision?
-//    | 'NUMERIC' precision?
-//    | 'RAW'
-//    | 'REAL'
-//    | 'SMALLINT'
-//    | 'STR'
-//    | 'TEXT'
-//    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
-    : ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
-//    | 'TINYINT'
-//    | 'UUID'
-//    | 'VARBINARY'
-//    | 'VARINT'
-//    | 'XML'
-    | id+ precision?
+    : 'BIGINT'
+    | 'BINARY' precision?
+    | 'BIT' 'VARYING'? length?
+    | 'BLOB' precision?
+//    | 'LARGE'? 'BLOB' precision?
+    | 'BOOL'
+    | 'BOOLEAN'
+    | chars precision?
+    | 'CLOB'
+    | 'DATE'
+    | 'DATETIME'
+    | 'DEC' precision?
+    | 'DECFLOAT'
+    | 'DECIMAL' precision?
+    | 'DOUBLE' 'PRECISION'?
+    | 'FLOAT' length?
+    | 'INT'
+    | 'BIG'? 'INTEGER'
+//    | 'INTEGER'
+    | 'INTERVAL'
+    | 'JSON'
+    | 'JSONB'
+    | 'LONG'
+    | 'NCLOB'
+    | 'NUM' precision?
+    | 'NUMBER' precision?
+    | 'NUMERIC' precision?
+    | 'RAW'
+    | 'REAL'
+    | 'SMALLINT'
+    | 'STR'
+    | 'TEXT'
+    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
+    | 'TINYINT'
+    | 'UUID'
+    | 'VARBINARY'
+    | 'VARINT'
+    | 'XML'
+//    | id+ precision?
     ;
 
-// chars
-//    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
-//    | 'VARCHAR'
-//    | 'VARCHAR2'
-//    | 'VARCHAR_IGNORECASE'
-//    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
-//    | 'STRING'
-//    ;
+ chars
+    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
+    | 'VARCHAR'
+    | 'VARCHAR2'
+    | 'VARCHAR_IGNORECASE'
+    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+    | 'STRING'
+    ;
 
 length
     : '(' INTEGER ')' ;
@@ -1009,6 +1028,15 @@ id :
     | FLOAT
     | PARAMETER
     | VARIABLE
+    // TODO add some more keywords here...?
+//    | 'SELECT'
+
+//    | 'TRUE'
+//    | 'FALSE'
+//    | 'UNKNOWN'
+//    | 'NULL'
+//    | 'ON'
+//    | 'OFF'
 
     // and exclude anything lexer doesn't recognize
     | OTHER

@@ -9,8 +9,8 @@ import java.util.HashMap;
 
 public class
 	Comparison
-extends
-	Knockout<SubtermCompareContext, Comparison.Pattern>
+//extends
+//	Knockout<SubtermCompareContext, Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -43,21 +43,21 @@ extends
 	public SubtermContext literal;
 	public SubtermContext column;
 
-	public Comparison( SubtermCompareContext context )
-	{
-		super( context );
-		op = operatorMap.get( context.compare().getText() );
-		SubtermContext left = context.subterm( 1 );
-		SubtermContext right = context.subterm( 1 );
-		pattern = valueOf( Pattern.class, left, right );
-
-		if( !isMatched() ) return;
-
-		// TODO: Move this logic to Worker, like for BETWEEN predicates
-		switch( pattern )
-		{
-			case LiteralColumn -> { literal = left; column = right; }
-			case ColumnLiteral -> { literal = right; column = left; }
-		}
-	}
+//	public Comparison( SubtermCompareContext context )
+//	{
+//		super( context );
+//		op = operatorMap.get( context.compare().getText() );
+//		SubtermContext left = context.subterm( 1 );
+//		SubtermContext right = context.subterm( 1 );
+//		pattern = valueOf( Pattern.class, left, right );
+//
+//		if( !isMatched() ) return;
+//
+//		// TODO: Move this logic to Worker, like for BETWEEN predicates
+//		switch( pattern )
+//		{
+//			case LiteralColumn -> { literal = left; column = right; }
+//			case ColumnLiteral -> { literal = right; column = left; }
+//		}
+//	}
 }
