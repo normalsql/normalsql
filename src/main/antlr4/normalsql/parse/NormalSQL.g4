@@ -211,8 +211,7 @@ createIndex
           | 'UNIQUE' onConflict?
           | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
           | 'DEFAULT' ( literal | term )
-//          | 'COLLATE' name
-          | 'COLLATE' type
+          | 'COLLATE' collationName
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
           )
@@ -370,7 +369,6 @@ query
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
         | tables join tables  ( 'ON' term | 'USING' qnames )?
-        | '(' tables ')' tableAlias?
 
         | ( qname | '(' qname ')' ) tableAlias?
           ( ( 'USE' 'INDEX' names ) // H2
@@ -387,7 +385,10 @@ query
           | unnest
           | pivot
           | unpivot
-          ) tableAlias?
+          )
+          tableAlias?
+
+        | '(' tables ')' tableAlias?
         ;
 
         join
@@ -563,7 +564,7 @@ subterm
     | array # SubtermArray
     | '(' query ')' # SubtermSubquery
     | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
-    | subterm 'COLLATE' type # SubtermCollate
+    | subterm 'COLLATE' collationName # SubtermCollate
 
     | subterm compare subterm                                                         # SubtermCompare
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
@@ -628,6 +629,9 @@ predicate
 
     compare
         : EQ | COMPARE | TILDE | MATCH ;
+
+    collationName
+        : 'BINARY' | 'NOCASE' | 'RTRIM' | id ;
 
 literal
     : INTEGER
@@ -722,7 +726,7 @@ scalar
     | 'SMALLINT'
     | 'STR'
     | 'TEXT'
-    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )
+    | ( 'TIME' | 'TIMESTAMP' ) length? ( withWithout 'LOCAL'? timeZone )?
     | 'TINYINT'
     | 'UUID'
     | 'VARBINARY'

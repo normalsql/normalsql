@@ -121,15 +121,12 @@ public class RandExpr1 {
 		var tokens = new CommonTokenStream( lexer );
 		var parser = new NormalSQLParser( tokens );
 		parser.removeErrorListeners();
+		boolean ambig = false;
+
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer,
-                                    Object offendingSymbol,
-                                    int line,
-                                    int charPositionInLine,
-                                    String msg,
-                                    RecognitionException e)
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e)
 			{
                 error();
 
@@ -148,51 +145,37 @@ public class RandExpr1 {
 					last = sql;
 				}
 			}
-				@Override
-	public void reportAmbiguity( Parser parser,
-								DFA dfa,
-								int startIndex,
-								int stopIndex,
-								boolean exact,
-								BitSet ambigAlts,
-								ATNConfigSet configs)
-	{
-		if( !sql.equals( last ))
-		{
-			ambig();
-			fails.add( "###" );
-			fails.add( sql );
-			last = sql;
-		}
-		var t1 = parser.getInputStream().get( startIndex );
-		var t2 = parser.getInputStream().get( stopIndex );
-		var span = parser.getInputStream().getText( t1, t2 );
-		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + parser.getCurrentToken() + "   " + span );
 
-	}
+			@Override
+			public void reportAmbiguity( Parser parser, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs)
+			{
+				if( !ambig ) return;
 
-	@Override
-	public void reportAttemptingFullContext(Parser recognizer,
-											DFA dfa,
-											int startIndex,
-											int stopIndex,
-											BitSet conflictingAlts,
-											ATNConfigSet configs)
-	{
-//		fails.add( "full " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+				if( !sql.equals( last ))
+				{
+					ambig();
+					fails.add( "###" );
+					fails.add( sql );
+					last = sql;
+				}
+				var t1 = parser.getInputStream().get( startIndex );
+				var t2 = parser.getInputStream().get( stopIndex );
+				var span = parser.getInputStream().getText( t1, t2 );
+				fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + parser.getCurrentToken() + "   " + span );
 
-	}
+			}
 
-	@Override
-	public void reportContextSensitivity(Parser recognizer,
-										 DFA dfa,
-										 int startIndex,
-										 int stopIndex,
-										 int prediction,
-										 ATNConfigSet configs)
-	{
-//		fails.add( "sensitive " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
-	}
+			@Override
+			public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs)
+			{
+		//		fails.add( "full " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+			}
+
+			@Override
+			public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs)
+			{
+		//		fails.add( "sensitive " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
+			}
 
 		} );
 
