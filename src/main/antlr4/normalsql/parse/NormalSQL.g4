@@ -212,7 +212,8 @@ createIndex
           | 'COLLATE' collationName
           | foreignKey
           | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
-          | 'HIDDEN'
+          | 'INVISIBLE'
+          | 'IMPLICITLY'? 'HIDDEN'
           )
           // SQLite undocumented
           ( 'CONSTRAINT' name )*
@@ -607,7 +608,6 @@ predicate
 // | row 'INTERSECTS' '(' term ',' term ')'
 
 //    predicate
-////        | 'IS' 'NOT'? truth                                                        # PredicateIsTruth
 //        | 'IS' 'NOT'? term                                                         # PredicateIS
 //        ;
 
@@ -697,7 +697,6 @@ scalar
     | 'FLOAT' length?
     | 'INT'
     | 'BIG'? 'INTEGER'
-//    | 'INTEGER'
     | 'INTERVAL'
     | 'JSON'
     | 'JSONB'
@@ -717,10 +716,7 @@ scalar
     | 'VARBINARY'
     | 'VARINT'
     | 'XML'
-//    | ID+ precision?
-//    | ID precision?
     | id precision?
-//    | id+ precision?
     ;
 
  chars
@@ -924,7 +920,6 @@ orderBy
 //        | 'USING' ( EQ | COMPARE )
         ;
 
-
     jsonPairs
         : jsonPair ( ',' jsonPair )* ;
 
@@ -970,9 +965,8 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-// TODO does alias rule need to call fixID()?
+// TODO inline rule name, DRY the misc alias
 alias
-//    : id | string ;
     : name ;
 
 qnames0
@@ -989,7 +983,7 @@ names
 
 name
     : id
-    | QUOTED
+    | QUOTED // TODO try changing QUOTED token into parser rule
     | BACKTICKS
     | string
     | UNICODE_ID uescape?
@@ -1008,6 +1002,7 @@ string
     uescape
         : 'UESCAPE' STRING ;
 
+// TODO rename from 'id' to 'keyword'
 // Exclude everything but this grammar's tokens and ID tokens.
 id :
     // exclude punctuation
