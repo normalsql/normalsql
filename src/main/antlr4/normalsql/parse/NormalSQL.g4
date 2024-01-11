@@ -547,24 +547,24 @@ term
 // TODO verify precedences
 // TODO combine operators into lexer rules
 subterm
-    : literal # SubtermLiteral
-    | ( '+' | '-' | TILDE ) subterm # SubtermUnary
+    : literal                                  # SubtermLiteral
+    | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
 
-    | ( 'NOT' | '!' ) subterm # SubtermUnary
+    | ( 'NOT' | '!' ) subterm                  # SubtermUnary
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
-    | function ( '.' name )* # SubtermFunction
+    | function ( '.' name )*                   # SubtermFunction
 //    | function ( '.' name | index | '::' type )* # SubtermFunction
-    | subterm index # SubtermIndex
-    | subterm '::' type  # SubtermTypecast
+    | subterm index                            # SubtermIndex
+    | subterm '::' type                        # SubtermTypecast
     | 'CASE' term whenSimple+ caseElse? 'END'       # CaseSimple
     | 'CASE' whenSearch+ caseElse? 'END'            # CaseSearch
     | 'INTERVAL' subterm timeCast                   # SubtermInterval
     | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
-    | array # SubtermArray
-    | '(' query ')' # SubtermSubquery
-    | 'ROW'? '(' terms? ')' ( '.' name )? # SubtermRow
-    | subterm 'COLLATE' collationName # SubtermCollate
+    | array                                      # SubtermArray
+    | '(' query ')'                              # SubtermSubquery
+    | 'ROW'? '(' terms? ')' ( '.' name )?        # SubtermRow
+    | subterm 'COLLATE' collationName            # SubtermCollate
 
     | subterm compare subterm                                                         # SubtermCompare
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
@@ -579,12 +579,12 @@ subterm
     | subterm 'NOT'? likes subterm                                                    # SubtermLIKE
     | subterm 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'                           # SubtermLIKETerms
 
-    | <assoc=right> subterm '^' subterm # SubtermOperator
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm # SubtermOperator
-    | subterm  ( '||' | '->' | '->>' ) subterm # SubtermOperator
+    | <assoc=right> subterm '^' subterm                   # SubtermOperator
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm         # SubtermOperator
+    | subterm  ( '||' | '->' | '->>' ) subterm            # SubtermOperator
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
-    | subterm ( '+' | '-' ) subterm # SubtermOperator
-    | VARIABLE assign subterm # SubtermAssign
+    | subterm ( '+' | '-' ) subterm                       # SubtermOperator
+    | VARIABLE assign subterm                             # SubtermAssign
     ;
 
 predicate
