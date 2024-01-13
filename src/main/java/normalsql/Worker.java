@@ -122,13 +122,13 @@ public class Worker
 						}
 					}
 				}
-//				case Comparison c ->
-//				{
-//					// TODO add operator to method signature
-//					String column = getColumn( c.column );
-//					Accessor prop = _helper.create( c.literal, column );
-//					work.statementAccessors.add( prop );
-//				}
+				case Comparison c ->
+				{
+					// TODO add operator to method signature
+					String column = getColumn( c.column );
+					Accessor prop = _helper.create( c.literal, column );
+					work.statementAccessors.add( prop );
+				}
 				case LIKE m ->
 				{
 					String column = getColumn( m.column );
@@ -140,24 +140,24 @@ public class Worker
 
 				case IN in ->
 				{
-//					String column = getColumn( in.column );
-//					for( int nth = 0; nth < in.literals.size(); nth++ )
-//					{
-//						SubtermValueContext l = in.literals.get( nth );
-//						String temp = column + "_" + ( nth + 1 );
-//						Accessor prop = _helper.create( l, temp );
-//						work.statementAccessors.add( prop );
-//					}
+					String column = getColumn( in.column );
+					for( int nth = 0; nth < in.literals.size(); nth++ )
+					{
+						SubtermLiteralContext l = in.literals.get( nth );
+						String temp = column + "_" + ( nth + 1 );
+						Accessor prop = _helper.create( l, temp );
+						work.statementAccessors.add( prop );
+					}
 				}
 
 				case Row row ->
 				{
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
-//						SubtermLiteralContext l = row.literals.get( nth );
-//						String col = row.insert.columns.get( nth ).getText();
-//						Accessor prop = _helper.create( l, col );
-//						work.statementAccessors.add( prop );
+						SubtermLiteralContext l = row.literals.get( nth );
+						String col = row.insert.columns.get( nth ).getText();
+						Accessor prop = _helper.create( l, col );
+						work.statementAccessors.add( prop );
 					}
 				}
 
@@ -225,10 +225,9 @@ public class Worker
 
 	public String getColumn( SubtermContext b )
 	{
-////		RuleContext column = ( (SubtermColumnContext) b ).id().qname();
-//		RuleContext column = ( (SubtermColumnContext) b ).id();
-//		return _helper.getTrimmedText( column );
-		return null;
+//		RuleContext column = ( (SubtermColumnContext) b ).id().qname();
+		RuleContext column = ( (SubtermLiteralContext) b ).literal().qname();
+		return _helper.getTrimmedText( column );
 	}
 
 	/**

@@ -32,7 +32,7 @@ extends
 
 	public SubtermContext test;
 	public SubtermContext low;
-	public SubtermContext high;
+	public SubtermContext 	high;
 
 	public BETWEEN( SubtermBETWEENContext context )
 	{
