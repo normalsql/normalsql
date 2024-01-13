@@ -5,7 +5,6 @@ package normalsql.parse;
 
 import normalsql.parse.NormalSQLParser.*;
 
-import java.util.HashMap;
 import java.util.Map;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;

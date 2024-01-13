@@ -201,7 +201,7 @@ extends
 			case SubtermBETWEENContext between -> new BETWEEN( between );
 			case SubtermCompareContext compare -> new Comparison( compare );
 			case SubtermINContext in -> new IN( in );
-//			case SubtermLIKEContext like -> new LIKE( like );
+			case SubtermLIKEContext like -> new LIKE( like );
 			default -> null;
 		};
 
