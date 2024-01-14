@@ -643,6 +643,9 @@ literal
     | datetime
     | PARAMETER
     | VARIABLE
+    | string
+    | 'TRUE'
+    | 'FALSE'
     ;
 
 datetime
@@ -1028,6 +1031,8 @@ id :
     | FLOAT
     | PARAMETER
     | VARIABLE
+    | 'TRUE'
+    | 'FALSE'
 
     // and exclude anything lexer doesn't recognize
     | OTHER
@@ -1043,11 +1048,9 @@ MATCH   : '~*' | '!~' | '!~*' ;
 
 // TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
-UNICODE_STRING
-    : 'U&' STRING ;
+UNICODE_STRING : 'U&' STRING ;
 
-NATIONAL_STRING
-    :  [NE] STRING ;
+NATIONAL_STRING : [NE] STRING ;
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\''
@@ -1059,13 +1062,9 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
+ID : [A-Z_] [A-Z_0-9#$@]* ;
 
-ID
-    : [A-Z_] [A-Z_0-9#$@]*
-    ;
-
-UNICODE_ID
-    : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
+UNICODE_ID : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
 
 BITS
     : '0b' [01]+
@@ -1077,8 +1076,7 @@ BYTES
     | 'X' '\'' ( [A-F0-9] | ' ' | '\'\'' )* '\''
     ;
 
- OCTALS
-    : '0o' [0-7]+ ;
+ OCTALS : '0o' [0-7]+ ;
 
 // TODO support underscore (visual grouping) in numbers
 INTEGER

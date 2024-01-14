@@ -6,7 +6,6 @@ package normalsql.parse;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 
 import java.util.ArrayList;
@@ -194,28 +193,6 @@ extends
 //		return super.visitSubtermRow( context );
 //	}
 
-//	@Override
-//	public Void visit( ParseTree tree )
-//	{
-//		Knockout<?,?> k = switch( tree )
-//		{
-//			case SubtermBETWEENContext between -> new BETWEEN( between );
-//			case SubtermCompareContext compare -> new Comparison( compare );
-//			case SubtermINContext in -> new IN( in );
-//			case SubtermLIKEContext like -> new LIKE( like );
-//			default -> null;
-//		};
-//
-//		if( k != null && k.isMatched() )
-//		{
-//			statementStack.peek().knockouts.add( k );
-//			knockouts.add( k );
-//			return null;
-//		}
-//
-//		return super.visit( tree );
-//	}
-
 	@Override
 	public Void visitChildren( RuleNode node )
 	{
@@ -237,28 +214,4 @@ extends
 
 		return super.visitChildren( node );
 	}
-
-//	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
-//	{
-//		PredicateContext pc = ctx.predicate();
-////			// TODO: ANY
-////			case PredicateAnyContext any -> {}
-//		Knockout<?,?> k = switch( pc )
-//		{
-//			case PredicateBETWEENContext between -> new BETWEEN( between );
-//			case PredicateOperatorContext compare -> new Comparison( compare );
-//			case PredicateINContext in -> new IN( in );
-//			case PredicateLIKEContext like -> new LIKE( like );
-//			default -> null;
-//		};
-//
-//		if( k != null && k.isMatched() )
-//		{
-//			statementStack.peek().knockouts.add( k );
-//			knockouts.add( k );
-//			return null;
-//		}
-//
-//		return super.visitSubtermPredicate( ctx );
-//	}
 }

@@ -27,24 +27,25 @@ extends
     {
         super( context );
 
-        column = context.subterm();
-        if( !( column instanceof SubtermLiteralContext )) return;
-
-        if( context.terms() != null && context.terms().term() != null )
+        if( context.subterm() instanceof SubtermColumnContext )
         {
-            for( TermContext term : context.terms().term() )
+            column = context.subterm();
+            if( context.terms() != null && context.terms().term() != null )
             {
-                SubtermContext sc = term.subterm();
-                if( sc instanceof SubtermLiteralContext )
+                for( var term : context.terms().term() )
                 {
-                    literals.add( (SubtermLiteralContext) sc );
+                    var sc = term.subterm();
+                    if( sc instanceof SubtermLiteralContext )
+                    {
+                        literals.add( (SubtermLiteralContext) sc );
+                    }
                 }
-            }
 
-            // Verify all the terms are literals
-            if( context.terms().term().size() == literals.size() )
-            {
-                pattern = Pattern.Literals;
+                // Verify all the terms are literals
+                if( context.terms().term().size() == literals.size() )
+                {
+                    pattern = Pattern.Literals;
+                }
             }
         }
     }
