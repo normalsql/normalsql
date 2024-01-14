@@ -548,6 +548,8 @@ term
 // TODO combine operators into lexer rules
 subterm
     : literal                                  # SubtermLiteral
+    | qname                                    # SubtermColumn
+
     | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
 
     | ( 'NOT' | '!' ) subterm                  # SubtermUnary
@@ -641,7 +643,6 @@ literal
     | datetime
     | PARAMETER
     | VARIABLE
-    | qname
     ;
 
 datetime

@@ -36,7 +36,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-public class Worker
+public class
+	Worker
 {
 	Connection _conn;
 	VelocityEngine _engine;
@@ -226,8 +227,8 @@ public class Worker
 
 	public String getColumn( SubtermContext b )
 	{
-//		RuleContext column = ( (SubtermColumnContext) b ).id().qname();
-		RuleContext column = ( (SubtermLiteralContext) b ).literal().qname();
+		RuleContext column = ( (SubtermColumnContext) b ).qname();
+//		RuleContext column = ( (SubtermLiteralContext) b ).literal().qname();
 		return _helper.getTrimmedText( column );
 	}
 

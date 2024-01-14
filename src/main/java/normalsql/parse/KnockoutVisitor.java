@@ -7,6 +7,7 @@ import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -38,8 +39,7 @@ extends
 		statementStack.add( root );
 		// TODO create contexts stack, so rules can match on parent too
 
-		super.visitScript( context );
-		return null;
+		return super.visitScript( context );
 	}
 
 	@Override
@@ -50,8 +50,7 @@ extends
 		var child = new Delete();
 		statementStack.push( child );
 		parent.add( child );
-		super.visitDelete( context );
-		return null;
+		return super.visitDelete( context );
 	}
 
 	@Override
@@ -61,8 +60,7 @@ extends
 		var child = new Select();
 		statementStack.push( child );
 		parent.add( child );
-		super.visitSelect( context );
-		return null;
+		return super.visitSelect( context );
 	}
 
 	@Override
@@ -78,8 +76,7 @@ extends
 			item.alias = tokens.getText( context.alias() );
 		}
 		statementStack.peek().items.add( item );
-		super.visitItemTerm( context );
-		return null;
+		return super.visitItemTerm( context );
 	}
 
 	// TODO restore visitInsert after resolving ambiguity in 'insert' rule
@@ -197,10 +194,32 @@ extends
 //		return super.visitSubtermRow( context );
 //	}
 
+//	@Override
+//	public Void visit( ParseTree tree )
+//	{
+//		Knockout<?,?> k = switch( tree )
+//		{
+//			case SubtermBETWEENContext between -> new BETWEEN( between );
+//			case SubtermCompareContext compare -> new Comparison( compare );
+//			case SubtermINContext in -> new IN( in );
+//			case SubtermLIKEContext like -> new LIKE( like );
+//			default -> null;
+//		};
+//
+//		if( k != null && k.isMatched() )
+//		{
+//			statementStack.peek().knockouts.add( k );
+//			knockouts.add( k );
+//			return null;
+//		}
+//
+//		return super.visit( tree );
+//	}
+
 	@Override
-	public Void visit( ParseTree tree )
+	public Void visitChildren( RuleNode node )
 	{
-		Knockout<?,?> k = switch( tree )
+		Knockout<?,?> k = switch( node )
 		{
 			case SubtermBETWEENContext between -> new BETWEEN( between );
 			case SubtermCompareContext compare -> new Comparison( compare );
@@ -216,7 +235,7 @@ extends
 			return null;
 		}
 
-		return super.visit( tree );
+		return super.visitChildren( node );
 	}
 
 //	public Void visitSubtermPredicate( SubtermPredicateContext ctx )
