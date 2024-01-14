@@ -5,13 +5,15 @@ package normalsql;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.nio.file.*;
+import static java.nio.file.FileVisitResult.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /*
@@ -44,6 +46,11 @@ import java.sql.Statement;
 public class
 	Tool
 {
+	// TODO: Create command line option for this? eg. for a clean build operation
+	static boolean _alwaysOverwrite = true;
+
+	static String extension = ".sql";
+
 	public static void main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";
@@ -100,9 +107,69 @@ public class
 
 		// TODO verify source exists
 		// TODO pull source & target from command line options
+
 		Path source = Paths.get( "" ).toAbsolutePath();
+		var files = new ArrayList<Path>();
+		Files.walkFileTree( source,
+			new SimpleFileVisitor<>()
+			{
+				@Override
+				public FileVisitResult visitFile( Path file, BasicFileAttributes attrs )
+				{
+					var name = file.getFileName().toString();
+					// Skip "hidden" dotfiles
+					var hidden = name.startsWith( "." );
+					var match = name.toLowerCase().endsWith( extension );
+					if( !hidden && match )
+					{
+						files.add( file );
+					}
+					return CONTINUE;
+				}
+
+				public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs )
+				{
+					var name = dir.getFileName();
+					var hidden = name.startsWith( "." );
+					return hidden ? SKIP_SUBTREE : CONTINUE;
+				}
+			}
+		);
+
+		System.out.printf( "files found %d\n", files.size() );
+
+
 		Path target = source;
-		crawl( source, target );
+		var works = resolve( files, source, target );
+
+		Worker worker = new Worker( _conn );
+		for( var work : works )
+		{
+			worker.process( work );
+		}
+
+//
+//			// TODO tidy this up. Remove boolean go.
+//			//  ... If file exists and _alwaysOverwrite == false, exit early
+//			boolean go = _alwaysOverwrite;
+//			if( Files.notExists( targetDir ) )
+//			{
+//				Files.createDirectories( targetDir );
+//				go = true;
+//			}
+//			else if( !go || Files.notExists( targetFile ) )
+//			{
+//				go = true;
+//			}
+//
+//			// TODO compare last modified
+//			// TODO flag for always overwrite
+//			if( go )
+//			{
+//				worker.process( work );
+//			}
+//		}
+//	}
 
 		if( _conn != null )
 		{
@@ -110,78 +177,48 @@ public class
 		}
 	}
 
-	/**
-	 * <p>crawl.</p>
-	 *
-	 * @param sourceRoot a {@link Path} object
-	 * @param targetRoot a {@link Path} object
-	 */
-	public static void crawl( Path sourceRoot, Path targetRoot )
+	public static List<Work> resolve(List<Path> files, Path sourceRoot, Path targetRoot )
 	{
-		Worker worker = new Worker( _conn );
-		try
+		var works = new ArrayList<Work>();
+
+		for( var sourceFile : files )
 		{
-			Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
-			{
-				@Override
-				public FileVisitResult visitFile( Path sourceFile, BasicFileAttributes attrs )
-				{
-					String sourceFileName = sourceFile.getFileName().toString();
-					// Skip "hidden" dotfiles
-					if( sourceFileName.startsWith( "." ) ) return FileVisitResult.CONTINUE;
+			Work work = new Work();
+			work.sourceFile = sourceFile;
+			work.sourceDir = sourceFile.getParent();
 
-					String extension = ".sql";
-					if( sourceFileName.toLowerCase().endsWith( extension ) )
-					{
-						int len = sourceFileName.length() - extension.length();
-						String className = sourceFileName.substring( 0, len );
-						Path sourceDir = sourceFile.getParent();
-						Path packagePath = sourceRoot.relativize( sourceDir );
-						String packageName = packagePath.toString().replace( File.separatorChar, '.' );
-						Path targetDir = targetRoot.resolve( packagePath );
-						Path targetFile = targetDir.resolve( className + ".java" );
+			var clazz = getBaseName( sourceFile );
+			work.statementClassName = clazz;
+			work.resultSetClassName = work.statementClassName + "ResultSet";
 
-						try
-						{
-							boolean go = _alwaysOverwrite;
-							if( Files.notExists( targetDir ) )
-							{
-								Files.createDirectories( targetDir );
-								go = true;
-							}
-							else if( !go || Files.notExists( targetFile ) )
-							{
-								go = true;
-							}
+			Path packagePath = sourceRoot.relativize( work.sourceDir );
+			work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
-							// TODO compare last modified
-							// TODO flag for always overwrite
-							if( go )
-							{
-								Work work = new Work();
-								work.sourceFile = sourceFile;
-								work.targetDir = targetDir;
-								work.packageName = packageName;
-								work.statementClassName = className;
-								work.resultSetClassName = className + "ResultSet";
-								worker.process( work );
-							}
-						}
-						catch( Exception ioe )
-						{
-							ioe.printStackTrace();
-						}
-					}
-					return FileVisitResult.CONTINUE;
-				}
-			} );
+			work.targetDir = targetRoot.resolve( packagePath );
+			work.targetFile = work.targetDir.resolve( clazz + ".java" );
+
+
+			works.add( work );
 		}
-		catch( IOException e )
-		{
-			e.printStackTrace();
-		}
+		return works;
 	}
 
-	// TODO: Create command line option for this? eg. for a clean build operation
-	static boolean _alwaysOverwrite = true;
+
+
+//	// "How to get the filename without the extension in Java?"
+//	// https://stackoverflow.com/a/29083921
+//	private static final Pattern ext = Pattern.compile( "(?<=.)\\.[^.]+$" );
+//
+//	public static String getBaseName( File file )
+//	{
+//		return ext.matcher( file.getName() ).replaceAll( "" );
+//	}
+
+	public static String getBaseName( Path file )
+	{
+		var name = file.getFileName().toString();
+		int len = name.length() - extension.length();
+		var base = name.substring( 0, len );
+		return base;
+	}
 }

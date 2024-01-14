@@ -18,18 +18,22 @@ extends
 {
 	public Parser parser;
 	public CommonTokenStream tokens;
-	public ArrayList<Knockout<?,?>> knockouts;
 
-	Stack<Statement> statementStack;
+	// All the (matched) knockouts in one flattened list.
+//	public ArrayList<Knockout<?,?>> knockouts;
+	public final ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
+
+	final Stack<Statement> statementStack = new Stack<>();
+
 	// TODO: Support multiple root-level statements
 	public Statement root;
 
 	@Override
 	public Void visitScript( ScriptContext context )
 	{
-		knockouts = new ArrayList<>();
-
-		statementStack = new Stack<>();
+//		knockouts = new ArrayList<>();
+//
+//		statementStack = new Stack<>();
 		root = new Statement();
 		statementStack.add( root );
 		// TODO create contexts stack, so rules can match on parent too
@@ -42,8 +46,8 @@ extends
 	public Void visitDelete( DeleteContext context )
 	{
 		// TODO StatementStack w/ auto parenting
-		Statement parent = statementStack.peek();
-		Statement child = new Delete();
+		var parent = statementStack.peek();
+		var child = new Delete();
 		statementStack.push( child );
 		parent.add( child );
 		super.visitDelete( context );
@@ -53,8 +57,8 @@ extends
 	@Override
 	public Void visitSelect( SelectContext context )
 	{
-		Statement parent = statementStack.peek();
-		Statement child = new Select();
+		var parent = statementStack.peek();
+		var child = new Select();
 		statementStack.push( child );
 		parent.add( child );
 		super.visitSelect( context );
@@ -65,7 +69,7 @@ extends
 	public Void visitItemTerm( ItemTermContext context )
 	{
 		// TODO: Could or should these be inlined into visitSelect?
-		Item item = new Item();
+		var item = new Item();
 		item.context = context;
 		item.source = tokens.getText( context );
 		item.name = tokens.getText( context.term() );

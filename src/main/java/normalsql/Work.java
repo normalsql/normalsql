@@ -5,10 +5,10 @@ package normalsql;
 
 import normalsql.jdbc.Column;
 import normalsql.parse.Knockout;
+import normalsql.parse.KnockoutVisitor;
 import normalsql.parse.Statement;
 import normalsql.template.Accessor;
 
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,18 +21,23 @@ import java.util.List;
 
 // TODO support multiple statements
 // TODO support multiple resultsets
-public class Work
+public class
+	Work
 {
+	KnockoutVisitor visitor;
 	Statement root;
 
 	// All the (matched) knockouts in one flattened list.
-	ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
+//	ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
+	ArrayList<Knockout<?,?>> knockouts;
 
 	// Columns copied from ResultSet's metadata
 	public ArrayList<Column> columns;
 
+	public Path sourceDir;
 	public Path sourceFile;
 	public Path targetDir;
+	public Path targetFile;
 	public String packageName;
 	public String statementClassName;
 	public String resultSetClassName;
@@ -42,7 +47,7 @@ public class Work
 	public List<Accessor> statementAccessors = new ArrayList<>();
 	public List<Accessor> resultSetAccessors;
 
-	// Create map of meta data to be used as 'context map' for
+	// "Serializes" this POJO into a HashMap, to be used as 'context map' for
 	// Velocity template.
 	//
 	// Only adds 'public' fields to resulting map.
@@ -53,16 +58,15 @@ public class Work
 	 */
 	public HashMap<String, Object> asMap()
 	{
-		HashMap<String, Object> bug = new HashMap<>();
+		var map = new HashMap<String, Object>();
 		try
 		{
-			Field[] fields = getClass().getFields();
-			for( Field f : fields )
+			for( var f : getClass().getFields() )
 			{
-				Object value = f.get( this );
+				var value = f.get( this );
 				if( value != null )
 				{
-					bug.put( f.getName(), value );
+					map.put( f.getName(), value );
 				}
 			}
 		}
@@ -70,7 +74,6 @@ public class Work
 		{
 			// do nothing
 		}
-		return bug;
+		return map;
 	}
-
 }

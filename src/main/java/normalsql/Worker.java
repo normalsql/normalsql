@@ -80,7 +80,6 @@ public class Worker
 
 		// TODO attempt running statement before parsing
 
-		// TODO reuse one instance of ANTLR?
 		CharStream chars = CharStreams.fromString( work.originalSQL );
 		NormalSQLLexer lexer = new NormalSQLLexer( chars );
 		CommonTokenStream tokens = new CommonTokenStream( lexer );
@@ -91,11 +90,13 @@ public class Worker
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
+		work.visitor = visitor;
 		work.root = visitor.root;
 
 		work.knockouts = visitor.knockouts;
 
-		for( var p : work.knockouts)
+//		for( var p : work.knockouts )
+		for( var p : visitor.knockouts )
 		{
 			switch( p )
 			{
