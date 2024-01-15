@@ -71,7 +71,7 @@ statement
 
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
 
-        pragmaValue : signedNumber | name ;
+        pragmaValue : literal | signedNumber | name ;
 
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
@@ -345,6 +345,10 @@ query
         | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
         | combine 'MULTISET' combine
         | select
+        | '(' query ')'
+        | values
+        // MySQL table statement
+        | 'TABLE' qname
         ;
 
     select
@@ -358,10 +362,6 @@ query
           having?
           windows?
           qualify?
-        | '(' query ')'
-        | values
-        // MySQL table statement
-        | 'TABLE' qname
         ;
 
     tables
@@ -643,7 +643,7 @@ literal
     | datetime
     | PARAMETER
     | VARIABLE
-    | string
+//    | string
     | 'TRUE'
     | 'FALSE'
     ;

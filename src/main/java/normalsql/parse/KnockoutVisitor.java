@@ -87,7 +87,8 @@ extends
 //		{
 //			// TODO this method chaining SUCKS, bring back the globber
 //			// Drill down to first row
-//			var termList = context.source().values().terms().term();
+////			var termList = context.source().values().terms().term();
+//			var termList = context.query().combine().values().terms().term();
 //			var subterm = termList.get( 0 ).subterm();
 //
 //
