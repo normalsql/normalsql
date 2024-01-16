@@ -196,6 +196,12 @@ public class
 
 		work.printfSQL = tokens.getText();
 
+		if( work.root == null || work.root.isEmpty() )
+		{
+			System.out.println( "file contains no statements: " + work.sourceFile );
+			return;
+		}
+
 		switch ( work.root.get( 0 ))
 		{
 			case Select ignore ->
@@ -228,7 +234,6 @@ public class
 	public String getColumn( SubtermContext b )
 	{
 		RuleContext column = ( (SubtermColumnContext) b ).qname();
-//		RuleContext column = ( (SubtermLiteralContext) b ).literal().qname();
 		return _helper.getTrimmedText( column );
 	}
 

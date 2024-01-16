@@ -31,13 +31,14 @@ package ${packageName};
 #end
 
 import java.sql.*;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 public class 
 	${className}
 {
-
 	/**
 		Pass a DataSource, a Connection instance is created, call its close() method when done. 
 	**/

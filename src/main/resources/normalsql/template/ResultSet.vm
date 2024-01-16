@@ -32,12 +32,12 @@ import java.math.BigDecimal;
 public class 
 	${resultSetClassName}
 {
-	private final ResultSet __resultSet;
-
 	public ${resultSetClassName}( ResultSet resultSet )
 	{
 		__resultSet = resultSet;
 	}
+
+	private ResultSet __resultSet;
 
 	public final ResultSet getResultSet()
 	{
@@ -47,25 +47,6 @@ public class
 	public boolean hasResultSet()
 	{
 		return __resultSet != null;
-	}
-
-	/**
-		Closes the contained ResultSet instance. Also closes contained Connection instance
-		created via a DataSource connection factory.
-	**/
-	public void close()
-		throws SQLException
-	{
-		if( __resultSet != null )
-		{
-			__resultSet.close();
-			__resultSet = null;
-		}
-		Connection connection = getConnection();
-		if( connection != null )
-		{
-			connection.close();
-		}
 	}
 
 	private Connection __connection = null;
@@ -80,7 +61,27 @@ public class
 		return __connection;
 	}
 
+	/**
+		Closes the contained ResultSet instance. Also closes contained Connection instance
+		created via a DataSource connection factory.
+	**/
+	public void close()
+		throws SQLException
+	{
+		if( __resultSet != null && !__resultSet.isClosed() )
+		{
+			__resultSet.close();
+			__resultSet = null;
+		}
+		if( __connection != null && !__connection.isClosed() )
+		{
+			__connection.close();
+			__connection = null;
+		}
+	}
+
 	private int __row = 0;
+
 	public int getRow() { return __row; }
 
 	public final boolean hasNext()

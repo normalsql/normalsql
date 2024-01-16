@@ -33,6 +33,8 @@ package ${packageName};
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.sql.*;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.util.Iterator;
 import java.math.BigDecimal;
 

@@ -551,7 +551,6 @@ subterm
     | qname                                    # SubtermColumn
 
     | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
-
     | ( 'NOT' | '!' ) subterm                  # SubtermUnary
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
     | function ( '.' name )*                   # SubtermFunction
@@ -643,7 +642,7 @@ literal
     | datetime
     | PARAMETER
     | VARIABLE
-//    | string
+    | string
     | 'TRUE'
     | 'FALSE'
     ;

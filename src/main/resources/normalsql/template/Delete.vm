@@ -43,6 +43,7 @@ package ${packageName};
 #end
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
