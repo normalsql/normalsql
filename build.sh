@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+setopt verbose
+
 #semver number
 
 #build number
@@ -7,7 +9,7 @@
 #imprint
 
 # clean
-rm -R ./simple
+rm -f -R ./simple
 mkdir simple
 mkdir simple/generated
 mkdir simple/out
@@ -35,3 +37,6 @@ jar cvfm gorp.jar src/main/resources/META-INF/MANIFEST.MF -C simple/out . -C src
 # sign gpg
 
 # upload
+
+
+unsetopt verbose
