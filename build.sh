@@ -1,7 +1,6 @@
 #!/bin/zsh
 
 setopt verbose
-
 #semver number
 
 #build number
@@ -34,7 +33,8 @@ jar cvfm gorp.jar src/main/resources/META-INF/MANIFEST.MF -C simple/out . -C src
 
 # test
 
-# sign gpg
+# detached ASCII signature
+gpg -ab gorp.jar
 
 # upload
 
