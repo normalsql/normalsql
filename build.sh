@@ -1,42 +1,56 @@
 #!/bin/zsh
 
+# show everything
 setopt verbose
+
+LANG_SOURCE=21
+LANG_TARGET=21
+SOURCE=src
+SOURCE_ANTLR=$SOURCE/main/antlr4
+SOURCE_JAVA=$SOURCE/main/java
+SOURCE_RESOURCES=$SOURCE/main/resources
+TARGET=simple
+TARGET_GENERATED=$TARGET/generated
+TARGET_OUT=$TARGET/out
+
 #semver number
 
 #build number
 
 #imprint
 
-# clean
-rm -f -R ./simple
-mkdir simple
-mkdir simple/generated
-mkdir simple/out
+## clean
+rm -v -d -f -R $TARGET
 
-# dependencies ?
+mkdir -v $TARGET
 
-# replace with build dirs
+mkdir -v $TARGET_GENERATED
 
+mkdir -v $TARGET_OUT
 
 #antlr
-java -cp "./lib/*" org.antlr.v4.Tool -package normalsql.parse -no-listener -visitor -o ./simple/generated -package normalsql.parse ./src/main/antlr4/normalsql/parse/NormalSQL.g4
-
+java -cp "./lib/*" org.antlr.v4.Tool -package normalsql.parse -no-listener -visitor \
+ -o $TARGET_GENERATED -package normalsql.parse \
+ $SOURCE_ANTLR/normalsql/parse/NormalSQL.g4
 
 #javac
-javac -deprecation -g -parameters -source 21 -target 21 \
+javac -deprecation -g -parameters -source $LANG_SOURCE -target $LANG_TARGET \
  -version -verbose -Werror \
- -cp "./lib/*" simple/**/*.java src/main/java/**/*.java -d simple/out
+ -cp "./lib/*" $TARGET_GENERATED/**/*.java $SOURCE_JAVA/**/*.java -d $TARGET_OUT
 
-
-# jar
-jar cvfm gorp.jar src/main/resources/META-INF/MANIFEST.MF -C simple/out . -C src/main/resources .
-
-# test
-
-# detached ASCII signature
-gpg -ab gorp.jar
-
-# upload
-
+## jar
+jar cvfm gorp.jar \
+ $SOURCE_RESOURCES/META-INF/MANIFEST.MF \
+ -C $TARGET_OUT . \
+ -C $SOURCE_RESOURCES .
+#
+## test
+#
+## create detached ASCII signature
+## assumes gpg version 2
+#gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab gorp.jar
+#
+## upload
+#
 
 unsetopt verbose
