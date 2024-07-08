@@ -1,2 +1,2 @@
-/** comment */
+/** normalsql */
 package normalsql;
