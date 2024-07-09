@@ -1,7 +1,22 @@
+# TODO maybe checkin IntelliJ stuff for quicker onboarding
 .idea
 *.iws
 *.iml
 *.ipr
+
+.vscode
+
+*.class
+
+# ANTLR
+*.tokens
+*.interp
+
+# Distro stuff
+*.jar
+*.asc
+
+
 /target/
 .DS_Store
 /spare/

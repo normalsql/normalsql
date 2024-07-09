@@ -55,7 +55,7 @@ jar cvfm $ARTIFACT \
  -C $TARGET_OUT . \
  -C $SOURCE_RESOURCES .
 
-exit
+#exit
 
 #
 # test
