@@ -15,11 +15,14 @@ import normalsql.parse.NormalSQLParser.SubtermContext;
  *
  * Subclasses will have any additional context needed for code generating
  * their corresponding accessors.
+ *
+ * @author Jason Osgood
+ *
+ * @param <T> concrete context for a rule
+ * @param <E> specific enum for this context's matching patterns
  */
 
-
-public abstract class
-	Knockout<T extends ParserRuleContext, E extends Enum<E>>
+public abstract class Knockout<T extends ParserRuleContext, E extends Enum<E>>
 //	Knockout<T extends SubtermContext, E extends Enum<E>>
 {
 	public T context;
@@ -33,12 +36,26 @@ public abstract class
 
 	public E pattern;
 
-	public boolean isMatched()
-	{
+	/**
+	 * Checks if the pattern has been set.
+	 *
+	 * @return is pattern matched
+	 */
+	public boolean isMatched() {
 		return pattern != null;
 	}
 
-	public static <E extends Enum<E>> E valueOf( Class<E> ugh, SubtermContext... contexts )
+	/**
+	 * Matches and returns an enum constant from an array of Enums.
+	 *
+	 * @param <E> added this just to fix javadoc error, ignore it
+	 *
+	 * @param patterns The class object representing the Enum to search.
+	 * @param contexts Array of rule contexts
+	 *
+	 * @return the enum constant that matches the name built from the context array, or null if none matches.
+	 */
+	public static <E extends Enum<E>> E valueOf( Class<E> patterns, SubtermContext... contexts )
 	{
 		StringBuilder name = new StringBuilder();
 		for( SubtermContext c : contexts )
@@ -48,7 +65,7 @@ public abstract class
 			name.append(simple);
 		}
 
-		E[] boo = ugh.getEnumConstants();
+		E[] boo = patterns.getEnumConstants();
 		for( E zip : boo )
 		{
 			if( zip.name().contentEquals( name )) return zip;

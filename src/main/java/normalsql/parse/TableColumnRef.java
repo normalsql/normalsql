@@ -14,11 +14,11 @@ package normalsql.parse;
 public class
 	TableColumnRef
 {
-	/**
-	 * <p>Constructor for TableColumnRef.</p>
-	 *
-	 * @param context a {@link normalsql.parse.NormalSQLParser.ColumnContext} object
-	 */
+//	/**
+//	 * <p>Constructor for TableColumnRef.</p>
+//	 *
+//	 * @param context a {@link normalsql.parse.NormalSQLParser.ColumnContext gorp} object
+//	 */
 //	public TableColumnRef( ColumnContext context )
 //	{
 ////		catalog = context.catalog != null ? context.catalog.getTrimmedText() : null;

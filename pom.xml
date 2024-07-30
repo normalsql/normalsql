@@ -54,6 +54,7 @@
             <artifactId>antlr4</artifactId>
             <version>${antlr4.version}</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-tool-testsuite</artifactId>
@@ -64,6 +65,7 @@
             <artifactId>antlr4-runtime-testsuite</artifactId>
             <version>${antlr4.version}</version>
         </dependency>
+        -->
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-engine-core</artifactId>
@@ -86,11 +88,12 @@
         </dependency>
 
         <!-- test -->
+        <!--
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>2.2.224</version>
-            <!--            <scope>test</scope>-->
+                        <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -102,8 +105,9 @@
                     <artifactId>protobuf-java</artifactId>
                 </exclusion>
             </exclusions>
-            <!--            <scope>test</scope>-->
+                        <scope>test</scope>
         </dependency>
+        -->
     </dependencies>
 
     <build>
@@ -122,49 +126,70 @@
                 </executions>
                 <configuration>
                     <visitor>true</visitor>
+                                        <listener>false</listener>
+
+                    <!--                    <sourceDirectory>src/main/antlr4</sourceDirectory>-->
+<!--                    <outputDirectory>target/generated-sources/antlr4</outputDirectory>-->
                 </configuration>
+
+
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>antlr</id>-->
+<!--                        <goals>-->
+<!--                            <goal>antlr4</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <configuration>-->
+<!--                    <visitor>true</visitor>-->
+<!--                    <listener>false</listener>-->
+<!--                </configuration>-->
+
+
             </plugin>
 
-            <plugin>
-                <!--
-                    control h2database server:
-                    $ mvn exec:java@h2-start
-                    $ mvn exec:java@h2-stop
-                -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>h2-start</id>
-                        <configuration>
-                            <arguments>
-                                <argument>-tcpPassword</argument>
-                                <argument>normalsql</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>h2-stop</id>
-                        <configuration>
-                            <arguments>
-                                <argument>-tcpPassword</argument>
-                                <argument>normalsql</argument>
-                                <argument>-tcpShutdown</argument>
-                                <argument>tcp://localhost:9092</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>org.h2.tools.Server</mainClass>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+            <!--
+                control h2database server:
+                $ mvn exec:java@h2-start
+                $ mvn exec:java@h2-stop
+            -->
+<!--
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+                <execution>
+                    <id>h2-start</id>
+                    <configuration>
+                        <arguments>
+                            <argument>-tcpPassword</argument>
+                            <argument>normalsql</argument>
+                        </arguments>
+                    </configuration>
+                </execution>
+                <execution>
+                    <id>h2-stop</id>
+                    <configuration>
+                        <arguments>
+                            <argument>-tcpPassword</argument>
+                            <argument>normalsql</argument>
+                            <argument>-tcpShutdown</argument>
+                            <argument>tcp://localhost:9092</argument>
+                        </arguments>
+                    </configuration>
+                </execution>
+            </executions>
+            <configuration>
+                <mainClass>org.h2.tools.Server</mainClass>
+            </configuration>
+        </plugin>
+-->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.11.0</version>
 <!--                <configuration>-->
 <!--                    <target>17</target>-->
 <!--                    <source>17</source>-->
@@ -187,7 +212,29 @@
                 </executions>
             </plugin>
 
-<!--            <plugin>-->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.8.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+<!--                                <javadocVersion>11</javadocVersion>-->
+                                <failOnError>false</failOnError>
+                            </configuration>
+<!--                            <configuration>-->
+<!--                                <excludePackageNames>*.parse</excludePackageNames>-->
+<!--                            </configuration>-->
+                        </execution>
+                    </executions>
+                </plugin>
+
+
+            <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-javadoc-plugin</artifactId>-->
 <!--                <version>3.4.1</version>-->
@@ -235,6 +282,12 @@
                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
                     <!-- Set this to true and the release will automatically proceed and sync to Central Repository will follow  -->
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
+
+                    <tags>
+                        <localUsername>abc</localUsername>
+                        <javaVersion>3.2.1</javaVersion>
+                    </tags>
+
                 </configuration>
             </plugin>
         </plugins>
