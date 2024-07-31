@@ -126,27 +126,11 @@
                 </executions>
                 <configuration>
                     <visitor>true</visitor>
-                                        <listener>false</listener>
+                    <listener>false</listener>
 
-                    <!--                    <sourceDirectory>src/main/antlr4</sourceDirectory>-->
+<!--                    <sourceDirectory>src/main/antlr4</sourceDirectory>-->
 <!--                    <outputDirectory>target/generated-sources/antlr4</outputDirectory>-->
                 </configuration>
-
-
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>antlr</id>-->
-<!--                        <goals>-->
-<!--                            <goal>antlr4</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--                <configuration>-->
-<!--                    <visitor>true</visitor>-->
-<!--                    <listener>false</listener>-->
-<!--                </configuration>-->
-
-
             </plugin>
 
             <!--
@@ -186,15 +170,10 @@
             </configuration>
         </plugin>
 -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.11.0</version>
-<!--                <configuration>-->
-<!--                    <target>17</target>-->
-<!--                    <source>17</source>-->
-<!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
-<!--                </configuration>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
             </plugin>
 
             <plugin>
@@ -212,49 +191,31 @@
                 </executions>
             </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.8.0</version>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                            <configuration>
-<!--                                <javadocVersion>11</javadocVersion>-->
-                                <failOnError>false</failOnError>
-                            </configuration>
-<!--                            <configuration>-->
-<!--                                <excludePackageNames>*.parse</excludePackageNames>-->
-<!--                            </configuration>-->
-                        </execution>
-                    </executions>
-                </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <!--                        <phase>package</phase>-->
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <debug>true</debug>
+                            <failOnError>false</failOnError>
+                            <sourceFileExcludes>
+                                <sourceFileExclude>**/NormalSQLParser.java</sourceFileExclude>
+                                <sourceFileExclude>**/NormalSQLLexer.java</sourceFileExclude>
+                                <sourceFileExclude>**/NormalSQLVisitor.java</sourceFileExclude>
+                                <sourceFileExclude>**/NormalSQLBaseVisitor.java</sourceFileExclude>
 
-
-            <!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-javadoc-plugin</artifactId>-->
-<!--                <version>3.4.1</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>attach-javadocs</id>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>jar</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--                <configuration>-->
-<!--                    &lt;!&ndash; exclude ANTLR generated source code &ndash;&gt;-->
-<!--                    <excludePackageNames>*.parse</excludePackageNames>-->
-<!--                    <quiet>true</quiet>-->
-<!--                    <failOnWarnings>false</failOnWarnings>-->
-<!--                    <failOnError>true</failOnError>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
+                            </sourceFileExcludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -282,12 +243,12 @@
                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
                     <!-- Set this to true and the release will automatically proceed and sync to Central Repository will follow  -->
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
-
+                    <!--
                     <tags>
                         <localUsername>abc</localUsername>
                         <javaVersion>3.2.1</javaVersion>
                     </tags>
-
+                    -->
                 </configuration>
             </plugin>
         </plugins>

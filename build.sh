@@ -17,7 +17,9 @@ SOURCE_RESOURCES=$SOURCE/main/resources
 TARGET=simple
 TARGET_GENERATED=$TARGET/generated
 TARGET_OUT=$TARGET/out
-ARTIFACT=$TARGET_OUT/normalsql-0.0.0-SNAPSHOT.jar
+JAR_MAIN=$TARGET_OUT/normalsql-0.0.0.jar
+JAR_JAVADOC=$TARGET_OUT/normalsql-0.0.0-javadoc.jar
+JAR_SOURCES=$TARGET_OUT/normalsql-0.0.0-sources.jar
 
 #semver number
 
@@ -48,21 +50,24 @@ javac -version -verbose -Werror \
  -deprecation -g -parameters -source $LANG_SOURCE -target $LANG_TARGET -Xpkginfo:always \
  -cp "./lib/*" @simple/to_javac.lst -d $TARGET_OUT
 
-
-# bundle jar
-jar cvfm $ARTIFACT \
+# jar main
+jar cvfm $JAR_MAIN \
  $SOURCE_RESOURCES/META-INF/MANIFEST.MF \
  -C $TARGET_OUT . \
  -C $SOURCE_RESOURCES .
 
-#exit
+# jar javadoc
 
-#
-# test
+# jar sources
+
+# copy POM
 
 # create detached ASCII signature
 # assumes gpg version 2
-gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab $ARTIFACT
+gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab $JAR_MAIN
+gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab $JAR_JAVADOC
+gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab $JAR_SOURCES
+#gpg --batch --yes --passphrase="normalsql" --pinentry-mode loopback -ab $POM
 
 ## upload
 #
