@@ -27,6 +27,17 @@
         <url>https://github.com/normalsql/normalsql</url>
     </scm>
 
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildplan-maven-plugin</artifactId>
+                <version>2.2.2</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
     <developers>
         <developer>
             <id>jasonosgood</id>
@@ -118,7 +129,7 @@
                 <version>${antlr4.version}</version>
                 <executions>
                     <execution>
-                        <id>antlr</id>
+<!--                        <id>antlr</id>-->
                         <goals>
                             <goal>antlr4</goal>
                         </goals>
