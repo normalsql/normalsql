@@ -3,26 +3,63 @@ package normalsql.maven;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 /**
  *  Runs NormalSQL's executable
  *
  */
 
-@Mojo( name = "normalsql", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+@Mojo(
+    name = "normalsql",
+    defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+    requiresDependencyResolution = ResolutionScope.COMPILE,
+    requiresProject = true
+//    , threadSafe = true
+)
 public class NormalSQLMojo
     extends AbstractMojo
 {
-    /**
-     * Location of the file.
-     */
-//    @Parameter( defaultValue = "${project.build.directory}", property = "outputDir", required = true )
-//    private File outputDirectory;
+    @Parameter (property = "project", required = true, readonly = true)
+    protected MavenProject project;
+
+    @Parameter //( property = "normalsql.description", defaultValue = "Default description" )
+    private String description;
+
+    @Parameter // ( property = "normalsql.driver", defaultValue = "org.h2.Driver" )
+    private String driver;
+
+    @Parameter // ( property = "normalsql.url", defaultValue = "jdbc:h2:mem:" )
+    private String url;
+
+    @Parameter // ( property = "normalsql.username" )
+    private String username;
+
+    @Parameter // ( property = "normalsql.password" )
+    private String password;
+
+    @Parameter
+    private String gorp = "gorp!";
+
+    @Parameter( property = "normalsql.source", defaultValue = "${project.basedir}/src/main/sql" )
+//    @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
+    private String source;
+
+    //    @Parameter( property = "normalsql.source", defaultValue = "${project.basedir}/src/main/sql" )
+    @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
+    private String target;
+
+
+//        #package = dogbone
 
     public void execute()
        // throws MojoExecutionException
     {
-        System.out.println( "\n\n\n\n$$$  I hate Maven  TOO $$$\n\n\n\n" );
+        System.out.println( "\n\n\n\n$$$  I hate Maven 3 $$$\n\n\n\n" );
+//        System.out.println( "\n\n\n\n$$$  gorp: " + gorp + " $$$\n\n\n\n" );
+        System.out.println( this.toString() );
 //        File f = outputDirectory;
 //
 //        if ( !f.exists() )
@@ -57,5 +94,20 @@ public class NormalSQLMojo
 //                }
 //            }
 //        }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("NormalSQLMojo{");
+        sb.append("\nproject=").append(project);
+        sb.append(", \ndescription='").append(description).append('\'');
+        sb.append(", \ndriver='").append(driver).append('\'');
+        sb.append(", \nurl='").append(url).append('\'');
+        sb.append(", \nusername='").append(username).append('\'');
+        sb.append(", \npassword='").append(password).append('\'');
+        sb.append(", \ngorp='").append(gorp).append('\'');
+        sb.append(", \nsource='").append(source).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

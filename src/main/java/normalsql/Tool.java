@@ -41,6 +41,9 @@ import java.util.List;
 		setClientInfo to "normalsql"
 			https://franckpachot.medium.com/you-should-set-ocsid-clientid-e00cb81ed7e2
 
+			configurable
+			or maybe default to appname, if possible
+
  */
 	
 public class
