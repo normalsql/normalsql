@@ -15,8 +15,8 @@ import org.apache.maven.project.MavenProject;
 @Mojo(
     name = "normalsql",
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE,
-    requiresProject = true
+    requiresDependencyResolution = ResolutionScope.COMPILE //,
+//    requiresProject = true
 //    , threadSafe = true
 )
 public class NormalSQLMojo
@@ -25,23 +25,20 @@ public class NormalSQLMojo
     @Parameter (property = "project", required = true, readonly = true)
     protected MavenProject project;
 
-    @Parameter //( property = "normalsql.description", defaultValue = "Default description" )
+    @Parameter
     private String description;
 
-    @Parameter // ( property = "normalsql.driver", defaultValue = "org.h2.Driver" )
+    @Parameter
     private String driver;
 
-    @Parameter // ( property = "normalsql.url", defaultValue = "jdbc:h2:mem:" )
+    @Parameter
     private String url;
 
-    @Parameter // ( property = "normalsql.username" )
+    @Parameter
     private String username;
 
-    @Parameter // ( property = "normalsql.password" )
-    private String password;
-
     @Parameter
-    private String gorp = "gorp!";
+    private String password;
 
     @Parameter( property = "normalsql.source", defaultValue = "${project.basedir}/src/main/sql" )
 //    @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
@@ -59,7 +56,7 @@ public class NormalSQLMojo
     {
         System.out.println( "\n\n\n\n$$$  I hate Maven 3 $$$\n\n\n\n" );
 //        System.out.println( "\n\n\n\n$$$  gorp: " + gorp + " $$$\n\n\n\n" );
-        System.out.println( this.toString() );
+        System.out.println( this );
 //        File f = outputDirectory;
 //
 //        if ( !f.exists() )
@@ -98,16 +95,16 @@ public class NormalSQLMojo
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("NormalSQLMojo{");
-        sb.append("\nproject=").append(project);
-        sb.append(", \ndescription='").append(description).append('\'');
-        sb.append(", \ndriver='").append(driver).append('\'');
-        sb.append(", \nurl='").append(url).append('\'');
-        sb.append(", \nusername='").append(username).append('\'');
-        sb.append(", \npassword='").append(password).append('\'');
-        sb.append(", \ngorp='").append(gorp).append('\'');
-        sb.append(", \nsource='").append(source).append('\'');
-        sb.append('}');
-        return sb.toString();
+        String sb =
+            "NormalSQLMojo{" + "\nproject=" + project +
+            ", \ndescription='" + description + '\'' +
+            ", \ndriver='" + driver + '\'' +
+            ", \nurl='" + url + '\'' +
+            ", \nusername='" + username + '\'' +
+            ", \npassword='" + password + '\'' +
+            ", \nsource='" + source + '\'' +
+            ", \ntarget='" + target + '\'' +
+            '}';
+        return sb;
     }
 }
