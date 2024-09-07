@@ -210,7 +210,7 @@ target = .
 package = .
 ```
 
-Future: config templates. Future: config strategy for naming accessors.
+Future: props templates. Future: props strategy for naming accessors.
 
 Source directory. NormalSQL will recurse thru subdirectories.
 

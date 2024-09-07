@@ -49,11 +49,9 @@ import java.util.List;
 public class
 	Tool
 {
-	// TODO: Create command line option for this? eg. for a clean build operation
-	static boolean _alwaysOverwrite = true;
+	// TODO: Detect if targets need to be (re)created.
 
 	static String extension = ".sql";
-
 	public static void main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";
@@ -66,27 +64,27 @@ public class
 		}
 
 		FileReader reader = new FileReader( file );
-		Config config = Config.load( reader );
-		config.setPropertiesFile( file.toURI().toURL() );
+		Props props = Props.load( reader );
+		props.setPropertiesFile( file.toURI().toURL() );
 
-		init( config );
+		init(props);
 		System.out.println( "done" );
 		System.exit( 0 );
 	}
 
 	static Connection _conn = null;
 
-	public static void init( Config config )
+	public static void init( Props props)
 		throws Exception
 	{
 		{
-			String driver = config.getDriver();
+			String driver = props.getDriver();
 			if( driver == null )
 			{
 				System.err.println( "JDBC driver class name cannot be null" );
 				System.exit( -1 );
 			}
-			String url = config.getURL();
+			String url = props.getURL();
 			if( url == null )
 			{
 				System.err.println( "JDBC URL cannot be null" );
@@ -94,8 +92,8 @@ public class
 			}
 
 			Class.forName( driver );
-			String username = config.getUsername();
-			String password = config.getPassword();
+			String username = props.getUsername();
+			String password = props.getPassword();
 
 			_conn = DriverManager.getConnection( url, username, password );
 
@@ -180,7 +178,7 @@ public class
 		}
 	}
 
-	public static List<Work> resolve(List<Path> files, Path sourceRoot, Path targetRoot )
+	public static List<Work> resolve( List<Path> files, Path sourceRoot, Path targetRoot )
 	{
 		var works = new ArrayList<Work>();
 

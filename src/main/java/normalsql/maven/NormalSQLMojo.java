@@ -1,55 +1,67 @@
 package normalsql.maven;
 
+import normalsql.Config;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 
 /**
- *  Runs NormalSQL's executable
+ *  Maven plugin. Gets populated with config. Then executed.
  *
  */
 
 @Mojo(
     name = "normalsql",
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE //,
-//    requiresProject = true
-//    , threadSafe = true
+    requiresDependencyResolution = ResolutionScope.COMPILE
 )
 public class NormalSQLMojo
     extends AbstractMojo
 {
-    @Parameter (property = "project", required = true, readonly = true)
-    protected MavenProject project;
+    @Parameter( property = "project", required = true, readonly = true )
+    MavenProject project;
 
     @Parameter
-    private String description;
+    String description;
 
     @Parameter
-    private String driver;
+    String driver;
 
     @Parameter
-    private String url;
+    String url;
 
     @Parameter
-    private String username;
+    String username;
 
     @Parameter
-    private String password;
+    String password;
 
-    @Parameter( property = "normalsql.source", defaultValue = "${project.basedir}/src/main/sql" )
-//    @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
-    private String source;
-
-    //    @Parameter( property = "normalsql.source", defaultValue = "${project.basedir}/src/main/sql" )
     @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
-    private String target;
+    String source;
 
+    @Parameter( defaultValue = "${project.build.directory}/generated-sources/sql" )
+    String target;
 
-//        #package = dogbone
+    @Parameter( property = "package" )
+    String pkg;
+
+    @Parameter( defaultValue = "sql" )
+    String extension;
+
+    public Config toConfig()
+    {
+        Config config = new Config();
+        config.description = description;
+        config.driver = driver;
+        config.url = url;
+        config.username = username;
+        config.password = password;
+        config.source = source;
+        config.target = target;
+        config.pkg = pkg;
+        config.extension = extension;
+        return config;
+    }
 
     public void execute()
        // throws MojoExecutionException
@@ -93,18 +105,4 @@ public class NormalSQLMojo
 //        }
     }
 
-    @Override
-    public String toString() {
-        String sb =
-            "NormalSQLMojo{" + "\nproject=" + project +
-            ", \ndescription='" + description + '\'' +
-            ", \ndriver='" + driver + '\'' +
-            ", \nurl='" + url + '\'' +
-            ", \nusername='" + username + '\'' +
-            ", \npassword='" + password + '\'' +
-            ", \nsource='" + source + '\'' +
-            ", \ntarget='" + target + '\'' +
-            '}';
-        return sb;
-    }
 }

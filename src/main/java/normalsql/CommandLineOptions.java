@@ -65,7 +65,7 @@ public class CommandLineOptions
 
 	String _filename = "normalsql";
 
-	Config _props = new Config();
+	Props _props = new Props();
 
 	OptionSet _options = null;
 
@@ -196,7 +196,7 @@ public class CommandLineOptions
 			if( file != null ) 
 			{
 				FileReader reader = new FileReader( file );
-				me._props = Config.load( reader );
+				me._props = Props.load( reader );
 				me._props.setPropertiesFile( file.toURI().toURL() );
 				me._loaded = true;
 			}
