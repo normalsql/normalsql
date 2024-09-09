@@ -178,6 +178,104 @@ public class
 		}
 	}
 
+	public void go( Config props )
+		throws Exception
+	{
+		{
+			if( props.driver == null )
+			{
+				throw new NullPointerException( "missing JDBC driver class name" );
+			}
+			if( props.url == null )
+			{
+				throw new NullPointerException( "missing JDBC URL" );
+			}
+
+			Class.forName( props.driver );
+
+			_conn = DriverManager.getConnection( props.url, props.username, props.password );
+
+			// TODO is this best way to confirm JDBC config?
+			Statement s = _conn.createStatement();
+			if( s.execute( "SELECT 1" ))
+			{
+				ResultSet rs = s.getResultSet();
+				System.out.println( "JDBC connection verified" );
+			}
+		}
+
+//		// TODO verify source exists
+//		// TODO pull source & target from command line options
+//
+//		Path source = Paths.get( props.source ).toAbsolutePath();
+//		var files = new ArrayList<Path>();
+//		Files.walkFileTree( source,
+//			new SimpleFileVisitor<>()
+//			{
+//				@Override
+//				public FileVisitResult visitFile( Path file, BasicFileAttributes attrs )
+//				{
+//					var name = file.getFileName().toString();
+//					// Skip "hidden" dotfiles
+//					var hidden = name.startsWith( "." );
+//					var match = name.toLowerCase().endsWith( extension );
+//					if( !hidden && match )
+//					{
+//						files.add( file );
+//					}
+//					return CONTINUE;
+//				}
+//
+//				public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs )
+//				{
+//					var name = dir.getFileName();
+//					var hidden = name.startsWith( "." );
+//					return hidden ? SKIP_SUBTREE : CONTINUE;
+//				}
+//			}
+//		);
+//
+//		System.out.printf( "files found %d\n", files.size() );
+//
+//
+//		Path target = source;
+//		var works = resolve( files, source, target );
+//
+//		Worker worker = new Worker( _conn );
+//		for( var work : works )
+//		{
+//			worker.process( work );
+//		}
+//
+////
+////			// TODO tidy this up. Remove boolean go.
+////			//  ... If file exists and _alwaysOverwrite == false, exit early
+////			boolean go = _alwaysOverwrite;
+////			if( Files.notExists( targetDir ) )
+////			{
+////				Files.createDirectories( targetDir );
+////				go = true;
+////			}
+////			else if( !go || Files.notExists( targetFile ) )
+////			{
+////				go = true;
+////			}
+////
+////			// TODO compare last modified
+////			// TODO flag for always overwrite
+////			if( go )
+////			{
+////				worker.process( work );
+////			}
+////		}
+////	}
+//
+//		if( _conn != null )
+//		{
+//			_conn.close();
+//		}
+	}
+
 	public static List<Work> resolve( List<Path> files, Path sourceRoot, Path targetRoot )
 	{
 		var works = new ArrayList<Work>();
