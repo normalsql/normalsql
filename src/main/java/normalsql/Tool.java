@@ -91,7 +91,7 @@ public class
 				System.exit( -1 );
 			}
 
-			Class.forName( driver );
+//			Class.forName( driver );
 			String username = props.getUsername();
 			String password = props.getPassword();
 

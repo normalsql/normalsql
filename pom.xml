@@ -9,7 +9,7 @@
     <version>0.0.1</version>
 
     <!--
-        This deliverable is both an executable JAR *AND* a Maven plugin. That's
+        This artifact is both an executable JAR *AND* a Maven plugin. That's
         why packaging is 'maven-plugin' and not simply 'jar'.
     -->
     <packaging>maven-plugin</packaging>
@@ -123,11 +123,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- TODO A bunch of popular JDBC Drivers -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>2.2.224</version>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
         <!--
         <dependency>
