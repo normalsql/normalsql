@@ -2,14 +2,14 @@ package normalsql.maven;
 
 import normalsql.Config;
 import normalsql.Tool;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +25,8 @@ import java.util.Map;
 public class NormalSQLMojo
     extends AbstractMojo
 {
-    @Parameter( property = "project", required = true, readonly = true )
+//    @Parameter( property = "project", required = true, readonly = true )
+    @Component
     MavenProject project;
 
     @Parameter
@@ -48,6 +49,9 @@ public class NormalSQLMojo
 
     @Parameter( defaultValue = "${project.build.directory}/generated-sources/sql" )
     String target;
+
+    @Parameter
+    File gorp;
 
     @Parameter( property = "package" )
     String pkg;
@@ -73,6 +77,13 @@ public class NormalSQLMojo
     public void execute()
         throws MojoExecutionException
     {
+    List<Dependency> dependencies = project.getDependencies();
+    for (Dependency dependency : dependencies) {
+        System.out.println(dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + dependency.getVersion());
+        System.out.println(dependency);
+    }
+    // Process dependencies or add them to the classpath
+
         try
         {
             Tool tool = new Tool();
