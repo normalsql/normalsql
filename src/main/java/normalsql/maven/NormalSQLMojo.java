@@ -5,10 +5,14 @@ import normalsql.Tool;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -25,15 +29,11 @@ import java.util.Map;
 public class NormalSQLMojo
     extends AbstractMojo
 {
-//    @Parameter( property = "project", required = true, readonly = true )
-    @Component
-    MavenProject project;
+//    @Component
+//    MavenProject project;
 
     @Parameter
     String description;
-
-    @Parameter
-    String driver;
 
     @Parameter
     String url;
@@ -50,94 +50,68 @@ public class NormalSQLMojo
     @Parameter( defaultValue = "${project.build.directory}/generated-sources/sql" )
     String target;
 
-    @Parameter
-    File gorp;
-
     @Parameter( property = "package" )
     String pkg;
 
     @Parameter( defaultValue = "sql" )
     String extension;
 
-    public Config toConfig()
-    {
-        Config config = new Config();
-        config.description = description;
-        config.driver = driver;
-        config.url = url;
-        config.username = username;
-        config.password = password;
-        config.source = source;
-        config.target = target;
-        config.pkg = pkg;
-        config.extension = extension;
-        return config;
-    }
-
     public void execute()
         throws MojoExecutionException
     {
-    List<Dependency> dependencies = project.getDependencies();
-    for (Dependency dependency : dependencies) {
-        System.out.println(dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + dependency.getVersion());
-        System.out.println(dependency);
-    }
-    // Process dependencies or add them to the classpath
+//    List<Dependency> dependencies = project.getDependencies();
+//    for (Dependency dependency : dependencies) {
+//        System.out.println(dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + dependency.getVersion());
+//        System.out.println(dependency);
+//    }
 
         try
         {
             Tool tool = new Tool();
-            Config config = toConfig();
+
+            Path sourceDir = Paths.get( source ).toAbsolutePath();
+            if( Files.notExists( sourceDir ))
+			{
+                // TODO add phase, id, goal for context?
+                throw new MojoExecutionException( "Source directory does not exist: " + sourceDir );
+            }
+
+            Path targetDir  = Paths.get( target ).toAbsolutePath();
+            if( Files.notExists( targetDir ) )
+			{
+                Files.createDirectories( targetDir );
+            }
+
+            if( url == null )
+            {
+                throw new MojoExecutionException( "JDBC URL is null" );
+            }
+
+            Config config = new Config();
+            config.description = description;
+            config.url = url;
+            config.username = username;
+            config.password = password;
+            config.source = sourceDir;
+            config.target = targetDir;
+            config.pkg = pkg;
+            config.extension = extension;
+
             tool.go( config );
+        }
+        catch( MojoExecutionException mee )
+        {
+            throw mee;
         }
         catch( Exception e )
         {
             throw new MojoExecutionException( e );
         }
 
-//        System.out.println( "\n\n\n\n$$$  I hate Maven 3 $$$\n\n\n\n" );
-////        System.out.println( "\n\n\n\n$$$  gorp: " + gorp + " $$$\n\n\n\n" );
-//        System.out.println( this );
-//        System.out.println( getPluginContext() );
-//
-//        Map map = getPluginContext();
-//        map.forEach((key, value) -> {
-//            System.out.println( "\n" + key + ": " + value );
-//        });
-//        File f = outputDirectory;
-//
-//        if ( !f.exists() )
-//        {
-//            f.mkdirs();
-//        }
-//
-//        File touch = new File( f, "touch.txt" );
-//
-//        FileWriter w = null;
-//        try
-//        {
-//            w = new FileWriter( touch );
-//
-//            w.write( "touch.txt" );
-//        }
-//        catch ( IOException e )
-//        {
-//            throw new MojoExecutionException( "Error creating file " + touch, e );
-//        }
-//        finally
-//        {
-//            if ( w != null )
-//            {
-//                try
-//                {
-//                    w.close();
-//                }
-//                catch ( IOException e )
-//                {
-//                    // ignore
-//                }
-//            }
-//        }
+        Map map = getPluginContext();
+        map.forEach((key, value) -> {
+            System.out.println( "\n" + key + ": " + value );
+        });
     }
 
 }

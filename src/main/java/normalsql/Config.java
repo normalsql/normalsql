@@ -1,14 +1,15 @@
 package normalsql;
 
+import java.nio.file.Path;
+
 public class Config
 {
     public String description;
-    public String driver;
     public String url;
     public String username;
     public String password;
-    public String source;
-    public String target;
+    public Path source;
+    public Path target;
     public String pkg;
     public String extension = "sql";
 
@@ -18,7 +19,6 @@ public class Config
         String sb =
             "Config {" +
                 ", \ndescription='" + description + '\'' +
-                ", \ndriver='" + driver + '\'' +
                 ", \nurl='" + url + '\'' +
                 ", \nusername='" + username + '\'' +
                 ", \npassword='" + password + '\'' +
