@@ -5,6 +5,7 @@ package normalsql;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -232,8 +233,6 @@ public class
 
 		System.out.printf( "files found %d\n", files.size() );
 
-//		Path target = source;
-//		var works = resolve( files, source, target );
 		var works = resolve( files, config.source, config.target );
 
 		Worker worker = new Worker( _conn );
@@ -242,36 +241,23 @@ public class
 			worker.process( work );
 		}
 
-//
-//			// TODO tidy this up. Remove boolean go.
-//			//  ... If file exists and _alwaysOverwrite == false, exit early
-//			boolean go = _alwaysOverwrite;
-//			if( Files.notExists( targetDir ) )
-//			{
-//				Files.createDirectories( targetDir );
-//				go = true;
-//			}
-//			else if( !go || Files.notExists( targetFile ) )
-//			{
-//				go = true;
-//			}
-//
-//			// TODO compare last modified
-//			// TODO flag for always overwrite
-//			if( go )
-//			{
-//				worker.process( work );
-//			}
-//		}
-//	}
-
+		// TODO compare last modified
 		if( _conn != null )
 		{
 			_conn.close();
 		}
 	}
 
+	/**
+	 * Generates list of Work (to be done) from source files found
+	 *
+	 * @param files
+	 * @param sourceRoot
+	 * @param targetRoot
+	 * @return
+	 */
 	public static List<Work> resolve( List<Path> files, Path sourceRoot, Path targetRoot )
+		throws IOException
 	{
 		var works = new ArrayList<Work>();
 
@@ -280,17 +266,24 @@ public class
 			Work work = new Work();
 			work.sourceFile = sourceFile;
 			work.sourceDir = sourceFile.getParent();
+			// Duplicate directory structure for output
+			Path packagePath = sourceRoot.relativize( work.sourceDir );
+			work.targetDir = targetRoot.resolve( packagePath );
+			if( Files.notExists( work.targetDir ))
+			{
+				Files.createDirectories( work.targetDir );
+			}
+
+			// infers package name from directory structure
+			work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
 			var clazz = getBaseName( sourceFile );
 			work.statementClassName = clazz;
+			// TODO custom suffix for ResultSet
 			work.resultSetClassName = work.statementClassName + "ResultSet";
 
-			Path packagePath = sourceRoot.relativize( work.sourceDir );
-			work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
-
-			work.targetDir = targetRoot.resolve( packagePath );
+			// TODO why isn't targetFile for ResultSet class also here?
 			work.targetFile = work.targetDir.resolve( clazz + ".java" );
-
 
 			works.add( work );
 		}

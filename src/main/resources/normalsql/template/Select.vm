@@ -17,7 +17,9 @@
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
 ##     statementAccessors - List<Accessor>, meta data for getters and setters
+## TODO can this source file's header be a sub-template....?
 /**
+## Change date to UTC or something
 * ${statementClassName}.java ${date}
 *
 ## TODO put actual filename and its timestamp here.
@@ -35,6 +37,7 @@
 * </pre>
 *
 ## TODO add timestamp
+## TODO use project's root for relative dir, vs absolute dir
 * @see ${sourceFile}
 *
 **/

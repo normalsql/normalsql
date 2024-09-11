@@ -1,19 +1,12 @@
-package normalsql.maven;
+package normalsql;
 
-import normalsql.Config;
-import normalsql.Tool;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.MavenProject;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,9 +19,11 @@ import java.util.Map;
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
     requiresDependencyResolution = ResolutionScope.COMPILE
 )
-public class NormalSQLMojo
+public class MavenPlugin
     extends AbstractMojo
 {
+    Config abc = new Config();
+
 //    @Component
 //    MavenProject project;
 
@@ -72,21 +67,22 @@ public class NormalSQLMojo
             Path sourceDir = Paths.get( source ).toAbsolutePath();
             if( Files.notExists( sourceDir ))
 			{
-                // TODO add phase, id, goal for context?
+                // TODO add phase, id, goal for better context?
                 throw new MojoExecutionException( "Source directory does not exist: " + sourceDir );
             }
 
             Path targetDir  = Paths.get( target ).toAbsolutePath();
-            if( Files.notExists( targetDir ) )
-			{
-                Files.createDirectories( targetDir );
-            }
+//            if( Files.notExists( targetDir ))
+//			{
+//                Files.createDirectories( targetDir );
+//            }
 
             if( url == null )
             {
                 throw new MojoExecutionException( "JDBC URL is null" );
             }
 
+            // TODO convert to a record?
             Config config = new Config();
             config.description = description;
             config.url = url;
