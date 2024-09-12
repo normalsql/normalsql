@@ -21,10 +21,7 @@ public class
 	/**
 	 * <p>Constructor for JavaHelper.</p>
 	 */
-	public JavaHelper()
-	{
-
-	}
+	public JavaHelper() {}
 
 	/**
 	 * <p>trimQuotes.</p>
@@ -64,7 +61,7 @@ public class
 	}
 
 	// TODO separate factory methods for Statement and ResultSet properties
-	public Accessor create(SubtermContext context, String... method )
+	public Accessor create( SubtermContext context, String... method )
 	{
 		Accessor prop = new Accessor();
 		prop.context = ((SubtermLiteralContext) context).literal();
@@ -402,6 +399,7 @@ public class
 	 * @return a {@link java.lang.String} object
 	 */
 	// TODO: Add 'value' to Exception messages
+	// TODO rename to toValueLiteral
 	public String convertToCode( int sqlType, String value )
 	{
 		String code = null;
@@ -501,6 +499,7 @@ public class
 	 * @param sqlType a int
 	 * @return a {@link java.lang.String} object
 	 */
+	// TODO elimate this method, invoke convertToCode (toValueLiteral) with default instead
 	public String getInitializerValue( int sqlType )
 	{
 		String result = null;

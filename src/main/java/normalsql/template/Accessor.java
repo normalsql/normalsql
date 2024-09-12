@@ -14,6 +14,7 @@ import normalsql.parse.NormalSQLParser.LiteralContext;
  * One Accessor for each ResultSet Column and PreparedStatement Param.
  */
 
+// TODO rename to Property
 public class
 	Accessor
 {
@@ -46,6 +47,24 @@ public class
      * Shortened class name for use by templates
      */
 	public String classShortName;
+	public String typeName;
+
+	/**
+     * JDBC's underlying getter method
+     */
+	// TODO jdbcGetter
+	/**
+     * JDBC's underlying setter method
+     */
+	// TODO jdbcSetter
+	/**
+     * Generated type-safe getter method
+     */
+	public String getter;
+	/**
+     * Generated type-safe setter method
+     */
+	public String setter;
 
 	/**
      * Name of local variable instance
@@ -60,16 +79,12 @@ public class
      */
 	public String trimmed;
 	/**
-     * Generated getter method
+     * The default SQL value literal transliterated to Java source.
+	 *  eg SQL's FLOAT 10.0 would become Java's <code>10.0f</code>.
+	 * Used by PreparedStatement templates.
+	 *
      */
-	public String getter;
-	/**
-     * Generated setter method
-     */
-	public String setter;
-	/**
-     * The default value literal converted from Java to SQL syntax. Used by PreparedStatement templates.
-     */
+	// TODO rename to 'valueLiteral'
 	public String asCode;
 	/**
      * Used by ResultSet templates. To specify variable default initial value.

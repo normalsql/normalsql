@@ -184,7 +184,9 @@ public class
 			prop.param = p;
 			prop.nth = p.nth;
 			prop.className = p.className;
-			prop.classShortName = p.className.substring( p.className.lastIndexOf( "." ) + 1 );
+			var shortName = p.className.substring(p.className.lastIndexOf(".") + 1);
+			if( "Integer".equals( shortName )) shortName = "Int";
+			prop.classShortName = shortName;
 			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
 		}
 
@@ -278,7 +280,13 @@ public class
 			prop.getter = "get" + _helper.toMethodCase( bean );
 			prop.setter = "set" + _helper.toMethodCase( bean );
 			prop.className = column.className;
-			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
+//			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
+
+			var shortName = column.className.substring(column.className.lastIndexOf(".") + 1);
+			if( "Integer".equals( shortName )) shortName = "Int";
+			prop.classShortName = shortName;
+
+			prop.typeName = column.typeName;
 			prop.sqlType = column.type;
 			prop.initial = _helper.getInitializerValue( column.type );
 

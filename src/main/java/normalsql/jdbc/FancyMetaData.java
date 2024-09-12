@@ -3,6 +3,11 @@ package normalsql.jdbc;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ *  Transliterate JDBC metadata into our fancy metadata POJO. Easier for us to pass around and manipulate. Seemed
+ *  like a good idea at the time. It'd be funny to discover actual JDBC
+ *  Driver implementations also used POJOs (behind the JDBC interface).
+ */
 public class
 	FancyMetaData
 {

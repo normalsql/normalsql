@@ -3,6 +3,7 @@ package normalsql;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.project.MavenProject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,10 +23,8 @@ import java.util.Map;
 public class MavenPlugin
     extends AbstractMojo
 {
-    Config abc = new Config();
-
-//    @Component
-//    MavenProject project;
+    @Component
+    MavenProject project;
 
     @Parameter
     String description;
@@ -54,12 +53,6 @@ public class MavenPlugin
     public void execute()
         throws MojoExecutionException
     {
-//    List<Dependency> dependencies = project.getDependencies();
-//    for (Dependency dependency : dependencies) {
-//        System.out.println(dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + dependency.getVersion());
-//        System.out.println(dependency);
-//    }
-
         try
         {
             Tool tool = new Tool();
@@ -72,10 +65,11 @@ public class MavenPlugin
             }
 
             Path targetDir  = Paths.get( target ).toAbsolutePath();
-//            if( Files.notExists( targetDir ))
-//			{
-//                Files.createDirectories( targetDir );
-//            }
+            if( Files.notExists( targetDir ))
+			{
+                Files.createDirectories( targetDir );
+                project.addCompileSourceRoot( targetDir.toAbsolutePath().toString() );
+            }
 
             if( url == null )
             {
@@ -103,11 +97,5 @@ public class MavenPlugin
         {
             throw new MojoExecutionException( e );
         }
-
-        Map map = getPluginContext();
-        map.forEach((key, value) -> {
-            System.out.println( "\n" + key + ": " + value );
-        });
     }
-
 }
