@@ -10,7 +10,7 @@
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     resultSetAccessors - List<Accessor>, meta data for getters and setters
+##     properties - List<Property>, meta data for getters and setters
 /**
 * ${resultSetClassName}.java ${date}
 *
@@ -93,8 +93,8 @@ public class
 		if( success )
 		{
 			__row = rs.getRow();
-			#foreach( $p in $resultSetAccessors )
-			_${p.variable} = rs.get${p.classShortName}( ${p.nth} );
+			#foreach( $p in $properties )
+			_${p.variable} = ( ${p.className} ) rs.getObject( ${p.nth} );
 			#if( $p.isNullable )
 			_${p.variable}_wasNull = !rs.wasNull();
 			#end
@@ -138,10 +138,11 @@ public class
 		return result;
 	}
 
-	#foreach( $p in $resultSetAccessors )
-	private ${p.classShortName} _${p.variable} = ${p.initial};
+	// TODO this sucks. convert to boxed for nullable, unboxed otherwise
+	#foreach( $p in $properties )
+	private ${p.className} _${p.variable} = ${p.initial};
 	/** column "${p.original}" **/
-	public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
+	public ${p.className} ${p.getter}() { return _${p.variable}; }
 	#if( $p.isNullable )
 	private boolean _${p.variable}_wasNull = false;
 	/** returns true if column "${p.original}" was NULL **/
@@ -165,7 +166,7 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", " );
-		#foreach( $p in $resultSetAccessors )
+		#foreach( $p in $properties )
 		sb.append( "${p.variable}: " );
 		sb.append( ${p.getter}() );
 ##		sb.append( ${p.getter}WasNull() ? null : ${p.getter}() );
@@ -177,4 +178,3 @@ public class
 	}
 
 }
-

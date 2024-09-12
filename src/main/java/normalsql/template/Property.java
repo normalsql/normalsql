@@ -8,22 +8,21 @@ import normalsql.jdbc.Param;
 import normalsql.parse.NormalSQLParser.LiteralContext;
 
 /**
- * An Accessor represents a class instance variable and its accessor
- * methods (getter, setter). aka a JavaBean.
+ * Property (aka JavaBean) represents a class instance variable and its accessors
+ *  (getters, setters).
  *
- * One Accessor for each ResultSet Column and PreparedStatement Param.
+ * One Property is created for each ResultSet Column and each PreparedStatement Param.
  */
 
-// TODO rename to Property
 public class
-	Accessor
+	Property
 {
 	/**
-	 * Column
+	 * Remember parent Column, for debugging
 	 */
 	public Column column;
 	/**
-	 * Param
+	 * Remember parent Param, for debugging
 	 */
 	public Param param;
 	/**
@@ -38,25 +37,17 @@ public class
 	/**
      * SQL data type, scrapped from JDBC metadata
      */
-	public int sqlType;
+//	public int sqlType;
+	/**
+	 * SQL's type name
+	 */
+//	public String typeName;
+
 	/**
      * Full class name scrapped from JDBC metadata
      */
 	public String className;
-	/**
-     * Shortened class name for use by templates
-     */
-	public String classShortName;
-	public String typeName;
 
-	/**
-     * JDBC's underlying getter method
-     */
-	// TODO jdbcGetter
-	/**
-     * JDBC's underlying setter method
-     */
-	// TODO jdbcSetter
 	/**
      * Generated type-safe getter method
      */
@@ -71,13 +62,13 @@ public class
      */
 	public String variable;
 	/**
-     * Original text copied from source code or metadata
+     * Original text copied from SQL source code. Used by templates to populate JavaDocs.
      */
 	public String original;
 	/**
      * Name (identifier) stripped of punctuation
      */
-	public String trimmed;
+//	public String trimmed;
 	/**
      * The default SQL value literal transliterated to Java source.
 	 *  eg SQL's FLOAT 10.0 would become Java's <code>10.0f</code>.
@@ -89,28 +80,6 @@ public class
 	/**
      * Used by ResultSet templates. To specify variable default initial value.
      */
-     // TODO Are initial default values necessary? I can't remember why I added them.
-    public String initial;
-
-	/**
-	 * @return String
-	 */
-	@Override
-	public String toString()
-	{
-		return "Accessor{" +
-			"column=" + column +
-			", param=" + param +
-			", context=" + context +
-			", nth=" + nth +
-			", variable='" + variable + '\'' +
-			", source='" + original + '\'' +
-			", trimmed='" + trimmed + '\'' +
-			", getter='" + getter + '\'' +
-			", setter='" + setter + '\'' +
-			", className='" + className + '\'' +
-			", classShortName='" + classShortName + '\'' +
-			", sqlType=" + sqlType +
-			'}';
-	}
+//     // TODO Are initial default values necessary? I can't remember why I added them.
+//    public String initial;
 }

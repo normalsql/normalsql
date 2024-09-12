@@ -16,8 +16,8 @@ public class
 	public String name;
 	public String label;
 	// TODO rename to sqlType
-	public int type;
-	public String typeName;
+	public int sqlType;
+	public String sqlTypeName;
 	public int isNullable;
 	public String className;
 }

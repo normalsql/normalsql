@@ -11,7 +11,7 @@ import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
 import normalsql.template.JavaHelper;
-import normalsql.template.Accessor;
+import normalsql.template.Property;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -31,6 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +42,7 @@ import java.util.List;
 public class
 	Worker
 {
+	String _now;
 	Connection _conn;
 	VelocityEngine _engine;
 	Template _selectTemplate;
@@ -49,6 +53,15 @@ public class
 
 	public Worker( Connection conn )
 	{
+//		_now = new Date();
+//		Instant instant = date.toInstant();
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss'Z'" ).withZone( ZoneOffset.UTC );
+		_now = formatter.format( Instant.now() );
+
+//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
+//		String formattedDateTime = Instant.now().format( formatter );
+
 		_conn = conn;
 
 		_engine = new VelocityEngine();
@@ -64,6 +77,7 @@ public class
 		_deleteTemplate = _engine.getTemplate( "normalsql/template/Delete.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
+
 	}
 
 	// TODO: use ANTLR's token stream rewriter instead
@@ -108,19 +122,19 @@ public class
 						case ColumnLiteralLiteral ->
 						{
 							String name = getColumn( b.test );
-							Accessor low = _helper.create( b.low, name, "low" );
-							work.statementAccessors.add( low );
+							Property low = _helper.create( b.low, name, "low" );
+							work.statementProperties.add( low );
 
-							Accessor high = _helper.create( b.high, name, "high" );
-							work.statementAccessors.add( high );
+							Property high = _helper.create( b.high, name, "high" );
+							work.statementProperties.add( high );
 						}
 
 						case LiteralColumnColumn ->
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Accessor high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
-							work.statementAccessors.add( high );
+							Property high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
+							work.statementProperties.add( high );
 						}
 					}
 				}
@@ -128,14 +142,14 @@ public class
 				{
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Accessor prop = _helper.create( c.literal, column );
-					work.statementAccessors.add( prop );
+					Property prop = _helper.create( c.literal, column );
+					work.statementProperties.add( prop );
 				}
 				case LIKE m ->
 				{
 					String column = getColumn( m.column );
-					Accessor prop = _helper.create( m.literal, column );
-					work.statementAccessors.add( prop );
+					Property prop = _helper.create( m.literal, column );
+					work.statementProperties.add( prop );
 				}
 
 				// TODO ANY predicate
@@ -147,8 +161,8 @@ public class
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
 						String temp = column + "_" + ( nth + 1 );
-						Accessor prop = _helper.create( l, temp );
-						work.statementAccessors.add( prop );
+						Property prop = _helper.create( l, temp );
+						work.statementProperties.add( prop );
 					}
 				}
 
@@ -158,8 +172,8 @@ public class
 					{
 						SubtermLiteralContext l = row.literals.get( nth );
 						String col = row.insert.columns.get( nth ).getText();
-						Accessor prop = _helper.create( l, col );
-						work.statementAccessors.add( prop );
+						Property prop = _helper.create( l, col );
+						work.statementProperties.add( prop );
 					}
 				}
 
@@ -167,7 +181,7 @@ public class
 			}
 		}
 
-		for( Accessor prop : work.statementAccessors )
+		for( Property prop : work.statementProperties)
 		{
 			setStartTokenText( prop.context, "?" );
 		}
@@ -179,20 +193,19 @@ public class
 
 		for( int nth = 0; nth < md.params.size(); nth++ )
 		{
-			Accessor prop = work.statementAccessors.get( nth );
+			Property prop = work.statementProperties.get( nth );
 			Param p = md.params.get( nth );
 			prop.param = p;
 			prop.nth = p.nth;
+			// Copy the className from the PreparedStatement's Param to our Property
 			prop.className = p.className;
-			var shortName = p.className.substring(p.className.lastIndexOf(".") + 1);
-			if( "Integer".equals( shortName )) shortName = "Int";
-			prop.classShortName = shortName;
-			prop.asCode = _helper.convertToCode( p.type, prop.trimmed );
+			var trimmed = _helper.getTrimmedText( prop.context );
+			prop.asCode = _helper.convertToCode( p.sqlType, trimmed );
 		}
 
-		for( Accessor prop : work.statementAccessors )
+		for( Property prop : work.statementProperties)
 		{
-			String text = _helper.toPrintfConverter( prop.param.type );
+			String text = _helper.toPrintfConverter( prop.param.sqlType);
 			setStartTokenText( prop.context, text );
 		}
 
@@ -209,7 +222,7 @@ public class
 			case Select ignore ->
 			{
 				// TODO foreach statement this, to support unions, multiple statements, and such
-				work.resultSetAccessors = matchItemsToColumns( work.root.get(0).items, work.columns );
+				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
 			}
 			case Insert ignore ->
 			{
@@ -245,14 +258,14 @@ public class
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	List<Accessor> matchItemsToColumns(List<Item> items, List<Column> columns )
+	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
 	{
-		ArrayList<Accessor> properties = new ArrayList<>();
+		var properties = new ArrayList<Property>();
 
 		for( Column column : columns )
 		{
 			// TODO reference to parent Item
-			Accessor prop = new Accessor();
+			var prop = new Property();
 			prop.nth = column.nth;
 			prop.column = column;
 			String bean = column.label;
@@ -280,15 +293,9 @@ public class
 			prop.getter = "get" + _helper.toMethodCase( bean );
 			prop.setter = "set" + _helper.toMethodCase( bean );
 			prop.className = column.className;
-//			prop.classShortName = column.className.substring( column.className.lastIndexOf( "." ) + 1 );
-
-			var shortName = column.className.substring(column.className.lastIndexOf(".") + 1);
-			if( "Integer".equals( shortName )) shortName = "Int";
-			prop.classShortName = shortName;
-
-			prop.typeName = column.typeName;
-			prop.sqlType = column.type;
-			prop.initial = _helper.getInitializerValue( column.type );
+//			prop.typeName = column.sqlTypeName;
+//			prop.sqlType = column.sqlType;
+//			prop.initial = _helper.getInitializerValue( column.sqlType);
 
 			properties.add( prop );
 		}
@@ -301,7 +308,7 @@ public class
 		HashMap<String, Object> childMap = work.asMap();
 		childMap.put( "esc", new EscapeTool() );
 		// TODO change to 'now', use same Date for all artifacts
-		childMap.put( "date", new Date() );
+		childMap.put( "date", _now);
 
 		VelocityContext vc = new VelocityContext( childMap );
 

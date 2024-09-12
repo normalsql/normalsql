@@ -28,8 +28,8 @@ public class
 			{
 				Param param = new Param();
 				param.nth = nth;
-				param.type = pmd.getParameterType( nth );
-				param.typeName = pmd.getParameterTypeName( nth );
+				param.sqlType = pmd.getParameterType( nth );
+				param.sqlTypeName = pmd.getParameterTypeName( nth );
 				param.isNullable = pmd.isNullable( nth );
 				param.isSigned = pmd.isSigned( nth );
 				param.scaled = pmd.getScale( nth );
@@ -53,8 +53,8 @@ public class
 				column.table = md.getTableName( nth );
 				column.name = md.getColumnName( nth );
 				column.label = md.getColumnLabel( nth );
-				column.type = md.getColumnType( nth );
-				column.typeName = md.getColumnTypeName( nth );
+				column.sqlType = md.getColumnType( nth );
+				column.sqlTypeName = md.getColumnTypeName( nth );
 				column.isNullable = md.isNullable( nth );
 				column.className = md.getColumnClassName( nth );
 				columns.add( column );

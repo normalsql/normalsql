@@ -7,7 +7,7 @@ import normalsql.jdbc.Column;
 import normalsql.parse.Knockout;
 import normalsql.parse.KnockoutVisitor;
 import normalsql.parse.Statement;
-import normalsql.template.Accessor;
+import normalsql.template.Property;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,8 +44,8 @@ public class
 	public String originalSQL;
 	public String preparedSQL;
 	public String printfSQL;
-	public List<Accessor> statementAccessors = new ArrayList<>();
-	public List<Accessor> resultSetAccessors;
+	public List<Property> statementProperties = new ArrayList<>();
+	public List<Property> resultSetProperties;
 
 	// "Serializes" this POJO into a HashMap, to be used as 'context map' for
 	// Velocity template.

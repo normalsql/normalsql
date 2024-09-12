@@ -61,12 +61,11 @@ public class
 	}
 
 	// TODO separate factory methods for Statement and ResultSet properties
-	public Accessor create( SubtermContext context, String... method )
+	public Property create(SubtermContext context, String... method )
 	{
-		Accessor prop = new Accessor();
+		Property prop = new Property();
 		prop.context = ((SubtermLiteralContext) context).literal();
 		prop.original = prop.context.getText();
-		prop.trimmed = getTrimmedText( prop.context );
 		prop.variable = toVariableCase( method );
 		prop.getter = "get" + toMethodCase( method );
 		prop.setter = "set" + toMethodCase( method );

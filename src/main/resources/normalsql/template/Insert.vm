@@ -16,7 +16,7 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     statementAccessors - List<Accessor>, meta data for getters and setters
+##     properties - List<Property>, meta data for getters and setters
 /**
 * ${statementClassName}.java ${date}
 *
@@ -105,8 +105,8 @@ public class
 	public final ResultSet execute()
 		throws SQLException
 	{
-        #foreach( $p in $statementAccessors )
-        __ps.set${p.classShortName}( ${p.nth}, ${p.getter}() );
+        #foreach( $p in $properties )
+        __ps.setObject( ${p.nth}, ${p.getter}() );
         #end
 
 		__ps.execute();
@@ -115,20 +115,19 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $p in $statementAccessors )
-    private ${p.classShortName} _${p.variable} = ${p.asCode};
-    public void ${p.setter}( ${p.classShortName} ${p.variable} ) { _${p.variable} = ${p.variable}; }
-    public ${p.classShortName} ${p.getter}() { return _${p.variable}; }
+    #foreach( $p in $properties )
+    private ${p.className} _${p.variable} = ${p.asCode};
+    public void ${p.setter}( ${p.className} ${p.variable} ) { _${p.variable} = ${p.variable}; }
+    public ${p.className} ${p.getter}() { return _${p.variable}; }
 
     #end
 
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $p in $statementAccessors )
+            #foreach( $p in $properties )
             , ${p.getter}()
             #end
 		);
 	}
 }
-

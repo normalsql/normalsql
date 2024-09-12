@@ -57,7 +57,9 @@ public class MavenPlugin
         {
             Tool tool = new Tool();
 
+            // TODO re-verify need to use absolute path for later steps
             Path sourceDir = Paths.get( source ).toAbsolutePath();
+            getLog().info( "source: " + source );
             if( Files.notExists( sourceDir ))
 			{
                 // TODO add phase, id, goal for better context?

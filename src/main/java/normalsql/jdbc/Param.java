@@ -24,8 +24,8 @@ public class Param
 	}
 
 	public int nth;
-	public int type;
-	public String typeName;
+	public int sqlType;
+	public String sqlTypeName;
 	public int isNullable;
 	public String className;
 	public boolean isSigned;
@@ -33,20 +33,20 @@ public class Param
 	public int precision;
 	public int mode;
 
-	@Override
-	public String toString() {
-		return "Param{" +
-				"nth=" + nth +
-				", type=" + type +
-				", typeName='" + typeName + '\'' +
-				", isNullable=" + isNullable +
-				", isNullable=" + IsNullable.values()[isNullable] +
-				", className='" + className + '\'' +
-				", isSigned=" + isSigned +
-				", scaled=" + scaled +
-				", precision=" + precision +
-				", mode=" + mode +
-				", mode=" + Mode.values()[mode]  +
-				'}';
-	}
+//	@Override
+//	public String toString() {
+//		return "Param{" +
+//				"nth=" + nth +
+//				", type=" + sqlType +
+//				", typeName='" + sqlTypeName + '\'' +
+//				", isNullable=" + isNullable +
+//				", isNullable=" + IsNullable.values()[isNullable] +
+//				", className='" + className + '\'' +
+//				", isSigned=" + isSigned +
+//				", scaled=" + scaled +
+//				", precision=" + precision +
+//				", mode=" + mode +
+//				", mode=" + Mode.values()[mode]  +
+//				'}';
+//	}
 }
