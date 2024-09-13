@@ -3,33 +3,37 @@
 
 package normalsql.jdbc;
 
+import normalsql.template.Property;
+
 /**
  * POJO for a PreparedStatement Parameter.
  */
 public class Param
+	extends Property
 {
-	enum IsNullable
-	{
-		parameterNoNulls,
-		parameterNullable,
-		parameterNullableUnknown
-	}
+//	enum IsNullable
+//	{
+//		parameterNoNulls,
+//		parameterNullable,
+//		parameterNullableUnknown
+//	}
+//
+//	enum Mode
+//	{
+//		parameterModeUnknown,
+//		parameterModeIn,
+//		parameterModeInOut,
+//		parameterModeOut
+//	}
 
-	enum Mode
-	{
-		parameterModeUnknown,
-		parameterModeIn,
-		parameterModeInOut,
-		parameterModeOut
-	}
+//	public int nth;
+//	public int sqlType;
+//	public String sqlTypeName;
+//	public int isNullable;
+//	public String className;
 
-	public int nth;
-	public int sqlType;
-	public String sqlTypeName;
-	public int isNullable;
-	public String className;
-	public boolean isSigned;
-	public int scaled;
-	public int precision;
-	public int mode;
+//	public boolean isSigned;
+//	public int scaled;
+//	public int precision;
+//	public int mode;
 }

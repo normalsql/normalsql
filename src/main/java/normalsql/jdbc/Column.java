@@ -3,21 +3,28 @@
 
 package normalsql.jdbc;
 
-/*
- POJO for a ResultSet's column.
+import normalsql.template.Property;
+
+/**
+ * POJO representing metadata of a ResultSet column.
 */
 public class
 	Column
+extends
+	Property
 {
-	public int nth;
-	public String catalog;
-	public String schema;
-	public String table;
-	public String name;
-	public String label;
-	// TODO rename to sqlType
-	public int sqlType;
-	public String sqlTypeName;
-	public int isNullable;
-	public String className;
+//	public String catalog;
+//	public String schema;
+//	public String table;
+	private String name;
+	public String name() {return name;}
+	public void name(String name	) { this.name = name; }
+
+	private String label;
+	public String label() {return label;}
+	public void label(String label	) { this.label = label; }
+
+	private int isNullable;
+	public int isNullable() {return isNullable;}
+	public void isNullable(int isNullable	) { this.isNullable = isNullable; }
 }

@@ -48,9 +48,9 @@ public class
 			{
 				Column column = new Column();
 				column.nth = nth;
-				column.catalog = md.getCatalogName( nth );
-				column.schema = md.getSchemaName( nth );
-				column.table = md.getTableName( nth );
+//				column.catalog = md.getCatalogName( nth );
+//				column.schema = md.getSchemaName( nth );
+//				column.table = md.getTableName( nth );
 				column.name = md.getColumnName( nth );
 				column.label = md.getColumnLabel( nth );
 				column.sqlType = md.getColumnType( nth );

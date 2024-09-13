@@ -182,7 +182,7 @@ public class
 
 		for( Property prop : work.statementProperties )
 		{
-			setStartTokenText( prop.context, "?" );
+			setStartTokenText( prop.context(), "?" );
 		}
 
 		work.preparedSQL = tokens.getText();
@@ -207,8 +207,8 @@ public class
 
 		for( Property prop : work.statementProperties )
 		{
-			String text = _helper.toPrintfConverter( prop.param.sqlType );
-			setStartTokenText( prop.context, text );
+			String text = _helper.toPrintfConverter( prop.sqlType() );
+			setStartTokenText( prop.context(), text );
 		}
 
 		work.printfSQL = tokens.getText();
@@ -262,27 +262,27 @@ public class
 	 */
 	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
 	{
-		var properties = new ArrayList<Property>();
+//		var properties = new ArrayList<Property>();
 
 		for( Column column : columns )
 		{
-			// TODO reference to parent Item
-			var prop = new Property();
-			prop.nth = column.nth;
-			prop.column = column;
-			String bean = column.label;
+//			// TODO reference to parent Item
+//			var prop = new Property();
+//			prop.nth = column.nth;
+//			prop.column = column;
+			String bean = column.label();
 			// TODO also match to catalog, schema, table
 			// TODO resolve best match
 			for( Item item : items )
 			{
-				if( column.name.equalsIgnoreCase( item.name ) )
+				if( column.name().equalsIgnoreCase( item.name ) )
 				{
-					if( column.label.equalsIgnoreCase( item.alias ) )
+					if( column.label().equalsIgnoreCase( item.alias ) )
 					{
 						bean = item.alias;
 						break;
 					}
-					else if( column.label.equalsIgnoreCase( item.name ))
+					else if( column.label().equalsIgnoreCase( item.name ))
 					{
 						bean = item.name;
 						break;
@@ -290,13 +290,13 @@ public class
 				}
 			}
 
-			prop.original = bean;
-			prop.variable = _helper.toVariableCase( bean );
-			prop.getter = "get" + _helper.toMethodCase( bean );
-			prop.setter = "set" + _helper.toMethodCase( bean );
-			prop.className = column.className;
+			column.original( bean );
+			column.variable( _helper.toVariableCase( bean ));
+			column.getter(  "get" + _helper.toMethodCase( bean ));
+			column.setter( "set" + _helper.toMethodCase( bean ));
+//			prop.className = column.className;
 
-			properties.add( prop );
+//			properties.add( prop );
 		}
 
 		return properties;
