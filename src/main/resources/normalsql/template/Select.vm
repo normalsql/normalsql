@@ -120,7 +120,7 @@ public class
 
 	// TODO add null check to setters (when !isnullable)
     #foreach( $p in $params )
-    private ${p.className} _${p.variable} = ${p.asCode};
+    private ${p.className} _${p.variable} = ${p.translated};
     public void ${p.setter}( ${p.className} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.className} ${p.getter}() { return _${p.variable}; }
 

@@ -24,12 +24,6 @@ public class Param
 //		parameterModeOut
 //	}
 
-//	public int nth;
-//	public int sqlType;
-//	public String sqlTypeName;
-//	public int isNullable;
-//	public String className;
-
 //	public boolean isSigned;
 //	public int scaled;
 //	public int precision;
@@ -41,16 +35,12 @@ public class Param
 	 */
 	public String original;
 	public String original() {return original;}
-	public void original(String original	) { this.original = original; }
+	public void original( String original ) { this.original = original; }
 
 	/**
-	 * The original default SQL value literal transliterated to Java source.
-	 *  eg SQL's FLOAT 10.0 would become Java's <code>10.0f</code>.
-	 * Used by PreparedStatement templates.
-	 *
+	 * Translated version of original literal. eg SQL FLOAT 10.0 translates to Java <code>10.0f</code>.
 	 */
-	// TODO rename to 'valueLiteral'
-	public String asCode;
-	public String asCode() {return asCode;}
-	public void asCode(String asCode	) { this.asCode = asCode; }
+	public String translated;
+	public String translated() {return translated;}
+	public void translated( String asCode ) { this.translated = asCode; }
 }

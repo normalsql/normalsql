@@ -238,7 +238,7 @@ public class
 		for( Param param : work.params)
 		{
 			var trimmed = _helper.trimQuotes( param.original() );
-			param.asCode( _helper.convertToCode( param.sqlType(), trimmed ));
+			param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
 		}
 
 		/** Transform original SQL source code into a printf template.
