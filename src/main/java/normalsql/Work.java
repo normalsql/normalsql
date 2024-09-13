@@ -28,7 +28,6 @@ public class
 	Statement root;
 
 	// All the (matched) knockouts in one flattened list.
-//	ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
 	ArrayList<Knockout<?,?>> knockouts;
 
 	// Columns copied from ResultSet's metadata

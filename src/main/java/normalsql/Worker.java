@@ -110,7 +110,6 @@ public class
 
 		work.knockouts = visitor.knockouts;
 
-//		for( var p : work.knockouts )
 		for( var p : visitor.knockouts )
 		{
 			switch( p )
@@ -181,7 +180,7 @@ public class
 			}
 		}
 
-		for( Property prop : work.statementProperties)
+		for( Property prop : work.statementProperties )
 		{
 			setStartTokenText( prop.context, "?" );
 		}
@@ -199,13 +198,16 @@ public class
 			prop.nth = p.nth;
 			// Copy the className from the PreparedStatement's Param to our Property
 			prop.className = p.className;
-			var trimmed = _helper.getTrimmedText( prop.context );
+//			var trimmed = _helper.getTrimmedText( prop.context );
+			var trimmed = _helper.trimQuotes( prop.original );
 			prop.asCode = _helper.convertToCode( p.sqlType, trimmed );
 		}
 
-		for( Property prop : work.statementProperties)
+
+
+		for( Property prop : work.statementProperties )
 		{
-			String text = _helper.toPrintfConverter( prop.param.sqlType);
+			String text = _helper.toPrintfConverter( prop.param.sqlType );
 			setStartTokenText( prop.context, text );
 		}
 
@@ -280,7 +282,7 @@ public class
 						bean = item.alias;
 						break;
 					}
-					else if( column.label.equalsIgnoreCase( item.name ) )
+					else if( column.label.equalsIgnoreCase( item.name ))
 					{
 						bean = item.name;
 						break;
@@ -293,9 +295,6 @@ public class
 			prop.getter = "get" + _helper.toMethodCase( bean );
 			prop.setter = "set" + _helper.toMethodCase( bean );
 			prop.className = column.className;
-//			prop.typeName = column.sqlTypeName;
-//			prop.sqlType = column.sqlType;
-//			prop.initial = _helper.getInitializerValue( column.sqlType);
 
 			properties.add( prop );
 		}

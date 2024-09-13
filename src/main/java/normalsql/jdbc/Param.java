@@ -32,21 +32,4 @@ public class Param
 	public int scaled;
 	public int precision;
 	public int mode;
-
-//	@Override
-//	public String toString() {
-//		return "Param{" +
-//				"nth=" + nth +
-//				", type=" + sqlType +
-//				", typeName='" + sqlTypeName + '\'' +
-//				", isNullable=" + isNullable +
-//				", isNullable=" + IsNullable.values()[isNullable] +
-//				", className='" + className + '\'' +
-//				", isSigned=" + isSigned +
-//				", scaled=" + scaled +
-//				", precision=" + precision +
-//				", mode=" + mode +
-//				", mode=" + Mode.values()[mode]  +
-//				'}';
-//	}
 }

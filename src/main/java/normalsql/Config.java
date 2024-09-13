@@ -12,21 +12,4 @@ public class Config
     public Path target;
     public String pkg;
     public String extension = "sql";
-
-    @Override
-    public String toString()
-    {
-        String sb =
-            "Config {" +
-                ", \ndescription='" + description + '\'' +
-                ", \nurl='" + url + '\'' +
-                ", \nusername='" + username + '\'' +
-                ", \npassword='" + password + '\'' +
-                ", \nsource='" + source + '\'' +
-                ", \ntarget='" + target + '\'' +
-                ", \npackage='" + pkg + '\'' +
-                ", \nextension='" + extension + '\'' +
-                "\n}";
-        return sb;
-    }
 }

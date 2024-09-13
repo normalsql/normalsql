@@ -16,7 +16,7 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     properties - List<Property>, meta data for getters and setters
+##     statementProperties - List<Property>, meta data for getters and setters
 ## TODO can this source file's header be a sub-template....?
 /**
 ## Change date to UTC or something
@@ -105,7 +105,7 @@ public class
 	public final ${resultSetClassName} execute()
 		throws SQLException
 	{
-        #foreach( $p in $properties )
+        #foreach( $p in $statementProperties )
         __ps.setObject( ${p.nth}, ${p.getter}() );
         #end
 
@@ -119,7 +119,7 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $p in $properties )
+    #foreach( $p in $statementProperties )
     private ${p.className} _${p.variable} = ${p.asCode};
     public void ${p.setter}( ${p.className} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.className} ${p.getter}() { return _${p.variable}; }
@@ -129,7 +129,7 @@ public class
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $p in $properties )
+            #foreach( $p in $statementProperties )
             , ${p.getter}()
             #end
 		);
