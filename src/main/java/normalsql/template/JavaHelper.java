@@ -60,16 +60,15 @@ public class
 		return trimQuotes( text );
 	}
 
-	// TODO separate factory methods for Statement and ResultSet properties
-	public Property create( SubtermContext context, String... method )
+	public Param create( SubtermContext context, String... method )
 	{
-		Property prop = new Property();
-		prop.context = ((SubtermLiteralContext) context).literal();
-		prop.original = prop.context.getText();
-		prop.variable = toVariableCase( method );
-		prop.getter = "get" + toMethodCase( method );
-		prop.setter = "set" + toMethodCase( method );
-		return prop;
+		Param param = new Param();
+		param.context( ((SubtermLiteralContext) context).literal() );
+		param.original( param.context().getText() );
+		param.variable( toVariableCase( method ) );
+		param.getter( "get" + toMethodCase( method ) );
+		param.setter( "set" + toMethodCase( method ) );
+		return param;
 	}
 
 	// TODO remove invalid chars (eg spaces), toUpper, toLower, toCapitals, recognize abbreviations (eg "ID"), to snake_case
@@ -93,8 +92,7 @@ public class
 
 	public String capitalize( String text )
 	{
-		if( text == null ) return null;
-		if( text.length() == 0 ) return null;
+		if( text == null || text.isBlank() ) return null;
 		if( "ID".equalsIgnoreCase( text )) return "ID";
 
 		char original = text.charAt(0);
@@ -300,6 +298,7 @@ public class
 	 */
 	// TODO: Add 'value' to Exception messages
 	// TODO rename to toValueLiteral
+	// TODO use Property.className instead of sqlType?
 	public String convertToCode( int sqlType, String value )
 	{
 		String code = null;

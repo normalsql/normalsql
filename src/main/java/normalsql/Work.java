@@ -3,11 +3,9 @@
 
 package normalsql;
 
-import normalsql.jdbc.Column;
-import normalsql.parse.Knockout;
-import normalsql.parse.KnockoutVisitor;
+import normalsql.template.Column;
+import normalsql.template.Param;
 import normalsql.parse.Statement;
-import normalsql.template.Property;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,14 +22,14 @@ import java.util.List;
 public class
 	Work
 {
-	KnockoutVisitor visitor;
+//	KnockoutVisitor visitor;
 	Statement root;
 
-	// All the (matched) knockouts in one flattened list.
-	ArrayList<Knockout<?,?>> knockouts;
+//	// All the (matched) knockouts in one flattened list.
+//	ArrayList<Knockout<?,?>> knockouts;
 
 	// Columns copied from ResultSet's metadata
-	public ArrayList<Column> columns;
+//	public ArrayList<Column> columns;
 
 	public Path sourceDir;
 	public Path sourceFile;
@@ -43,11 +41,11 @@ public class
 	public String originalSQL;
 	public String preparedSQL;
 	public String printfSQL;
-	public List<Property> statementProperties = new ArrayList<>();
-	public List<Property> resultSetProperties;
+	public List<Param> params = new ArrayList<>();
+	public List<Column> columns = new ArrayList<>();
 
 	// "Serializes" this POJO into a HashMap, to be used as 'context map' for
-	// Velocity template.
+	// Velocity templates.
 	//
 	// Only adds 'public' fields to resulting map.
 	/**

@@ -10,9 +10,10 @@
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     resultSetProperties - List<Property>, meta data for getters and setters
+##     columns - List<Column>, meta data for getters and setters
 /**
-* ${resultSetClassName}.java ${date}
+* ${resultSetClassName}.java
+* ${date}
 *
 * Generated using NormalSQL's ResultSet.vm template.
 *
@@ -93,10 +94,10 @@ public class
 		if( success )
 		{
 			__row = rs.getRow();
-			#foreach( $p in $resultSetProperties )
-			_${p.variable} = ( ${p.className} ) rs.getObject( ${p.nth} );
-			#if( $p.isNullable )
-			_${p.variable}_wasNull = !rs.wasNull();
+			#foreach( $c in $columns )
+			_${c.variable} = ( ${c.className} ) rs.getObject( ${c.nth} );
+			#if( $c.isNullable )
+			_${c.variable}_wasNull = !rs.wasNull();
 			#end
 			#end
 		}
@@ -139,15 +140,15 @@ public class
 	}
 
 	// TODO this sucks. convert to boxed for nullable, unboxed otherwise
-	#foreach( $p in $resultSetProperties )
-##	private ${p.className} _${p.variable} = ${p.initial};
-	private ${p.className} _${p.variable};
-	/** column "${p.original}" **/
-	public ${p.className} ${p.getter}() { return _${p.variable}; }
-	#if( $p.isNullable )
-	private boolean _${p.variable}_wasNull = false;
-	/** returns true if column "${p.original}" was NULL **/
-	public boolean ${p.getter}WasNull() { return _${p.variable}_wasNull; }
+	#foreach( $c in $columns )
+##	private ${c.className} _${c.variable} = ${c.initial};
+	private ${c.className} _${c.variable};
+	/** column "${c.original}" **/
+	public ${c.className} ${c.getter}() { return _${c.variable}; }
+	#if( $c.isNullable )
+	private boolean _${c.variable}_wasNull = false;
+	/** returns true if column "${c.original}" was NULL **/
+	public boolean ${c.getter}WasNull() { return _${c.variable}_wasNull; }
 	#end
 
 	#end
@@ -167,10 +168,10 @@ public class
 		sb.append( "#row: " );
 		sb.append( getRow() );
 		sb.append( ", " );
-		#foreach( $p in $resultSetProperties )
-		sb.append( "${p.variable}: " );
-		sb.append( ${p.getter}() );
-##		sb.append( ${p.getter}WasNull() ? null : ${p.getter}() );
+		#foreach( $c in $columns )
+		sb.append( "${c.variable}: " );
+		sb.append( ${c.getter}() );
+##		sb.append( ${c.getter}WasNull() ? null : ${c.getter}() );
 		#if($foreach.hasNext)
 		sb.append( ", " );
 		#end

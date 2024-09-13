@@ -3,15 +3,14 @@
 
 package normalsql;
 
-import normalsql.jdbc.Column;
-import normalsql.jdbc.FancyMetaData;
-import normalsql.jdbc.Param;
+import normalsql.template.Column;
+import normalsql.template.Param;
 import normalsql.parse.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
+import normalsql.parse.Statement;
 import normalsql.template.JavaHelper;
-import normalsql.template.Property;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -29,13 +28,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -53,14 +49,9 @@ public class
 
 	public Worker( Connection conn )
 	{
-//		_now = new Date();
-//		Instant instant = date.toInstant();
-
+//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss'Z'" ).withZone( ZoneOffset.UTC );
 		_now = formatter.format( Instant.now() );
-
-//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
-//		String formattedDateTime = Instant.now().format( formatter );
 
 		_conn = conn;
 
@@ -88,6 +79,8 @@ public class
 		start.setText( text );
 	}
 
+	// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
+
 	public void process( Work work )
 		throws IOException, SQLException
 	{
@@ -105,10 +98,17 @@ public class
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
-		work.visitor = visitor;
+//		work.visitor = visitor;
+		if( work.root == null || work.root.isEmpty() )
+		{
+			System.out.println( "file contains no statements: " + work.sourceFile );
+			return;
+		}
+
 		work.root = visitor.root;
 
-		work.knockouts = visitor.knockouts;
+
+//		work.knockouts = visitor.knockouts;
 
 		for( var p : visitor.knockouts )
 		{
@@ -121,19 +121,19 @@ public class
 						case ColumnLiteralLiteral ->
 						{
 							String name = getColumn( b.test );
-							Property low = _helper.create( b.low, name, "low" );
-							work.statementProperties.add( low );
+							Param low = _helper.create( b.low, name, "low" );
+							work.params.add( low );
 
-							Property high = _helper.create( b.high, name, "high" );
-							work.statementProperties.add( high );
+							Param high = _helper.create( b.high, name, "high" );
+							work.params.add( high );
 						}
 
 						case LiteralColumnColumn ->
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Property high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
-							work.statementProperties.add( high );
+							Param high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
+							work.params.add( high );
 						}
 					}
 				}
@@ -141,14 +141,14 @@ public class
 				{
 					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Property prop = _helper.create( c.literal, column );
-					work.statementProperties.add( prop );
+					Param prop = _helper.create( c.literal, column );
+					work.params.add( prop );
 				}
 				case LIKE m ->
 				{
 					String column = getColumn( m.column );
-					Property prop = _helper.create( m.literal, column );
-					work.statementProperties.add( prop );
+					Param prop = _helper.create( m.literal, column );
+					work.params.add( prop );
 				}
 
 				// TODO ANY predicate
@@ -160,8 +160,8 @@ public class
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
 						String temp = column + "_" + ( nth + 1 );
-						Property prop = _helper.create( l, temp );
-						work.statementProperties.add( prop );
+						Param prop = _helper.create( l, temp );
+						work.params.add( prop );
 					}
 				}
 
@@ -171,8 +171,8 @@ public class
 					{
 						SubtermLiteralContext l = row.literals.get( nth );
 						String col = row.insert.columns.get( nth ).getText();
-						Property prop = _helper.create( l, col );
-						work.statementProperties.add( prop );
+						Param prop = _helper.create( l, col );
+						work.params.add( prop );
 					}
 				}
 
@@ -180,57 +180,91 @@ public class
 			}
 		}
 
-		for( Property prop : work.statementProperties )
+		/**
+		 * Transform original SQL source code into a prepared statement,
+		 * by replacing literals with SQL "?" placeholders.
+ 		 */
+		for( Param param : work.params )
 		{
-			setStartTokenText( prop.context(), "?" );
+			setStartTokenText( param.context(), "?" );
 		}
-
 		work.preparedSQL = tokens.getText();
+		PreparedStatement ps = _conn.prepareStatement( work.preparedSQL );
 
-		FancyMetaData md = new FancyMetaData( _conn, work.preparedSQL );
-		work.columns = md.columns;
-
-		for( int nth = 0; nth < md.params.size(); nth++ )
+		// Copy paramenter meta data
+		ParameterMetaData pmd = ps.getParameterMetaData();
+		if( pmd != null )
 		{
-			Property prop = work.statementProperties.get( nth );
-			Param p = md.params.get( nth );
-			prop.param = p;
-			prop.nth = p.nth;
-			// Copy the className from the PreparedStatement's Param to our Property
-			prop.className = p.className;
-//			var trimmed = _helper.getTrimmedText( prop.context );
-			var trimmed = _helper.trimQuotes( prop.original );
-			prop.asCode = _helper.convertToCode( p.sqlType, trimmed );
+			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
+			{
+				// Remember that SQL arrays are is 1-based
+				Param param = work.params.get( nth - 1 );
+				param.nth( nth );
+				param.sqlType( pmd.getParameterType( nth ));
+				param.sqlTypeName( pmd.getParameterTypeName( nth ));
+				param.isNullable( pmd.isNullable( nth ));
+//				param.isSigned( pmd.isSigned( nth ));
+//				param.scaled( pmd.getScale( nth ));
+//				param.precision( pmd.getPrecision( nth ));
+//				param.mode( pmd.getParameterMode( nth ));
+				param.className( pmd.getParameterClassName( nth ));
+//				params.add( param );
+			}
 		}
 
-
-
-		for( Property prop : work.statementProperties )
+		// Copy column meta data
+		ResultSetMetaData md = ps.getMetaData();
+		if( md != null )
 		{
-			String text = _helper.toPrintfConverter( prop.sqlType() );
-			setStartTokenText( prop.context(), text );
+			// TODO: dedupe resultset columns. or maybe add suffix to dupes.
+			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
+			{
+				Column column = new Column();
+				column.nth( nth );
+//				Column column = work.resultSetProperties.get( nth - 1 );
+//				column.catalog = md.getCatalogName( nth );
+//				column.schema = md.getSchemaName( nth );
+//				column.table = md.getTableName( nth );
+				column.name( md.getColumnName( nth ));
+				column.alias( md.getColumnLabel( nth ));
+				column.sqlType( md.getColumnType( nth ));
+				column.sqlTypeName( md.getColumnTypeName( nth ));
+				column.isNullable( md.isNullable( nth ));
+				column.className( md.getColumnClassName( nth ));
+				work.columns.add( column );
+			}
 		}
 
+		for( Param param : work.params)
+		{
+			var trimmed = _helper.trimQuotes( param.original() );
+			param.asCode( _helper.convertToCode( param.sqlType(), trimmed ));
+		}
+
+		/** Transform original SQL source code into a printf template.
+		 * eg Replacing integer "100" with "%d".
+		 *
+		 * Generated printf templates are useful for debugging and logging.
+		 */
+		for( Param param : work.params )
+		{
+			String text = _helper.toPrintfConverter( param.sqlType() );
+			setStartTokenText( param.context(), text );
+		}
 		work.printfSQL = tokens.getText();
 
-		if( work.root == null || work.root.isEmpty() )
+		Statement statement = work.root.getFirst();
+		switch( statement )
 		{
-			System.out.println( "file contains no statements: " + work.sourceFile );
-			return;
-		}
-
-		switch ( work.root.get( 0 ))
-		{
-			case Select ignore ->
-			{
-				// TODO foreach statement this, to support unions, multiple statements, and such
-				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
-			}
-			case Insert ignore ->
+			case Select ignored ->
+                // TODO foreach statement this, to support unions, multiple statements, and such
+                //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+				matchItemsToColumns( statement.items, work.columns);
+			case Insert ignored ->
 			{
 				// TODO fill in missing columns
 			}
-			case Delete ignore ->
+			case Delete ignored ->
 			{
 				// TODO may have to attach Params to Table & Columns
 			}
@@ -239,11 +273,7 @@ public class
 			}
     	}
 
-		// TODO match values' literals to columns
-
 		merge( work );
-
-		// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
 		System.out.println( work.sourceFile + " processed" );
 	}
@@ -260,46 +290,38 @@ public class
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	List<Property> matchItemsToColumns( List<Item> items, List<Column> columns )
+	void matchItemsToColumns( List<Item> items, List<Column> columns )
 	{
-//		var properties = new ArrayList<Property>();
-
 		for( Column column : columns )
 		{
-//			// TODO reference to parent Item
-//			var prop = new Property();
-//			prop.nth = column.nth;
-//			prop.column = column;
-			String bean = column.label();
+			// Default bean name (eg when there's no items to match against)
+			String bean = column.alias();
+
 			// TODO also match to catalog, schema, table
 			// TODO resolve best match
 			for( Item item : items )
 			{
 				if( column.name().equalsIgnoreCase( item.name ) )
 				{
-					if( column.label().equalsIgnoreCase( item.alias ) )
+					if( column.alias().equalsIgnoreCase( item.alias ) )
 					{
 						bean = item.alias;
+						column.item( item );
 						break;
 					}
-					else if( column.label().equalsIgnoreCase( item.name ))
+					else if( column.alias().equalsIgnoreCase( item.name ))
 					{
 						bean = item.name;
+						column.item( item );
 						break;
 					}
 				}
 			}
 
-			column.original( bean );
 			column.variable( _helper.toVariableCase( bean ));
-			column.getter(  "get" + _helper.toMethodCase( bean ));
+			column.getter( "get" + _helper.toMethodCase( bean ));
 			column.setter( "set" + _helper.toMethodCase( bean ));
-//			prop.className = column.className;
-
-//			properties.add( prop );
 		}
-
-		return properties;
 	}
 
 	public void merge( Work work ) throws IOException
@@ -311,25 +333,23 @@ public class
 
 		VelocityContext vc = new VelocityContext( childMap );
 
-		switch ( work.root.get( 0 ))
+		Statement statement = work.root.getFirst();
+		switch( statement )
 		{
-			case Select ignore ->
+			case Select ignored ->
 			{
 				generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
 				generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
 			}
-			case Insert ignore ->
-			{
+
+			case Insert ignored ->
 				generate( _insertTemplate, vc, work.targetDir, work.statementClassName );
-			}
-			case Delete ignore ->
-			{
+
+			case Delete ignored ->
 				generate( _deleteTemplate, vc, work.targetDir, work.statementClassName );
-			}
+
 	        default ->
-			{
-				System.out.println( "unrecognized: " + work.root.get( 0 ).getClass() );
-			}
+				System.out.println( "unrecognized: " + statement.getClass() );
     	}
 	}
 

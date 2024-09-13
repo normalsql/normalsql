@@ -15,7 +15,6 @@ import normalsql.parse.NormalSQLParser.LiteralContext;
 public abstract class
 	Property
 {
-
 	public LiteralContext context() {return context;}
 	public void context(LiteralContext context	) { this.context = context; }
 
@@ -25,7 +24,7 @@ public abstract class
 	public int sqlType() {return sqlType;}
 	public void sqlType( int sqlType ) { this.sqlType = sqlType; }
 
-	public String sqlTypeName() {return sqlTypeName;}
+	public String sqlTypeName() { return sqlTypeName; }
 	public void sqlTypeName( String sqlTypeName ) { this.sqlTypeName = sqlTypeName; }
 
 	public String className() {return className;}
@@ -40,62 +39,52 @@ public abstract class
 	public String variable() {return variable;}
 	public void variable(String variable	) { this.variable = variable; }
 
-	public String original() {return original;}
-	public void original(String original	) { this.original = original; }
-
-	public String asCode() {return asCode;}
-	public void asCode(String asCode	) { this.asCode = asCode; }
 	/**
 	 * LiteralContext
 	 */
-	private LiteralContext context;
+	public LiteralContext context;
 
 	/**
      * Index scrapped from JDBC metadata
      */
-	private int nth;
+	public int nth;
 
 	/**
      * SQL data type, scrapped from JDBC metadata
      */
-	private int sqlType;
+	public int sqlType;
 
 	/**
 	 * SQL's type name
 	 */
-	private String sqlTypeName;
+	public String sqlTypeName;
 
 	/**
      * Full class name scrapped from JDBC metadata
      */
-	private String className;
+	public String className;
 
 	/**
      * Generated type-safe getter method
      */
-	private String getter;
+	public String getter;
 
 	/**
      * Generated type-safe setter method
      */
-	private String setter;
+	public String setter;
 
 	/**
      * Name of local variable instance
      */
-	private String variable;
+	public String variable;
 
-	/**
-     * Original text copied from SQL source code. Used by templates to populate JavaDocs.
-     */
-	private String original;
+	// TODO move 'original' to Param
 
-	/**
-     * The default SQL value literal transliterated to Java source.
-	 *  eg SQL's FLOAT 10.0 would become Java's <code>10.0f</code>.
-	 * Used by PreparedStatement templates.
-	 *
-     */
-	// TODO rename to 'valueLiteral'
-	private String asCode;
+
+
+	public int isNullable;
+	public int isNullable() {return isNullable;}
+	public void isNullable(int isNullable	) { this.isNullable = isNullable; }
+
 }
