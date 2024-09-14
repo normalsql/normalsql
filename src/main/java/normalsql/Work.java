@@ -3,8 +3,8 @@
 
 package normalsql;
 
-import normalsql.template.Column;
-import normalsql.template.Param;
+import normalsql.template.ResultSetColumn;
+import normalsql.template.PreparedStatementParameter;
 import normalsql.parse.Statement;
 
 import java.nio.file.Path;
@@ -34,13 +34,13 @@ public class Work
 	public String preparedSQL;
 	public String printfSQL;
 
-	public List<Param> params = new ArrayList<>();
-	public List<Column> columns = new ArrayList<>();
+	public List<PreparedStatementParameter> params = new ArrayList<>();
+	public List<ResultSetColumn> columns = new ArrayList<>();
 
 	/**
 	 * "Serializes" this POJO into a HashMap, to be used as 'context map' for
 	 * Velocity templates. Only adds 'public' fields to resulting map.
-	 *
+	 * <p>
 	 * Passing values into a Velocity template sucks. This is the least
 	 * turrible strategy I could think of.
 	 *

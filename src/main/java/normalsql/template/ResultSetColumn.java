@@ -6,10 +6,10 @@ package normalsql.template;
 import normalsql.parse.Item;
 
 /**
- * POJO representing metadata of a ResultSet column.
+ * POJO representing ResultSet column's metadata
 */
 public class
-	Column
+	ResultSetColumn
 extends
 	Property
 {
@@ -27,8 +27,4 @@ extends
 	public Item item;
 	public Item item() { return item; }
 	public void item( Item item ) { this.item = item; }
-
-	public int isNullable;
-	public int isNullable() {return isNullable;}
-	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
 }

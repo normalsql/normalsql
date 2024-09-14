@@ -16,11 +16,12 @@
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     params - List<Param>, meta data for getters and setters
+##     params - List<PreparedStatementParameter>, meta data for getters and setters
 ## TODO can this source file's header be a sub-template....?
 /**
 ## Change date to UTC or something
-* ${statementClassName}.java ${date}
+* ${statementClassName}.java
+* ${now}
 *
 ## TODO put actual filename and its timestamp here.
 * Generated using NormalSQL's Select.vm template.
@@ -36,7 +37,6 @@
 * }
 * </pre>
 *
-## TODO add timestamp
 ## TODO use project's root for relative dir, vs absolute dir
 * @see ${sourceFile}
 *

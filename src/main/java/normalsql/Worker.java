@@ -3,19 +3,16 @@
 
 package normalsql;
 
-import normalsql.template.Column;
-import normalsql.template.Param;
+import normalsql.template.ResultSetColumn;
+import normalsql.template.PreparedStatementParameter;
 import normalsql.parse.*;
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
 import normalsql.parse.NormalSQLParser.*;
-import normalsql.parse.Statement;
 import normalsql.template.JavaHelper;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.WritableToken;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -32,7 +29,6 @@ import java.sql.*;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 
 public class
@@ -117,22 +113,22 @@ public class
 					{
 						case ColumnLiteralLiteral ->
 						{
-							var name = getColumn( b.test );
+							var name = getColumnQname( b.test );
 
-							var low = new Param( b.low );
+							var low = new PreparedStatementParameter( b.low );
 							_helper.signatures( low, name, "low" );
 							work.params.add( low );
 
-							var high = new Param( b.high );
+							var high = new PreparedStatementParameter( b.high );
 							_helper.signatures( high, name, "high" );
 							work.params.add( high );
 						}
 
 						case LiteralColumnColumn ->
 						{
-							var columnLow = getColumn( b.low );
-							var columnHigh = getColumn( b.high );
-							var test = new Param( b.test );
+							var columnLow = getColumnQname( b.low );
+							var columnHigh = getColumnQname( b.high );
+							var test = new PreparedStatementParameter( b.test );
 							_helper.signatures( test, "between", columnLow, "and", columnHigh );
 							work.params.add( test );
 						}
@@ -140,17 +136,17 @@ public class
 				}
 				case Comparison c ->
 				{
-					var column = getColumn( c.column );
+					var column = getColumnQname( c.column );
 
-					var param = new Param( c.literal );
+					var param = new PreparedStatementParameter( c.literal );
 					// TODO add operator to method signature
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
 				case LIKE m ->
 				{
-					var column = getColumn( m.column );
-					var param = new Param( m.literal );
+					var column = getColumnQname( m.column );
+					var param = new PreparedStatementParameter( m.literal );
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
@@ -159,12 +155,12 @@ public class
 
 				case IN in ->
 				{
-					var column = getColumn( in.column );
+					var column = getColumnQname( in.column );
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
 						var l = in.literals.get( nth );
 						var temp = column + "_" + ( nth + 1 );
-						var param = new Param( l );
+						var param = new PreparedStatementParameter( l );
 						_helper.signatures( param, temp );
 						work.params.add( param );
 					}
@@ -176,7 +172,7 @@ public class
 					{
 						var l = row.literals.get( nth );
 						var col = row.insert.columns.get( nth ).getText();
-						var param = new Param( l );
+						var param = new PreparedStatementParameter( l );
 						_helper.signatures( param, col );
 						work.params.add( param );
 					}
@@ -214,8 +210,29 @@ public class
 //				param.precision( pmd.getPrecision( nth ));
 //				param.mode( pmd.getParameterMode( nth ));
 				param.className( pmd.getParameterClassName( nth ));
+
+//				for( var param : work.params )
+				{
+					var trimmed = _helper.trimQuotes( param.original() );
+					param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
+				}
+
 			}
 		}
+
+		/* Transform original SQL source code into a printf template.
+		  eg Replacing integer "100" with "%d".
+
+		  Generated printf templates are useful for debugging and logging.
+
+		 */
+		for( var param : work.params )
+		{
+			var text = _helper.toPrintfConverter( param.sqlType() );
+			setStartTokenText( param.context(), text );
+		}
+		work.printfSQL = tokens.getText();
+
 
 		// Copy column meta data
 		var md = ps.getMetaData();
@@ -224,7 +241,7 @@ public class
 			// TODO: dedupe resultset columns. or maybe add suffix to dupes.
 			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
 			{
-				var column = new Column();
+				var column = new ResultSetColumn();
 				column.nth( nth );
 //				Column column = work.resultSetProperties.get( nth - 1 );
 //				column.catalog = md.getCatalogName( nth );
@@ -240,23 +257,6 @@ public class
 			}
 		}
 
-		for( var param : work.params )
-		{
-			var trimmed = _helper.trimQuotes( param.original() );
-			param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
-		}
-
-		/* Transform original SQL source code into a printf template.
-		  eg Replacing integer "100" with "%d".
-
-		  Generated printf templates are useful for debugging and logging.
-		 */
-		for( var param : work.params )
-		{
-			var text = _helper.toPrintfConverter( param.sqlType() );
-			setStartTokenText( param.context(), text );
-		}
-		work.printfSQL = tokens.getText();
 
 		var statement = work.root.getFirst();
 		switch( statement )
@@ -283,7 +283,12 @@ public class
 		System.out.println( work.sourceFile + " processed" );
 	}
 
-	public String getColumn( SubtermContext b )
+	/**
+	 *
+	 * @param b
+	 * @return qname (qualified name) of a resultset column
+	 */
+	public String getColumnQname(SubtermContext b )
 	{
 		var column = ( (SubtermColumnContext) b ).qname();
 		return _helper.getTrimmedText( column );
@@ -295,7 +300,7 @@ public class
 	 * result columns appear in same order. There can be more result columns than items.
 	 *
 	 */
-	void matchItemsToColumns( List<Item> items, List<Column> columns )
+	void matchItemsToColumns( List<Item> items, List<ResultSetColumn> columns )
 	{
 		for( var column : columns )
 		{
@@ -325,6 +330,14 @@ public class
 				}
 			}
 
+			if( column.item() != null )
+			{
+				column.original( column.item().context.getText() );
+			}
+			else
+			{
+				column.original( column.name() );
+			}
 			_helper.signatures( column, label );
 			column.variable( _helper.toVariableCase( label ));
 		}
@@ -332,11 +345,10 @@ public class
 
 	public void merge( Work work ) throws IOException
 	{
-//		HashMap<String, Object> childMap = work.asMap();
 		var childMap = work.asMap();
 		childMap.put( "esc", new EscapeTool() );
 		// TODO change to 'now', use same Date for all artifacts
-		childMap.put( "date", _now);
+		childMap.put( "now", _now );
 
 		var vc = new VelocityContext( childMap );
 

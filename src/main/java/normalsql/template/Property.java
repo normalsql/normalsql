@@ -15,6 +15,12 @@ import normalsql.parse.NormalSQLParser.LiteralContext;
 public abstract class
 	Property
 {
+	/**
+	 * Original literal copied from the SQL source code. Later transformed into Java source code.
+	 * Also used by templates to populate JavaDocs.
+	 */
+	public String original;
+
 	public LiteralContext context() {return context;}
 	public void context(LiteralContext context	) { this.context = context; }
 
@@ -82,4 +88,8 @@ public abstract class
 	public int isNullable;
 	public int isNullable() {return isNullable;}
 	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
+
+	public String original() {return original;}
+
+	public void original(String original ) { this.original = original; }
 }

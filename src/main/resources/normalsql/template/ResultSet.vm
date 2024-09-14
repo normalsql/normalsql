@@ -10,10 +10,10 @@
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
-##     columns - List<Column>, meta data for getters and setters
+##     columns - List<ResultSetColumn>, meta data for getters and setters
 /**
 * ${resultSetClassName}.java
-* ${date}
+* ${now}
 *
 * Generated using NormalSQL's ResultSet.vm template.
 *
@@ -143,11 +143,15 @@ public class
 	#foreach( $c in $columns )
 ##	private ${c.className} _${c.variable} = ${c.initial};
 	private ${c.className} _${c.variable};
-	/** column "${c.original}" **/
+	/**
+	 * @return column "${c.original}"
+	*/
 	public ${c.className} ${c.getter}() { return _${c.variable}; }
 	#if( $c.isNullable )
 	private boolean _${c.variable}_wasNull = false;
-	/** returns true if column "${c.original}" was NULL **/
+	/**
+	 * @return true if column "${c.original}" was NULL
+	 */
 	public boolean ${c.getter}WasNull() { return _${c.variable}_wasNull; }
 	#end
 
