@@ -55,7 +55,7 @@ public class
 	public String getTrimmedText( RuleContext context )
 	{
 		// TODO fix this to include all tokens, incl. whitespace
-		String text = context.getText();
+		var text = context.getText();
 		return trimQuotes( text );
 	}
 
@@ -76,13 +76,12 @@ public class
 	 */
 	public String toMethodCase( String... name )
 	{
-		String[] temp = new String[name.length];
+		var temp = new String[name.length];
 		for( int i = 0; i < name.length; i++ )
 		{
 			temp[i] = capitalize( name[i] );
 		}
-		String text = String.join( "", temp );
-		return text;
+        return String.join( "", temp );
 	}
 
 	public String capitalize( String text )
@@ -296,7 +295,7 @@ public class
 	// TODO use Property.className instead of sqlType?
 	public String convertToCode( int sqlType, String value )
 	{
-		String code = null;
+		String code;
 		switch( sqlType )
 		{
 			case CHAR:

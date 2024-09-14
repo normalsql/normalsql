@@ -20,9 +20,9 @@ extends
 	public String name() {return name;}
 	public void name( String name ) { this.name = name; }
 
-	public String alias;
-	public String alias() {return alias;}
-	public void alias( String alias ) { this.alias = alias; }
+	public String label;
+	public String label() {return label;}
+	public void label(String label ) { this.label = label; }
 
 	public Item item;
 	public Item item() { return item; }

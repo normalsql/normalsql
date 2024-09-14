@@ -3,6 +3,7 @@
 *.iws
 *.iml
 *.ipr
+.run
 
 .vscode
 
@@ -15,7 +16,6 @@
 # Distro stuff
 *.jar
 *.asc
-
 
 /target/
 .DS_Store

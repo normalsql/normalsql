@@ -20,23 +20,7 @@ extends
 		original( context().getText() );
 	}
 
-	/**
-	enum IsNullable
-	{
-		parameterNoNulls,
-		parameterNullable,
-		parameterNullableUnknown
-	}
 
-	enum Mode
-	{
-		parameterModeUnknown,
-		parameterModeIn,
-		parameterModeInOut,
-		parameterModeOut
-	}
-
-	 */
 
 //	public boolean isSigned;
 //	public int scaled;
@@ -58,3 +42,21 @@ extends
 	public String translated() {return translated;}
 	public void translated( String asCode ) { this.translated = asCode; }
 }
+
+/**
+ enum IsNullable
+ {
+ parameterNoNulls,
+ parameterNullable,
+ parameterNullableUnknown
+ }
+
+ enum Mode
+ {
+ parameterModeUnknown,
+ parameterModeIn,
+ parameterModeInOut,
+ parameterModeOut
+ }
+
+ */

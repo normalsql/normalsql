@@ -190,7 +190,7 @@ public class
 			_conn = DriverManager.getConnection( config.url, config.username, config.password );
 
 			// TODO is this best way to confirm JDBC config?
-			Statement s = _conn.createStatement();
+			var s = _conn.createStatement();
 			if( s.execute( "SELECT 1" ))
 			{
 				ResultSet rs = s.getResultSet();
@@ -234,7 +234,7 @@ public class
 
 		var works = resolve( files, config.source, config.target );
 
-		Worker worker = new Worker( _conn );
+		var worker = new Worker( _conn );
 		for( var work : works )
 		{
 			worker.process( work );
@@ -262,7 +262,7 @@ public class
 
 		for( var sourceFile : files )
 		{
-			Work work = new Work();
+			var work = new Work();
 			work.sourceFile = sourceFile;
 			work.sourceDir = sourceFile.getParent();
 			// Duplicate directory structure for output

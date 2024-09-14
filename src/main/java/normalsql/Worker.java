@@ -50,7 +50,7 @@ public class
 	public Worker( Connection conn )
 	{
 //		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss'Z'" ).withZone( ZoneOffset.UTC );
+		var formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss'Z'" ).withZone( ZoneOffset.UTC );
 		_now = formatter.format( Instant.now() );
 
 		_conn = conn;
@@ -75,7 +75,7 @@ public class
 	public void setStartTokenText( ParserRuleContext context, String text )
 	{
 		// Replace text of first "visible" (non whitespace) token, then exit
-		WritableToken start = (WritableToken) context.getStart();
+		var start = (WritableToken) context.getStart();
 		start.setText( text );
 	}
 
@@ -88,24 +88,24 @@ public class
 
 		// TODO attempt running statement before parsing
 
-		CharStream chars = CharStreams.fromString( work.originalSQL );
-		NormalSQLLexer lexer = new NormalSQLLexer( chars );
-		CommonTokenStream tokens = new CommonTokenStream( lexer );
-		NormalSQLParser parser = new NormalSQLParser( tokens );
-		ScriptContext script = parser.script();
+		var chars = CharStreams.fromString( work.originalSQL );
+		var lexer = new NormalSQLLexer( chars );
+		var tokens = new CommonTokenStream( lexer );
+		var parser = new NormalSQLParser( tokens );
+		var script = parser.script();
 
-		KnockoutVisitor visitor = new KnockoutVisitor();
+		var visitor = new KnockoutVisitor();
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
 
+		work.root = visitor.root;
 		if( work.root == null || work.root.isEmpty() )
 		{
 			System.out.println( "file contains no statements: " + work.sourceFile );
 			return;
 		}
 
-		work.root = visitor.root;
 
 		for( var p : visitor.knockouts )
 		{
@@ -117,22 +117,22 @@ public class
 					{
 						case ColumnLiteralLiteral ->
 						{
-							String name = getColumn( b.test );
+							var name = getColumn( b.test );
 
-							Param low = new Param( b.low );
+							var low = new Param( b.low );
 							_helper.signatures( low, name, "low" );
 							work.params.add( low );
 
-							Param high = new Param( b.high );
+							var high = new Param( b.high );
 							_helper.signatures( high, name, "high" );
 							work.params.add( high );
 						}
 
 						case LiteralColumnColumn ->
 						{
-							String columnLow = getColumn( b.low );
-							String columnHigh = getColumn( b.high );
-							Param test = new Param( b.test );
+							var columnLow = getColumn( b.low );
+							var columnHigh = getColumn( b.high );
+							var test = new Param( b.test );
 							_helper.signatures( test, "between", columnLow, "and", columnHigh );
 							work.params.add( test );
 						}
@@ -140,17 +140,17 @@ public class
 				}
 				case Comparison c ->
 				{
-					String column = getColumn( c.column );
+					var column = getColumn( c.column );
 
-					Param param = new Param( c.literal );
+					var param = new Param( c.literal );
 					// TODO add operator to method signature
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
 				case LIKE m ->
 				{
-					String column = getColumn( m.column );
-					Param param = new Param( m.literal );
+					var column = getColumn( m.column );
+					var param = new Param( m.literal );
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
@@ -159,12 +159,12 @@ public class
 
 				case IN in ->
 				{
-					String column = getColumn( in.column );
+					var column = getColumn( in.column );
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
-						SubtermLiteralContext l = in.literals.get( nth );
-						String temp = column + "_" + ( nth + 1 );
-						Param param = new Param( l );
+						var l = in.literals.get( nth );
+						var temp = column + "_" + ( nth + 1 );
+						var param = new Param( l );
 						_helper.signatures( param, temp );
 						work.params.add( param );
 					}
@@ -174,9 +174,9 @@ public class
 				{
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
-						SubtermLiteralContext l = row.literals.get( nth );
-						String col = row.insert.columns.get( nth ).getText();
-						Param param = new Param( l );
+						var l = row.literals.get( nth );
+						var col = row.insert.columns.get( nth ).getText();
+						var param = new Param( l );
 						_helper.signatures( param, col );
 						work.params.add( param );
 					}
@@ -195,16 +195,16 @@ public class
 			setStartTokenText( param.context(), "?" );
 		}
 		work.preparedSQL = tokens.getText();
-		PreparedStatement ps = _conn.prepareStatement( work.preparedSQL );
+		var ps = _conn.prepareStatement( work.preparedSQL );
 
 		// Copy parameter meta data
-		ParameterMetaData pmd = ps.getParameterMetaData();
+		var pmd = ps.getParameterMetaData();
 		if( pmd != null )
 		{
 			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
 			{
 				// Remember that SQL arrays are 1-based
-				Param param = work.params.get( nth - 1 );
+				var param = work.params.get( nth - 1 );
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
 				param.sqlTypeName( pmd.getParameterTypeName( nth ));
@@ -218,20 +218,20 @@ public class
 		}
 
 		// Copy column meta data
-		ResultSetMetaData md = ps.getMetaData();
+		var md = ps.getMetaData();
 		if( md != null )
 		{
 			// TODO: dedupe resultset columns. or maybe add suffix to dupes.
 			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
 			{
-				Column column = new Column();
+				var column = new Column();
 				column.nth( nth );
 //				Column column = work.resultSetProperties.get( nth - 1 );
 //				column.catalog = md.getCatalogName( nth );
 //				column.schema = md.getSchemaName( nth );
 //				column.table = md.getTableName( nth );
 				column.name( md.getColumnName( nth ));
-				column.alias( md.getColumnLabel( nth ));
+				column.label( md.getColumnLabel( nth ));
 				column.sqlType( md.getColumnType( nth ));
 				column.sqlTypeName( md.getColumnTypeName( nth ));
 				column.isNullable( md.isNullable( nth ));
@@ -240,7 +240,7 @@ public class
 			}
 		}
 
-		for( Param param : work.params )
+		for( var param : work.params )
 		{
 			var trimmed = _helper.trimQuotes( param.original() );
 			param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
@@ -251,14 +251,14 @@ public class
 
 		  Generated printf templates are useful for debugging and logging.
 		 */
-		for( Param param : work.params )
+		for( var param : work.params )
 		{
-			String text = _helper.toPrintfConverter( param.sqlType() );
+			var text = _helper.toPrintfConverter( param.sqlType() );
 			setStartTokenText( param.context(), text );
 		}
 		work.printfSQL = tokens.getText();
 
-		Statement statement = work.root.getFirst();
+		var statement = work.root.getFirst();
 		switch( statement )
 		{
 			case Select ignored ->
@@ -285,7 +285,7 @@ public class
 
 	public String getColumn( SubtermContext b )
 	{
-		RuleContext column = ( (SubtermColumnContext) b ).qname();
+		var column = ( (SubtermColumnContext) b ).qname();
 		return _helper.getTrimmedText( column );
 	}
 
@@ -297,49 +297,50 @@ public class
 	 */
 	void matchItemsToColumns( List<Item> items, List<Column> columns )
 	{
-		for( Column column : columns )
+		for( var column : columns )
 		{
-			// Default bean name (eg when there's no items to match against)
-			String bean = column.alias();
+			// Use column's label by default (eg when there's no items to match against)
+			var label = column.label();
 
 			// TODO also match to catalog, schema, table
-			// TODO resolve best match
-			for( Item item : items )
+			// TODO resolve best match, eg when multiple columns have same name but label != alias
+			// TODO eventually, account for locale, collation, etc. use IBM's ICU lib?
+			for( var item : items )
 			{
-				if( column.name().equalsIgnoreCase( item.name ) )
+				if( column.name().equalsIgnoreCase( item.name ))
 				{
-					if( column.alias().equalsIgnoreCase( item.alias ) )
+					if( label.equalsIgnoreCase( item.alias ))
 					{
-						bean = item.alias;
+						label = item.alias;
 						column.item( item );
 						break;
 					}
-					else if( column.alias().equalsIgnoreCase( item.name ))
+					// TODO per best match idea above, this logic might be wrong for yet unknown edge cases. need test coverage.
+					else if( label.equalsIgnoreCase( item.name ))
 					{
-						bean = item.name;
+						label = item.name;
 						column.item( item );
 						break;
 					}
 				}
 			}
 
-			_helper.signatures( column, bean );
-			column.variable( _helper.toVariableCase( bean ));
-			column.getter( "get" + _helper.toMethodCase( bean ));
-			column.setter( "set" + _helper.toMethodCase( bean ));
+			_helper.signatures( column, label );
+			column.variable( _helper.toVariableCase( label ));
 		}
 	}
 
 	public void merge( Work work ) throws IOException
 	{
-		HashMap<String, Object> childMap = work.asMap();
+//		HashMap<String, Object> childMap = work.asMap();
+		var childMap = work.asMap();
 		childMap.put( "esc", new EscapeTool() );
 		// TODO change to 'now', use same Date for all artifacts
 		childMap.put( "date", _now);
 
-		VelocityContext vc = new VelocityContext( childMap );
+		var vc = new VelocityContext( childMap );
 
-		Statement statement = work.root.getFirst();
+		var statement = work.root.getFirst();
 		switch( statement )
 		{
 			case Select ignored ->
