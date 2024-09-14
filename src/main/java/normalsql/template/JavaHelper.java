@@ -8,11 +8,10 @@
 */
 package normalsql.template;
 
-import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.RuleContext;
 
-import static java.lang.Character.toLowerCase;
-import static java.lang.Character.toUpperCase;
+//import static java.lang.Character.toLowerCase;
+//import static java.lang.Character.toUpperCase;
 import static java.sql.Types.*;
 
 public class
@@ -60,15 +59,11 @@ public class
 		return trimQuotes( text );
 	}
 
-	public Param create( SubtermContext context, String... method )
+	public void signatures( Property property, String... method )
 	{
-		Param param = new Param();
-		param.context( ((SubtermLiteralContext) context).literal() );
-		param.original( param.context().getText() );
-		param.variable( toVariableCase( method ) );
-		param.getter( "get" + toMethodCase( method ) );
-		param.setter( "set" + toMethodCase( method ) );
-		return param;
+		property.variable( toVariableCase( method ) );
+		property.getter( "get" + toMethodCase( method ) );
+		property.setter( "set" + toMethodCase( method ) );
 	}
 
 	// TODO remove invalid chars (eg spaces), toUpper, toLower, toCapitals, recognize abbreviations (eg "ID"), to snake_case
@@ -115,71 +110,71 @@ public class
 		return String.join( "_", name );
 	}
 
-	/**
-	 * <p>isAllUpperCase.</p>
-	 *
-	 * @param s a {@link java.lang.String} object
-	 * @return a boolean
-	 */
-	public boolean isAllUpperCase( String s )
-	{
-		for( char c : s.toCharArray() ) 
-		{
-			if( Character.isLetter( c ) && Character.isLowerCase( c )) 
-			{
-				return false;
-			}
-		}
-		return true;
-	}
+//	/**
+//	 * <p>isAllUpperCase.</p>
+//	 *
+//	 * @param s a {@link java.lang.String} object
+//	 * @return a boolean
+//	 */
+//	public boolean isAllUpperCase( String s )
+//	{
+//		for( char c : s.toCharArray() )
+//		{
+//			if( Character.isLetter( c ) && Character.isLowerCase( c ))
+//			{
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 	
-	// BIGPONY => BIGPONY
-	// bigPony => BigPony
-	// id => ID
-	/**
-	 * <p>toMethodName.</p>
-	 *
-	 * @param name a {@link java.lang.String} object
-	 * @return a {@link java.lang.String} object
-	 */
-	public String toMethodName( String name )
-	{
-		if( "id".equalsIgnoreCase( name ))
-		{
-			name = "ID";
-		}
-		else if( !isAllUpperCase( name ))
-		{
-			name = toUpperCase( name.charAt( 0 ) ) + name.substring( 1 );
-		}
-		return name;
-	}
-	
-	// BIGPONY => bigpony
-	// BigPony => bigPony
-	// ID => id
-	/**
-	 * <p>toVariableName.</p>
-	 *
-	 * @param name a {@link java.lang.String} object
-	 * @return a {@link java.lang.String} object
-	 */
-	public String toVariableName( String name )
-	{
-		if( "id".equalsIgnoreCase( name ))
-		{
-			name = "id";
-		}
-		else if( isAllUpperCase( name ))
-		{
-			name = name.toLowerCase();
-		}
-		else
-		{
-			name = toLowerCase( name.charAt( 0 ) ) + name.substring( 1 );
-		}
-		return name;
-	}
+//	// BIGPONY => BIGPONY
+//	// bigPony => BigPony
+//	// id => ID
+//	/**
+//	 * <p>toMethodName.</p>
+//	 *
+//	 * @param name a {@link java.lang.String} object
+//	 * @return a {@link java.lang.String} object
+//	 */
+//	public String toMethodName( String name )
+//	{
+//		if( "id".equalsIgnoreCase( name ))
+//		{
+//			name = "ID";
+//		}
+//		else if( !isAllUpperCase( name ))
+//		{
+//			name = toUpperCase( name.charAt( 0 ) ) + name.substring( 1 );
+//		}
+//		return name;
+//	}
+//
+//	// BIGPONY => bigpony
+//	// BigPony => bigPony
+//	// ID => id
+//	/**
+//	 * <p>toVariableName.</p>
+//	 *
+//	 * @param name a {@link java.lang.String} object
+//	 * @return a {@link java.lang.String} object
+//	 */
+//	public String toVariableName( String name )
+//	{
+//		if( "id".equalsIgnoreCase( name ))
+//		{
+//			name = "id";
+//		}
+//		else if( isAllUpperCase( name ))
+//		{
+//			name = name.toLowerCase();
+//		}
+//		else
+//		{
+//			name = toLowerCase( name.charAt( 0 ) ) + name.substring( 1 );
+//		}
+//		return name;
+//	}
 
 	// TODO change to Types enum?
 	/**

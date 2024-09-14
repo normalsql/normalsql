@@ -19,17 +19,9 @@ import java.util.List;
 
 // TODO support multiple statements
 // TODO support multiple resultsets
-public class
-	Work
+public class Work
 {
-//	KnockoutVisitor visitor;
 	Statement root;
-
-//	// All the (matched) knockouts in one flattened list.
-//	ArrayList<Knockout<?,?>> knockouts;
-
-	// Columns copied from ResultSet's metadata
-//	public ArrayList<Column> columns;
 
 	public Path sourceDir;
 	public Path sourceFile;
@@ -41,15 +33,16 @@ public class
 	public String originalSQL;
 	public String preparedSQL;
 	public String printfSQL;
+
 	public List<Param> params = new ArrayList<>();
 	public List<Column> columns = new ArrayList<>();
 
-	// "Serializes" this POJO into a HashMap, to be used as 'context map' for
-	// Velocity templates.
-	//
-	// Only adds 'public' fields to resulting map.
 	/**
-	 * <p>asMap.</p>
+	 * "Serializes" this POJO into a HashMap, to be used as 'context map' for
+	 * Velocity templates. Only adds 'public' fields to resulting map.
+	 *
+	 * Passing values into a Velocity template sucks. This is the least
+	 * turrible strategy I could think of.
 	 *
 	 * @return a {@link java.util.HashMap} object
 	 */

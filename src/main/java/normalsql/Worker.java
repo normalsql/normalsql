@@ -98,7 +98,7 @@ public class
 		visitor.parser = parser;
 		visitor.tokens = tokens;
 		visitor.visit( script );
-//		work.visitor = visitor;
+
 		if( work.root == null || work.root.isEmpty() )
 		{
 			System.out.println( "file contains no statements: " + work.sourceFile );
@@ -106,9 +106,6 @@ public class
 		}
 
 		work.root = visitor.root;
-
-
-//		work.knockouts = visitor.knockouts;
 
 		for( var p : visitor.knockouts )
 		{
@@ -121,10 +118,13 @@ public class
 						case ColumnLiteralLiteral ->
 						{
 							String name = getColumn( b.test );
-							Param low = _helper.create( b.low, name, "low" );
+
+							Param low = new Param( b.low );
+							_helper.signatures( low, name, "low" );
 							work.params.add( low );
 
-							Param high = _helper.create( b.high, name, "high" );
+							Param high = new Param( b.high );
+							_helper.signatures( high, name, "high" );
 							work.params.add( high );
 						}
 
@@ -132,23 +132,27 @@ public class
 						{
 							String columnLow = getColumn( b.low );
 							String columnHigh = getColumn( b.high );
-							Param high = _helper.create( b.test, "between", columnLow, "and", columnHigh );
-							work.params.add( high );
+							Param test = new Param( b.test );
+							_helper.signatures( test, "between", columnLow, "and", columnHigh );
+							work.params.add( test );
 						}
 					}
 				}
 				case Comparison c ->
 				{
-					// TODO add operator to method signature
 					String column = getColumn( c.column );
-					Param prop = _helper.create( c.literal, column );
-					work.params.add( prop );
+
+					Param param = new Param( c.literal );
+					// TODO add operator to method signature
+					_helper.signatures( param, column );
+					work.params.add( param );
 				}
 				case LIKE m ->
 				{
 					String column = getColumn( m.column );
-					Param prop = _helper.create( m.literal, column );
-					work.params.add( prop );
+					Param param = new Param( m.literal );
+					_helper.signatures( param, column );
+					work.params.add( param );
 				}
 
 				// TODO ANY predicate
@@ -160,8 +164,9 @@ public class
 					{
 						SubtermLiteralContext l = in.literals.get( nth );
 						String temp = column + "_" + ( nth + 1 );
-						Param prop = _helper.create( l, temp );
-						work.params.add( prop );
+						Param param = new Param( l );
+						_helper.signatures( param, temp );
+						work.params.add( param );
 					}
 				}
 
@@ -171,8 +176,9 @@ public class
 					{
 						SubtermLiteralContext l = row.literals.get( nth );
 						String col = row.insert.columns.get( nth ).getText();
-						Param prop = _helper.create( l, col );
-						work.params.add( prop );
+						Param param = new Param( l );
+						_helper.signatures( param, col );
+						work.params.add( param );
 					}
 				}
 
@@ -180,24 +186,24 @@ public class
 			}
 		}
 
-		/**
-		 * Transform original SQL source code into a prepared statement,
-		 * by replacing literals with SQL "?" placeholders.
+		/*
+		  Transform original SQL source code into a prepared statement,
+		  by replacing literals with SQL "?" placeholders.
  		 */
-		for( Param param : work.params )
+		for( var param : work.params )
 		{
 			setStartTokenText( param.context(), "?" );
 		}
 		work.preparedSQL = tokens.getText();
 		PreparedStatement ps = _conn.prepareStatement( work.preparedSQL );
 
-		// Copy paramenter meta data
+		// Copy parameter meta data
 		ParameterMetaData pmd = ps.getParameterMetaData();
 		if( pmd != null )
 		{
 			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
 			{
-				// Remember that SQL arrays are is 1-based
+				// Remember that SQL arrays are 1-based
 				Param param = work.params.get( nth - 1 );
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
@@ -208,7 +214,6 @@ public class
 //				param.precision( pmd.getPrecision( nth ));
 //				param.mode( pmd.getParameterMode( nth ));
 				param.className( pmd.getParameterClassName( nth ));
-//				params.add( param );
 			}
 		}
 
@@ -235,16 +240,16 @@ public class
 			}
 		}
 
-		for( Param param : work.params)
+		for( Param param : work.params )
 		{
 			var trimmed = _helper.trimQuotes( param.original() );
 			param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
 		}
 
-		/** Transform original SQL source code into a printf template.
-		 * eg Replacing integer "100" with "%d".
-		 *
-		 * Generated printf templates are useful for debugging and logging.
+		/* Transform original SQL source code into a printf template.
+		  eg Replacing integer "100" with "%d".
+
+		  Generated printf templates are useful for debugging and logging.
 		 */
 		for( Param param : work.params )
 		{
@@ -259,7 +264,7 @@ public class
 			case Select ignored ->
                 // TODO foreach statement this, to support unions, multiple statements, and such
                 //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
-				matchItemsToColumns( statement.items, work.columns);
+				matchItemsToColumns( statement.items, work.columns );
 			case Insert ignored ->
 			{
 				// TODO fill in missing columns
@@ -318,6 +323,7 @@ public class
 				}
 			}
 
+			_helper.signatures( column, bean );
 			column.variable( _helper.toVariableCase( bean ));
 			column.getter( "get" + _helper.toMethodCase( bean ));
 			column.setter( "set" + _helper.toMethodCase( bean ));

@@ -8,7 +8,7 @@ import normalsql.parse.NormalSQLParser.LiteralContext;
 /**
  * Property (aka JavaBean) represents a class instance variable and its accessors
  *  (getters, setters).
- *
+ * <p>
  * One Property is created for each ResultSet Column and each PreparedStatement Param.
  */
 
@@ -79,12 +79,7 @@ public abstract class
      */
 	public String variable;
 
-	// TODO move 'original' to Param
-
-
-
 	public int isNullable;
 	public int isNullable() {return isNullable;}
-	public void isNullable(int isNullable	) { this.isNullable = isNullable; }
-
+	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
 }

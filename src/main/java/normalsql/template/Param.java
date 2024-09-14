@@ -3,26 +3,40 @@
 
 package normalsql.template;
 
+import normalsql.parse.NormalSQLParser.SubtermContext;
+import normalsql.parse.NormalSQLParser.SubtermLiteralContext;
+
 /**
  * POJO for a PreparedStatement Parameter.
  */
-public class Param
-	extends Property
+public class
+	Param
+extends
+	Property
 {
-//	enum IsNullable
-//	{
-//		parameterNoNulls,
-//		parameterNullable,
-//		parameterNullableUnknown
-//	}
-//
-//	enum Mode
-//	{
-//		parameterModeUnknown,
-//		parameterModeIn,
-//		parameterModeInOut,
-//		parameterModeOut
-//	}
+	public Param( SubtermContext context )
+	{
+		context( ((SubtermLiteralContext) context).literal() );
+		original( context().getText() );
+	}
+
+	/**
+	enum IsNullable
+	{
+		parameterNoNulls,
+		parameterNullable,
+		parameterNullableUnknown
+	}
+
+	enum Mode
+	{
+		parameterModeUnknown,
+		parameterModeIn,
+		parameterModeInOut,
+		parameterModeOut
+	}
+
+	 */
 
 //	public boolean isSigned;
 //	public int scaled;

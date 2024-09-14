@@ -5,6 +5,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,15 +56,13 @@ public class MavenPlugin
     {
         try
         {
-            Tool tool = new Tool();
-
             // TODO re-verify need to use absolute path for later steps
             Path sourceDir = Paths.get( source ).toAbsolutePath();
             getLog().info( "source: " + source );
             if( Files.notExists( sourceDir ))
 			{
                 // TODO add phase, id, goal for better context?
-                throw new MojoExecutionException( "Source directory does not exist: " + sourceDir );
+                throw new FileNotFoundException( "Source directory does not exist: " + sourceDir );
             }
 
             Path targetDir  = Paths.get( target ).toAbsolutePath();
@@ -75,7 +74,7 @@ public class MavenPlugin
 
             if( url == null )
             {
-                throw new MojoExecutionException( "JDBC URL is null" );
+                throw new NullPointerException( "JDBC URL is null" );
             }
 
             // TODO convert to a record?
@@ -89,12 +88,13 @@ public class MavenPlugin
             config.pkg = pkg;
             config.extension = extension;
 
+            Tool tool = new Tool();
             tool.go( config );
         }
-        catch( MojoExecutionException mee )
-        {
-            throw mee;
-        }
+//        catch( MojoExecutionException mee )
+//        {
+//            throw mee;
+//        }
         catch( Exception e )
         {
             throw new MojoExecutionException( e );
