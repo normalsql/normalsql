@@ -58,6 +58,7 @@ public class
 		String filename = "normalsql.properties";
 		File cwd = new File( "." ).getCanonicalFile();
 		File file = new File( cwd, filename );
+
 		if( !file.exists() )
 		{
 			System.err.println( "'./normalsql.properties' not found" );
@@ -79,12 +80,6 @@ public class
 		throws Exception
 	{
 		{
-			String driver = props.getDriver();
-			if( driver == null )
-			{
-				System.err.println( "JDBC driver class name cannot be null" );
-				System.exit( -1 );
-			}
 			String url = props.getURL();
 			if( url == null )
 			{
