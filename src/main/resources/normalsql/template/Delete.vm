@@ -36,7 +36,7 @@
 ## TODO add timestamp
 * @see ${sourceFile}
 *
-**/
+*/
 
 #if( $packageName )
 package ${packageName};

@@ -200,6 +200,7 @@
                 <version>3.9.0</version>
                 <configuration>
                     <goalPrefix>normalsql</goalPrefix>
+                    <requiredJavaVersion>${maven.compiler.release}</requiredJavaVersion>
                 </configuration>
                 <executions>
                     <execution>

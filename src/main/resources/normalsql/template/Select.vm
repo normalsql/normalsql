@@ -40,7 +40,7 @@
 ## TODO use project's root for relative dir, vs absolute dir
 * @see ${sourceFile}
 *
-**/
+*/
 
 #if( $packageName )
 package ${packageName};
@@ -73,7 +73,7 @@ public class
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
 		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
-	**/
+	*/
 	public ${statementClassName}( Connection connection, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{
@@ -89,7 +89,7 @@ public class
 	/**
 		Pass a DataSource. You are responsible for closing that DataSource.
 		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
-	**/
+	*/
 	public ${statementClassName}( DataSource dataSource, int resultSetType, int resultSetConcurrency )
 		throws SQLException
 	{

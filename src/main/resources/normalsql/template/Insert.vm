@@ -37,7 +37,7 @@
 ## TODO add timestamp
 * @see ${sourceFile}
 *
-**/
+*/
 
 #if( $packageName )
 package ${packageName};
@@ -70,7 +70,7 @@ public class
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
 		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
-	**/
+	*/
 	public ${statementClassName}( Connection connection )
 		throws SQLException
 	{
@@ -86,7 +86,7 @@ public class
 	/**
 		Pass a DataSource. You are responsible for closing that DataSource.
 		${statementClassName} is a wrapper for a PreparedStatement, not a Connection.
-	**/
+	*/
 	public ${statementClassName}( DataSource dataSource )
 		throws SQLException
 	{

@@ -24,7 +24,7 @@ import java.util.Map;
 public class MavenPlugin
     extends AbstractMojo
 {
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     MavenProject project;
 
     @Parameter

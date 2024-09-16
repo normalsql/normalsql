@@ -24,7 +24,7 @@ $line
 
 @see ${originalfile}
   
-**/
+*/
 
 #if( $packageName )
 package ${packageName};
@@ -41,7 +41,7 @@ public class
 {
 	/**
 		Pass a DataSource, a Connection instance is created, call its close() method when done. 
-	**/
+	*/
 	public final int execute( DataSource dataSource )
 		throws SQLException
 	{

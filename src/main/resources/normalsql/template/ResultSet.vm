@@ -19,7 +19,7 @@
 *
 * @see ${sourceFile}
 *
-**/
+*/
 
 #if( $packageName )
 package ${packageName};
@@ -65,7 +65,7 @@ public class
 	/**
 		Closes the contained ResultSet instance. Also closes contained Connection instance
 		created via a DataSource connection factory.
-	**/
+	*/
 	public void close()
 		throws SQLException
 	{
