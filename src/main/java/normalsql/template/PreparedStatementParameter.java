@@ -17,7 +17,6 @@ extends
 	public PreparedStatementParameter( SubtermContext context )
 	{
 		context( ((SubtermLiteralContext) context).literal() );
-//		original( context().getText() );
 		original( context.getText() );
 	}
 
