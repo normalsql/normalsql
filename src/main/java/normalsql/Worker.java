@@ -52,11 +52,10 @@ public class
 		_conn = conn;
 
 		_engine = new VelocityEngine();
-		_engine.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
-		// TODO verify this works with jar
-		_engine.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
-//		_engine.setProperty( "class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader" );
-		_engine.setProperty( "runtime.introspector.uberspect", "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
+		_engine.setProperty( RuntimeConstants.RESOURCE_LOADERS, "classpath" );
+		_engine.setProperty( "resource.loader.classpath.class", ClasspathResourceLoader.class.getName() );
+		_engine.setProperty( "resource.loader.classpath.cache", "true" );
+		_engine.setProperty( RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
 		_engine.init();
 
 		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
