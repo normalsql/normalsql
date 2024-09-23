@@ -8,6 +8,7 @@ import joptsimple.OptionSet;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 
 // TODO: validate
 // TODO: print help
@@ -20,6 +21,13 @@ import java.io.FileReader;
  */
 public class CommandLineOptions
 {
+	public static void main( String[] args )
+	{
+		CommandLineOptions options = new CommandLineOptions();
+		String[] oops = { "-user", "sa", "-password", "root" };
+		options.parse( oops );
+	}
+
 //	/**
 //	 * <p>Constructor for CommandLineOptions.</p>
 //	 */
@@ -42,7 +50,7 @@ public class CommandLineOptions
 //	}
 
 	/** Constant <code>DRIVER="driver"</code> */
-	public final static String DRIVER = "driver";
+//	public final static String DRIVER = "driver";
 	/** Constant <code>URL="url"</code> */
 	public final static String URL = "url";
 	/** Constant <code>USERNAME="username"</code> */
@@ -69,15 +77,15 @@ public class CommandLineOptions
 
 	OptionSet _options = null;
 
-	/**
-	 * <p>getDriver.</p>
-	 *
-	 * @return a {@link java.lang.String} object
-	 */
-	public String getDriver()
-	{
-		return coalesce( (String) _options.valueOf( DRIVER ), _props.get( DRIVER ) );
-	}
+//	/**
+//	 * <p>getDriver.</p>
+//	 *
+//	 * @return a {@link java.lang.String} object
+//	 */
+//	public String getDriver()
+//	{
+//		return coalesce( (String) _options.valueOf( DRIVER ), _props.get( DRIVER ) );
+//	}
 
 	/**
 	 * <p>getUrl.</p>
@@ -159,7 +167,7 @@ public class CommandLineOptions
 	{
 		CommandLineOptions me = new CommandLineOptions();
 		OptionParser parser = new OptionParser();
-		parser.accepts( DRIVER ).withRequiredArg();
+//		parser.accepts( DRIVER ).withRequiredArg();
 		parser.accepts( URL ).withRequiredArg();
 		parser.accepts( USERNAME ).withRequiredArg();
 		parser.accepts( PASSWORD ).withRequiredArg();
@@ -170,7 +178,13 @@ public class CommandLineOptions
 		parser.accepts( PROPERTY ).withRequiredArg().defaultsTo( me._filename );
 		parser.accepts( ONLYPARSE ).withRequiredArg();
 
-		me._options = parser.parse( args );
+        try {
+            parser.printHelpOn( System.out );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        me._options = parser.parse( args );
 
 		String filename = (String) me._options.valueOf( PROPERTY );
 		if( !filename.endsWith( ".properties" )) 
@@ -241,7 +255,7 @@ public class CommandLineOptions
 		{
 			sb.append( "NormalSQL properties loaded from " ).append( _props.getPropertiesFile() ).append( '\n' );
 			sb.append( '\n' );
-			sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
+//			sb.append( DRIVER ).append( " = " ).append( getDriver() ).append( '\n' );
 			sb.append( URL ).append( " = " ).append( getURL() ).append( '\n' );
 			sb.append( USERNAME ).append( " = " ).append( getUsername() ).append( '\n' );
 			sb.append( PASSWORD ).append( " = " ).append( getPassword() ).append( '\n' );
