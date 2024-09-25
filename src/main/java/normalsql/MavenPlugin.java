@@ -77,7 +77,6 @@ public class MavenPlugin
                 throw new NullPointerException( "JDBC URL is null" );
             }
 
-            // TODO convert to a record?
             Config config = new Config();
             config.description = description;
             config.url = url;

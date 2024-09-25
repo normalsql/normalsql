@@ -34,14 +34,14 @@ import java.util.List;
 public class
 	Worker
 {
-	String _now;
-	Connection _conn;
-	VelocityEngine _engine;
-	Template _selectTemplate;
-	Template _insertTemplate;
-	Template _deleteTemplate;
-	Template _resultSetTemplate;
-	JavaHelper _helper;
+	          String _now;
+	      Connection _conn;
+  	  VelocityEngine _engine;
+            Template _selectTemplate;
+	        Template _insertTemplate;
+	        Template _deleteTemplate;
+	        Template _resultSetTemplate;
+		  JavaHelper _helper;
 
 	public Worker( Connection conn )
 	{
@@ -76,6 +76,7 @@ public class
 
 	// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
+	// process( Work work ) throws IO, SQL
 	public void process( Work work )
 		throws IOException, SQLException
 	{
@@ -83,8 +84,8 @@ public class
 
 		// TODO attempt running statement before parsing
 
-		var chars = CharStreams.fromString( work.originalSQL );
-		var lexer = new NormalSQLLexer( chars );
+		 var chars = CharStreams.fromString( work.originalSQL );
+		 var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
 		var parser = new NormalSQLParser( tokens );
 		var script = parser.script();

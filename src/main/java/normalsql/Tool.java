@@ -50,10 +50,31 @@ import java.util.List;
 public class
 	Tool
 {
+	public static void main( String[] args ) throws Exception
+	{
+		CLI m = new CLI( args );
+         m.go( blah );
+         System.out.println( m );
+
+
+		Config config = new Config();
+		config.description = description;
+		config.url = url;
+		config.username = username;
+		config.password = password;
+		config.source = sourceDir;
+		config.target = targetDir;
+		config.pkg = pkg;
+		config.extension = extension;
+
+		Tool tool = new Tool();
+		tool.go( config );
+	}
+
 	// TODO: Detect if targets need to be (re)created.
 
 	static String extension = ".sql";
-	public static void main( String[] args ) throws Exception
+	public static void old_main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";
 		File cwd = new File( "." ).getCanonicalFile();
@@ -76,7 +97,7 @@ public class
 
 	static Connection _conn = null;
 
-	public static void init( Props props)
+	public static void init( Props props )
 		throws Exception
 	{
 		{
