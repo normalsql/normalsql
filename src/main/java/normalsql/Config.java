@@ -1,3 +1,7 @@
+// Copyright 2010-2024 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
+
 package normalsql;
 
 import java.io.FileNotFoundException;
@@ -5,8 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
+//import java.sql.ResultSet;
 
+/**
+ * <p>Config class.</p>
+ *
+ * @author jasonosgood
+ * @version $Id: $Id
+ */
 public class Config
 {
     public String description;
@@ -26,7 +36,6 @@ public class Config
         {
             throw new NullPointerException( "JDBC URL cannot be null or empty" );
         }
-
 
         // TODO re-verify need to use absolute path for later steps
         sourcePath = Paths.get( source ).toAbsolutePath();

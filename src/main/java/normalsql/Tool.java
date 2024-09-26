@@ -1,4 +1,4 @@
-// Copyright 2010-2023 Jason Osgood
+// Copyright 2010-2024 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
@@ -29,10 +29,6 @@ import java.util.List;
 
 		log work list if diff from found list
 
-		verify DB connection
-		FUTURE: infer dialect from JDBC connection string
-		FUTURE: infer dialect by asking DB itself
-
 		test each statement in work list
 			maybe use EXPLAIN
 			could be DB specific
@@ -51,38 +47,36 @@ public class
 {
 	public static void main( String[] args )
 	{
-		int exit = 0;
-		String[] blah = { "-j", "jdbc:h2:mem:", "-u", "sa", "--password", "root" };
-		args = blah;
+		int exit = -1;
+//		String[] blah = { "-j", "jdbc:h2:mem:", "-u", "sa", "--password", "root", "--count", "123" };
+//		args = blah;
 
 		try
 		{
-			CLI cli = new CLI( blah );
-//			CLI cli = new CLI( args );
+			CLI cli = new CLI( args );
 
 			Config c = new Config();
-			c.url       = cli.getOptional( String.class, "-j", "--url" );
-//			c.url       = cli.getOptional( null, "-j", "--url" );
-			c.username  = cli.getOptional( null, "-u", "--username" );
-			c.password  = cli.getOptional( null, "-p", "--password" );
-			c.source    = cli.getOptional( ".", missing, "-s", "--source" );
-			c.target    = cli.getOptional( c.source, missing, "-t", "--target" );
-			c.pkg       = cli.getOptional( null, "-k", "--package" );
-			c.extension = cli.getOptional( ".sql", missing, "-e", "--extension" );
+			c.url       = cli.getOptional( "", "-j", "--url" );
+			c.username  = cli.getOptional( "", "-u", "--username" );
+			c.password  = cli.getOptional( "", "-p", "--password" );
+			c.source    = cli.getOptional( ".", "-s", "--source" );
+			c.target    = cli.getOptional( c.source, "-t", "--target" );
+			c.pkg       = cli.getOptional( "", "-k", "--package" );
+			c.extension = cli.getOptional( ".sql", "-e", "--extension" );
+//			var count = cli.getOptional( 1, "-c", "--count" );
 //			boolean help = cli.getFlag( "-h", "--help" );
-			if( !cli.nu.isEmpty() )
+
+			if( cli.done() )
 			{
-				throw new IllegalArgumentException( "don't understand argument" + cli.nu );
+				c.validate();
+
+				var map = asMap( c );
+				System.out.println( map );
+
+				Tool tool = new Tool();
+				tool.go( c );
+				exit = 0;
 			}
-
-			c.validate();
-
-			var map = asMap( c );
-			System.out.println( map );
-
-			Tool tool = new Tool();
-			tool.go( c );
-
 		}
 		catch( Exception e )
 		{

@@ -1,3 +1,7 @@
+// Copyright 2010-2024 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
+
 package normalsql;
 
 import java.util.ArrayList;
@@ -24,19 +28,9 @@ public class CLI
     // TODO getRequired
     // TODO getFlag
 
-    public <T> T getOptional( Class<T> kind, String... keys )
+    public <T> T getOptional(  T def, String... keys )
     {
-        return getOptional( kind, null, keys );
-    }
-
-    public <T> T getOptional( T missing, String... keys )
-    {
-        Class<T> kind = (Class<T>) missing.getClass();
-        return getOptional( kind, missing, keys );
-    }
-
-    public <T> T getOptional( Class<T> kind, T missing, String... keys )
-    {
+        if( def == null ) throw new NullPointerException( "default value cannot be null" );
         if( keys == null ) throw new NullPointerException( "key(s) cannot be null" );
 
         int size = nu.size();
@@ -51,25 +45,40 @@ public class CLI
                         nu.remove( i );
                         var value = nu.remove( i );
 
-                        T ugh = switch( kind.getClass() )
+                        var ugh = switch( def )
                         {
                             case String ignore -> (T) value;
                             case Integer ignore -> (T) Integer.valueOf( value );
-                            case null -> null;
                             default ->
-                                throw new IllegalStateException( "don't know how to convert/cast: " + missing.getClass() );
+                            {
+                                String name =  def.getClass().getCanonicalName();
+                                throw new IllegalArgumentException( "don't know how to convert/cast: " + name );
+                            }
                         };
 
                         return ugh;
                     }
                     else
                     {
-                        throw new IllegalStateException( "missing value for key: " + key );
+                        throw new IllegalArgumentException( "missing value for key: " + key );
                     }
                 }
             }
         }
-        return missing;
+        return def;
+    }
+
+    public boolean done()
+    {
+        if( !nu.isEmpty() )
+        {
+            String extra = String.join( " ", nu );
+            System.out.println( "unknown parameter(s): " + extra );
+            System.out.println(  );
+            System.out.println( "TODO: help info happens here" );
+//            throw new IllegalArgumentException( "unknown parameter(s): " + extra );
+        }
+        return true;
     }
 
 //    public static void main( String[] args )
