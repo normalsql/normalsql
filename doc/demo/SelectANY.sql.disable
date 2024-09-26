@@ -1,6 +1,6 @@
 /*
 Works with Postgres. Both the query and PreparedStatement's metadata.
-TODO Query in H2 does not work, but metadata does. Fix it.
+TODO Query fails in H2, but metadata does. Fix it.
 TODO Experiment with T-SQL, SQLite, MySQL, Oracle, etc.
 */
 

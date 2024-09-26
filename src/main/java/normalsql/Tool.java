@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
+import static normalsql.Work.asMap;
+
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -50,25 +52,51 @@ import java.util.List;
 public class
 	Tool
 {
-	public static void main( String[] args ) throws Exception
+	public static void main( String[] args )
 	{
-		CLI m = new CLI( args );
-         m.go( blah );
-         System.out.println( m );
+		int exit = 0;
+		String[] blah = { "-u", "sa", "--password", "root" };
+		args = blah;
+
+		try
+		{
+			CLI cli = new CLI( blah );
+//			CLI cli = new CLI( args );
+
+			Config c = new Config();
+			c.url       = cli.getOptional( null, "-j", "--url" );
+			c.username  = cli.getOptional( null, "-u", "--username" );
+			c.password  = cli.getOptional( null, "-p", "--password" );
+			c.source    = cli.getOptional( ".", "-s", "--source" );
+			c.target    = cli.getOptional( c.source, "-t", "--target" );
+			c.pkg       = cli.getOptional( null, "-k", "--package" );
+			c.extension = cli.getOptional( ".sql", "-e", "--extension" );
+//			boolean help = cli.getFlag( "-h", "--help" );
+			boolean empty = cli.nu.isEmpty();
+			c.validate();
+
+			var map = asMap( c );
+			System.out.println( map );
+
+//			if(  config.password )
+//
+//				if( config.url == null || config.url.isEmpty() )
+//				{
+//					throw new Mis
+//				}
 
 
-		Config config = new Config();
-		config.description = description;
-		config.url = url;
-		config.username = username;
-		config.password = password;
-		config.source = sourceDir;
-		config.target = targetDir;
-		config.pkg = pkg;
-		config.extension = extension;
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+			exit = 1;
+		}
 
-		Tool tool = new Tool();
-		tool.go( config );
+		System.exit( exit );
+
+//		Tool tool = new Tool();
+//		tool.go( config );
 	}
 
 	// TODO: Detect if targets need to be (re)created.
@@ -220,7 +248,7 @@ public class
 //		Path source = Paths.get( config.source ).toAbsolutePath();
 //		Path target = Paths.get( config.target ).toAbsolutePath();
 		var files = new ArrayList<Path>();
-		Files.walkFileTree( config.source,
+		Files.walkFileTree( config.sourcePath,
 			new SimpleFileVisitor<>()
 			{
 				@Override
@@ -248,7 +276,7 @@ public class
 
 		System.out.printf( "files found %d\n", files.size() );
 
-		var works = resolve( files, config.source, config.target );
+		var works = resolve( files, config.sourcePath, config.targetPath );
 
 		var worker = new Worker( _conn );
 		for( var work : works )

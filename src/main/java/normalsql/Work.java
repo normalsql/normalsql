@@ -46,14 +46,40 @@ public class Work
 	 *
 	 * @return a {@link java.util.HashMap} object
 	 */
+//	public HashMap<String, Object> asMap()
+//	{
+//		var map = new HashMap<String, Object>();
+//		try
+//		{
+//			for( var f : getClass().getFields() )
+//			{
+//				var value = f.get( this );
+//				if( value != null )
+//				{
+//					map.put( f.getName(), value );
+//				}
+//			}
+//		}
+//		catch( IllegalAccessException e )
+//		{
+//			// do nothing
+//		}
+//		return map;
+//	}
+
 	public HashMap<String, Object> asMap()
+	{
+		return asMap( this );
+	}
+
+	public static HashMap<String, Object> asMap( Object o )
 	{
 		var map = new HashMap<String, Object>();
 		try
 		{
-			for( var f : getClass().getFields() )
+			for( var f : o.getClass().getFields() )
 			{
-				var value = f.get( this );
+				var value = f.get( o );
 				if( value != null )
 				{
 					map.put( f.getName(), value );

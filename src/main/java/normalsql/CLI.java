@@ -65,47 +65,47 @@ public class CLI
         return missing;
     }
 
-    public static void main( String[] args )
-    {
-        String[] blah = { "-u", "sa", "--password", "root" };
+//    public static void main( String[] args )
+//    {
+//        String[] blah = { "-u", "sa", "--password", "root" };
+//
+//        CLI m = new CLI( blah );
+//         m.go( blah );
+//         System.out.println( m );
+//    }
 
-        CLI m = new CLI( blah );
-         m.go( blah );
-         System.out.println( m );
-    }
-
-    String username;
-    int    count;
-    String    stinky;
-
-    public void go( String[] args )
-    {
-        var nu = new ArrayList<String>();
-        for( var arg : args )
-        {
-            if( arg.equals( "--" ) ) break;
-            nu.add( arg );
-        }
-
-        username = getOptional( "nope", "-u", "--username" );
-        count    = getOptional( 1, "count" );
-        stinky   = getOptional( stinky, "--stinky" );
-        // TODO find orphans
-//        source = next();
-//        target = next();
-
-
-    }
-
-
-    @Override
-    public String toString()
-    {
-        final StringBuffer sb = new StringBuffer( "Main\n{" );
-        sb.append( "\nusername='" ).append( username ).append( '\'' );
-        sb.append( ", \ncount=" ).append( count );
-        sb.append( ", \nstinky='" ).append( stinky ).append( '\'' );
-        sb.append( "\n}" );
-        return sb.toString();
-    }
+//    String username;
+//    int    count;
+//    String    stinky;
+//
+//    public void go( String[] args )
+//    {
+//        var nu = new ArrayList<String>();
+//        for( var arg : args )
+//        {
+//            if( arg.equals( "--" ) ) break;
+//            nu.add( arg );
+//        }
+//
+//        username = getOptional( "nope", "-u", "--username" );
+//        count    = getOptional( 1, "count" );
+//        stinky   = getOptional( stinky, "--stinky" );
+//        // TODO find orphans
+////        source = next();
+////        target = next();
+//
+//
+//    }
+//
+//
+//    @Override
+//    public String toString()
+//    {
+//        final StringBuffer sb = new StringBuffer( "Main\n{" );
+//        sb.append( "\nusername='" ).append( username ).append( '\'' );
+//        sb.append( ", \ncount=" ).append( count );
+//        sb.append( ", \nstinky='" ).append( stinky ).append( '\'' );
+//        sb.append( "\n}" );
+//        return sb.toString();
+//    }
 }

@@ -9,7 +9,6 @@ import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
 /**
  *  Maven plugin. Gets populated with config. Then executed.
@@ -56,44 +55,24 @@ public class MavenPlugin
     {
         try
         {
-            // TODO re-verify need to use absolute path for later steps
-            Path sourceDir = Paths.get( source ).toAbsolutePath();
-            getLog().info( "source: " + source );
-            if( Files.notExists( sourceDir ))
-			{
-                // TODO add phase, id, goal for better context?
-                throw new FileNotFoundException( "Source directory does not exist: " + sourceDir );
-            }
-
-            Path targetDir  = Paths.get( target ).toAbsolutePath();
-            if( Files.notExists( targetDir ))
-			{
-                Files.createDirectories( targetDir );
-                project.addCompileSourceRoot( targetDir.toAbsolutePath().toString() );
-            }
-
-            if( url == null )
-            {
-                throw new NullPointerException( "JDBC URL is null" );
-            }
-
+//            getLog().info( "source: " + source );
             Config config = new Config();
             config.description = description;
-            config.url = url;
-            config.username = username;
-            config.password = password;
-            config.source = sourceDir;
-            config.target = targetDir;
-            config.pkg = pkg;
-            config.extension = extension;
+            config.url         = url;
+            config.username    = username;
+            config.password    = password;
+            config.source      = source;
+            config.target      = target;
+            config.pkg         = pkg;
+            config.extension   = extension;
+            config.validate();
+
+            // Make sure Maven finds our generated files
+            project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
 
             Tool tool = new Tool();
             tool.go( config );
         }
-//        catch( MojoExecutionException mee )
-//        {
-//            throw mee;
-//        }
         catch( Exception e )
         {
             throw new MojoExecutionException( e );
