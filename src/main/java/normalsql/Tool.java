@@ -12,9 +12,6 @@ import static normalsql.Work.asMap;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +52,7 @@ public class
 	public static void main( String[] args )
 	{
 		int exit = 0;
-		String[] blah = { "-u", "sa", "--password", "root" };
+		String[] blah = { "-j", "jdbc:h2:mem:", "-u", "sa", "--password", "root" };
 		args = blah;
 
 		try
@@ -64,27 +61,27 @@ public class
 //			CLI cli = new CLI( args );
 
 			Config c = new Config();
-			c.url       = cli.getOptional( null, "-j", "--url" );
+			c.url       = cli.getOptional( String.class, "-j", "--url" );
+//			c.url       = cli.getOptional( null, "-j", "--url" );
 			c.username  = cli.getOptional( null, "-u", "--username" );
 			c.password  = cli.getOptional( null, "-p", "--password" );
-			c.source    = cli.getOptional( ".", "-s", "--source" );
-			c.target    = cli.getOptional( c.source, "-t", "--target" );
+			c.source    = cli.getOptional( ".", missing, "-s", "--source" );
+			c.target    = cli.getOptional( c.source, missing, "-t", "--target" );
 			c.pkg       = cli.getOptional( null, "-k", "--package" );
-			c.extension = cli.getOptional( ".sql", "-e", "--extension" );
+			c.extension = cli.getOptional( ".sql", missing, "-e", "--extension" );
 //			boolean help = cli.getFlag( "-h", "--help" );
-			boolean empty = cli.nu.isEmpty();
+			if( !cli.nu.isEmpty() )
+			{
+				throw new IllegalArgumentException( "don't understand argument" + cli.nu );
+			}
+
 			c.validate();
 
 			var map = asMap( c );
 			System.out.println( map );
 
-//			if(  config.password )
-//
-//				if( config.url == null || config.url.isEmpty() )
-//				{
-//					throw new Mis
-//				}
-
+			Tool tool = new Tool();
+			tool.go( c );
 
 		}
 		catch( Exception e )
@@ -94,9 +91,6 @@ public class
 		}
 
 		System.exit( exit );
-
-//		Tool tool = new Tool();
-//		tool.go( config );
 	}
 
 	// TODO: Detect if targets need to be (re)created.
@@ -128,31 +122,6 @@ public class
 	public static void init( Props props )
 		throws Exception
 	{
-		{
-			String url = props.getURL();
-			if( url == null )
-			{
-				System.err.println( "JDBC URL cannot be null" );
-				System.exit( -1 );
-			}
-
-			String username = props.getUsername();
-			String password = props.getPassword();
-
-			_conn = DriverManager.getConnection( url, username, password );
-
-			// TODO is this best way to confirm JDBC config?
-			Statement s = _conn.createStatement();
-			if( s.execute( "SELECT 1" ))
-			{
-				ResultSet rs = s.getResultSet();
-				System.out.println( rs );
-			}
-		}
-
-		// TODO verify source exists
-		// TODO pull source & target from command line options
-
 		Path source = Paths.get( "" ).toAbsolutePath();
 		var files = new ArrayList<Path>();
 		Files.walkFileTree( source,
@@ -193,29 +162,6 @@ public class
 			worker.process( work );
 		}
 
-//
-//			// TODO tidy this up. Remove boolean go.
-//			//  ... If file exists and _alwaysOverwrite == false, exit early
-//			boolean go = _alwaysOverwrite;
-//			if( Files.notExists( targetDir ) )
-//			{
-//				Files.createDirectories( targetDir );
-//				go = true;
-//			}
-//			else if( !go || Files.notExists( targetFile ) )
-//			{
-//				go = true;
-//			}
-//
-//			// TODO compare last modified
-//			// TODO flag for always overwrite
-//			if( go )
-//			{
-//				worker.process( work );
-//			}
-//		}
-//	}
-
 		if( _conn != null )
 		{
 			_conn.close();
@@ -225,26 +171,6 @@ public class
 	public void go( Config config )
 		throws Exception
 	{
-		{
-			if( config.url == null )
-			{
-				throw new NullPointerException( "missing JDBC URL" );
-			}
-
-			_conn = DriverManager.getConnection( config.url, config.username, config.password );
-
-			// TODO is this best way to confirm JDBC config?
-			var s = _conn.createStatement();
-			if( s.execute( "SELECT 1" ))
-			{
-				ResultSet rs = s.getResultSet();
-				System.out.println( "JDBC connection verified" );
-			}
-		}
-
-		// TODO verify source exists
-		// TODO pull source & target from command line options
-
 //		Path source = Paths.get( config.source ).toAbsolutePath();
 //		Path target = Paths.get( config.target ).toAbsolutePath();
 		var files = new ArrayList<Path>();

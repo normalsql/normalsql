@@ -14,7 +14,8 @@ public class CLI
         {
             for( var arg : args )
             {
-                // IIRC this is a bash thing. everything after "--" is ignored, to be passed thru next program.
+                // IIRC this is a shell (bash) thing. Everything after "--" is ignored,
+                // to be passed thru to next program.
                 if( arg.equals( "--" ) ) break;
                 nu.add( arg );
             }
@@ -23,11 +24,20 @@ public class CLI
     // TODO getRequired
     // TODO getFlag
 
+    public <T> T getOptional( Class<T> kind, String... keys )
+    {
+        return getOptional( kind, null, keys );
+    }
 
     public <T> T getOptional( T missing, String... keys )
     {
-//        if( missing == null ) throw new NullPointerException( "missing cannot be null" );
-        if( keys == null ) throw new NullPointerException( "keys cannot be null" );
+        Class<T> kind = (Class<T>) missing.getClass();
+        return getOptional( kind, missing, keys );
+    }
+
+    public <T> T getOptional( Class<T> kind, T missing, String... keys )
+    {
+        if( keys == null ) throw new NullPointerException( "key(s) cannot be null" );
 
         int size = nu.size();
         for( int i = 0; i < size; i++ )
@@ -38,22 +48,19 @@ public class CLI
                 {
                     if( i + 1 < size )
                     {
-                        String value = nu.get( i + 1 );
                         nu.remove( i );
-                        nu.remove( i );
+                        var value = nu.remove( i );
 
-                        switch( missing )
+                        T ugh = switch( kind.getClass() )
                         {
-                            case String ignore ->
-                            {
-                                return (T) value;
-                            }
-                            case Integer ignore ->
-                            {
-                                return (T) Integer.valueOf( value );
-                            }
-                            default -> throw new IllegalStateException( "don't know how to convert/cast: " + missing.getClass() );
-                        }
+                            case String ignore -> (T) value;
+                            case Integer ignore -> (T) Integer.valueOf( value );
+                            case null -> null;
+                            default ->
+                                throw new IllegalStateException( "don't know how to convert/cast: " + missing.getClass() );
+                        };
+
+                        return ugh;
                     }
                     else
                     {
@@ -97,15 +104,4 @@ public class CLI
 //
 //    }
 //
-//
-//    @Override
-//    public String toString()
-//    {
-//        final StringBuffer sb = new StringBuffer( "Main\n{" );
-//        sb.append( "\nusername='" ).append( username ).append( '\'' );
-//        sb.append( ", \ncount=" ).append( count );
-//        sb.append( ", \nstinky='" ).append( stinky ).append( '\'' );
-//        sb.append( "\n}" );
-//        return sb.toString();
-//    }
 }
