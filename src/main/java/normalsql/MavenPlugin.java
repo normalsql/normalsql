@@ -71,7 +71,7 @@ public class MavenPlugin
             project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
 
             Tool tool = new Tool();
-            tool.go( config );
+//            tool.go( config );
         }
         catch( Exception e )
         {

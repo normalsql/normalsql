@@ -21,6 +21,9 @@ import java.util.List;
 // TODO support multiple resultsets
 public class Work
 {
+	public Work() {}
+	public Work( Path file ) { sourceFile = file; }
+
 	Statement root;
 
 	public Path sourceDir;

@@ -68,7 +68,7 @@ public class CLI
         return def;
     }
 
-    public boolean done()
+    public boolean ok()
     {
         if( !nu.isEmpty() )
         {

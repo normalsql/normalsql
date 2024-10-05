@@ -60,14 +60,6 @@ public class Config
             }
         }
 
-        var	conn = DriverManager.getConnection( url, username, password );
 
-        // TODO is this best way to confirm JDBC config?
-        var s = conn.createStatement();
-        if( s.execute( "SELECT 1" ))
-        {
-//            ResultSet rs = s.getResultSet();
-            System.out.println( "JDBC connection verified" );
-        }
     }
 }

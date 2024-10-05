@@ -102,7 +102,6 @@ public class
 			return;
 		}
 
-
 		for( var p : visitor.knockouts )
 		{
 			switch( p )

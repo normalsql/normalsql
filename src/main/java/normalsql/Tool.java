@@ -4,16 +4,17 @@
 package normalsql;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
 import static normalsql.Work.asMap;
 
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 
 /*
@@ -55,26 +56,54 @@ public class
 		{
 			CLI cli = new CLI( args );
 
-			Config c = new Config();
-			c.url       = cli.getOptional( "", "-j", "--url" );
-			c.username  = cli.getOptional( "", "-u", "--username" );
-			c.password  = cli.getOptional( "", "-p", "--password" );
-			c.source    = cli.getOptional( ".", "-s", "--source" );
-			c.target    = cli.getOptional( c.source, "-t", "--target" );
-			c.pkg       = cli.getOptional( "", "-k", "--package" );
-			c.extension = cli.getOptional( ".sql", "-e", "--extension" );
+			Config cfg = new Config();
+			cfg.url       = cli.getOptional( "", "-j", "--url" );
+			cfg.username  = cli.getOptional( "", "-u", "--username" );
+			cfg.password  = cli.getOptional( "", "-p", "--password" );
+			cfg.source    = cli.getOptional( "", "-s", "--source" );
+			cfg.target    = cli.getOptional( cfg.source, "-t", "--target" );
+			cfg.pkg       = cli.getOptional( "", "-k", "--package" );
+			cfg.extension = cli.getOptional( ".sql", "-e", "--extension" );
 //			var count = cli.getOptional( 1, "-c", "--count" );
 //			boolean help = cli.getFlag( "-h", "--help" );
 
-			if( cli.done() )
+			// TODO debug logging
+			var map = asMap( cfg );
+			System.out.println( map );
+
+			if( cli.ok() )
 			{
-				c.validate();
+				cfg.validate();
 
-				var map = asMap( c );
-				System.out.println( map );
+				var	conn = DriverManager.getConnection( cfg.url, cfg.username, cfg.password );
 
-				Tool tool = new Tool();
-				tool.go( c );
+				var tool  = new Tool();
+				var files = tool.go( cfg.sourcePath, cfg.extension );
+				var works = new ArrayList<Work>();
+				for( var file : files )
+				{
+					works.add( new Work( file ) );
+				}
+
+				long count = files.size();
+				System.out.printf( "files found %d\n", count );
+
+				if( count > 0 )
+				{
+					var worker = new Worker( conn );
+
+					for( var work : works )
+					{
+						resolvePaths( work, cfg );
+						worker.process( work );
+					}
+				}
+
+				if( conn != null )
+				{
+					conn.close();
+				}
+
 				exit = 0;
 			}
 		}
@@ -87,9 +116,11 @@ public class
 		System.exit( exit );
 	}
 
+
 	// TODO: Detect if targets need to be (re)created.
 
-	static String extension = ".sql";
+//	static String extension = ".sql";
+	/*
 	public static void old_main( String[] args ) throws Exception
 	{
 		String filename = "normalsql.properties";
@@ -112,6 +143,7 @@ public class
 	}
 
 	static Connection _conn = null;
+
 
 	public static void init( Props props )
 		throws Exception
@@ -156,19 +188,15 @@ public class
 			worker.process( work );
 		}
 
-		if( _conn != null )
-		{
-			_conn.close();
-		}
 	}
+	*/
 
-	public void go( Config config )
+	public List<Path> go( Path sourcePath, String extension )
 		throws Exception
 	{
-//		Path source = Paths.get( config.source ).toAbsolutePath();
-//		Path target = Paths.get( config.target ).toAbsolutePath();
 		var files = new ArrayList<Path>();
-		Files.walkFileTree( config.sourcePath,
+		Stream.Builder<Path>  hate = Stream.builder();
+		Files.walkFileTree( sourcePath,
 			new SimpleFileVisitor<>()
 			{
 				@Override
@@ -193,64 +221,38 @@ public class
 				}
 			}
 		);
-
-		System.out.printf( "files found %d\n", files.size() );
-
-		var works = resolve( files, config.sourcePath, config.targetPath );
-
-		var worker = new Worker( _conn );
-		for( var work : works )
-		{
-			worker.process( work );
-		}
-
-		// TODO compare last modified
-		if( _conn != null )
-		{
-			_conn.close();
-		}
+		return files;
 	}
 
 	/**
 	 * Generates list of Work (to be done) from source files found
 	 *
-	 * @param files
-	 * @param sourceRoot
-	 * @param targetRoot
+	 * @param work
+	 * @param config
 	 * @return
 	 */
-	public static List<Work> resolve( List<Path> files, Path sourceRoot, Path targetRoot )
-		throws IOException
+	public static void resolvePaths( Work work, Config config )
 	{
-		var works = new ArrayList<Work>();
+		work.sourceDir = work.sourceFile.getParent();
+		// Duplicate directory structure for output
+		Path packagePath = config.sourcePath.relativize( work.sourceDir );
+		work.targetDir = config.targetPath.resolve( packagePath );
+//		if( Files.notExists( work.targetDir ))
+//		{
+//			Files.createDirectories( work.targetDir );
+//		}
 
-		for( var sourceFile : files )
-		{
-			var work = new Work();
-			work.sourceFile = sourceFile;
-			work.sourceDir = sourceFile.getParent();
-			// Duplicate directory structure for output
-			Path packagePath = sourceRoot.relativize( work.sourceDir );
-			work.targetDir = targetRoot.resolve( packagePath );
-			if( Files.notExists( work.targetDir ))
-			{
-				Files.createDirectories( work.targetDir );
-			}
+		// infers packa`ge name from directory structure
+		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
-			// infers package name from directory structure
-			work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
+		var clazz = getSimpleName( work.sourceFile );
+		work.statementClassName = clazz;
 
-			var clazz = getBaseName( sourceFile );
-			work.statementClassName = clazz;
-			// TODO custom suffix for ResultSet
-			work.resultSetClassName = work.statementClassName + "ResultSet";
+		// TODO custom suffix for ResultSet
+		work.resultSetClassName = work.statementClassName + "ResultSet";
 
-			// TODO why isn't targetFile for ResultSet class also here?
-			work.targetFile = work.targetDir.resolve( clazz + ".java" );
-
-			works.add( work );
-		}
-		return works;
+		// TODO why isn't targetFile for ResultSet class also here?
+		work.targetFile = work.targetDir.resolve( clazz + ".java" );
 	}
 
 
@@ -264,10 +266,11 @@ public class
 //		return ext.matcher( file.getName() ).replaceAll( "" );
 //	}
 
-	public static String getBaseName( Path file )
+	public static String getSimpleName( Path file )
 	{
+		// TODO fix this
 		var name = file.getFileName().toString();
-		int len = name.length() - extension.length();
+		int len = name.length() - ".sql".length();
 		var base = name.substring( 0, len );
 		return base;
 	}
