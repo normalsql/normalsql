@@ -331,7 +331,7 @@ public class
 
 			if( column.item() != null )
 			{
-				column.original( column.item().context.getText() );
+				column.original( column.item().verbatim );
 			}
 			else
 			{

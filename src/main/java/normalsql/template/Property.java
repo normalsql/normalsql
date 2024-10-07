@@ -21,29 +21,29 @@ public abstract class
 	 */
 	public String original;
 
-	public LiteralContext context() {return context;}
-	public void context(LiteralContext context	) { this.context = context; }
+	public LiteralContext context() { return context; }
+	public void context( LiteralContext context ) { this.context = context; }
 
-	public int nth() {return nth;}
-	public void nth( int nth	) { this.nth = nth; }
+	public int nth() { return nth; }
+	public void nth( int nth ) { this.nth = nth; }
 
-	public int sqlType() {return sqlType;}
+	public int sqlType() { return sqlType; }
 	public void sqlType( int sqlType ) { this.sqlType = sqlType; }
 
 	public String sqlTypeName() { return sqlTypeName; }
 	public void sqlTypeName( String sqlTypeName ) { this.sqlTypeName = sqlTypeName; }
 
-	public String className() {return className;}
-	public void className(String className	) { this.className = className; }
+	public String className() { return className; }
+	public void className( String className ) { this.className = className; }
 
-	public String getter() {return getter;}
-	public void getter(String getter	) { this.getter = getter; }
+	public String getter() { return getter; }
+	public void getter( String getter ) { this.getter = getter; }
 
-	public String setter() {return setter;}
-	public void setter(String setter	) { this.setter = setter; }
+	public String setter() { return setter; }
+	public void setter( String setter ) { this.setter = setter; }
 
-	public String variable() {return variable;}
-	public void variable(String variable	) { this.variable = variable; }
+	public String variable() { return variable; }
+	public void variable( String variable ) { this.variable = variable; }
 
 	/**
 	 * LiteralContext
@@ -89,7 +89,7 @@ public abstract class
 	public int isNullable() {return isNullable;}
 	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
 
-	public String original() {return original;}
+	public String original() { return original; }
 
-	public void original(String original ) { this.original = original; }
+	public void original( String original ) { this.original = original; }
 }

@@ -67,9 +67,17 @@ extends
 	{
 		// TODO: Could or should these be inlined into visitSelect?
 		var item = new Item();
-		item.context = context;
-		item.source = tokens.getText( context );
-		item.name = tokens.getText( context.term() );
+		item.context  = context;
+		item.verbatim = tokens.getText( context );
+
+		String name = tokens.getText( context.term() );
+		// Use just the name; remove any reference prefixes
+		if( name.contains( "." ))
+		{
+			name = name.substring( name.lastIndexOf( "." ) + 1 );
+		}
+		item.name = name;
+		
 		if( context.alias() != null )
 		{
 			item.alias = tokens.getText( context.alias() );

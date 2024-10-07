@@ -17,12 +17,16 @@ extends
 //	public String schema;
 //	public String table;
 	public String name;
-	public String name() {return name;}
+	public String name() { return name; }
 	public void name( String name ) { this.name = name; }
 
-	public String label;
-	public String label() {return label;}
-	public void label(String label ) { this.label = label; }
+	/**
+	 * ResultSet column label is either the item's name or alias. We use "alias" here
+	 * for clarity later when matching up items and columns.
+	 */
+	public String alias;
+	public String label() { return alias; }
+	public void label( String label ) { this.alias = label; }
 
 	public Item item;
 	public Item item() { return item; }

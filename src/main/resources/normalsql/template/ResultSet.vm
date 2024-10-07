@@ -144,13 +144,13 @@ public class
 ##	private ${c.className} _${c.variable} = ${c.initial};
 	private ${c.className} _${c.variable};
 	/**
-	 * @return column "${c.original}"
+	 * @return item "${c.original}"
 	*/
 	public ${c.className} ${c.getter}() { return _${c.variable}; }
 	#if( $c.isNullable )
 	private boolean _${c.variable}_wasNull = false;
 	/**
-	 * @return true if column "${c.original}" was NULL
+	 * @return true if item "${c.original}" was NULL
 	 */
 	public boolean ${c.getter}WasNull() { return _${c.variable}_wasNull; }
 	#end
