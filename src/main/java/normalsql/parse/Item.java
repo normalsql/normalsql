@@ -18,8 +18,8 @@ import normalsql.parse.NormalSQLParser.ItemContext;
 public class Item
 {
 	public ItemContext context;
-	public String name;
-	public String alias;
+	public String      localName;
+	public String      alias;
 	/**
 	 * Actual source code of original SELECT item. Not called "source" to disambiquate.
 	 */

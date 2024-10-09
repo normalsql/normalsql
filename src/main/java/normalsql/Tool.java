@@ -4,14 +4,12 @@
 package normalsql;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
 import static normalsql.Work.asMap;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -114,6 +112,17 @@ public class
 		}
 
 		System.exit( exit );
+	}
+
+	// TODO put this somewhere useful
+	public static String getLocalName( String qname )
+	{
+		// Use just the name; remove any reference prefixes
+		if( qname.contains( "." ))
+		{
+			qname = qname.substring( qname.lastIndexOf( "." ) + 1 );
+		}
+		return qname;
 	}
 
 
@@ -245,7 +254,7 @@ public class
 		// infers packa`ge name from directory structure
 		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
-		var clazz = getSimpleName( work.sourceFile );
+		var clazz = getClassSimpleName( work.sourceFile );
 		work.statementClassName = clazz;
 
 		// TODO custom suffix for ResultSet
@@ -266,7 +275,7 @@ public class
 //		return ext.matcher( file.getName() ).replaceAll( "" );
 //	}
 
-	public static String getSimpleName( Path file )
+	public static String getClassSimpleName( Path file )
 	{
 		// TODO fix this
 		var name = file.getFileName().toString();

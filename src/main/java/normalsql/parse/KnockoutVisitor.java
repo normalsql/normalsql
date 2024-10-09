@@ -3,6 +3,7 @@
 
 package normalsql.parse;
 
+import static normalsql.Tool.getLocalName;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
@@ -70,14 +71,9 @@ extends
 		item.context  = context;
 		item.verbatim = tokens.getText( context );
 
-		String name = tokens.getText( context.term() );
-		// Use just the name; remove any reference prefixes
-		if( name.contains( "." ))
-		{
-			name = name.substring( name.lastIndexOf( "." ) + 1 );
-		}
-		item.name = name;
-		
+		String qname = tokens.getText( context.term() );
+		item.localName = getLocalName( qname );
+
 		if( context.alias() != null )
 		{
 			item.alias = tokens.getText( context.alias() );

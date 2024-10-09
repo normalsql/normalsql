@@ -196,9 +196,9 @@ public class
 		var pmd = ps.getParameterMetaData();
 		if( pmd != null )
 		{
+			// SQL arrays are 1-based
 			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
 			{
-				// Remember that SQL arrays are 1-based
 				var param = work.params.get( nth - 1 );
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
@@ -287,17 +287,18 @@ public class
 	 * @param b
 	 * @return qname (qualified name) of a resultset column
 	 */
-	public String getColumnQname(SubtermContext b )
+	public String getColumnQname( SubtermContext b )
 	{
 		var column = ( (SubtermColumnContext) b ).qname();
 		return _helper.getTrimmedText( column );
 	}
 
 	/**
-	 * Match query 'items' from original SQL to ResultSet's result columns. If original SQL
-	 * used wildcard '*', there will be more columns than items. Assumes items and
-	 * result columns appear in same order. There can be more result columns than items.
+	 * Match SELECT items to ResultSet columns. When SELECT items use wildcard '*', there can be more
+	 * ResultSet columns than SELECT items. Assumes items and result columns appear in same order.
 	 *
+	 * TODO Use database's case sensitivity settings & quoted ids must be exact match
+	 * TODO ensure each column matches just one time, eg "SELECT 1 AS name, 2 AS name"
 	 */
 	void matchItemsToColumns( List<Item> items, List<ResultSetColumn> columns )
 	{
@@ -311,7 +312,7 @@ public class
 			// TODO eventually, account for locale, collation, etc. use IBM's ICU lib?
 			for( var item : items )
 			{
-				if( column.name().equalsIgnoreCase( item.name ))
+				if( column.name().equalsIgnoreCase( item.localName ))
 				{
 					if( label.equalsIgnoreCase( item.alias ))
 					{
@@ -320,9 +321,9 @@ public class
 						break;
 					}
 					// TODO per best match idea above, this logic might be wrong for yet unknown edge cases. need test coverage.
-					else if( label.equalsIgnoreCase( item.name ))
+					else if( label.equalsIgnoreCase( item.localName ))
 					{
-						label = item.name;
+						label = item.localName;
 						column.item( item );
 						break;
 					}

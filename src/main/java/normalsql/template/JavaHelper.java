@@ -8,10 +8,15 @@
 */
 package normalsql.template;
 
+import static normalsql.Tool.getLocalName;
 import org.antlr.v4.runtime.RuleContext;
 
 //import static java.lang.Character.toLowerCase;
 //import static java.lang.Character.toUpperCase;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static java.sql.Types.*;
 
 public class
@@ -59,8 +64,17 @@ public class
 		return trimQuotes( text );
 	}
 
+	// TODO maybe (re)use alias if parameter's name matches a SELECT item
 	public void signatures( Property property, String... method )
 	{
+//		List<String> ffs = new ArrayList<String>( method );
+//		method.forEach( System.out::println );
+		for( int i = 0; i < method.length; i++ )
+		{
+			var temp = method[i];
+			method[i] = getLocalName( temp );
+		}
+
 		property.variable( toVariableCase( method ) );
 		property.getter( "get" + toMethodCase( method ) );
 		property.setter( "set" + toMethodCase( method ) );
