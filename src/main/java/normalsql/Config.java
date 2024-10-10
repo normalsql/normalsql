@@ -8,8 +8,6 @@ import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.DriverManager;
-//import java.sql.ResultSet;
 
 /**
  * <p>Config class.</p>
@@ -59,7 +57,5 @@ public class Config
                 throw new NullPointerException( "using password also requires username" );
             }
         }
-
-
     }
 }

@@ -345,7 +345,7 @@ public class
 
 	public void merge( Work work ) throws IOException
 	{
-		var childMap = work.asMap();
+		var childMap = work.toMap();
 		childMap.put( "esc", new EscapeTool() );
 		// TODO change to 'now', use same Date for all artifacts
 		childMap.put( "now", _now );

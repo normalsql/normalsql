@@ -8,14 +8,11 @@
 */
 package normalsql.template;
 
-import static normalsql.Tool.getLocalName;
+import static normalsql.Glorp.getLocalName;
 import org.antlr.v4.runtime.RuleContext;
 
 //import static java.lang.Character.toLowerCase;
 //import static java.lang.Character.toUpperCase;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static java.sql.Types.*;
 

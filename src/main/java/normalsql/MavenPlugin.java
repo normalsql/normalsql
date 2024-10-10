@@ -5,11 +5,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 
-import java.io.FileNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 /**
  *  Maven plugin. Gets populated with config. Then executed.
  *
@@ -71,7 +66,7 @@ public class MavenPlugin
             project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
 
             Tool tool = new Tool();
-//            tool.go( config );
+            tool.generate( config );
         }
         catch( Exception e )
         {

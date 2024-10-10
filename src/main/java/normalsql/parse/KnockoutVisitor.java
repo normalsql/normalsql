@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import static normalsql.Tool.getLocalName;
+import static normalsql.Glorp.getLocalName;
 import normalsql.parse.NormalSQLParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;

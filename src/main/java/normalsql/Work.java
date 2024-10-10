@@ -9,11 +9,11 @@ import normalsql.parse.Statement;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Represents the work of processing one (1) SQL source file.
+ * Represents the unit of work for processing one (1) SQL source file.
  *
  */
 
@@ -41,58 +41,13 @@ public class Work
 	public List<ResultSetColumn> columns = new ArrayList<>();
 
 	/**
-	 * "Serializes" this POJO into a HashMap, to be used as 'context map' for
-	 * Velocity templates. Only adds 'public' fields to resulting map.
-	 * <p>
-	 * Passing values into a Velocity template sucks. This is the least
-	 * turrible strategy I could think of.
+	 * Calls Glorp.toMap() on self.
 	 *
-	 * @return a {@link java.util.HashMap} object
+	 * @return Map
 	 */
-//	public HashMap<String, Object> asMap()
-//	{
-//		var map = new HashMap<String, Object>();
-//		try
-//		{
-//			for( var f : getClass().getFields() )
-//			{
-//				var value = f.get( this );
-//				if( value != null )
-//				{
-//					map.put( f.getName(), value );
-//				}
-//			}
-//		}
-//		catch( IllegalAccessException e )
-//		{
-//			// do nothing
-//		}
-//		return map;
-//	}
-
-	public HashMap<String, Object> asMap()
+	public Map<String, Object> toMap()
 	{
-		return asMap( this );
+		return Glorp.toMap( this );
 	}
 
-	public static HashMap<String, Object> asMap( Object o )
-	{
-		var map = new HashMap<String, Object>();
-		try
-		{
-			for( var f : o.getClass().getFields() )
-			{
-				var value = f.get( o );
-				if( value != null )
-				{
-					map.put( f.getName(), value );
-				}
-			}
-		}
-		catch( IllegalAccessException e )
-		{
-			// do nothing
-		}
-		return map;
-	}
 }
