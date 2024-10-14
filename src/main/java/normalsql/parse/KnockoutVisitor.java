@@ -32,9 +32,6 @@ extends
 	@Override
 	public Void visitScript( ScriptContext context )
 	{
-//		knockouts = new ArrayList<>();
-//
-//		statementStack = new Stack<>();
 		root = new Statement();
 		statementStack.add( root );
 		// TODO create contexts stack, so rules can match on parent too
@@ -51,6 +48,17 @@ extends
 		statementStack.push( child );
 		parent.add( child );
 		return super.visitDelete( context );
+	}
+
+	@Override
+	public Void visitUpdate( UpdateContext context )
+	{
+		// TODO StatementStack w/ auto parenting
+		var parent = statementStack.peek();
+		var child = new Update();
+		statementStack.push( child );
+		parent.add( child );
+		return super.visitUpdate( context );
 	}
 
 	@Override
@@ -204,6 +212,7 @@ extends
 			case SubtermCompareContext compare -> new Comparison( compare );
 			case SubtermINContext in -> new IN( in );
 			case SubtermLIKEContext like -> new LIKE( like );
+			case SetterContext setter -> new Setter( setter );
 			default -> null;
 		};
 

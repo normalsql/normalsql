@@ -37,9 +37,10 @@ public class
 	          String _now;
 	      Connection _conn;
   	  VelocityEngine _engine;
-            Template _selectTemplate;
 	        Template _insertTemplate;
 	        Template _deleteTemplate;
+	        Template _updateTemplate;
+            Template _selectTemplate;
 	        Template _resultSetTemplate;
 		  JavaHelper _helper;
 
@@ -58,9 +59,10 @@ public class
 		_engine.setProperty( RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.UberspectPublicFields, org.apache.velocity.util.introspection.UberspectImpl" );
 		_engine.init();
 
-		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
 		_insertTemplate = _engine.getTemplate( "normalsql/template/Insert.vm" );
 		_deleteTemplate = _engine.getTemplate( "normalsql/template/Delete.vm" );
+		_updateTemplate = _engine.getTemplate( "normalsql/template/Update.vm" );
+		_selectTemplate = _engine.getTemplate( "normalsql/template/Select.vm" );
 		_resultSetTemplate = _engine.getTemplate( "normalsql/template/ResultSet.vm" );
 		_helper = new JavaHelper();
 
@@ -104,6 +106,12 @@ public class
 
 		for( var p : visitor.knockouts )
 		{
+			// TODO this doesn't work yet because bugs in knockouts
+			if( !p.isMatched() )
+			{
+				System.out.println( "parameter expression not match(able): " + p.context.getText() );
+			}
+
 			switch( p )
 			{
 				case BETWEEN b ->
@@ -142,16 +150,6 @@ public class
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
-				case LIKE m ->
-				{
-					var column = getColumnQname( m.column );
-					var param = new PreparedStatementParameter( m.literal );
-					_helper.signatures( param, column );
-					work.params.add( param );
-				}
-
-				// TODO ANY predicate
-
 				case IN in ->
 				{
 					var column = getColumnQname( in.column );
@@ -164,6 +162,23 @@ public class
 						work.params.add( param );
 					}
 				}
+				case LIKE m ->
+				{
+					var column = getColumnQname( m.column );
+					var param = new PreparedStatementParameter( m.literal );
+					_helper.signatures( param, column );
+					work.params.add( param );
+				}
+				case Setter setter ->
+				{
+					var temp = setter.qname.getText();
+					var column = _helper.trimQuotes( temp );
+					var param = new PreparedStatementParameter( setter.literal );
+					_helper.signatures( param, column );
+					work.params.add( param );
+				}
+
+				// TODO ANY predicate
 
 				case Row row ->
 				{
@@ -366,6 +381,9 @@ public class
 
 			case Delete ignored ->
 				generate( _deleteTemplate, vc, work.targetDir, work.statementClassName );
+
+			case Update ignored ->
+				generate( _updateTemplate, vc, work.targetDir, work.statementClassName );
 
 	        default ->
 				System.out.println( "unrecognized: " + statement.getClass() );
