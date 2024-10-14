@@ -1,24 +1,24 @@
-## Copyright 2010-2023 Jason Osgood
+## Copyright 2010-2024 Jason Osgood
 ## SPDX-License-Identifier: Apache-2.0
 
 ## NormalSQL - INSERT Statement Template for Java & JDBC
 ##
-## Copyright 2023, 2022, 2014, 2011, 2010 Jason Osgood
+## Copyright 2024, 2023, 2022, 2014, 2011, 2010 Jason Osgood
 ##
 ## Template Parameters:
 ##
 ##     esc - EscapeTool
-##     date - current timestamp
+##     now - current timestamp
 ##     packageName - target Java package name as String
 ##     statementClassName - target Java class name for PreparedStatement wrapper as String
-##     resultSetClassName - target Java class name for ResultSet wrapper as String
 ##     sourceFile - name of original .sql file
 ##     originalSQL - original unparsed SQL
 ##     preparedSQL - prepared statement version of originalSQL
 ##     printfSQL - printf version of originalSQL, for debugging
-##     properties - List<Property>, meta data for getters and setters
+##     params - List<PreparedStatementParameter>, meta data for getters and setters
 /**
-* ${statementClassName}.java ${date}
+* ${statementClassName}.java
+* ${now}
 *
 ## TODO put actual filename and its timestamp here.
 * Generated using NormalSQL's Insert.vm template.
@@ -105,7 +105,7 @@ public class
 	public final ResultSet execute()
 		throws SQLException
 	{
-        #foreach( $p in $properties )
+        #foreach( $p in $params )
         __ps.setObject( ${p.nth}, ${p.getter}() );
         #end
 
@@ -115,8 +115,8 @@ public class
     }
 
 	// TODO add null check to setters (when !isnullable)
-    #foreach( $p in $properties )
-    private ${p.className} _${p.variable} = ${p.asCode};
+    #foreach( $p in $params )
+    private ${p.className} _${p.variable} = ${p.translated};
     public void ${p.setter}( ${p.className} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.className} ${p.getter}() { return _${p.variable}; }
 
@@ -125,7 +125,7 @@ public class
 	public String toString()
 	{
 		return String.format( __printfSQL
-            #foreach( $p in $properties )
+            #foreach( $p in $params )
             , ${p.getter}()
             #end
 		);

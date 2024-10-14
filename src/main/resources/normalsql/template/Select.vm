@@ -8,7 +8,7 @@
 ## Template Parameters:
 ##
 ##     esc - EscapeTool
-##     date - current timestamp
+##     now - current timestamp
 ##     packageName - target Java package name as String
 ##     statementClassName - target Java class name for PreparedStatement wrapper as String
 ##     resultSetClassName - target Java class name for ResultSet wrapper as String
