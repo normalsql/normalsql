@@ -224,13 +224,8 @@ public class
 //				param.precision( pmd.getPrecision( nth ));
 //				param.mode( pmd.getParameterMode( nth ));
 				param.className( pmd.getParameterClassName( nth ));
-
-//				for( var param : work.params )
-				{
-					var trimmed = _helper.trimQuotes( param.original() );
-					param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
-				}
-
+				var trimmed = _helper.trimQuotes( param.original() );
+				param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
 			}
 		}
 
