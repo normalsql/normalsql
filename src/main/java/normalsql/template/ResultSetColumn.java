@@ -6,16 +6,22 @@ package normalsql.template;
 import normalsql.parse.Item;
 
 /**
- * POJO representing ResultSet column's metadata
+ * POJO representing ResultSet column's metadata.
+ *
+ * Velocity's reflection (introspection) doesn't find "naked" public instance variables.
+ * Had to add JavaBean style accessors.
+ *
+ * TODO Does EscapeVelocity (Velocity rewrite) work w/o accessors?
 */
 public class
 	ResultSetColumn
 extends
 	Property
 {
-//	public String catalog;
-//	public String schema;
-//	public String table;
+	public String catalog;
+	public String schema;
+	public String table;
+
 	public String name;
 	public String name() { return name; }
 	public void name( String name ) { this.name = name; }

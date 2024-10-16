@@ -31,6 +31,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static normalsql.TableIdentifierInspector.findTableIdentifier;
+
 public class
 	Worker
 {
@@ -252,10 +254,9 @@ public class
 			{
 				var column = new ResultSetColumn();
 				column.nth( nth );
-//				Column column = work.resultSetProperties.get( nth - 1 );
-//				column.catalog = md.getCatalogName( nth );
-//				column.schema = md.getSchemaName( nth );
-//				column.table = md.getTableName( nth );
+				column.catalog = md.getCatalogName( nth );
+				column.schema = md.getSchemaName( nth );
+				column.table = md.getTableName( nth );
 				column.name( md.getColumnName( nth ));
 				column.label( md.getColumnLabel( nth ));
 				column.sqlType( md.getColumnType( nth ));
@@ -274,8 +275,11 @@ public class
                 // TODO foreach statement this, to support unions, multiple statements, and such
                 //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
 				matchItemsToColumns( statement.items, work.columns );
-			case Insert ignored ->
+			case Insert insert ->
 			{
+				var table = insert.table.getText();
+				findTableIdentifier( null, null, table, _conn );
+//				var column = work.columns.get( 0 );
 				// TODO fill in missing columns
 			}
 			case Delete ignored ->
