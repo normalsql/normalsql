@@ -102,16 +102,24 @@ public class
 	/**
 	 * Returns ResultSet of generated keys. @see java.sql.Statement#getGeneratedKeys()
 	 */
-	public final ResultSet execute()
+	public final ${keyClassName} execute()
 		throws SQLException
 	{
+		${keyClassName} key = null;
+
         #foreach( $p in $params )
         __ps.setObject( ${p.nth}, ${p.getter}() );
         #end
 
-		__ps.execute();
-		ResultSet rs = __ps.getGeneratedKeys();
-        return rs;
+		if( __ps.execute() )
+		{
+			ResultSet rs = __ps.getGeneratedKeys();
+			if( rs.next() )
+			{
+				key = (${keyClassName}) rs.getObject( 1 );
+			}
+		}
+        return key;
     }
 
 	// TODO add null check to setters (when !isnullable)

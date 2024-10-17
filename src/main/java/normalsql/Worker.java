@@ -31,7 +31,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static normalsql.TableIdentifierInspector.findTableIdentifier;
+import static normalsql.TableIdentifierInspector.inferGeneratedKeyType;
+import static normalsql.template.SQLTypeConverter.getJavaClassName;
 
 public class
 	Worker
@@ -278,7 +279,11 @@ public class
 			case Insert insert ->
 			{
 				var table = insert.table.getText();
-				findTableIdentifier( null, null, table, _conn );
+				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
+				var clazz = getJavaClassName( sqlType );
+				System.out.println( "clazz: " + clazz );
+				work.keyClassName = clazz;
+
 //				var column = work.columns.get( 0 );
 				// TODO fill in missing columns
 			}

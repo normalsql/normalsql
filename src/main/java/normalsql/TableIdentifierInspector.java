@@ -8,7 +8,7 @@ import static normalsql.jdbc.Dumper.dumpResultSet;
 public class TableIdentifierInspector
 {
 
-    public static int findTableIdentifier( String catalog, String schema, String table, Connection connection )
+    public static int inferGeneratedKeyType(String catalog, String schema, String table, Connection connection )
         throws SQLException
     {
         int sqlType = Types.INTEGER;
@@ -28,10 +28,10 @@ public class TableIdentifierInspector
         for( var column : columns )
         {
             var digger = metaData.getColumns( catalog, schema, table, column );
-            dumpResultSet( digger );
+//            dumpResultSet( digger );
             if( digger.next() )
             {
-                var gorp = digger.getObject( 1 );
+                sqlType = digger.getInt( "DATA_TYPE" );
             }
         }
 

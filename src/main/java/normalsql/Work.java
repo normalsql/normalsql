@@ -39,6 +39,10 @@ public class Work
 
 	public List<PreparedStatementParameter> params = new ArrayList<>();
 	public List<ResultSetColumn> columns = new ArrayList<>();
+	/**
+	 * Class name of generated key returned by INSERT statements
+	 */
+	public String keyClassName = "not used";
 
 	/**
 	 * Calls Glorp.toMap() on self.
