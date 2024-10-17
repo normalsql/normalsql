@@ -1,84 +1,103 @@
 ## NormalSQL
 
-NormalSQL parses normal SQL statements (SELECT, INSERT, etc), finds the parameters 
-and columns, and generates convenient wrappers.
+Get quicker results using your SQL source files to code generate wrappers. No need for mappings, annotations, DSLs, or string templates. Just use NormalSQL.
 
-NormalSQL defines the "SQL-first" workflow. Use normal SQL to generate application
-source code. There are no mappings, templates, or DSLs.
+### Simple Example
 
-### Most Simple Example
-
-Start with the file [SelectPeopleOlderThan.sql](doc/example/SelectPeopleOlderThan.sql) containing this query:
+Given this SQL source file ([SimpleSelect.sql](doc/example/SimpleExample.sql)):
 
 ```sql
-SELECT name FROM people WHERE age > 18
+SELECT first, last, age FROM people WHERE age > 18
+```
+NormalSQL generates a PreparedStatement wrapper ([SimpleExample.java](doc/example/SelectPeopleOlderThan.java)) and its matching ResultSet ([SimpleExampleResultSet.java](doc/example/SelectPeopleOlderThanResultSet.java)):
+```java
+// pseudo-code
+class SimpleSelect 
+    int ageGT = 18
+    SimpleSelectResultSet execute()
+        
+class SimpleSelectResultSet 
+    boolean next()
+    String first
+    String last
+    int age
 ```
 
-NormalSQL generates [SelectPeopleOlderThan.java](doc/example/SelectPeopleOlderThan.java) and [SelectPeopleOlderThanResultSet.java](doc/example/SelectPeopleOlderThanResultSet.java).
-
-The condition `age > 18` is converted into a prepared statement parameter.
+Here's how your app will use these wrappers:
 
 ```java
 // pseudo-code
-class SelectPeopleOlderThan 
+try
+( 
+    conn = DriverManager.getConnection( ... )
+    select = new SimpleSelect( conn )
+) 
 {
-    // Literal has been replaced with a parameter
-    String _sql = "SELECT name FROM people WHERE age > ?";
-	
-    // Original literal is used as the default value
-    int _age = 18;
-	
-    // 'Greater Than' (GT) operand is used as suffix
-    void setAgeGT( int age ) { _age = age; }
-    
-    GetPeopleOlderThanResultSet execute() { ... }
-}
-```
-The column `name` is converted into an accessor:
-```java
-// pseudo-code
-class SelectPeopleOlderThanResultSet implements Iterable<Row>
-{
-    // inner-class
-    class Row
+    select.ageGT = 21 
+    results = select.execute()
+
+    while( results.next() ) 
     {
-        String getName();
+        println( results )
     }
 }
 ```
 
-Your application will look something like this:
-
-```java
-Connection conn = DriverManager.getConnection( ... );
-
-GetPeopleOlderThan select = new GetPeopleOlderThan( conn );
-
-select.setAgeGT( 21 );
-
-GetPeopleOlderThanResultSet rs = select.execute();
-
-for( GetPeopleOlderThanResultSet.Row row : rs )
-{
-    System.out.println( row.getName() );
-}
-
-rs.close();
-select.close();
-```
-
 What could be easier?
 
+## Usage
 
-## SQL Grammar Support
+To work its magic, NormalSQL requires a live running instance of the target database(s).
 
-NormalSQL supports SQL-92 thru SQL-2016. This includes CTEs, JOINs, UNIONs, functions, and so forth.
+### Petclinic (Inspired) Demo
 
-NormalSQL has initial support for multiple dialects of SQL, including Postgress, MySQL, SQL Server, SQLite.
+The [normalsql-demo]() IntelliJ & Maven project shows typical CRUD usage. (Minus the distracting webserver and front-end.) It conveniently includes pre-generated wrappers.
 
-The initial test harness started quite modest, but is growing rapidly. Like all third 
-party SQL parsers, support will improve as NormalSQL matures. Please submit
-any potential bugs and errors.
+### Maven Plugin
+
+```xml
+<plugin>
+  <groupId>org.normalsql</groupId>
+  <artifactId>normalsql</artifactId>
+  <version>0.0.1</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>normalsql</goal>
+      </goals>
+    </execution>
+  </executions>
+  <configuration>
+    <url>jdbc:h2:tcp://localhost/petclinic</url>
+    <username>username</username>
+    <password>password</password>
+  </configuration>
+</plugin>
+```
+NormalSQL's plugin is bound to the `generate-sources` phase, therefore runs before `compile`. So normally you'd do full rebuilds like this:
+```shell
+$ mvn clean compile
+```
+Or just re-run NormalSQL as needed:
+```shell
+$ mvn normalsql:normalsql
+```
+
+### Command Line
+
+Details go here.
+
+### IntelliJ Extension
+
+Details go here.
+
+# SQL Support
+
+NormalSQL recognizes DML statements from SQL-92 thru SQL-2016. This includes CTEs, JOINs, UNIONs, aggregate functions, and so forth.
+
+List of sample SQLs use for testing goes here.
+
+
 
 ### Benefits
 
@@ -173,23 +192,11 @@ rs.close();
 select.close();
 ```
 
+# Configuration
 
-## Example Project
-
-# Usage
-
-## Maven Plugin
-
-TODO
+## Maven
 
 ## Command Line
-
-NormalSQL uses metadata to infer data types of columns and predicates. It
-requires a live running instance of the target database(s) during processing.
-
-
-
-### Command Line
 
 Optionally specify .properties. Optionally specify initial source directory.
 
