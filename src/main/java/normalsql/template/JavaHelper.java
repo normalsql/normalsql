@@ -195,102 +195,42 @@ public class
 	 */
 	public String toPrintfConverter( int sqlType )
 	{
-		String result = null;
-		switch( sqlType )
-		{
-//			case ARRAY:
-//				result = "java.sql.Array";
-//				break;
-			case BIGINT:
-				result = "%d";
-				break;
-//			case BINARY:
-//				result = "byte[]";
-//				break;
-			case BIT:
-				result = "%b";
-				break;
-//			case BLOB:
-//				result = "java.sql.Blob";
-//				break;
-			case BOOLEAN:
-				result = "%b";
-				break;
-			case CHAR:
-				result = "'%s'";
-				break;
-//			case CLOB:
-//				result = "java.sql.Clob";
-//				break;
-//			case DATALINK:
-//				throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
-			case DATE:
-				result = "'%t'";
-				break;
-			case DECIMAL:
-				result = "%f";
-				break;
-			case DISTINCT:
-				result = "%d";
-				break;
-			case DOUBLE:
-				result = "%f";
-				break;
-			case FLOAT:
-				result = "%f";
-				break;
-			case INTEGER:
-				result = "%d";
-				break;
-//			case JAVA_OBJECT:
-//				throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
-//			case LONGVARBINARY:
-//				result = "byte[]";
-//				break;
-			case LONGVARCHAR:
-			case LONGNVARCHAR:
-				result = "'%s'";
-				break;
-
-			case NUMERIC:
-				result = "%d";
-				break;
-//			case NULL:
-//				throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
-//			case OTHER:
-//				throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
-			case REAL:
-				result = "%f";
-				break;
-//			case REF:
-//				result = "java.sql.Ref";
-//				break;
-			case SMALLINT:
-				result = "%d";
-				break;
-//			case STRUCT:
-//				result = "java.sql.Struct";
-//				break;
-			case TINYINT:
-				result = "%d";
-				break;
-//			case TIME:
-//				result = "java.sql.Time";
-//				break;
-//			case TIMESTAMP:
-//				result = "java.sql.Timestamp";
-//				break;
-//			case VARBINARY:
-//				result = "byte[]";
-//				break;
-			case VARCHAR:
-				result = "'%s'";
-				break;
-			default:
-				result = "unknown SQL Type: " + sqlType;
-				throw new IllegalArgumentException( result );
-		}
-		return result;
+		String result = switch( sqlType )
+        {
+//            case ARRAY -> "java.sql.Array";
+            case BIGINT -> "%d";
+//            case BINARY -> "byte[]";
+            case BIT -> "%b";
+//            case BLOB -> "java.sql.Blob";
+            case BOOLEAN -> "%b";
+            case CHAR -> "'%s'";
+//            case CLOB -> "java.sql.Clob";
+            case DATALINK -> throw new IllegalArgumentException( "don't know what to do with SQL Type DATALINK" );
+            case DATE -> "'%tc'";
+            case DECIMAL, REAL, DOUBLE, FLOAT -> "%f";
+//            case DISTINCT -> "%d";
+            case INTEGER -> "%d";
+//            case JAVA_OBJECT -> throw new IllegalArgumentException( "don't know what to do with SQL Type JAVA_OBJECT" );
+//            case LONGVARBINARY -> "byte[]";
+            case LONGVARCHAR, LONGNVARCHAR -> "'%s'";
+            case NUMERIC -> "%d";
+            case NULL -> throw new IllegalArgumentException( "don't know what to do with SQL Type NULL" );
+            case OTHER -> throw new IllegalArgumentException( "don't know what to do with SQL Type OTHER" );
+//            case REF -> "java.sql.Ref";
+            case SMALLINT -> "%d";
+//            case STRUCT -> "java.sql.Struct";
+            case TINYINT -> "%d";
+//            case TIME -> "java.sql.Time";
+//            case TIMESTAMP -> "java.sql.Timestamp";
+//            case VARBINARY -> "byte[]";
+            case VARCHAR -> "'%s'";
+            default ->
+            {
+                result = "unknown SQL Type: " + sqlType;
+                throw new IllegalArgumentException( result );
+            }
+        };
+        return result;
 	}
 
 	/**

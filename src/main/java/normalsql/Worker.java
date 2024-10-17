@@ -31,8 +31,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static normalsql.TableIdentifierInspector.inferGeneratedKeyType;
-import static normalsql.template.SQLTypeConverter.getJavaClassName;
+import static normalsql.Glorp.inferGeneratedKeyType;
+import static normalsql.Glorp.getJavaClassName;
 
 public class
 	Worker
@@ -165,10 +165,10 @@ public class
 						work.params.add( param );
 					}
 				}
-				case LIKE m ->
+				case LIKE like ->
 				{
-					var column = getColumnQname( m.column );
-					var param = new PreparedStatementParameter( m.literal );
+					var column = getColumnQname( like.column );
+					var param = new PreparedStatementParameter( like.literal );
 					_helper.signatures( param, column );
 					work.params.add( param );
 				}
@@ -280,12 +280,7 @@ public class
 			{
 				var table = insert.table.getText();
 				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
-				var clazz = getJavaClassName( sqlType );
-				System.out.println( "clazz: " + clazz );
-				work.keyClassName = clazz;
-
-//				var column = work.columns.get( 0 );
-				// TODO fill in missing columns
+                work.keyClassName = getJavaClassName( sqlType );
 			}
 			case Delete ignored ->
 			{

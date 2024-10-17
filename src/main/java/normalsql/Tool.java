@@ -74,7 +74,7 @@ public class
 			{
 				var tool  = new Tool();
 				tool.generate( cfg );
-				//  OK
+				// OK
 				status = 0;
 			}
 			catch( Exception e )
@@ -188,7 +188,8 @@ public class
 	 * @param config
 	 * @return
 	 */
-	public static void resolvePaths( Work work, Config config ) throws IOException
+	public static void resolvePaths( Work work, Config config )
+		throws IOException
     {
 		work.sourceDir = work.sourceFile.getParent();
 
