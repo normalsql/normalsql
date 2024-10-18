@@ -20,7 +20,7 @@
 * ${statementClassName}.java
 * ${now}
 *
-## TODO put actual filename and its timestamp here.
+## TODO add template's full filename and timestamp here
 * Generated using NormalSQL's Update.vm template.
 *
 * Original SQL:

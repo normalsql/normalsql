@@ -1,6 +1,6 @@
 ## Copyright 2010-2022 Jason Osgood
 ## SPDX-License-Identifier: Apache-2.0
-
+##
 ## NormalSQL - ResultSet Template for Java & JDBC
 ## 
 ## Template Parameters:
@@ -15,6 +15,7 @@
 * ${resultSetClassName}.java
 * ${now}
 *
+## TODO add template's full filename and timestamp here
 * Generated using NormalSQL's ResultSet.vm template.
 *
 * @see ${sourceFile}

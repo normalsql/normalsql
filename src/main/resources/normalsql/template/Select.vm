@@ -23,7 +23,7 @@
 * ${statementClassName}.java
 * ${now}
 *
-## TODO add template full filename and its timestamp here
+## TODO add template's full filename and timestamp here
 * Generated using NormalSQL's Select.vm template.
 *
 * Original SQL:
@@ -128,8 +128,6 @@ implements
 
         if( __ps.execute() )
         {
-	        ResultSet rs = __ps.getResultSet();
-			return new ${resultSetClassName}( rs );
 			ResultSet rs = __ps.getResultSet();
 			__wrapperRS = new ${resultSetClassName}( rs );
 			return __wrapperRS;
