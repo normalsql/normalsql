@@ -32,6 +32,8 @@ import java.math.BigDecimal;
 
 public class 
 	${resultSetClassName}
+implements
+	AutoCloseable
 {
 	public ${resultSetClassName}( ResultSet resultSet )
 	{
@@ -50,18 +52,6 @@ public class
 		return __resultSet != null;
 	}
 
-	private Connection __connection = null;
-
-	public void setConnection( Connection connection )
-	{
-		__connection = connection;
-	}
-
-	public Connection getConnection()
-	{
-		return __connection;
-	}
-
 	/**
 		Closes the contained ResultSet instance. Also closes contained Connection instance
 		created via a DataSource connection factory.
@@ -73,11 +63,6 @@ public class
 		{
 			__resultSet.close();
 			__resultSet = null;
-		}
-		if( __connection != null && !__connection.isClosed() )
-		{
-			__connection.close();
-			__connection = null;
 		}
 	}
 
@@ -156,8 +141,7 @@ public class
 	#end
 
 	#end
-
-	// TODO switch from StringBuilder to printf
+	// TODO switch from StringBuilder to printf?
 	public String toString()
 	{
 		if( getResultSet() == null )
