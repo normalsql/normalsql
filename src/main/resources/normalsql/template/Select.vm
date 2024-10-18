@@ -59,7 +59,7 @@ implements
 	AutoCloseable
 {
 	private final PreparedStatement __ps;
-	private  ${resultSetClassName} __wrapperRS;
+	private ${resultSetClassName} __wrapperRS;
 
 	public final String __preparedSQL =
 ## add back each '\n', then concat each line with '+', then end with ';'

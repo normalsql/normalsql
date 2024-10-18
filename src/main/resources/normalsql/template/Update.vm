@@ -1,6 +1,6 @@
 ## Copyright 2010-2024 Jason Osgood
 ## SPDX-License-Identifier: Apache-2.0
-
+##
 ## NormalSQL - UPDATE Statement Template for Java & JDBC
 ##
 ## Copyright 2024, 2023, 2022, 2014, 2011, 2010 Jason Osgood
@@ -51,6 +51,8 @@ import java.math.BigDecimal;
 
 public class 
 	${statementClassName}
+implements
+	AutoCloseable
 {
 	private final PreparedStatement __ps;
 
@@ -101,6 +103,15 @@ public class
             , ${p.getter}()
             #end
 		);
+	}
+
+	public void close()
+		throws SQLException
+	{
+		if( __ps != null )
+		{
+			__ps.close();
+		}
 	}
 
 	/**

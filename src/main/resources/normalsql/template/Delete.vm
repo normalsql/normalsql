@@ -51,6 +51,8 @@ import java.math.BigDecimal;
 
 public class
 	${statementClassName}
+implements
+	AutoCloseable
 {
 	private final PreparedStatement __ps;
 
@@ -101,6 +103,15 @@ public class
             , ${p.getter}()
             #end
 		);
+	}
+
+	public void close()
+		throws SQLException
+	{
+		if( __ps != null )
+		{
+			__ps.close();
+		}
 	}
 
 	/**
