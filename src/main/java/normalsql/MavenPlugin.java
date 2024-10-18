@@ -36,7 +36,7 @@ public class MavenPlugin
     @Parameter( defaultValue = "${project.basedir}/src/main/sql" )
     String source;
 
-    @Parameter( defaultValue = "${project.build.directory}/generated-sources/sql" )
+    @Parameter( defaultValue = "${project.build.directory}/generated-sources/normalsql" )
     String target;
 
     @Parameter( property = "package" )
