@@ -273,9 +273,11 @@ public class
 		switch( statement )
 		{
 			case Select ignored ->
+			{
                 // TODO foreach statement this, to support unions, multiple statements, and such
                 //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
 				matchItemsToColumns( statement.items, work.columns );
+			}
 			case Insert insert ->
 			{
 				var table = insert.table.getText();
