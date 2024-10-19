@@ -12,8 +12,11 @@ import org.apache.maven.project.MavenProject;
 
 @Mojo(
     name = "normalsql",
+    requiresProject = true,
+    threadSafe = false,
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE
+//    requiresDependencyResolution = ResolutionScope.COMPILE
+    requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
 )
 public class MavenPlugin
     extends AbstractMojo
@@ -45,12 +48,13 @@ public class MavenPlugin
     @Parameter( defaultValue = "sql" )
     String extension;
 
+    @Override
     public void execute()
         throws MojoExecutionException
     {
         try
         {
-//            getLog().info( "source: " + source );
+            getLog().info( "source: " + source );
             Config config = new Config();
             config.description = description;
             config.url         = url;
@@ -63,7 +67,9 @@ public class MavenPlugin
             config.validate();
 
             // Make sure Maven finds our generated files
-            project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
+//            project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
+            project.addCompileSourceRoot( config.target );
+            project.addTestCompileSourceRoot( config.target );
 
             Tool tool = new Tool();
             tool.generate( config );
