@@ -1,9 +1,9 @@
-## Copyright 2010-2023 Jason Osgood
+## Copyright 2010-2024 Jason Osgood
 ## SPDX-License-Identifier: Apache-2.0
 ##
 ## NormalSQL - SELECT Statement Template for Java & JDBC
 ##
-## Copyright 2023, 2022, 2014, 2011, 2010 Jason Osgood
+## Copyright 2024, 2023, 2022, 2014, 2011, 2010 Jason Osgood
 ##
 ## Template Parameters:
 ##
@@ -19,7 +19,6 @@
 ##     params - List<PreparedStatementParameter>, meta data for getters and setters
 ## TODO can this source file's header be a sub-template....?
 /**
-## Change date to UTC or something
 * ${statementClassName}.java
 * ${now}
 *
@@ -28,24 +27,14 @@
 *
 * Original SQL:
 *
-## TODO: Should this be a JavaDoc @snippet?
-* <pre>
-* {@code
-#foreach( $line in $originalSQL.split('\n') )
-* $line
-#end
-* }
-* </pre>
-*
-## TODO use project's root for relative dir, vs absolute dir
 * @see ${sourceFile}
 *
 */
 
 #if( $packageName )
 package ${packageName};
-#end
 
+#end
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -58,20 +47,25 @@ public class
 implements
 	AutoCloseable
 {
-	private final PreparedStatement __ps;
-	private ${resultSetClassName} __wrapperRS;
+	public final String __originalSQL = """
+		#foreach( $line in $originalSQL.split('\n') )
+		${esc.java($line)}
+		#end
+	""";
 
-	public final String __preparedSQL =
-## add back each '\n', then concat each line with '+', then end with ';'
+	public final String __preparedSQL = """
 		#foreach( $line in $preparedSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+		${esc.java($line)}
 		#end
+	""";
 
-	public final String __printfSQL =
-## add back each '\n' (as %n), then concat each line with '+', then end with ';'
+	public final String __printfSQL = """
 		#foreach( $line in $printfSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+		${esc.java($line)}
 		#end
+	""";
+
+	public final PreparedStatement __ps;
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -102,22 +96,10 @@ implements
 	public ${statementClassName}( DataSource dataSource )
 		throws SQLException
 	{
-		this( dataSource, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+		this( dataSource.getConnection() );
 	}
 
-	public void close()
-		throws SQLException
-	{
-		// TODO add try/catch. figure out how to rethrow (possibly) 2 exceptions
-		if( __wrapperRS != null )
-		{
-			__wrapperRS.close();
-		}
-		if( __ps != null )
-		{
-			__ps.close();
-		}
-	}
+	private ${resultSetClassName} __wrapperRS;
 
 	public final ${resultSetClassName} execute()
 		throws SQLException
@@ -133,8 +115,23 @@ implements
 			return __wrapperRS;
         }
 
+		// TODO return NullObject
         return null;
     }
+
+	public void close()
+		throws SQLException
+	{
+		// TODO add try/catch. figure out how to rethrow (possibly) 2 exceptions
+		if( __wrapperRS != null )
+		{
+			__wrapperRS.close();
+		}
+		if( !__ps.isClosed() )
+		{
+			__ps.close();
+		}
+	}
 
 	// TODO add null check to setters (when !isnullable)
     #foreach( $p in $params )
@@ -143,7 +140,6 @@ implements
     public ${p.className} ${p.getter}() { return _${p.variable}; }
 
     #end
-
 	public String toString()
 	{
 		return String.format( __printfSQL

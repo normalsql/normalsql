@@ -6,7 +6,7 @@
 ## Copyright 2024, 2023, 2022, 2014, 2011, 2010 Jason Osgood
 ##
 ## Template Parameters:
-## 
+##
 ##     esc - EscapeTool
 ##     now - current timestamp
 ##     packageName - target Java package name as String
@@ -23,50 +23,44 @@
 ## TODO add template's full filename and timestamp here
 * Generated using NormalSQL's Update.vm template.
 *
-* Original SQL:
-*
-## TODO: Should this be a JavaDoc @snippet?
-* <pre>
-* {@code
-#foreach( $line in $originalSQL.split('\n') )
-* $line
-#end
-* }
-* </pre>
-*
-## TODO add timestamp
 * @see ${sourceFile}
 *
 */
 
 #if( $packageName )
 package ${packageName};
-#end
 
+#end
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 
-public class 
+public class
 	${statementClassName}
 implements
 	AutoCloseable
 {
-	private final PreparedStatement __ps;
+	public final String __originalSQL = """
+		#foreach( $line in $originalSQL.split('\n') )
+		${esc.java($line)}
+		#end
+	""";
 
-	public final String __preparedSQL =
-## add back each '\n', then concat each line with '+', then end with ';'
+	public final String __preparedSQL = """
 		#foreach( $line in $preparedSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+		${esc.java($line)}
 		#end
+	""";
 
-	public final String __printfSQL =
-## add back each '\n' (as %n), then concat each line with '+', then end with ';'
+	public final String __printfSQL = """
 		#foreach( $line in $printfSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+		${esc.java($line)}
 		#end
+	""";
+
+	public final PreparedStatement __ps;
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
@@ -88,14 +82,35 @@ implements
 		this( dataSource.getConnection() );
 	}
 
-	// TODO add null check to setters (when !isnullable)
+	/**
+	 * Returns number of rows updated. @see java.sql.Statement#executeUpdate()
+	 */
+	public final int execute()
+		throws SQLException
+	{
+        #foreach( $p in $params )
+        __ps.setObject( ${p.nth}, ${p.getter}() );
+        #end
+
+        return __ps.executeUpdate();
+    }
+
+	public void close()
+		throws SQLException
+	{
+		if( !__ps.isClosed() )
+		{
+			__ps.close();
+		}
+	}
+
+    // TODO add null check to setters (when !isnullable)
     #foreach( $p in $params )
     private ${p.className} _${p.variable} = ${p.translated};
     public void ${p.setter}( ${p.className} ${p.variable} ) { _${p.variable} = ${p.variable}; }
     public ${p.className} ${p.getter}() { return _${p.variable}; }
 
     #end
-
 	public String toString()
 	{
 		return String.format( __printfSQL
@@ -104,27 +119,4 @@ implements
             #end
 		);
 	}
-
-	public void close()
-		throws SQLException
-	{
-		if( __ps != null )
-		{
-			__ps.close();
-		}
-	}
-
-	/**
-	 * Returns number of rows updated. @see java.sql.Statement#executeUpdate()
-	 */
-	public final int execute()
-		throws SQLException
-	{
-        #foreach( $p in $params )
-##        __ps.set${p.className}( ${p.nth}, ${p.getter}() );
-        __ps.setObject( ${p.nth}, ${p.getter}() );
-        #end
-
-        return __ps.executeUpdate();
-    }
 }

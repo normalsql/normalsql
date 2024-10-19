@@ -24,8 +24,8 @@
 
 #if( $packageName )
 package ${packageName};
-#end
 
+#end
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,12 +36,12 @@ public class
 implements
 	AutoCloseable
 {
+	private final ResultSet __resultSet;
+
 	public ${resultSetClassName}( ResultSet resultSet )
 	{
 		__resultSet = resultSet;
 	}
-
-	private ResultSet __resultSet;
 
 	public final ResultSet getResultSet()
 	{
@@ -60,10 +60,9 @@ implements
 	public void close()
 		throws SQLException
 	{
-		if( __resultSet != null && !__resultSet.isClosed() )
+		if( !__resultSet.isClosed() )
 		{
 			__resultSet.close();
-			__resultSet = null;
 		}
 	}
 
@@ -167,5 +166,4 @@ implements
 		#end
 		return sb.toString();
 	}
-
 }
