@@ -23,18 +23,6 @@
 ## TODO add template's full filename and timestamp here
 * Generated using NormalSQL's Insert.vm template.
 *
-* Original SQL:
-*
-## TODO: Should this be a JavaDoc @snippet?
-* <pre>
-* {@code
-#foreach( $line in $originalSQL.split('\n') )
-* $line
-#end
-* }
-* </pre>
-*
-## TODO add timestamp
 * @see ${sourceFile}
 *
 */
@@ -58,17 +46,23 @@ implements
 	private final PreparedStatement __ps;
 	private PreparedStatement __keysRS;
 
-	public final String __preparedSQL =
-## add back each '\n', then concat each line with '+', then end with ';'
-		#foreach( $line in $preparedSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+	public final String __originalSQL = """
+		#foreach( $line in $originalSQL.split('\n') )
+		${esc.java($line)}
 		#end
+	""";
 
-	public final String __printfSQL =
-## add back each '\n' (as %n), then concat each line with '+', then end with ';'
-		#foreach( $line in $printfSQL.split('\n') )
-		"${esc.java($line)}#if($foreach.hasNext)\n" + #else"; #end
+	public final String __preparedSQL = """
+		#foreach( $line in $preparedSQL.split('\n') )
+		${esc.java($line)}
 		#end
+	""";
+
+	public final String __printfSQL = """
+		#foreach( $line in $printfSQL.split('\n') )
+		${esc.java($line)}
+		#end
+	""";
 
 	/**
 		Pass a Connection. You are responsible for closing that Connection.
