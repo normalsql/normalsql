@@ -5,6 +5,7 @@ package normalsql;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
 
@@ -43,6 +44,11 @@ import java.util.List;
 public class
 	Tool
 {
+	PrintWriter INFO = new PrintWriter( System.out, true );
+	PrintWriter DEBUG = new PrintWriter( System.out, true );
+	PrintWriter WARN = new PrintWriter( System.out, true );
+	PrintWriter ERROR = new PrintWriter( System.err, true );
+
 	/**
 	 * Returns -1 for config error, 1 for runtime error, 0 for success
 	 *

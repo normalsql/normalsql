@@ -1,6 +1,11 @@
 ## NormalSQL
 
-Get quicker results using your SQL source files to code generate wrappers. No need for mappings, annotations, DSLs, or string templates. Just use NormalSQL.
+Just use normal SQL. 
+
+No need for mappings, annotations, DSLs, or string templates. 
+
+NormalSQL understands your SQL as-is. It then generates the simple, obvious wrappers 
+you'd create yourself, if only you had more time.
 
 ### Simple Example
 

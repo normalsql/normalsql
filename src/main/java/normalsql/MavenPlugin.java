@@ -12,8 +12,6 @@ import org.apache.maven.project.MavenProject;
 
 @Mojo(
     name = "normalsql",
-    requiresProject = true,
-    threadSafe = false,
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
 //    requiresDependencyResolution = ResolutionScope.COMPILE
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
