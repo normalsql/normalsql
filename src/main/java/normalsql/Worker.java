@@ -21,6 +21,8 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.tools.generic.EscapeTool;
 
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -294,6 +296,19 @@ public class
     	}
 
 		merge( work );
+
+//		JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
+//		int compilationResult = javac.run(null, null, null, work.targetFile.toString());
+
+//		if (compilationResult == 0) {
+//			System.out.println("Compilation successful.");
+//		} else {
+//			System.out.println("Compilation failed.");
+//		}
+		// TODO verify generation worked
+		//  javac succeeds
+		//  forName
+		//  compare originalSQL == toString()
 
 		System.out.println( work.sourceFile + " processed" );
 	}

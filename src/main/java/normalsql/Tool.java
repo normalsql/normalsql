@@ -5,7 +5,6 @@ package normalsql;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
 
@@ -14,6 +13,7 @@ import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import static normalsql.Echo.Basic;
 
 /*
 	TODO:
@@ -44,10 +44,10 @@ import java.util.List;
 public class
 	Tool
 {
-	PrintWriter INFO = new PrintWriter( System.out, true );
-	PrintWriter DEBUG = new PrintWriter( System.out, true );
-	PrintWriter WARN = new PrintWriter( System.out, true );
-	PrintWriter ERROR = new PrintWriter( System.err, true );
+	public static Echo INFO  = new Basic( "info", System.out );
+	public static Echo WARN  = new Basic( "warn", System.out );
+	public static Echo DEBUG = new Basic( "debug", System.out );
+	public static Echo ERROR = new Basic( "error", System.err );
 
 	/**
 	 * Returns -1 for config error, 1 for runtime error, 0 for success
@@ -85,8 +85,9 @@ public class
 			}
 			catch( Exception e )
 			{
-				e.printStackTrace();
-				// Runtime error
+				ERROR.log( e );
+
+				// Shell runtime error
 				status = 1;
 			}
 		}

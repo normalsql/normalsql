@@ -1,14 +1,35 @@
 package normalsql;
 
 import static java.sql.Types.*;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 public class Hello {
-    public static void main(String[] args) {
-        System.out.println( "Hello" );
+    public static void main( String[] args )
+    {
+        Tool.INFO.log( "apple" );
+        Tool.WARN.log( "banana" );
+        Tool.DEBUG.log( "cherry" );
+        Tool.ERROR.log( "daikon" );
+
+        try
+        {
+            sniffles();
+        }
+        catch( Exception e )
+        {
+            Tool.INFO.log( e, "apple" );
+            Tool.WARN.log( e, "banana" );
+            Tool.DEBUG.log( e, "cherry" );
+            Tool.ERROR.log( e, "daikon" );
+        }
+
+//        System.out.println( "Hello" );
     }
-    
+
+    public static Throwable sniffles()
+    {
+        throw new NullPointerException( "awchoo!" );
+    }
+
     String gorp = switch ( 123 ) {
         case BIT -> "";
         case TINYINT -> "";

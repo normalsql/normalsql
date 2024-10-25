@@ -50,10 +50,11 @@ public class MavenPlugin
     public void execute()
         throws MojoExecutionException
     {
+        var log = getLog();
         try
         {
-            getLog().info( "source: " + source );
-            Config config = new Config();
+
+            var config         = new Config();
             config.description = description;
             config.url         = url;
             config.username    = username;
@@ -64,12 +65,20 @@ public class MavenPlugin
             config.extension   = extension;
             config.validate();
 
+            log.debug( "normalsql config: " + Glorp.toMap( config ));
+
             // Make sure Maven finds our generated files
 //            project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
             project.addCompileSourceRoot( config.target );
             project.addTestCompileSourceRoot( config.target );
 
-            Tool tool = new Tool();
+
+            var tool = new Tool();
+            // Use Maven's logger
+            tool.INFO  = new MavenEcho( "info", log );
+            tool.WARN  = new MavenEcho( "warn", log );
+            tool.DEBUG = new MavenEcho( "debug", log );
+            tool.ERROR = new MavenEcho( "error", log );
             tool.generate( config );
         }
         catch( Exception e )
