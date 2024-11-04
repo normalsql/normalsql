@@ -4,6 +4,7 @@
 
 package normalsql;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ public class Config
     public Path   targetPath;
     public String pkg;
     public String extension = ".sql";
+    public Path cwd;
 
     public void validate() throws Exception
     {

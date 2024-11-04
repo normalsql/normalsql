@@ -54,18 +54,18 @@ public class MavenPlugin
         try
         {
 
-            var config         = new Config();
+            var config = new Config();
             config.description = description;
-            config.url         = url;
-            config.username    = username;
-            config.password    = password;
-            config.source      = source;
-            config.target      = target;
-            config.pkg         = pkg;
-            config.extension   = extension;
+            config.url = url;
+            config.username = username;
+            config.password = password;
+            config.source = source;
+            config.target = target;
+            config.pkg = pkg;
+            config.extension = extension;
             config.validate();
 
-            log.debug( "normalsql config: " + Glorp.toMap( config ));
+//            log.debug( "normalsql config: " + Glorp.toMap( config ));
 
             // Make sure Maven finds our generated files
 //            project.addCompileSourceRoot( config.targetPath.toAbsolutePath().toString() );
@@ -79,6 +79,15 @@ public class MavenPlugin
             tool.WARN  = new MavenEcho( "warn", log );
             tool.DEBUG = new MavenEcho( "debug", log );
             tool.ERROR = new MavenEcho( "error", log );
+
+            tool.INFO.log( "*** INFO" );
+            tool.WARN.log( "*** WARN" );
+            tool.DEBUG.log( "*** DEBUG" );
+            tool.ERROR.log( "*** ERROR" );
+
+//            tool.biff = (x) -> log.info( x );
+//            tool.biff = (x) -> new MavenEcho( "info", log ).log( x );
+
             tool.generate( config );
         }
         catch( Exception e )

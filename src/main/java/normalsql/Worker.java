@@ -3,6 +3,7 @@
 
 package normalsql;
 
+import static normalsql.Tool.*;
 import normalsql.template.ResultSetColumn;
 import normalsql.template.PreparedStatementParameter;
 import normalsql.parse.*;
@@ -105,7 +106,8 @@ public class
 		work.root = visitor.root;
 		if( work.root == null || work.root.isEmpty() )
 		{
-			System.out.println( "file contains no statements: " + work.sourceFile );
+//			System.out.println( "file contains no statements: " + work.sourceFile );
+			WARN.log( "file contains no statements: " + work.sourceFile ) ;
 			return;
 		}
 
@@ -114,7 +116,8 @@ public class
 			// TODO this doesn't work yet because bugs in knockouts
 			if( !p.isMatched() )
 			{
-				System.out.println( "parameter expression not match(able): " + p.context.getText() );
+//				System.out.println( "parameter expression not match(able): " + p.context.getText() );
+				ERROR.log( "parameter expression not match(able): " + p.context.getText() );
 			}
 
 			switch( p )
@@ -310,7 +313,8 @@ public class
 		//  forName
 		//  compare originalSQL == toString()
 
-		System.out.println( work.sourceFile + " processed" );
+//		System.out.println( work.sourceFile + " processed" );
+		INFO.log( work.sourceFile + " processed" );
 	}
 
 	/**
@@ -402,7 +406,8 @@ public class
 				generate( _updateTemplate, vc, work.targetDir, work.statementClassName );
 
 	        default ->
-				System.out.println( "unrecognized: " + statement.getClass() );
+//				System.outSystem.out.println( "unrecognized: " + statement.getClass() );
+				WARN.log( "skipped unrecognized: " + statement.getClass() );
     	}
 	}
 

@@ -11,12 +11,10 @@ import static java.sql.Types.*;
 
 public class Glorp
 {
-    public static String getLocalName( String qname )
-    {
+    public static String getLocalName( String qname ) {
         // Use just the name; remove any reference prefixes
-        if( qname.contains( "." ))
-        {
-            qname = qname.substring( qname.lastIndexOf( "." ) + 1 );
+        if( qname.contains( "." )) {
+            return qname.substring( qname.lastIndexOf( "." ) + 1 );
         }
         return qname;
     }
@@ -79,15 +77,22 @@ public class Glorp
             names.add( name );
         }
 
-        for( var name : names )
-        {
+        for( var name : names ) {
             var rs = md.getColumns( catalog, schema, table, name );
-            if( rs.next() )
-            {
+            if( rs.next() ) {
                 sqlType = rs.getInt( "DATA_TYPE" );
             }
         }
 
+//        for( var name : names )
+//        {
+//            var rs = md.getColumns( catalog, schema, table, name );
+//            if( rs.next() )
+//            {
+//                sqlType = rs.getInt( "DATA_TYPE" );
+//            }
+//        }
+//
         return sqlType;
 
 //        if (primaryKeyColumn != null) {

@@ -12,6 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static normalsql.Echo.Basic;
 
@@ -49,6 +50,8 @@ public class
 	public static Echo DEBUG = new Basic( "debug", System.out );
 	public static Echo ERROR = new Basic( "error", System.err );
 
+//	public static Consumer<List<Object>> biff = (x) -> System.out.println( x );
+
 	/**
 	 * Returns -1 for config error, 1 for runtime error, 0 for success
 	 *
@@ -62,12 +65,12 @@ public class
 		CLI cli = new CLI( args );
 
 		Config cfg = new Config();
-		cfg.url       = cli.getOptional( "", "-j", "--url" );
-		cfg.username  = cli.getOptional( "", "-u", "--username" );
-		cfg.password  = cli.getOptional( "", "-p", "--password" );
-		cfg.source    = cli.getOptional( "", "-s", "--source" );
-		cfg.target    = cli.getOptional( cfg.source, "-t", "--target" );
-		cfg.pkg       = cli.getOptional( "", "-k", "--package" );
+		cfg.url = cli.getOptional( "", "-j", "--url" );
+		cfg.username = cli.getOptional( "", "-u", "--username" );
+		cfg.password = cli.getOptional( "", "-p", "--password" );
+		cfg.source = cli.getOptional( "", "-s", "--source" );
+		cfg.target = cli.getOptional( cfg.source, "-t", "--target" );
+		cfg.pkg = cli.getOptional( "", "-k", "--package" );
 		cfg.extension = cli.getOptional( ".sql", "-e", "--extension" );
 //			var count = cli.getOptional( 1, "-c", "--count" );
 //			boolean help = cli.getFlag( "-h", "--help" );
@@ -97,9 +100,16 @@ public class
 
 	public void generate( Config config ) throws Exception
 	{
-		// TODO debug logging
-		var map = Glorp.toMap( config );
-		System.out.println( map );
+		config.cwd = new File(  "." ).toPath().toAbsolutePath();
+
+		INFO.log( "*** INFO 2" );
+		WARN.log( "*** WARN 2" );
+		DEBUG.log( "*** DEBUG 2" );
+		ERROR.log( "*** ERROR 2" );
+
+//		var map = Glorp.toMap( config );
+//		DEBUG.log( map.toString() );
+		DEBUG.log( "normalsql config: " + Glorp.toMap( config ));
 
 		config.validate();
 
@@ -116,7 +126,7 @@ public class
 			}
 
 			var count = files.size();
-			System.out.printf( "files found %d\n", count );
+			INFO.log( "files found %d\n".formatted( count ));
 
 			if( count > 0 )
 			{
@@ -208,7 +218,7 @@ public class
 			Files.createDirectories( work.targetDir );
 		}
 
-		// infers packa`ge name from directory structure
+		// infers package name from directory structure
 		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
 		var clazz = Glorp.getClassSimpleName( work.sourceFile );
