@@ -1,5 +1,6 @@
 package normalsql;
 
+import java.io.OutputStream;
 import java.util.function.*;
 
 public class PreCLI {
@@ -17,6 +18,19 @@ public class PreCLI {
     public static void main(String[] args) {
             PreCLI cli = new PreCLI();
             cli.setup();
+            cli.oof( System.out::println );
+            cli.dah( "hellp" );
+    }
+
+    private void dah( String hellp )
+    {
+        abc.accept( hellp );
+    }
+
+    Consumer<String> abc;
+    private void oof( Consumer<String> abc )
+    {
+        this.abc = abc;
     }
 
     public void setup()

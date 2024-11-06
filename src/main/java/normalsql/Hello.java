@@ -16,10 +16,10 @@ public class Hello {
         }
         catch( Exception e )
         {
-            Tool.INFO.log( e, "apple" );
-            Tool.WARN.log( e, "banana" );
-            Tool.DEBUG.log( e, "cherry" );
-            Tool.ERROR.log( e, "daikon" );
+            Tool.INFO.log( "apple", e );
+            Tool.WARN.log( "banana", e );
+            Tool.DEBUG.log( "cherry", e );
+            Tool.ERROR.log( "daikon", e );
         }
 
 //        System.out.println( "Hello" );

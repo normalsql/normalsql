@@ -65,6 +65,7 @@ public class
 		CLI cli = new CLI( args );
 
 		Config cfg = new Config();
+		cfg.cwd = Paths.get(  System.getProperty( "user.dir" ));
 		cfg.url = cli.getOptional( "", "-j", "--url" );
 		cfg.username = cli.getOptional( "", "-u", "--username" );
 		cfg.password = cli.getOptional( "", "-p", "--password" );

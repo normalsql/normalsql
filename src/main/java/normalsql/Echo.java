@@ -7,7 +7,8 @@ public interface
 {
 	void log( CharSequence msg );
 	void log( Throwable error );
-	void log( Throwable error, CharSequence msg );
+	void log( CharSequence msg, Throwable error );
+	boolean isEnabled();
 
 	class Basic implements Echo
 	{
@@ -26,25 +27,25 @@ public interface
 		public void log( CharSequence msg )
 		{
 			if( disabled ) return;
-			log( null, msg );
+			log( msg, null );
 		}
 
 		@Override
 		public void log( Throwable error )
 		{
 			if( disabled ) return;
-			log( error, null );
+			log( null, error );
 		}
 
 		@Override
-		public void log( Throwable error, CharSequence msg )
+		public void log( CharSequence msg, Throwable error )
 		{
 			if( disabled ) return;
 
 			if( error == null && msg == null )
 			{
 				var npe = new NullPointerException( "both 'error' and 'msg' are null" );
-				log( npe, "error logger throwing an error. ironic." );
+				log( "error logger throwing an error. ironic.", npe );
 				throw npe;
 			}
 
@@ -65,6 +66,9 @@ public interface
 				_out.println();
 			}
 		}
+
+		public boolean isEnabled() { return !disabled; }
+
 	}
 
 

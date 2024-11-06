@@ -22,11 +22,13 @@ class MavenEcho implements Echo
 	{
 		switch( prefix )
 		{
-			case "info": log.info( msg ); return;
-			case "warn": log.warn( msg ); return;
-			case "debug": log.debug( msg ); return;
-			case "error": log.error( msg ); return;
-		}
+			case "info" -> log.info( msg );
+			case "warn" -> log.warn( msg );
+			case "debug" -> log.debug( msg );
+			case "error" -> log.error( msg );
+            default ->
+                throw new IllegalStateException("Unexpected value: " + prefix);
+        }
 	}
 
 	@Override
@@ -42,6 +44,17 @@ class MavenEcho implements Echo
 	}
 
 	@Override
+	public void log( CharSequence msg, Throwable error )
+	{
+
+	}
+
+	@Override
+	public boolean isEnabled()
+	{
+		return false;
+	}
+
 	public void log( Throwable error, CharSequence msg )
 	{
 		switch( prefix )
