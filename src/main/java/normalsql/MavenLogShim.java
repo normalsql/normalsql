@@ -6,7 +6,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class LogAgain implements Echo
+public class MavenLogShim implements LogShim
 {
     Consumer<CharSequence>             a;
     Consumer<Throwable>                b;
@@ -17,7 +17,7 @@ public class LogAgain implements Echo
 
     public final Level level;
 
-    LogAgain( Level level, Log log )
+    MavenLogShim( Level level, Log log )
     {
         this.level = level;
 

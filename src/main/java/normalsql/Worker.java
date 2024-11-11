@@ -22,8 +22,6 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.tools.generic.EscapeTool;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,11 +50,10 @@ public class
 
 	public Worker( Connection conn )
 	{
-//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
+		_conn = conn;
+
 		var formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss'Z'" ).withZone( ZoneOffset.UTC );
 		_now = formatter.format( Instant.now() );
-
-		_conn = conn;
 
 		_engine = new VelocityEngine();
 		_engine.setProperty( RuntimeConstants.RESOURCE_LOADERS, "classpath" );
@@ -84,15 +81,14 @@ public class
 
 	// TODO "roundtrip" test, verify new PreparedStatement.toString() is same as original source
 
-	// process( Work work ) throws IO, SQL
-	public void process( Work work )
+	public void process( UnitOfWork unitOfWork )
 		throws IOException, SQLException
 	{
-		work.originalSQL = new String( Files.readAllBytes( work.sourceFile ));
+		unitOfWork.originalSQL = new String( Files.readAllBytes( unitOfWork.sourceFile ));
 
 		// TODO attempt running statement before parsing
 
-		 var chars = CharStreams.fromString( work.originalSQL );
+		 var chars = CharStreams.fromString( unitOfWork.originalSQL );
 		 var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
 		var parser = new NormalSQLParser( tokens );
@@ -103,24 +99,22 @@ public class
 		visitor.tokens = tokens;
 		visitor.visit( script );
 
-		work.root = visitor.root;
-		if( work.root == null || work.root.isEmpty() )
+		unitOfWork.root = visitor.root;
+		if( unitOfWork.root == null || unitOfWork.root.isEmpty() )
 		{
-//			System.out.println( "file contains no statements: " + work.sourceFile );
-			WARN.log( "file contains no statements: " + work.sourceFile ) ;
+			WARN.log( "file contains no statements: " + unitOfWork.sourceFile ) ;
 			return;
 		}
 
-		for( var p : visitor.knockouts )
+		for( var knockout : visitor.knockouts )
 		{
 			// TODO this doesn't work yet because bugs in knockouts
-			if( !p.isMatched() )
+			if( !knockout.isMatched() )
 			{
-//				System.out.println( "parameter expression not match(able): " + p.context.getText() );
-				ERROR.log( "parameter expression not match(able): " + p.context.getText() );
+				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
 			}
 
-			switch( p )
+			switch( knockout )
 			{
 				case BETWEEN b ->
 				{
@@ -132,11 +126,11 @@ public class
 
 							var low = new PreparedStatementParameter( b.low );
 							_helper.signatures( low, name, "low" );
-							work.params.add( low );
+							unitOfWork.params.add( low );
 
 							var high = new PreparedStatementParameter( b.high );
 							_helper.signatures( high, name, "high" );
-							work.params.add( high );
+							unitOfWork.params.add( high );
 						}
 
 						case LiteralColumnColumn ->
@@ -145,7 +139,7 @@ public class
 							var columnHigh = getColumnQname( b.high );
 							var test = new PreparedStatementParameter( b.test );
 							_helper.signatures( test, "between", columnLow, "and", columnHigh );
-							work.params.add( test );
+							unitOfWork.params.add( test );
 						}
 					}
 				}
@@ -156,7 +150,7 @@ public class
 					var param = new PreparedStatementParameter( c.literal );
 					// TODO add operator to method signature
 					_helper.signatures( param, column );
-					work.params.add( param );
+					unitOfWork.params.add( param );
 				}
 				case IN in ->
 				{
@@ -167,7 +161,7 @@ public class
 						var temp = column + "_" + ( nth + 1 );
 						var param = new PreparedStatementParameter( l );
 						_helper.signatures( param, temp );
-						work.params.add( param );
+						unitOfWork.params.add( param );
 					}
 				}
 				case LIKE like ->
@@ -175,7 +169,7 @@ public class
 					var column = getColumnQname( like.column );
 					var param = new PreparedStatementParameter( like.literal );
 					_helper.signatures( param, column );
-					work.params.add( param );
+					unitOfWork.params.add( param );
 				}
 				case Setter setter ->
 				{
@@ -183,7 +177,7 @@ public class
 					var column = _helper.trimQuotes( temp );
 					var param = new PreparedStatementParameter( setter.literal );
 					_helper.signatures( param, column );
-					work.params.add( param );
+					unitOfWork.params.add( param );
 				}
 
 				// TODO ANY predicate
@@ -196,11 +190,11 @@ public class
 						var col = row.insert.columns.get( nth ).getText();
 						var param = new PreparedStatementParameter( l );
 						_helper.signatures( param, col );
-						work.params.add( param );
+						unitOfWork.params.add( param );
 					}
 				}
 
-				default -> throw new IllegalStateException( "Unexpected value: " + p );
+				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
 			}
 		}
 
@@ -208,12 +202,12 @@ public class
 		  Transform original SQL source code into a prepared statement,
 		  by replacing literals with SQL "?" placeholders.
  		 */
-		for( var param : work.params )
+		for( var param : unitOfWork.params )
 		{
 			setStartTokenText( param.context(), "?" );
 		}
-		work.preparedSQL = tokens.getText();
-		var ps = _conn.prepareStatement( work.preparedSQL );
+		unitOfWork.preparedSQL = tokens.getText();
+		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
 
 		// Copy parameter meta data
 		var pmd = ps.getParameterMetaData();
@@ -222,7 +216,7 @@ public class
 			// SQL arrays are 1-based
 			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
 			{
-				var param = work.params.get( nth - 1 );
+				var param = unitOfWork.params.get( nth - 1 );
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
 				param.sqlTypeName( pmd.getParameterTypeName( nth ));
@@ -243,12 +237,12 @@ public class
 		  Generated printf templates are useful for debugging and logging.
 
 		 */
-		for( var param : work.params )
+		for( var param : unitOfWork.params )
 		{
 			var text = _helper.toPrintfConverter( param.sqlType() );
 			setStartTokenText( param.context(), text );
 		}
-		work.printfSQL = tokens.getText();
+		unitOfWork.printfSQL = tokens.getText();
 
 
 		// Copy column meta data
@@ -269,25 +263,25 @@ public class
 				column.sqlTypeName( md.getColumnTypeName( nth ));
 				column.isNullable( md.isNullable( nth ));
 				column.className( md.getColumnClassName( nth ));
-				work.columns.add( column );
+				unitOfWork.columns.add( column );
 			}
 		}
 
 
-		var statement = work.root.getFirst();
+		var statement = unitOfWork.root.getFirst();
 		switch( statement )
 		{
 			case Select ignored ->
 			{
                 // TODO foreach statement this, to support unions, multiple statements, and such
                 //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
-				matchItemsToColumns( statement.items, work.columns );
+				matchItemsToColumns( statement.items, unitOfWork.columns );
 			}
 			case Insert insert ->
 			{
 				var table = insert.table.getText();
 				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
-                work.keyClassName = getJavaClassName( sqlType );
+				unitOfWork.keyClassName = getJavaClassName( sqlType );
 			}
 			case Delete ignored ->
 			{
@@ -298,7 +292,7 @@ public class
 			}
     	}
 
-		merge( work );
+		merge( unitOfWork );
 
 //		JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
 //		int compilationResult = javac.run(null, null, null, work.targetFile.toString());
@@ -314,7 +308,7 @@ public class
 		//  compare originalSQL == toString()
 
 //		System.out.println( work.sourceFile + " processed" );
-		INFO.log( work.sourceFile + " processed" );
+		INFO.log( "processed: " + unitOfWork.sourceFile );
 	}
 
 	/**
@@ -378,35 +372,33 @@ public class
 		}
 	}
 
-	public void merge( Work work ) throws IOException
+	public void merge( UnitOfWork unitOfWork ) throws IOException
 	{
-		var childMap = work.toMap();
-		childMap.put( "esc", new EscapeTool() );
-		// TODO change to 'now', use same Date for all artifacts
-		childMap.put( "now", _now );
+		// Prime Velocity context for next task
+		var contextChildMap = Glorp.toMap( unitOfWork );
+		contextChildMap.put( "esc", new EscapeTool() );
+		contextChildMap.put( "now", _now );
+		var vc = new VelocityContext( contextChildMap );
 
-		var vc = new VelocityContext( childMap );
-
-		var statement = work.root.getFirst();
+		var statement = unitOfWork.root.getFirst();
 		switch( statement )
 		{
 			case Select ignored ->
 			{
-				generate( _selectTemplate, vc, work.targetDir, work.statementClassName );
-				generate( _resultSetTemplate, vc, work.targetDir, work.resultSetClassName );
+				generate( _selectTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
+				generate( _resultSetTemplate, vc, unitOfWork.targetDir, unitOfWork.resultSetClassName );
 			}
 
 			case Insert ignored ->
-				generate( _insertTemplate, vc, work.targetDir, work.statementClassName );
+				generate( _insertTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
 
 			case Delete ignored ->
-				generate( _deleteTemplate, vc, work.targetDir, work.statementClassName );
+				generate( _deleteTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
 
 			case Update ignored ->
-				generate( _updateTemplate, vc, work.targetDir, work.statementClassName );
+				generate( _updateTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
 
 	        default ->
-//				System.outSystem.out.println( "unrecognized: " + statement.getClass() );
 				WARN.log( "skipped unrecognized: " + statement.getClass() );
     	}
 	}
@@ -424,10 +416,8 @@ public class
 		throws IOException
 	{
 		// TODO property for generated file name (incl extension)
-		Path targetFile = targetDir.resolve( name + ".java" );
-		try (
-			FileWriter writer = new FileWriter( targetFile.toFile() )
-		)
+		var resolved = targetDir.resolve( name + ".java" );
+		try ( FileWriter writer = new FileWriter( resolved.toFile() ))
 		{
 			template.merge( vc, writer );
 			writer.flush();

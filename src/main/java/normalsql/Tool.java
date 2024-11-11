@@ -12,18 +12,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-
-import static normalsql.Echo.Basic;
 
 /*
 	TODO:
 
-		find and log all files
 		parse all found files
 		add just the DML statements to the work list
 		add just the parseable statements to the work list
-		log errors
 		command line option for filelist
 		command line option for extension filter
 
@@ -45,12 +40,10 @@ import static normalsql.Echo.Basic;
 public class
 	Tool
 {
-	public static Echo INFO  = new Basic( "info", System.out );
-	public static Echo WARN  = new Basic( "warn", System.out );
-	public static Echo DEBUG = new Basic( "debug", System.out );
-	public static Echo ERROR = new Basic( "error", System.err );
-
-//	public static Consumer<List<Object>> biff = (x) -> System.out.println( x );
+	public static LogShim INFO  = new ConsoleLog( "info", System.out );
+	public static LogShim WARN  = new ConsoleLog( "warn", System.out );
+	public static LogShim DEBUG = new ConsoleLog( "debug", System.out );
+	public static LogShim ERROR = new ConsoleLog( "error", System.err );
 
 	/**
 	 * Returns -1 for config error, 1 for runtime error, 0 for success
@@ -59,38 +52,33 @@ public class
 	 */
 	public static void main( String[] args )
 	{
-//		String[] blah = { "-j", "jdbc:h2:mem:", "-u", "sa", "--password", "root", "--count", "123" };
-//		args = blah;
-
 		CLI cli = new CLI( args );
 
-		Config cfg = new Config();
-		cfg.cwd = Paths.get(  System.getProperty( "user.dir" ));
-		cfg.url = cli.getOptional( "", "-j", "--url" );
-		cfg.username = cli.getOptional( "", "-u", "--username" );
-		cfg.password = cli.getOptional( "", "-p", "--password" );
-		cfg.source = cli.getOptional( "", "-s", "--source" );
-		cfg.target = cli.getOptional( cfg.source, "-t", "--target" );
-		cfg.pkg = cli.getOptional( "", "-k", "--package" );
-		cfg.extension = cli.getOptional( ".sql", "-e", "--extension" );
-//			var count = cli.getOptional( 1, "-c", "--count" );
+		Config config = new Config();
+		config.url = cli.getOptional( "", "-j", "--url" );
+		config.username = cli.getOptional( "", "-u", "--username" );
+		config.password = cli.getOptional( "", "-p", "--password" );
+		config.source = cli.getOptional( "", "-s", "--source" );
+		config.target = cli.getOptional( config.source, "-t", "--target" );
+		config.pkg = cli.getOptional( "", "-k", "--package" );
+		config.extension = cli.getOptional( ".sql", "-e", "--extension" );
 //			boolean help = cli.getFlag( "-h", "--help" );
+		// TODO -v --version flag
 
-		//  Config error
+		//  Default to config error
 		int status = -1;
 		if( cli.ok() )
 		{
 			try
 			{
 				var tool  = new Tool();
-				tool.generate( cfg );
+				tool.generate( config );
 				// OK
 				status = 0;
 			}
 			catch( Exception e )
 			{
 				ERROR.log( e );
-
 				// Shell runtime error
 				status = 1;
 			}
@@ -101,16 +89,8 @@ public class
 
 	public void generate( Config config ) throws Exception
 	{
-		config.cwd = new File(  "." ).toPath().toAbsolutePath();
-
-		INFO.log( "*** INFO 2" );
-		WARN.log( "*** WARN 2" );
-		DEBUG.log( "*** DEBUG 2" );
-		ERROR.log( "*** ERROR 2" );
-
-//		var map = Glorp.toMap( config );
-//		DEBUG.log( map.toString() );
-		DEBUG.log( "normalsql config: " + Glorp.toMap( config ));
+		config.cwd = new File( System.getProperty( "user.dir" )).toPath();
+		DEBUG.log( "normalsql config: " + config );
 
 		config.validate();
 
@@ -119,13 +99,7 @@ public class
 			var conn = DriverManager.getConnection( config.url, config.username, config.password )
 		)
 		{
-			var files = getSourceSQL( config.sourcePath, config.extension );
-			var works = new ArrayList<Work>();
-			for( var file : files )
-			{
-				works.add( new Work( file ) );
-			}
-
+			var files = walkFileTree( config.cwd, config.sourcePath, config.extension );
 			var count = files.size();
 			INFO.log( "files found %d\n".formatted( count ));
 
@@ -133,10 +107,10 @@ public class
 			{
 				var worker = new Worker( conn );
 
-				for( var work : works )
+				for( var file : files )
 				{
-					resolvePaths( work, config );
-					worker.process( work );
+					UnitOfWork unitOfWork = resolvePaths( file, config );
+					worker.process( unitOfWork );
 				}
 			}
 		}
@@ -167,10 +141,10 @@ public class
 
 	*/
 
-	public List<Path> getSourceSQL( Path sourcePath, String extension )
+	public List<Path> walkFileTree( Path cwd, Path sourcePath, String extension )
 		throws Exception
 	{
-		var files = new ArrayList<Path>();
+		var paths = new ArrayList<Path>();
 		Files.walkFileTree( sourcePath,
 			new SimpleFileVisitor<>()
 			{
@@ -179,11 +153,19 @@ public class
 				{
 					var name = file.getFileName().toString();
 					// Skip "hidden" dotfiles
-					var hidden = name.startsWith( "." );
-					var match = name.toLowerCase().endsWith( extension );
-					if( !hidden && match )
+					if( name.startsWith( "." ))
 					{
-						files.add( file );
+						DEBUG.log(  "skipping hidden file: " + name );
+					}
+					else if( !name.toLowerCase().endsWith( extension ))
+					{
+						DEBUG.log(  "skipping unknown filetype: " + name );
+					}
+					else
+					{
+						var found = cwd.relativize( file );
+						paths.add( found );
+						DEBUG.log(  "found: " + found );
 					}
 					return CONTINUE;
 				}
@@ -191,35 +173,44 @@ public class
 				public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs )
 				{
 					var name = dir.getFileName();
-					var hidden = name.startsWith( "." );
-					return hidden ? SKIP_SUBTREE : CONTINUE;
+					if( name.startsWith( "." ))
+					{
+						DEBUG.log( "skipping hidden directory: " + name );
+						return SKIP_SUBTREE;
+					}
+					else
+					{
+						DEBUG.log( "visiting: " + name );
+						return CONTINUE;
+					}
 				}
 			}
 		);
-		return files;
+		return paths;
 	}
 
 	/**
 	 * Generates list of Work (to be done) from source files found
 	 *
-	 * @param work
+	 * @param path
 	 * @param config
-	 * @return
+	 * @return unit of work, representing a single SQL source file
 	 */
-	public static void resolvePaths( Work work, Config config )
+	public static UnitOfWork resolvePaths( Path path, Config config )
 		throws IOException
     {
-		work.sourceDir = work.sourceFile.getParent();
+		var work = new UnitOfWork( path );
+		work.sourceDir = work.sourceFile.toAbsolutePath().getParent();
 
 		// Duplicate directory structure for output
-		Path packagePath = config.sourcePath.relativize( work.sourceDir );
+		var packagePath = config.sourcePath.relativize( work.sourceDir );
 		work.targetDir = config.targetPath.resolve( packagePath );
 		if( Files.notExists( work.targetDir ))
 		{
 			Files.createDirectories( work.targetDir );
 		}
 
-		// infers package name from directory structure
+		// infers package name from directory structure, following javac's convention
 		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
 
 		var clazz = Glorp.getClassSimpleName( work.sourceFile );
@@ -230,6 +221,8 @@ public class
 
 		// TODO why isn't targetFile for ResultSet class also here?
 		work.targetFile = work.targetDir.resolve( clazz + ".java" );
+
+		return work;
 	}
 
 

@@ -37,11 +37,9 @@ public class Config
             throw new NullPointerException( "JDBC URL cannot be null or empty" );
         }
 
-        // TODO re-verify need to use absolute path for later steps
-        sourcePath = Paths.get( source ).toAbsolutePath();
+        sourcePath = Paths.get( source ).toAbsolutePath().normalize();
         if( Files.notExists( sourcePath ))
         {
-            // TODO add phase, id, goal for better context?
             throw new FileNotFoundException( "Source directory does not exist: " + sourcePath );
         }
 
@@ -59,5 +57,10 @@ public class Config
                 throw new NullPointerException( "using password also requires username" );
             }
         }
+    }
+
+    public String toString()
+    {
+        return Glorp.toMap( this ).toString();
     }
 }

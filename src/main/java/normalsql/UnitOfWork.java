@@ -10,7 +10,6 @@ import normalsql.parse.Statement;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents the unit of work for processing one (1) SQL source file.
@@ -19,10 +18,11 @@ import java.util.Map;
 
 // TODO support multiple statements
 // TODO support multiple resultsets
-public class Work
+public class UnitOfWork
 {
-	public Work() {}
-	public Work( Path file ) { sourceFile = file; }
+//	public UnitOfWork() {}
+
+	public UnitOfWork( Path file ) { sourceFile = file; }
 
 	Statement root;
 
@@ -43,15 +43,4 @@ public class Work
 	 * Class name of generated key returned by INSERT statements
 	 */
 	public String keyClassName = "not used";
-
-	/**
-	 * Calls Glorp.toMap() on self.
-	 *
-	 * @return Map
-	 */
-	public Map<String, Object> toMap()
-	{
-		return Glorp.toMap( this );
-	}
-
 }
