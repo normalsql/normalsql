@@ -62,7 +62,7 @@ public class MavenPlugin
             config.password = password;
             config.source = source;
             config.target = target;
-            config.pkg = pkg;
+//            config.pkg = pkg;
             config.extension = extension;
             config.validate();
 
@@ -72,7 +72,7 @@ public class MavenPlugin
             project.addTestCompileSourceRoot( config.target );
 
 
-            var tool = new Tool();
+            var tool = new Tool( config );
             tool.INFO  = new MavenLogShim( info, log );
             tool.WARN  = new MavenLogShim( warn, log );
             tool.DEBUG = new MavenLogShim( debug, log );

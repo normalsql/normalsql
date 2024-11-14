@@ -26,7 +26,8 @@ public class Config
     public Path   sourcePath;
     public String target;
     public Path   targetPath;
-    public String pkg;
+//    public String pkg;
+    public String propsFilename;
     public String extension = ".sql";
     public Path cwd;
 

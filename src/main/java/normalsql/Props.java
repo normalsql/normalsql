@@ -1,4 +1,4 @@
-// Copyright 2010-2023 Jason Osgood
+// Copyright 2010-2024 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql;
@@ -219,7 +219,7 @@ public class Props
 	 * @return a {@link Props} object
 	 * @throws java.io.IOException if any.
 	 */
-	public static Props load(String filename ) throws IOException
+	public static Props load( String filename ) throws IOException
 	{
 		ClassLoader loader = Props.class.getClassLoader();
 		URL url = loader.getResource( filename + ".properties" );
@@ -244,15 +244,16 @@ public class Props
 	public static Props load(File file )
 		throws IOException
 	{
-		if( file.exists() ) 
+		if( file.exists() )
 		{
-			FileReader reader = new FileReader( file );
-			Props props = load( reader );
-			props._url = file.toURI().toURL();
-			return props;
+			try( FileReader reader = new FileReader( file ))
+			{
+				Props props = load( reader );
+				props._url = file.toURI().toURL();
+				return props;
+			}
 		}
 		throw new FileNotFoundException( file.toString() );
-	
 	}
 
 	/**
@@ -270,37 +271,39 @@ public class Props
 		}
 		
 		Props props = new Props();
-		BufferedReader buffer = new BufferedReader( reader );
-		while( true )
+		try( BufferedReader buffer = new BufferedReader( reader ))
 		{
-			String data = buffer.readLine();
-			if( data == null ) break;
-
-			Line line = new Line();
-
-			int comment = data.indexOf( '#' );
-			if( comment > -1 )
+			while( true )
 			{
-				String temp = data.substring( comment + 1 );
-				line.comment = temp;
-				data = data.substring( 0, comment );
-			}
+				String data = buffer.readLine();
+				if( data == null ) break;
 
-			int equal = data.indexOf( '=' );
-			if( equal > -1 )
-			{
-				String key = data.substring( 0, equal );
-				line.key = key.trim();
-				String value = data.substring( equal + 1 );
-				line.value = value.trim();
-			}
-			props.lines.add( line );
-			if( line.key != null )
-			{
-				props.map.put( line.key, line );
+				Line line = new Line();
+
+				int comment = data.indexOf( '#' );
+				if( comment > -1 )
+				{
+					String temp = data.substring( comment + 1 );
+					line.comment = temp;
+					data         = data.substring( 0, comment );
+				}
+
+				int equal = data.indexOf( '=' );
+				if( equal > -1 )
+				{
+					String key = data.substring( 0, equal );
+					line.key = key.trim();
+					String value = data.substring( equal + 1 );
+					line.value = value.trim();
+				}
+				props.lines.add( line );
+				if( line.key != null )
+				{
+					props.map.put( line.key, line );
+				}
 			}
 		}
-		
+
 		return props;
 	}
 

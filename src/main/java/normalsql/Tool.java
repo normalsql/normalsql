@@ -4,6 +4,7 @@
 package normalsql;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
@@ -52,18 +53,20 @@ public class
 	 */
 	public static void main( String[] args )
 	{
-		CLI cli = new CLI( args );
+		var cli = new CLI( args );
 
-		Config config = new Config();
+		var config = new Config();
 		config.url = cli.getOptional( "", "-j", "--url" );
 		config.username = cli.getOptional( "", "-u", "--username" );
 		config.password = cli.getOptional( "", "-p", "--password" );
 		config.source = cli.getOptional( "", "-s", "--source" );
 		config.target = cli.getOptional( config.source, "-t", "--target" );
-		config.pkg = cli.getOptional( "", "-k", "--package" );
+//		config.pkg = cli.getOptional( "", "-k", "--package" );
 		config.extension = cli.getOptional( ".sql", "-e", "--extension" );
 //			boolean help = cli.getFlag( "-h", "--help" );
 		// TODO -v --version flag
+
+		DEBUG.log( "command line: " + config );
 
 		//  Default to config error
 		int status = -1;
@@ -71,7 +74,7 @@ public class
 		{
 			try
 			{
-				var tool  = new Tool();
+				var tool  = new Tool( config );
 				tool.generate( config );
 				// OK
 				status = 0;
@@ -87,13 +90,36 @@ public class
 		System.exit( status );
 	}
 
-	public void generate( Config config ) throws Exception
+	Config config;
+
+	public Tool( Config c ) throws Exception
 	{
+		config = c;
 		config.cwd = new File( System.getProperty( "user.dir" )).toPath();
-		DEBUG.log( "normalsql config: " + config );
 
 		config.validate();
 
+		String properties = Glorp.coalesce( config.propsFilename, "normalsql.properties" );
+		// TODO does this support subdirs? eg "./gosh/normalsql.properties"
+		Path propertiesPath = config.sourcePath.resolve( properties );
+
+		if( Files.exists( propertiesPath ))
+		{
+			Props props = Props.load( propertiesPath.toFile() );
+			DEBUG.log( "properties file '%s' loaded".formatted( properties ));
+			DEBUG.log( "loaded: " + props );
+
+			// TODO: stopping here, for now. decided to go another way for misc config stuff.
+
+		}
+		else
+		{
+			DEBUG.log( "properties file '%s' not found".formatted( properties ));
+		}
+	}
+
+	public void generate( Config config ) throws Exception
+	{
 		try
 		(
 			var conn = DriverManager.getConnection( config.url, config.username, config.password )
@@ -116,30 +142,6 @@ public class
 		}
 	}
 
-//	static String extension = ".sql";
-	/*
-	public static void old_main( String[] args ) throws Exception
-	{
-		String filename = "normalsql.properties";
-		File cwd = new File( "." ).getCanonicalFile();
-		File file = new File( cwd, filename );
-
-		if( !file.exists() )
-		{
-			System.err.println( "'./normalsql.properties' not found" );
-			System.exit( -1 );
-		}
-
-		FileReader reader = new FileReader( file );
-		Props props = Props.load( reader );
-		props.setPropertiesFile( file.toURI().toURL() );
-
-		init(props);
-		System.out.println( "done" );
-		System.exit( 0 );
-	}
-
-	*/
 
 	public List<Path> walkFileTree( Path cwd, Path sourcePath, String extension )
 		throws Exception
