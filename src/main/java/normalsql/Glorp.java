@@ -49,6 +49,20 @@ public class Glorp
         return map;
     }
 
+    /**
+     *  coalesce.
+     *
+     * @param values a {@link java.lang.String} object
+     * @return a {@link java.lang.String} object
+     */
+    public static String coalesce( String... values )
+    {
+        for( String value : values )
+        {
+            if( value != null ) return value;
+        }
+        return null;
+    }
     public static String getClassSimpleName( Path file )
     {
         // TODO fix this

@@ -1,4 +1,4 @@
-package normalsql.jdbc;// Copyright 2010-2023 Jason Osgood
+package normalsql.jdbc;// Copyright 2010-2024 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 //package classicmodels;
