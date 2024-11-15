@@ -87,10 +87,9 @@ public abstract class
      */
 	public String variable;
 
-	private boolean nullable;
-	public boolean nullable() { return nullable; }
-	public void nullable( boolean nullable ) { this.nullable = nullable; }
-	public void nullable( int nullable ) { this.nullable = ( nullable != parameterNullable ); }
+	public int isNullable;
+	public int isNullable() {return isNullable;}
+	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
 
 	public String original() { return original; }
 

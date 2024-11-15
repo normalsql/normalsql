@@ -81,9 +81,6 @@ implements
 			__row = rs.getRow();
 			#foreach( $c in $columns )
 			_${c.variable} = ( ${c.className} ) rs.getObject( ${c.nth} );
-			#if( $c.isNullable )
-			_${c.variable}_wasNull = !rs.wasNull();
-			#end
 			#end
 		}
 		return success;
@@ -124,21 +121,12 @@ implements
 		return result;
 	}
 
-	// TODO this sucks. convert to boxed for nullable, unboxed otherwise
 	#foreach( $c in $columns )
-##	private ${c.className} _${c.variable} = ${c.initial};
 	private ${c.className} _${c.variable};
 	/**
 	 * @return item "${c.original}"
 	*/
 	public ${c.className} ${c.getter}() { return _${c.variable}; }
-	#if( $c.isNullable )
-	private boolean _${c.variable}_wasNull = false;
-	/**
-	 * @return true if item "${c.original}" was NULL
-	 */
-	public boolean ${c.getter}WasNull() { return _${c.variable}_wasNull; }
-	#end
 
 	#end
 	// TODO switch from StringBuilder to printf?

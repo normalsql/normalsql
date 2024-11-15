@@ -3,7 +3,7 @@
 
 package normalsql;
 
-import static java.sql.ParameterMetaData.parameterNullable;
+import static java.sql.ResultSetMetaData.columnNoNulls;
 import static normalsql.Tool.*;
 import normalsql.template.ResultSetColumn;
 import normalsql.template.PreparedStatementParameter;
@@ -210,6 +210,7 @@ public class
 		unitOfWork.preparedSQL = tokens.getText();
 		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
 
+		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
 		// Copy parameter meta data
 		var pmd = ps.getParameterMetaData();
 		if( pmd != null )
@@ -221,12 +222,14 @@ public class
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
 				param.sqlTypeName( pmd.getParameterTypeName( nth ));
-				param.nullable( pmd.isNullable( nth ));
+				param.isNullable( pmd.isNullable( nth ));
 //				param.isSigned( pmd.isSigned( nth ));
 //				param.scaled( pmd.getScale( nth ));
 //				param.precision( pmd.getPrecision( nth ));
 //				param.mode( pmd.getParameterMode( nth ));
 				param.className( pmd.getParameterClassName( nth ));
+
+				// TODO but this stays here, cuz template related. or moves to merge?
 				var trimmed = _helper.trimQuotes( param.original() );
 				param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
 			}
@@ -246,6 +249,7 @@ public class
 		unitOfWork.printfSQL = tokens.getText();
 
 
+		// TODO move to ResultSetColumn, cuz I can't keep all these details straight in my head
 		// Copy column meta data
 		var md = ps.getMetaData();
 		if( md != null )
@@ -262,9 +266,9 @@ public class
 				column.label( md.getColumnLabel( nth ));
 				column.sqlType( md.getColumnType( nth ));
 				column.sqlTypeName( md.getColumnTypeName( nth ));
-				column.nullable( md.isNullable( nth ));
+				column.isNullable( md.isNullable( nth ));
 				column.className( md.getColumnClassName( nth ));
-				if( !column.nullable() )
+				if( column.isNullable() == columnNoNulls )
 				{
 					var name = column.className();
 					name = switch( name )
@@ -311,6 +315,8 @@ public class
 			}
     	}
 
+		INFO.log( "processed: " + unitOfWork.sourceFile );
+
 		merge( unitOfWork );
 
 //		JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
@@ -321,13 +327,11 @@ public class
 //		} else {
 //			System.out.println("Compilation failed.");
 //		}
+		//  compare originalSQL == toString()
 		// TODO verify generation worked
 		//  javac succeeds
 		//  forName
-		//  compare originalSQL == toString()
 
-//		System.out.println( work.sourceFile + " processed" );
-		INFO.log( "processed: " + unitOfWork.sourceFile );
 	}
 
 	/**
@@ -435,11 +439,12 @@ public class
 		throws IOException
 	{
 		// TODO property for generated file name (incl extension)
-		var resolved = targetDir.resolve( name + ".java" );
+		var resolved = targetDir.resolve( name + ".java" ).normalize();
 		try ( FileWriter writer = new FileWriter( resolved.toFile() ))
 		{
 			template.merge( vc, writer );
 			writer.flush();
+			INFO.log( "generated: " + resolved );
 		}
 	}
 }
