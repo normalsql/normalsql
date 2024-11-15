@@ -66,8 +66,9 @@ implements
 		}
 	}
 
+	private boolean __beforeFirst = true;
+	private boolean __afterLast = false;
 	private int __row = 0;
-
 	public int getRow() { return __row; }
 
 	public final boolean hasNext()
@@ -76,9 +77,11 @@ implements
 		ResultSet rs = getResultSet();
 		if( rs == null ) return false;
 		boolean	success = rs.next();
+		__row = rs.getRow();
+		__beforeFirst = rs.isBeforeFirst();
+		__afterLast = rs.isAfterLast();
 		if( success )
 		{
-			__row = rs.getRow();
 			#foreach( $c in $columns )
 			_${c.variable} = ( ${c.className} ) rs.getObject( ${c.nth} );
 			#end
@@ -134,11 +137,15 @@ implements
 	{
 		if( getResultSet() == null )
 		{
-			return "No results";
+			return "null resultset";
 		}
-		if( getRow() == 0 )
+		if( __beforeFirst )
 		{
-			return "No current row";
+			return "before first";
+		}
+		if( __afterLast )
+		{
+			return "after last";
 		}
 		StringBuilder sb = new StringBuilder();
 		sb.append( "#row: " );
@@ -147,7 +154,6 @@ implements
 		#foreach( $c in $columns )
 		sb.append( "${c.variable}: " );
 		sb.append( ${c.getter}() );
-##		sb.append( ${c.getter}WasNull() ? null : ${c.getter}() );
 		#if($foreach.hasNext)
 		sb.append( ", " );
 		#end
