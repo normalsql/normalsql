@@ -1,1 +1,0 @@
-select count(t.*) from test t;

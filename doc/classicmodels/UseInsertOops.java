@@ -11,7 +11,7 @@ public class UseInsertOops {
         throws Exception
     {
 		Class.forName( "org.h2.Driver" );
-		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/~/classicmodels", "sa", null );
+		Connection conn = DriverManager.getConnection( " jdbc:h2:tcp://localhost/petclinic-jdbc", "sa", null );
 //        InsertOopsMaster abc = new InsertOopsMaster( conn, Statement.RETURN_GENERATED_KEYS );
 //        InsertOops abc = new InsertOops( conn );
 //        abc.setID( 18L );
