@@ -5,6 +5,8 @@ package normalsql.template;
 
 import normalsql.parse.NormalSQLParser.LiteralContext;
 
+import static java.sql.ParameterMetaData.parameterNullable;
+
 /**
  * Property (aka JavaBean) represents a class instance variable and its accessors
  *  (getters, setters).
@@ -85,9 +87,10 @@ public abstract class
      */
 	public String variable;
 
-	public int isNullable;
-	public int isNullable() {return isNullable;}
-	public void isNullable( int isNullable ) { this.isNullable = isNullable; }
+	private boolean nullable;
+	public boolean nullable() { return nullable; }
+	public void nullable( boolean nullable ) { this.nullable = nullable; }
+	public void nullable( int nullable ) { this.nullable = ( nullable != parameterNullable ); }
 
 	public String original() { return original; }
 

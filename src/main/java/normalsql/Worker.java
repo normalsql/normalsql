@@ -3,6 +3,7 @@
 
 package normalsql;
 
+import static java.sql.ParameterMetaData.parameterNullable;
 import static normalsql.Tool.*;
 import normalsql.template.ResultSetColumn;
 import normalsql.template.PreparedStatementParameter;
@@ -220,7 +221,7 @@ public class
 				param.nth( nth );
 				param.sqlType( pmd.getParameterType( nth ));
 				param.sqlTypeName( pmd.getParameterTypeName( nth ));
-				param.isNullable( pmd.isNullable( nth ));
+				param.nullable( pmd.isNullable( nth ));
 //				param.isSigned( pmd.isSigned( nth ));
 //				param.scaled( pmd.getScale( nth ));
 //				param.precision( pmd.getPrecision( nth ));
@@ -261,8 +262,26 @@ public class
 				column.label( md.getColumnLabel( nth ));
 				column.sqlType( md.getColumnType( nth ));
 				column.sqlTypeName( md.getColumnTypeName( nth ));
-				column.isNullable( md.isNullable( nth ));
+				column.nullable( md.isNullable( nth ));
 				column.className( md.getColumnClassName( nth ));
+				if( !column.nullable() )
+				{
+					var name = column.className();
+					name = switch( name )
+					{
+						case "java.lang.Boolean" -> "boolean";
+						case "java.lang.Byte" -> "byte";
+						case "java.lang.Short" -> "short";
+						case "java.lang.Character" -> "char";
+						case "java.lang.Integer" -> "int";
+						case "java.lang.Long" -> "long";
+						case "java.lang.Float" -> "float";
+						case "java.lang.Double" -> "double";
+						default -> name;
+					};
+					column.className( name );
+				}
+
 				unitOfWork.columns.add( column );
 			}
 		}
