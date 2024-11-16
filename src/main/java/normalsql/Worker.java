@@ -3,6 +3,7 @@
 
 package normalsql;
 
+import static java.sql.ParameterMetaData.parameterNoNulls;
 import static java.sql.ResultSetMetaData.columnNoNulls;
 import static normalsql.Tool.*;
 import normalsql.template.ResultSetColumn;
@@ -228,6 +229,11 @@ public class
 //				param.precision( pmd.getPrecision( nth ));
 //				param.mode( pmd.getParameterMode( nth ));
 				param.className( pmd.getParameterClassName( nth ));
+				if( param.isNullable() == parameterNoNulls )
+				{
+					var name = toScalarClassName( param.className() );
+					param.className( name );
+				}
 
 				// TODO but this stays here, cuz template related. or moves to merge?
 				var trimmed = _helper.trimQuotes( param.original() );
@@ -270,22 +276,9 @@ public class
 				column.className( md.getColumnClassName( nth ));
 				if( column.isNullable() == columnNoNulls )
 				{
-					var name = column.className();
-					name = switch( name )
-					{
-						case "java.lang.Boolean" -> "boolean";
-						case "java.lang.Byte" -> "byte";
-						case "java.lang.Short" -> "short";
-						case "java.lang.Character" -> "char";
-						case "java.lang.Integer" -> "int";
-						case "java.lang.Long" -> "long";
-						case "java.lang.Float" -> "float";
-						case "java.lang.Double" -> "double";
-						default -> name;
-					};
+					var name = toScalarClassName( column.className() );
 					column.className( name );
 				}
-
 				unitOfWork.columns.add( column );
 			}
 		}
@@ -332,6 +325,23 @@ public class
 		//  javac succeeds
 		//  forName
 
+	}
+
+	private static String toScalarClassName( String name )
+	{
+		name = switch( name )
+		{
+			case "java.lang.Boolean" -> "boolean";
+			case "java.lang.Byte" -> "byte";
+			case "java.lang.Short" -> "short";
+			case "java.lang.Character" -> "char";
+			case "java.lang.Integer" -> "int";
+			case "java.lang.Long" -> "long";
+			case "java.lang.Float" -> "float";
+			case "java.lang.Double" -> "double";
+			default -> name;
+		};
+		return name;
 	}
 
 	/**
