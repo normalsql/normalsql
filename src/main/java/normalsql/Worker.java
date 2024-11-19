@@ -214,6 +214,8 @@ public class
 		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
 		// Copy parameter meta data
 		var pmd = ps.getParameterMetaData();
+//		var ugh = ps.getMetaData();
+//		var dink = ps.getResultSetType();
 		if( pmd != null )
 		{
 			// SQL arrays are 1-based
