@@ -12,7 +12,7 @@ public class Test {
 //		var ugh = Class.forName( "org.h2.Driver" );
 		Connection conn = DriverManager.getConnection( "jdbc:h2:tcp://localhost/petclinic-jdbc", "", "" );
 
-        var max = new TryNullables( conn );
+        var max = new SelectNullables( conn );
         var rs = max.execute();
         System.out.println( rs );
         while( rs.hasNext() )
