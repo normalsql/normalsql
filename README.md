@@ -1,26 +1,39 @@
-## NormalSQL
+# NormalSQL
 
-Just use normal SQL. 
+Transform normal SQL statements into typesafe PreparedStatement and ResultSet wrappers.
 
 No need for mappings, annotations, DSLs, or string templates. 
 
-NormalSQL understands your SQL as-is. It then generates the simple, obvious wrappers 
-you'd create yourself, if only you had more time.
+NormalSQL understands your SQL as-is. It finds all query parameters and result columns. 
+Which are then used to code generate wrappers. 
 
-### Simple Example
+## Simple Example
 
-Given this SQL source file ([SimpleSelect.sql](doc/example/SimpleExample.sql)):
+This simple [query](doc/example/SimpleExample.sql):
 
 ```sql
-SELECT first, last, age FROM people WHERE age > 18
+SELECT first, last, age FROM people WHERE age = 18
 ```
-NormalSQL generates a PreparedStatement wrapper ([SimpleExample.java](doc/example/SelectPeopleOlderThan.java)) and its matching ResultSet ([SimpleExampleResultSet.java](doc/example/SelectPeopleOlderThanResultSet.java)):
+Generates these [PreparedStatement](doc/example/SelectPeopleOlderThan.java) and [ResultSet](doc/example/SelectPeopleOlderThanResultSet.java) (wrappers):
 ```java
 // pseudo-code
-class SimpleSelect 
-    int ageGT = 18
-    SimpleSelectResultSet execute()
-        
+class SimpleSelect {
+    PreparedStatement ps;
+    SimpleSelect( Connection connection ) {
+        ps = connection.prepareStatement( "SELECT first, last, age FROM people WHERE age = ?" );
+    }
+    int age = 18;
+    void setAge( int age ) { this.age = age; }
+    SimpleSelectResultSet execute() {
+        ps.setInteger( 1, age );
+        return new SimpleSelectResult( ps.execute() );
+    }
+}
+```
+
+Notice that NormalSQL found `age = 18`,  created property (bean) `age` , copied  `18` as the default value, and replaced that `18` with SQL parameter `?` for the prepared statement.
+
+```java
 class SimpleSelectResultSet 
     boolean next()
     String first
@@ -28,7 +41,9 @@ class SimpleSelectResultSet
     int age
 ```
 
-Here's how your app will use these wrappers:
+Notice the properties created for each result column `first`, `last`,  and `age`. 
+
+How your app uses these wrappers:
 
 ```java
 // pseudo-code
@@ -38,27 +53,33 @@ try
     select = new SimpleSelect( conn )
 ) 
 {
-    select.ageGT = 21 
-    results = select.execute()
+    select.setAge( 21 ); 
+    rs = select.execute();
 
-    while( results.next() ) 
+    while( rs.next() ) 
     {
-        println( results )
+        printf( "name: %s %s age: %d", rs.getFirst(), rs.getLast(), rs.getAge() );
     }
 }
 ```
 
-What could be easier?
+## Less Simple Examples
 
-## Usage
+JOINs, CTEs, INSERT, DELETE
 
-To work its magic, NormalSQL requires a live running instance of the target database(s).
+## Petclinic (Inspired) Demo
 
-### Petclinic (Inspired) Demo
+The [normalsql-demo]() project shows a typical CRUD implemenation. (The NormalSQL generated wrappers are included.)
 
-The [normalsql-demo]() IntelliJ & Maven project shows typical CRUD usage. (Minus the distracting webserver and front-end.) It conveniently includes pre-generated wrappers.
+clone repo
 
-### Maven Plugin
+quick start
+
+# Usage
+
+NormalSQL requires a live running instance of the target database(s) to gather metadata.
+
+## Maven Plugin
 
 ```xml
 <plugin>
@@ -79,122 +100,13 @@ The [normalsql-demo]() IntelliJ & Maven project shows typical CRUD usage. (Minus
   </configuration>
 </plugin>
 ```
-NormalSQL's plugin is bound to the `generate-sources` phase, therefore runs before `compile`. So normally you'd do full rebuilds like this:
+NormalSQL's plugin is bound to Maven's `generate-sources` phase, therefore runs before `compile` [[1]](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html) [[2]](https://maven.apache.org/guides/mini/guide-generating-sources.html). So normally you'd do full rebuilds like this:
 ```shell
 $ mvn clean compile
 ```
 Or just re-run NormalSQL as needed:
 ```shell
 $ mvn normalsql:normalsql
-```
-
-### Command Line
-
-Details go here.
-
-### IntelliJ Extension
-
-Details go here.
-
-# SQL Support
-
-NormalSQL recognizes DML statements from SQL-92 thru SQL-2016. This includes CTEs, JOINs, UNIONs, aggregate functions, and so forth.
-
-List of sample SQLs use for testing goes here.
-
-
-
-### Benefits
-
-| Feature                 | Detail                                                                                                                                                                               |
-|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SQL-first workflow      | Use normal SQL to generate app source code. Instead of using mappings, DSLs, or templates to generate SQL.                                                                           |
-| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                     |
-| Reduce errors           | &bull; Compile time processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
-| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                              |
-| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                    |
-
-
-
-
-## Quick Example
-
-Starting with the simple SELECT [SelectForSale.sql](doc/example/SelectForSale.sql):
-
-```sql
--- Find cars by style and mileage 
-SELECT id, make, model, year 
-  FROM automobiles 
- WHERE style = 'coupe' 
-   AND odometer < 100000;
-```
-
-NormalSQL generates this prepared statement:
-
-```sql
--- Find cars by style and mileage 
-SELECT id, make, model, year 
-  FROM automobiles 
- WHERE style = ? 
-   AND odometer < ?;
-```
-
-The literals `'coupe'` and `100000` were automatically replaced with a parameter `?`.
-
-The prepared statement is then wrapped in generated class [SelectForSale.java](doc/example/SelectForSale.java):
-
-```java
-// pseudo-code
-class SelectForSale 
-{
-    String _style = "coupe";
-    void setStyle( String style ) { _style = style; }
-    
-    Integer _odometer = 100000;
-    void setOdometer( Integer odometer ) { _odometer = odometer; }
-
-    SelectForSaleResultSet execute();
-}
-```
-
-Next, NormalSQL finds the columns `id`, `make`, `model`, and `year`. They are added to
-to the inner class Row.
-[SelectForSaleResultSet.java](doc/example/SelectForSaleResultSet.java) is the 
-generated source:
-
-```java
-// pseudo-code
-class SelectForSaleResultSet implements Iterable<Row>
-{
-    // inner-class
-    class Row
-    {
-        Integer getID()
-        String  getMake()
-        String  getModel()
-        Integer getYear()
-    }
-}
-```
-
-Your application will use those wrappers something like this:
-
-```java
-Connection conn = DriverManager.getConnection( ... );
-
-SelectForSale select = new SelectForSale( conn );
-select.setStyle( "sedan" );
-select.setOdometer( 90000 );
-
-SelectForSaleResultSet rs = select.execute();
-
-for( SelectForSaleResultSet.Row row : rs )
-{
-    System.out.println( row.toJSON() );
-}
-
-rs.close();
-select.close();
 ```
 
 # Configuration
@@ -204,7 +116,6 @@ select.close();
 ## Command Line
 
 Optionally specify .properties. Optionally specify initial source directory.
-
 
 ## Properties
 
@@ -304,6 +215,12 @@ And the generated accessors will be:
 Future: LIKE, REGEXP, Postgress Matches
 --
 
+# SQL Support
+
+NormalSQL recognizes DML statements from SQL-92 thru SQL-2016. This includes CTEs, JOINs, UNIONs, aggregate functions, and so forth.
+
+(List of sample SQLs use for testing goes here.)
+
 ### Find Columns
 
 Only the outer most result columns are found and become accessors.
@@ -386,41 +303,14 @@ file a bug report. Thank you in advance.
 
 The error reporting of our grammar will improve over time.
 
-# Future Work 
-
-Allow custom templates for code generation. Because customer have their own best practices
-for JDBC, logging, monitoring, and so forth.
-
-The 2.x release will introduce our own document model. NormalSQL will then be a general purpose
-SQL parsing toolkit, useful for other projects.
-
-We have some ideas for how to support dynamic SQL. This will require including NormalSQL as a runtime 
-dependency.
-
-NormalSQL can work along side other SQL stacks. This allows incremental adoption of Normal's SQL-first workflow.
-Creating examples and tutorials will be a lot of work.
-
-Support other platforms, such as PHP, Python, C#.
-
-Create a standalone native NormalSQL executable to be used by other platform's build chains. Perhaps even 
-port NormalSQL to other platforms.
-
-Standup a SQL Fiddle like public instance of NormalSQL, allowing people to casually try things out.
 
 
---
+### Benefits
 
-
-Use normal SQL statements.
-
-Remember Data Access Objects (DAOs)? The SQL was right there. How everything worked was obvious. No
-black box, no runtime magic, no complicated rules or incantations.
-
-Unfortunately, manually writing and maintaining DAOs was tedious and error prone. So DAOs rightly
-fell out of fashion.
-
-But what if that process was automated and error free?
-
-That's exactly what NormalSQL does.
-
-Use normal SQL DML statements as-is to generate app source code.
+| Feature                 | Detail                                                                                                                                                                               |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SQL-first workflow      | Use normal SQL to generate app source code. Instead of using mappings, DSLs, or templates to generate SQL.                                                                           |
+| Plaintext SQL files     | &bull; Use your favorite SQL client (eg DBeaver, DataGrip). <br/> &bull; Devs & DBAs can now work independently.                                                                     |
+| Reduce errors           | &bull; Compile time processing. <br/> &bull; SQL and app always in sync. <br/> &bull; All prepared statement parameters have a default value. <br/> &bull; No SQL injection attacks. |
+| No runtime dependencies | There is no NormalSQL runtime. Use the generated app source code as-is.                                                                                                              |
+| Easier debugging        | &bull; Statement.toString() returns currrent SQL. <br/> &bull; ResultSet.toString() returns current row's fields.                                                                    |

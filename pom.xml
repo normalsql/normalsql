@@ -16,7 +16,10 @@
 
     <name>NormalSQL</name>
     <description>Compile SQL statements into typesafe source code.</description>
-    <url>https://normalsql.org</url>
+    <organization>
+        <name>Jason Osgood</name>
+        <url>https://normalsql.org</url>
+    </organization>
 
     <licenses>
         <license>
@@ -256,11 +259,12 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
+                            <Implementation-Title>${project.name}</Implementation-Title>
                             <Implementation-Version>${project.version} build ${buildNumber}</Implementation-Version>
-                            <Implementation-Version>${project.version} build ${buildNumber}</Implementation-Version>
+                            <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
                         </manifestEntries>
                         <manifest>
-                            <mainClass>normalsql.Hello</mainClass>
+                            <mainClass>normalsql.Tool</mainClass>
                             <!-- TODO determine what this does -->
                             <addDefaultImplementationEntries>
                                 true
@@ -287,7 +291,7 @@
                         <configuration>
 <!--                            <debug>true</debug>-->
                             <failOnError>false</failOnError>
-                            <!-- TODO exclude all generated files vs itemized list -->
+                            <!-- TODO exclude all generated files (wildcard?) vs itemized list -->
                             <sourceFileExcludes>
                                 <sourceFileExclude>**/NormalSQLParser.java</sourceFileExclude>
                                 <sourceFileExclude>**/NormalSQLLexer.java</sourceFileExclude>
