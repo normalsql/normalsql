@@ -1,6 +1,12 @@
 # NormalSQL
 
-Transform normal SQL statements into typesafe PreparedStatement and ResultSet wrappers.
+~~Transform normal SQL statements into typesafe PreparedStatement and ResultSet wrappers.~~
+
+~~Use normal SQL statements to generate typesafe wrappers.~~
+
+~~Compile SQL statements into typesafe source code.~~
+
+Generate typesafe wrappers from normal SQL statements.
 
 No need for mappings, annotations, DSLs, or string templates. 
 

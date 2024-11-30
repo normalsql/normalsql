@@ -6,7 +6,7 @@
 
     <groupId>org.normalsql</groupId>
     <artifactId>normalsql</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
 
     <!--
         This artifact is both an executable JAR *AND* a Maven plugin. That's
@@ -15,11 +15,8 @@
     <packaging>maven-plugin</packaging>
 
     <name>NormalSQL</name>
-    <description>Compile SQL statements into typesafe source code.</description>
-    <organization>
-        <name>Jason Osgood</name>
-        <url>https://normalsql.org</url>
-    </organization>
+    <description>Generate typesafe wrappers from normal SQL statements.</description>
+    <url>https://normalsql.org</url>
 
     <licenses>
         <license>
@@ -320,9 +317,26 @@
 
             <!-- https://help.sonatype.com/repomanager2/staging-releases/configuring-your-project-for-deployment -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+<!--                <version>${maven-deploy-plugin.version}</version>-->
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.13</version>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>s01.oss.sonatype.org</serverId>
