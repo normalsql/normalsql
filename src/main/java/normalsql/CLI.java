@@ -7,190 +7,143 @@ package normalsql;
 import java.util.ArrayList;
 import java.util.List;
 
-record Spot ( String small, String big, String blurb, Object filler ){}
+record Option( String name, String shortName, String description, Object defaultValue ){}
 
+/**
+ *  Quick & dirty command line arguments parser. I wanted typesafe
+ *  1-pass imperative API, instead of annotations or getopt style "parse
+ *  then fetch". I wanted explicit constraints, instead of delegated via
+ *  annotation or otherwise.
+ *
+ *  Get it order:
+ *
+ *      options
+ *      flags
+ *      ordinal parameters
+ *      done()
+ *
+ */
 public class CLI
 {
-    List<String> nu;
-
-    List<Spot> spots = new ArrayList<Spot>();
+    public static final String BASH_END_OF_OPTIONS = "--";
+    // Copy of command line arguments. Up to, but not including, "" (double-dash)
+    List<String> _args;
+    List<Option> options = new ArrayList<>();
 
     public static void main( String[] args )
     {
-//        var cli = new CLI( new String[]{"-x"} );
-        var cli = new CLI( new String[]{"-f", "tangerine", "-x"} );
-        String fave = cli.getOptional( "pineapple", "-f", "--fruit", "favorite fruit" );
-        boolean help = cli.getFlag( "-h", "--help", "show help" );
-        boolean version = cli.getFlag( "-v", "--version", "show version" );
-        if( cli.ok() )
+//        var cli = new CLI( new String[]{"x"} );
+        var cli = new CLI( new String[]{ "-f", "tangerine", "-x" });
+//        var cli = new CLI( new String[]{} );
+        String fave = cli.getOption( "fruit", "f", "favorite fruit", "pineapple" );
+        boolean help = cli.getFlag( "h", "help", "show help" );
+        boolean version = cli.getFlag( "v", "version", "show version" );
+        if( cli.done() )
         {
             System.out.println( fave );
+            System.out.println( help );
+            System.out.println( version );
         }
     }
 
     public CLI( String[] args )
     {
-        nu = new ArrayList<>();
+        _args = new ArrayList<>();
         if( args != null )
         {
             for( var arg : args )
             {
-                // IIRC this is a shell (bash) thing. Everything after "--" is ignored,
-                // to be passed thru to next program.
-                if( arg.equals( "--" ) ) break;
-                nu.add( arg );
+                // Copy command line up to end of options
+                if( arg.equals( BASH_END_OF_OPTIONS ) ) break;
+                _args.add( arg );
             }
         }
     }
     // TODO getRequired
-    // TODO getFlag
 
-    public <T> T getOptional( T def, String... keys )
+    @SuppressWarnings( "unchecked" )
+    public <T> T getOption( String name, String shortName, String description, T defaultValue )
     {
-        if( def == null ) throw new NullPointerException( "default value cannot be null" );
-        if( keys == null ) throw new NullPointerException( "key(s) cannot be null" );
+        if( shortName == null && name == null ) { throw new NullPointerException( "both name and abbrev cannot be null" ); }
+        if( defaultValue == null ) { throw new NullPointerException( "default value cannot be null" ); }
 
-        int size = nu.size();
-        for( int i = 0; i < size; i++ )
+        options.add( new Option( name, shortName, description, defaultValue ));
+
+        if( !name.startsWith( "--" ))
         {
-            for( var key : keys )
-            {
-                if( nu.get( i ).equals( key ) )
-                {
-                    if( i + 1 < size )
-                    {
-                        nu.remove( i );
-                        var value = nu.remove( i );
-
-	                    return switch( def )
-	                    {
-	                        case String ignore -> (T) value;
-	                        case Integer ignore -> (T) Integer.valueOf( value );
-	                        default ->
-	                        {
-	                            String name =  def.getClass().getCanonicalName();
-	                            throw new IllegalArgumentException( "don't know how to convert/cast: " + name );
-	                        }
-	                    };
-                    }
-                    else
-                    {
-                        throw new IllegalArgumentException( "missing value for key: " + key );
-                    }
-                }
-            }
+            name = "--" + name;
         }
-        return def;
-    }
 
-    public <T> T getOptional( T filler, String small, String big, String blurb )
-    {
+        if( !shortName.startsWith( "-" ))
+        {
+            shortName = "-" + shortName;
+        }
 
-        if( filler == null ) { throw new NullPointerException( "default value cannot be null" ); }
-        if( small == null && big == null ) { throw new NullPointerException( "both small and big keys cannot be null" ); }
-
-        spots.add( new Spot( small, big, blurb, filler ));
-
-        int size = nu.size();
+        int size = _args.size();
         for( int i = 0; i < size; i++ )
         {
-            var key = nu.get( i );
-            if( key.equals( small ) || key.equals( big ) )
+            var key = _args.get( i );
+            if( key.equals( name ) || key.equals( shortName ) )
             {
                 if( i + 1 < size )
                 {
-                    // "consume" token for key
-                    nu.remove( i );
-                    // get and then "consume" token for value
-                    var value = nu.remove( i );
+                    // "consume" option name
+                    _args.remove( i );
+                    // get and then "consume" option argument
+                    var arg = _args.remove( i );
 
-                    return switch( filler )
+                    return (T) switch( defaultValue )
                     {
-                        case String ignore -> (T) value;
-                        case Integer ignore -> (T) Integer.valueOf( value );
+                        case String ignore -> arg;
+                        case Integer ignore -> Integer.valueOf( arg );
+                        case Float ignore -> Float.valueOf( arg );
+                        case Boolean ignore -> Boolean.valueOf( arg );
                         default ->
                         {
-                            String name = filler.getClass().getCanonicalName();
-                            throw new IllegalArgumentException( "don't know how to convert/cast: " + name );
+                            String canonicalName = defaultValue.getClass().getCanonicalName();
+                            throw new IllegalArgumentException( "don't know how to convert/cast: " + canonicalName );
                         }
                     };
                 }
-                else
-                {
-                    throw new IllegalArgumentException( "missing value for key: " + key );
-                }
+
+                throw new IllegalArgumentException( "missing value for key: " + key );
             }
         }
-        return filler;
+        return defaultValue;
     }
 
 
-    public boolean getFlag( String small, String big, String blurb )
+    public boolean getFlag( String abbrev, String name, String blurb )
     {
-        spots.add( new Spot( small, big, "blurb", null ));
+        options.add( new Option( name, abbrev, blurb, null ));
 
-        int size = nu.size();
+        int size = _args.size();
         for( int i = 0; i < size; i++ )
         {
-            var arg = nu.get( i );
-            if( arg.equals( small ) || arg.equals( big ) )
+            var arg = _args.get( i );
+            if( arg.equals( abbrev ) || arg.equals( name ) )
             {
-                // "consume" token
-                nu.remove( i );
+                // "consume" flag
+                _args.remove( i );
                 return true;
             }
         }
         return false;
     }
 
-    public boolean ok()
+    public boolean done()
     {
-        if( !nu.isEmpty() )
+        if( _args.isEmpty() ) return true;
+
+        String extra = String.join( " ", _args );
+        System.out.println( "unknown parameter(s): " + extra );
+        System.out.println(  );
+        System.out.println( "TODO: help info happens here" );
+        for( var spot : options )
         {
-            String extra = String.join( " ", nu );
-            System.out.println( "unknown parameter(s): " + extra );
-            System.out.println(  );
-            System.out.println( "TODO: help info happens here" );
-            for( var spot : spots )
-            {
-                System.out.println( spot );
-            }
-//            throw new IllegalArgumentException( "unknown parameter(s): " + extra );
-            return false;
+            System.out.println( spot );
         }
-        return true;
+
+        return false;
     }
-
-//    public static void main( String[] args )
-//    {
-//        String[] blah = { "-u", "sa", "--password", "root" };
-//
-//        CLI m = new CLI( blah );
-//         m.go( blah );
-//         System.out.println( m );
-//    }
-
-//    String username;
-//    int    count;
-//    String    stinky;
-//
-//    public void go( String[] args )
-//    {
-//        var nu = new ArrayList<String>();
-//        for( var arg : args )
-//        {
-//            if( arg.equals( "--" ) ) break;
-//            nu.add( arg );
-//        }
-//
-//        username = getOptional( "nope", "-u", "--username" );
-//        count    = getOptional( 1, "count" );
-//        stinky   = getOptional( stinky, "--stinky" );
-//        // TODO find orphans
-////        source = next();
-////        target = next();
-//
-//
-//    }
-//
 }

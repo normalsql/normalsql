@@ -4,7 +4,6 @@
 package normalsql;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import static java.nio.file.FileVisitResult.*;
@@ -56,21 +55,21 @@ public class
 		var cli = new CLI( args );
 
 		var config = new Config();
-		config.url = cli.getOptional( "", "-j", "--url" );
-		config.username = cli.getOptional( "", "-u", "--username" );
-		config.password = cli.getOptional( "", "-p", "--password" );
-		config.source = cli.getOptional( "", "-s", "--source" );
-		config.target = cli.getOptional( config.source, "-t", "--target" );
-//		config.pkg = cli.getOptional( "", "-k", "--package" );
-		config.extension = cli.getOptional( ".sql", "-e", "--extension" );
-//			boolean help = cli.getFlag( "-h", "--help" );
+		config.url = cli.getOption( "url", "j", "JDBC url", "" );
+		config.username = cli.getOption( "username", "u", "login username", "" );
+		config.password = cli.getOption( "password", "p", "password", "" );
+		config.source = cli.getOption( "source", "s", "source directory", "" );
+		config.target = cli.getOption( "target", "t", "target directory", config.source );
+		config.pkg = cli.getOption( "package", "k", "target java package name", "" );
+		config.extension = cli.getOption( "extension", "e", "SQL source filename extension", ".sql" );
+//			boolean help = cli.getFlag( "h", "help" );
 		// TODO -v --version flag
 
 		DEBUG.log( "command line: " + config );
 
 		//  Default to config error
 		int status = -1;
-		if( cli.ok() )
+		if( cli.done() )
 		{
 			try
 			{

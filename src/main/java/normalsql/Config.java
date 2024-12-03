@@ -30,6 +30,7 @@ public class Config
     public String propsFilename;
     public String extension = ".sql";
     public Path cwd;
+    public String pkg;
 
     public void validate() throws Exception
     {
