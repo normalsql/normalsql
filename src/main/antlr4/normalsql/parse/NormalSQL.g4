@@ -90,11 +90,16 @@ explain
         | 'FORMAT' ( 'TEXT' | 'XML' | 'JSON' | 'YAML' )
         ;
 
+// https://www.postgresql.org/docs/current/sql-altertable.html
 alter
     : 'ALTER' 'TABLE' qname
       ( 'RENAME' ( 'COLUMN'? qname )? 'TO' qname
-      | 'ADD' 'COLUMN'? columnDef
-      | 'DROP' 'COLUMN'? qname
+      | 'ADD' 'COLUMN'? ( 'IF' 'NOT' 'EXISTS' )? columnDef
+      | 'ALTER' 'COLUMN' qname
+        ( 'SET' 'STATISTICS' ( signedInteger |  'DEFAULT' )
+        | 'SET' 'STORAGE'  ( 'PLAIN' | 'EXTERNAL' | 'EXTENDED' | 'MAIN' | 'DEFAULT' )
+        )
+      | 'DROP' 'COLUMN'? qname ( 'IF' 'EXISTS' )?
       )
     ;
 
@@ -368,10 +373,11 @@ query
         : tables ',' tables
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
-        | tables join tables  ( 'ON' term | 'USING' qnames )?
+        | tables join tables ( 'ON' term | 'USING' qnames )?
 
         | ( qname | '(' qname ')' ) tableAlias?
-          ( ( 'USE' 'INDEX' names ) // H2
+          ( 'USE' 'INDEX' names // H2
+          | ( 'USE' | 'IGNORE' | 'FORCE' ) 'INDEX' ( 'FOR' 'JOIN' )? '(' id ')' // Postgres? MySQL?
           | indexedBy // SQLite
           )?
 
@@ -392,14 +398,13 @@ query
         ;
 
         join
-            // TODO add 'LATERAL'
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
               | ( 'RIGHT' | 'FULL' ) 'OUTER'?
               | 'INNER'
               | 'CROSS'
               )?
-              'JOIN'
+              'JOIN' 'LATERAL'?
             ;
 
     tableAlias : 'AS'? alias names? ;
@@ -414,7 +419,7 @@ query
     tableCollection : 'TABLE' '(' term ')' ;
 
     unnest
-        : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
+        : 'UNNEST' '(' ( (qname | array ) ( ',' (qname | array ) )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
 
     tableFunc
         // H2 table function http://h2database.com/html/functions.html#table
@@ -582,7 +587,7 @@ subterm
 
     | <assoc=right> subterm '^' subterm                   # SubtermOperator
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm         # SubtermOperator
-    | subterm  ( '||' | '->' | '->>' ) subterm            # SubtermOperator
+    | subterm  ( '||' | '->>' | '->' | '#>>' | '#>' ) subterm            # SubtermOperator
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm                       # SubtermOperator
     | VARIABLE assign subterm                             # SubtermAssign
@@ -918,9 +923,7 @@ orderBy
     sortDir
         : 'ASC'
         | 'DESC'
-        // Postgres
-//        | 'USING' compare
-//        | 'USING' ( EQ | COMPARE )
+        | 'USING' compare // Postgres?
         ;
 
     jsonPairs
