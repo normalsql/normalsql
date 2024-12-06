@@ -298,8 +298,7 @@ insert
 
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
-//      'USING' 'ONLY'? source 'ON' terms
-      'USING' 'ONLY'? query 'ON' terms
+      'USING' 'ONLY'? ( query | qname alias? ) 'ON' terms
       when*
     ;
 
@@ -627,13 +626,21 @@ predicate
         ;
 
     likes
-        : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
+        : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' | 'SIMILAR' 'TO' ;
 
     assign
         : EQ | ASSIGN ;
 
     compare
-        : EQ | COMPARE | TILDE | MATCH ;
+        : EQ | COMPARE | TILDE | MATCH | postgres ;
+
+    // TODO gotta catch them all
+    // https://www.postgresql.org/docs/current/functions-array.html
+    // https://www.postgresql.org/docs/current/functions-range.html
+    // https://www.postgresql.org/docs/current/functions-geometry.html
+    postgres
+        : '@@' | '@>' | '@<' | '<->' | '&>' | '&<'
+        ;
 
     collationName
         : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
@@ -1047,6 +1054,7 @@ ASSIGN  : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 TILDE   : '~' ;
 MATCH   : '~*' | '!~' | '!~*' ;
+STARTS_WITH : '^@' ;
 
 // TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
