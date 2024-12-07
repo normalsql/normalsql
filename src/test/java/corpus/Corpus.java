@@ -46,7 +46,8 @@ Corpus
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-		String wick = "/Users/jasonosgood/Learn/DerekStride/tree-sitter-sql/test/corpus";
+//		String wick = "/Users/jasonosgood/Learn/DerekStride/tree-sitter-sql/test/corpus";
+		String wick = "/Users/jasonosgood/Learn/m-novikov/tree-sitter-sql/test/corpus";
 		Path sourceRoot = Paths.get( wick );
 
 		ArrayList<Path> files = new ArrayList<>();
