@@ -385,6 +385,7 @@ query
           )?
 
         | ( '(' query ')'
+          | function
           | values
           | tableFunc
           | deltaTable
@@ -766,7 +767,17 @@ array
     arrayNested
         : arrayTerms ( ',' arrayTerms )* ;
 
+
 function
+    : coreFunction
+    | simpleFunction
+    | aggregateFunction
+    | analyticFunction
+    | windowFunction
+    | '{fn' function '}' //  ODBC style
+    ;
+
+coreFunction
     : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
     | 'CURRENT_DATE' params?
     | 'CURRENT_TIME' params?
@@ -806,9 +817,6 @@ function
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
     | 'ARRAY' '(' query ')' // Postgres
-    | '{fn' function '}' //  ODBC style
-
-    | aggregateFunction
     ;
 
     params
@@ -837,37 +845,46 @@ function
 ////    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
 //        'SUM' '(' allDistinct? term ')' filter? over?
 
-    aggregateFunction
-        : functionName
-          '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
-          orderBy?
-    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-          ( 'ON' 'OVERFLOW' 'ERROR' )?
-          ( 'SEPARATOR' term )? onNull?
-    //      respectIgnore?  // TODO: Oracle
-          ')'
-          withinGroup?
-          filter?
-          ( 'FROM' firstLast )?
-          nullTreatment? over?
+    simpleFunction
+        : functionName '(' ( '*' |  term ( ',' term )*  ) ')'
         ;
 
-//      ( ')' withinGroup
-//      | ')' nullTreatment? over
-//      | nullTreatment ')' over
-//      | ')'
-//      )
+    windowFunction
+        : name '(' ( ( qname '.' )? '*' | ( term ( ',' term )* )? ) ')'
+          ( 'FROM' firstLast )? filter? nullTreatment? over
+        ;
 
+    aggregateFunction
+        : name
+          '('
+          ( ( qname '.' )? '*'
+          | allDistinct? ( term ( ',' term )* )?
+          )
+          orderBy?
+          ( 'ON' 'OVERFLOW' 'ERROR' )?
+          ( 'SEPARATOR' term )? onNull?
+          ')'
+          withinGroup? filter?
+          over?
+        ;
 
-    //    analyticFunction
-//        : ( 'FIRST_VALUE'
-//          | 'LAST_VALUE'
-//          | 'NTH_VALUE'
-//          )
-//          '(' terms respectIgnore? ')' respectIgnore? over
-//        // Generic syntax for all analytic functions?
-//        | qname '(' term respectIgnore? ')' respectIgnore? over
-//
+    analyticFunction
+        : id '(' signedNumber? ')' withinGroup? over?
+        ;
+
+//    aggregateFunctionOLD
+//        : functionName
+//          '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
+//          orderBy?
+//    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+//          ( 'ON' 'OVERFLOW' 'ERROR' )?
+//          ( 'SEPARATOR' term )? onNull?
+//    //      respectIgnore?  // TODO: Oracle
+//          ')'
+//          withinGroup?
+//          filter?
+//          ( 'FROM' firstLast )?
+//          nullTreatment? over?
 //        ;
 
     functionName
