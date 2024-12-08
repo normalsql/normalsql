@@ -145,9 +145,13 @@ createTable
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
-      // SQLite
-      'STRICT'?
+
+      ( createTableOptions ( ',' createTableOptions )? )?
       ;
+
+  createTableOptions
+    : 'STRICT' | 'WITHOUT' 'ROWID' // SQLite
+    ;
 
 // https://www.sqlite.org/vtab.html
 createVirtualTable
@@ -573,12 +577,14 @@ subterm
 
     | subterm compare subterm                                                         # SubtermCompare
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
-    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
+//    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
+    | subterm 'IS' 'NOT'? subterm                                                    # SubtermLogical
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # SubtermDistinct
     | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # SubtermJSON
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # SubtermOfType
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # SubtermBETWEEN
-    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # SubtermIN
+    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | qname )?                      # SubtermIN
+    // can't remember why I had to split SubtermLIKE. IIRC, ambiguity something something
 //    | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # SubtermLIKE
     | subterm 'NOT'? likes subterm 'ESCAPE' subterm                                   # SubtermLIKE
     | subterm 'NOT'? likes subterm                                                    # SubtermLIKE
@@ -595,7 +601,8 @@ subterm
 predicate
     : compare subterm                                                         # PredicateCompare
     | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # PredicateFixme
-    | 'IS' 'NOT'? logicals                                                    # PredicateLogical
+//    | 'IS' 'NOT'? logicals                                                    # PredicateLogical
+    | 'IS' 'NOT'? subterm                                                    # PredicateLogical
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # PredicateDistinct
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # PredicateJSON
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # PredicateOfType
@@ -632,15 +639,12 @@ predicate
         : EQ | ASSIGN ;
 
     compare
-        : EQ | COMPARE | TILDE | MATCH | postgres ;
+        : EQ | COMPARE | TILDE | MATCH
+        | POSTGRES_COMPARE
 
-    // TODO gotta catch them all
-    // https://www.postgresql.org/docs/current/functions-array.html
-    // https://www.postgresql.org/docs/current/functions-range.html
-    // https://www.postgresql.org/docs/current/functions-geometry.html
-    postgres
-        : '@@' | '@>' | '@<' | '<->' | '&>' | '&<'
         ;
+
+
 
     collationName
         : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
@@ -1055,6 +1059,14 @@ COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 TILDE   : '~' ;
 MATCH   : '~*' | '!~' | '!~*' ;
 STARTS_WITH : '^@' ;
+
+// TODO gotta catch them all
+// https://www.postgresql.org/docs/current/functions-array.html
+// https://www.postgresql.org/docs/current/functions-range.html
+// https://www.postgresql.org/docs/current/functions-geometry.html
+POSTGRES_COMPARE
+    : '@@' | '@>' | '@<' | '<->' | '&>' | '&<'
+    ;
 
 // TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
