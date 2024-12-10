@@ -382,12 +382,15 @@ query
           ( 'USE' 'INDEX' names // H2
           | ( 'USE' | 'IGNORE' | 'FORCE' ) 'INDEX' ( 'FOR' 'JOIN' )? '(' id ')' // Postgres? MySQL?
           | indexedBy // SQLite
+          | 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? // Postgres
           )?
 
-        | ( '(' query ')'
+        | 'LATERAL'?
+          ( '(' query ')'
           | function
           | values
           | tableFunc
+          | tableRows
           | deltaTable
           | tableCollection
           | 'JSON_TABLE' // TODO
@@ -434,6 +437,18 @@ query
         tableFuncParam
 //            : name ( type | qname | 'NULL' ) '=' subterm ;
             : name ( type | 'NULL' ) '=' subterm ;
+
+    tableRows
+        : 'ROWS' 'FROM' '(' tableRowsFunc ( ',' tableRowsFunc )* ')'
+        ;
+
+    tableRowsFunc
+        : function 'AS' '(' tableRowsFuncType ( ',' tableRowsFuncType )* ')'
+        ;
+
+    tableRowsFuncType
+        : name type // ( 'COLLATE' qname )?
+        ;
 
     offset
         : 'OFFSET' term rowRows? ;
@@ -561,6 +576,9 @@ subterm
 
     | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
     | ( 'NOT' | '!' ) subterm                  # SubtermUnary
+    // Postgres unary operators: absolute value, square root, and mystery
+    // https://www.postgresql.org/docs/17/typeconv-oper.html
+    | ( '@' | '|/' | '||/' ) subterm                  # SubtermUnary
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
     | function ( '.' name )*                   # SubtermFunction
 //    | function ( '.' name | index | '::' type )* # SubtermFunction
@@ -568,7 +586,7 @@ subterm
     | subterm '::' type                        # SubtermTypecast
     | 'CASE' term whenSimple+ caseElse? 'END'       # CaseSimple
     | 'CASE' whenSearch+ caseElse? 'END'            # CaseSearch
-    | 'INTERVAL' subterm timeCast                   # SubtermInterval
+    | 'INTERVAL' subterm timeCast?                   # SubtermInterval
     | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
     | array                                      # SubtermArray
@@ -642,10 +660,7 @@ predicate
     compare
         : EQ | COMPARE | TILDE | MATCH
         | POSTGRES_COMPARE
-
         ;
-
-
 
     collationName
         : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
@@ -846,16 +861,16 @@ coreFunction
 //        'SUM' '(' allDistinct? term ')' filter? over?
 
     simpleFunction
-        : functionName '(' ( '*' |  term ( ',' term )*  ) ')'
+        : qname '(' ( '*' |  term ( ',' term )*  ) ')'
         ;
 
     windowFunction
-        : name '(' ( ( qname '.' )? '*' | ( term ( ',' term )* )? ) ')'
+        : qname '(' ( ( qname '.' )? '*' | ( term ( ',' term )* )? ) ')'
           ( 'FROM' firstLast )? filter? nullTreatment? over
         ;
 
     aggregateFunction
-        : name
+        : qname
           '('
           ( ( qname '.' )? '*'
           | allDistinct? ( term ( ',' term )* )?
@@ -917,29 +932,22 @@ coreFunction
         : 'DOCUMENT' | 'CONTENT' ;
 
 window
-    : '(' name? partitionBy? orderBy? windowFrame? ')'
+    : '(' name? partitionBy? orderBy? frameRange? ')'
     | name
     ;
 
     partitionBy
         : 'PARTITION' 'BY' terms ;
 
-    windowFrame
+    frameRange
         : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-          ( preceding | 'BETWEEN' following 'AND' following )
-          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+          ( 'BETWEEN' start=framePoint 'AND' )? end=framePoint
+          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
         ;
 
-        preceding
-//            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-            : term 'PRECEDING'
+        framePoint
+            : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
             | 'CURRENT' 'ROW'
-            ;
-
-        following
-//            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-            : term 'FOLLOWING'
-            | preceding
             ;
 
 orderBy
