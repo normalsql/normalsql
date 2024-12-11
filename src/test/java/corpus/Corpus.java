@@ -170,6 +170,7 @@ Corpus
 				{
 					error();
 //					fails.add( msg );
+					fails.add( sourceFile + ":" + nth );
 					fails.add( sql );
 					last = sql;
 				}

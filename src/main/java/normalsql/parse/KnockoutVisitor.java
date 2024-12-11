@@ -124,9 +124,10 @@ extends
 				if( found.size() == maybes.size() )
 				{
 					Insert child = new Insert();
-					if( context.qname() != null )
+					// TODO unnecessary null check?
+					if( context.tableRef() != null )
 					{
-						child.table = context.qname();
+						child.table = context.tableRef().qname();
 					}
 
 					if( context.names() != null )

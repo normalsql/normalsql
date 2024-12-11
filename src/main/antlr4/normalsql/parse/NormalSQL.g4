@@ -266,13 +266,13 @@ with
     cte
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
-        '(' query ')'
-        ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
-        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
+          '(' ( query | insert | update ) ')'
+          ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
+          ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
         ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )?
+    : with? 'DELETE' 'FROM' 'ONLY'? tableRef
       indexedBy?
       // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
       // Postgres
@@ -283,25 +283,66 @@ delete
 
 insert
     : with?
+        // TODO this is getting too nutty; split into rule per dialect
       ( 'INSERT' ( 'OR' afirr )? | 'REPLACE' )
-      'INTO' qname ( 'AS' name )? names?
+      ( 'LOW_PRIORITY' | 'DELAYED' | 'HIGH_PRIORITY' )? 'IGNORE'? // MySQL
+      'OVERWRITE'? // Hive, Snowflake
+      'INTO'? tableRef
+      ( 'PARTITION'  ( qnames | '(' setters ')'  ) )? // MySQL or Hive
       overriding?
-//      ( source upsert* | 'DEFAULT' 'VALUES' )
-      ( query upsert* | 'DEFAULT' 'VALUES' )
+
+      ( names? ( query upsert* | 'DEFAULT' 'VALUES' )
+      | 'SET' setters ( 'AS' name names? )? // MySQL
+      )
+
+      ( 'ON' 'DUPLICATE' 'KEY' 'UPDATE' setters )? // MySQL
       returning?
     ;
 
+    // Postgres?
     overriding
         : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
 
     // SQLite
     upsert
         : 'ON' 'CONFLICT' ( terms where? )?
-          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
+          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setters where? )
         ;
 
+update
+    : with? 'UPDATE'
+      'ONLY'? // Postgres
+      ( 'OR' afirr )? // SQLite
+      'LOW_PRIORITY'? 'IGNORE'? // MySQL
+      tableRef ( '*' | ( ',' tableRef )* ) // Postgres or MySQL
+      indexedBy?
+      'SET' setters
+      ( 'FROM' tables )?
+      where? returning? orderBy? limit? offset?
+    ;
+
+    setters
+        : setter ( ',' setter )* ;
+
+    setter
+        : ( qname | qnames ) '=' term ;
+
+    afirr
+        : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
+
+    returning
+        : 'RETURNING' returned ( ',' returned )* ;
+
+        returned
+            : '*' | term ( 'AS'? alias )?
+            ;
+
+tableRef
+    : qname ( 'AS'? name )?
+    ;
+
 merge
-    : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
+    : with? 'MERGE' 'INTO' 'ONLY'? tableRef
       'USING' 'ONLY'? ( query | qname alias? ) 'ON' terms
       when*
     ;
@@ -309,35 +350,10 @@ merge
     when
         : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
           ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
-          | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
+          | 'UPDATE' 'SET' setters ( 'DELETE'? where )?
           | 'DELETE'
           | 'DO' 'NOTHING'
           )
-        ;
-
-update
-    : with? 'UPDATE' ( 'OR' afirr )?
-      qname ( 'AS'? name )? indexedBy?
-      'SET' setter ( ',' setter )*
-      ( 'FROM' tables )?
-      where? returning? orderBy? limit? offset?
-    ;
-
-    setter
-        : ( qname | qnames ) '=' term ;
-
-afirr
-    : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
-
-// SQLite
-indexedBy
-    : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
-
-returning
-    : 'RETURNING' returned ( ',' returned )* ;
-
-    returned
-        : '*' | term ( 'AS'? alias )?
         ;
 
 query
@@ -550,6 +566,10 @@ query
         xmlColumn
            : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' ) ;
 
+    // SQLite
+    indexedBy
+        : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
+
 terms
     : term ( ',' term )* ;
 
@@ -658,7 +678,7 @@ predicate
 
     compare
         : EQ | COMPARE | TILDE | MATCH
-        | POSTGRES_COMPARE
+        | POSTGRES_COMPARE | STARTS_WITH
         ;
 
     collationName
@@ -730,7 +750,7 @@ scalar
     | 'DOUBLE' 'PRECISION'?
     | 'FLOAT' length?
     | 'INT'
-    | 'BIG'? 'INTEGER'
+    | ( 'BIG' | 'UNSIGNED' )? 'INTEGER'
     | 'INTERVAL'
     | 'JSON'
     | 'JSONB'
@@ -751,6 +771,7 @@ scalar
     | 'VARINT'
     | 'XML'
     | id precision?
+    | string
     ;
 
  chars
@@ -1047,7 +1068,7 @@ string
 // Exclude everything but this grammar's tokens and ID tokens.
 id :
     // exclude punctuation
-    ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
+    ~( EQ | COMPARE | ASSIGN | TILDE | MATCH  | POSTGRES_COMPARE | STARTS_WITH
     | '!' | '+' | '-' | '*' | '/' | '%' | '^'
     | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
     | '.' | ':' | '::' | ';'
