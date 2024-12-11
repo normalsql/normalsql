@@ -105,7 +105,7 @@ alter
 
 // TODO so much more to add
 set
-    : 'SET' ( 'LOCAL' | 'GLOBAL' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
+    : 'SET' ( 'LOCAL' | 'GLOBAL' | 'SESSION' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
 
 //reset
 //    : 'RESET' qname;
@@ -319,8 +319,7 @@ update
     : with? 'UPDATE' ( 'OR' afirr )?
       qname ( 'AS'? name )? indexedBy?
       'SET' setter ( ',' setter )*
-      // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
-//      ( 'FROM' sources )?
+      ( 'FROM' tables )?
       where? returning? orderBy? limit? offset?
     ;
 
