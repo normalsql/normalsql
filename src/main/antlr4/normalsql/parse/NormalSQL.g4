@@ -45,6 +45,7 @@ statement
     | 'ATTACH' 'DATABASE'? term 'AS' ( qname | 'NULL' )
     | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'? name?
     | 'COMMIT' 'TRANSACTION'?
+    | createSchema
     | createIndex
     | createTable
     | createTrigger
@@ -64,6 +65,10 @@ statement
     | 'ROLLBACK' 'TRANSACTION'? (( 'TO' 'SAVEPOINT'? )? name )?
     | 'SAVEPOINT' qname
     | set
+    | 'SHOW' 'CREATE'
+      ( 'DATABASE' | 'EVENT' | 'FUNCTION' | 'PROCEDURE' | 'SCHEMA' | 'TABLE' | 'TRIGGER' | 'USER' | 'VIEW' ) name // MySQL
+    | 'SHOW' 'EXTENDED'? 'FULL'? 'TABLES' ( 'FROM' | 'IN' ) qname ( 'LIKE' string | 'WHERE' term ) // MySQL
+    | 'SHOW' ( 'ALL' | name ) // Postgres
     | update
     | 'VACUUM' qname? ( 'INTO' term )?
     )
@@ -185,6 +190,18 @@ createView
         // Postgres?
         ( 'OR' 'REPLACE' )?
         'VIEW' ifNotExists? qname qnames? 'AS' query ;
+
+createSchema
+    : 'CREATE' ( 'DATABASE' | 'SCHEMA' ) ( 'IF' 'NOT' 'EXISTS' )? name
+      ( 'DEFAULT'?
+        ( 'CHARACTER' 'SET' '='? name
+        | 'COLLATE' '='? name
+        | 'ENCRYPTION' '='? ( 'Y' | 'N' )
+        )
+      )*
+      ( 'OWNER' name )?
+      ( 'AUTHORIZATION' name )?
+   ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -334,7 +351,8 @@ update
         : 'RETURNING' returned ( ',' returned )* ;
 
         returned
-            : '*' | term ( 'AS'? alias )?
+            : term ( 'AS'? alias )?
+//            : '*' | term ( 'AS'? alias )?
             ;
 
 tableRef
@@ -494,7 +512,8 @@ query
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
-        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
+        | ( qname | '*' ) ( 'EXCEPT' qnames )?  # ItemColumns
+//        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
 
     into
@@ -634,6 +653,7 @@ subterm
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm                       # SubtermOperator
     | VARIABLE assign subterm                             # SubtermAssign
+    | '*' # SubtermAll
     ;
 
 predicate
@@ -805,41 +825,49 @@ array
 
 function
     : coreFunction
-    | simpleFunction
     | aggregateFunction
     | analyticFunction
     | windowFunction
     | '{fn' function '}' //  ODBC style
+    | simpleFunction
     ;
 
 coreFunction
-    : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
+    : 'ARRAY' '(' query ')' // Postgres
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
+    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
     | 'CURRENT_DATE' params?
     | 'CURRENT_TIME' params?
     | 'CURRENT_TIMESTAMP' params?
-    | 'LOCALTIME' params?
-    | 'LOCALTIMESTAMP' params?
-    | 'CURRENT_USER' params?
-    | 'USER' params?
-    | 'CURRENT_ROLE'
-    | 'SESSION_USER'
     | 'CURRENT_CATALOG'
+    | 'CURRENT_ROLE'
     | 'CURRENT_SCHEMA'
-    | 'SYSTEM_USER'
-    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
-    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
-    | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
-    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'
+    | 'CURRENT_USER' params?
+    | 'DATEADD' '(' timeUnit ',' signedInteger ',' datetime ')'
+    | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
+    | 'DATE_TRUNC' '(' timeUnit ',' datetime ')'
     | 'EXISTS' '(' query ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
-    | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
+    | 'JSON_ARRAYAGG' '(' qname orderBy? onNull?
+//      uniqueKeys?
+      ')'
+//      filter? over?
+    | 'JSON_OBJECTAGG' '(' jsonPair orderBy? onNull?
+      uniqueKeys?
+      ')'
+      filter?
+//      over?
+    | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
+    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
+    | 'LOCALTIME' params?
+    | 'LOCALTIMESTAMP' params?
+    | 'SESSION_USER'
+    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
+    | 'SYSTEM_USER'
+    | 'USER' params?
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'
     | 'TIMESTAMPDIFF' '(' timeUnit ',' string ',' string ')'
-    | 'DATEADD' '(' timeUnit ',' signedInteger ',' datetime ')'
-    | 'DATE_TRUNC' '(' timeUnit ',' datetime ')'
-    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
-
+    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
@@ -850,8 +878,6 @@ coreFunction
     | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
-
-    | 'ARRAY' '(' query ')' // Postgres
     ;
 
     params
@@ -881,59 +907,30 @@ coreFunction
 //        'SUM' '(' allDistinct? term ')' filter? over?
 
     simpleFunction
-        : qname '(' ( '*' |  term ( ',' term )*  ) ')'
+        : qname '(' term ( ',' term )* ')'
+//        : qname '(' ( '*' |  term ( ',' term )*  ) ')'
         ;
 
     windowFunction
-        : qname '(' ( ( qname '.' )? '*' | ( term ( ',' term )* )? ) ')'
-          ( 'FROM' firstLast )? filter? nullTreatment? over
+        : qname '(' terms ')' filter? over
         ;
 
     aggregateFunction
-        : qname
-          '('
-          ( ( qname '.' )? '*'
-          | allDistinct? ( term ( ',' term )* )?
-          )
-          orderBy?
-          ( 'ON' 'OVERFLOW' 'ERROR' )?
-          ( 'SEPARATOR' term )? onNull?
-          ')'
-          withinGroup? filter?
-          over?
+        : 'GROUP_CONCAT' '(' 'DISTINCT'? terms orderBy? ( 'SEPARATOR' term )? ')' filter?
+       // https://docs.oracle.com/en/database/oracle/oracle-database/12.2/sqlrf/LISTAGG.html
+        | 'LISTAGG' '(' ( 'ALL' | 'DISTINCT' )? terms ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' ))? ')' 'WITHIN' 'GROUP' '(' orderBy? ')' filter? over?
+        | qname '(' ( 'ALL' | 'DISTINCT' )? terms orderBy? ')' filter? over?
+        // https://docs.oracle.com/en/database/oracle/oracle-database/12.2/sqlrf/NTH_VALUE.html
+        | qname '('  terms ')' ( 'FROM' firstLast )? nullTreatment? over?
+        | qname '(' 'DISTINCT'? terms ')' 'WITHIN' 'GROUP' '(' orderBy? ')' filter? over?
+        | qname '('  terms ')' nullTreatment '(' orderBy? ')' filter?
         ;
+
+    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+//          ( 'ON' 'OVERFLOW' 'ERROR' )?
 
     analyticFunction
         : id '(' signedNumber? ')' withinGroup? over?
-        ;
-
-//    aggregateFunctionOLD
-//        : functionName
-//          '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
-//          orderBy?
-//    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-//          ( 'ON' 'OVERFLOW' 'ERROR' )?
-//          ( 'SEPARATOR' term )? onNull?
-//    //      respectIgnore?  // TODO: Oracle
-//          ')'
-//          withinGroup?
-//          filter?
-//          ( 'FROM' firstLast )?
-//          nullTreatment? over?
-//        ;
-
-    functionName
-        : name
-        | 'RIGHT'
-        | 'LEFT'
-        | 'SECOND'
-        | 'YEAR'
-        | 'MINUTE'
-        | 'MONTH'
-        | 'HOUR'
-        | 'SET'
-        | 'ANY'
-        | 'SOME'
         ;
 
     withinGroup
@@ -974,7 +971,8 @@ orderBy
     : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )* ;
 
     orderByTerm
-        : term sortDir? ( 'NULLS' firstLast )? ;
+        : term sortDir? ( 'NULLS' firstLast )?
+        ;
 
     sortDir
         : 'ASC'
@@ -1009,6 +1007,7 @@ formatJson
 onNull
     : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
+// TODO inline
 nullTreatment
     : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 
@@ -1038,7 +1037,7 @@ qnames
     : '(' qname ( ',' qname )* ')' ;
 
 qname
-    : name ( '.' name )* ;
+    : name ( '.' name )* ( '.' '*' )? ;
 
 names
     : '(' name ( ',' name )* ')' ;
