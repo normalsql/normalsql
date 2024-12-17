@@ -36,34 +36,53 @@ contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
 // convenience for debugging
 aaa1 : script ;
 
-script : statement? ( ';' statement? )* EOF ;
+script : ( statement | ';' )* EOF ;
+//script : statement ( ';' statement )* EOF ;
+
+transaction
+    // Postgres
+    : 'BEGIN'  ( 'TRANSACTION' | 'WORK' )?  ( transactionModePostgres ( ',' transactionModePostgres )* )?
+    // MySQL
+    | 'START' 'TRANSACTION' (transactionModeMySQL (',' transactionModeMySQL)* )?
+    // MySQL
+    | 'COMMIT' ( 'TRANSACTION' | 'WORK' )? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
+    // MySQL
+    | 'ROLLBACK' ( 'TRANSACTION' | 'WORK' )? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
+     | 'ROLLBACK' ( 'TRANSACTION' | 'WORK' )? (( 'TO' 'SAVEPOINT'? )? name )?
+     | 'SAVEPOINT' qname
+    | 'END' 'TRANSACTION'?
+    | 'RELEASE' 'SAVEPOINT'? qname
+    | 'RESET' qname
+   ;
+//    ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' | 'TRANSACTION' | 'WORK' )?
+
+  transactionModePostgres
+    : 'ISOLATION' 'LEVEL' ( 'SERIALIZABLE' | 'REPEATABLE' 'READ' | 'READ' ( 'COMMITTED' | 'UNCOMMITTED' ))*
+    | 'READ' ( 'WRITE' |  'ONLY' )
+    | 'NOT'? 'DEFERRABLE'
+    ;
+
+    transactionModeMySQL
+        : 'WITH' 'CONSISTENT' 'SNAPSHOT'
+        | 'READ' 'WRITE'
+        | 'READ' 'ONLY'
+        ;
 
 statement
-    : explain?
+    :  explain?
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
     | 'ATTACH' 'DATABASE'? term 'AS' ( qname | 'NULL' )
-    | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'? name?
-    | 'COMMIT' 'TRANSACTION'?
-    | createSchema
-    | createIndex
-    | createTable
-    | createTrigger
-    | createView
-    | createVirtualTable
+    | transaction
+    | create
     | delete
     | 'DETACH' 'DATABASE'? term
     | drop
-    | 'END' 'TRANSACTION'?
     | insert
     | merge
     | pragma
     | query
     | 'REINDEX' qname?
-    | 'RELEASE' 'SAVEPOINT'? qname
-    | 'RESET' qname
-    | 'ROLLBACK' 'TRANSACTION'? (( 'TO' 'SAVEPOINT'? )? name )?
-    | 'SAVEPOINT' qname
     | set
     | 'SHOW' 'CREATE'
       ( 'DATABASE' | 'EVENT' | 'FUNCTION' | 'PROCEDURE' | 'SCHEMA' | 'TABLE' | 'TRIGGER' | 'USER' | 'VIEW' ) name // MySQL
@@ -99,14 +118,16 @@ explain
 alter
     : 'ALTER' 'TABLE' qname
       ( 'RENAME' ( 'COLUMN'? qname )? 'TO' qname
-      | 'ADD' 'COLUMN'? ( 'IF' 'NOT' 'EXISTS' )? columnDef
+      | 'ADD' 'COLUMN'? notExists? columnDef
       | 'ALTER' 'COLUMN' qname
         ( 'SET' 'STATISTICS' ( signedInteger |  'DEFAULT' )
         | 'SET' 'STORAGE'  ( 'PLAIN' | 'EXTERNAL' | 'EXTENDED' | 'MAIN' | 'DEFAULT' )
         )
-      | 'DROP' 'COLUMN'? qname ( 'IF' 'EXISTS' )?
+      | 'DROP' 'COLUMN'? qname exists?
       )
     ;
+
+
 
 // TODO so much more to add
 set
@@ -116,7 +137,7 @@ set
 //    : 'RESET' qname;
 
 drop
-    : 'DROP' dropsicle ( 'IF' 'EXISTS' )? qnames0 ( 'CASCADE' | 'RESTRICT' )?
+    : 'DROP' dropsicle exists? qnames0 ( 'CASCADE' | 'RESTRICT' )?
 //    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( '(' ( type ( ',' type )* )? ')' )?
     ;
 
@@ -144,9 +165,58 @@ drop
         | 'VIEW'
         ;
 
+create
+    : createSchema
+    | createIndex
+    | createMaterializedView
+    | createRole
+    | createTable
+    | createTrigger
+    | createView
+    | createVirtualTable
+    ;
+
+createIndex
+      : 'CREATE' 'UNIQUE'? 'INDEX' notExists? qname 'ON' qname indexedColumns where?
+      ;
+//    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
+//    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
+//    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
+
+    indexedColumn
+//        : ( qname | term ) sortDir? ;
+//        : qname sortDir? ;
+        : term sortDir? ;
+
+    indexedColumns
+        : '(' indexedColumn ( ',' indexedColumn )* ')' ;
+
+
+createMaterializedView
+    : 'CREATE' 'MATERIALIZED' 'VIEW' notExists? qname  qnames?
+//    (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
+        ( 'USING' . )?
+        ( 'WITH' '(' .*? ')' )?
+        ( 'TABLESPACE' . )?
+        'AS' query
+        ( 'WITH' ( 'NO' )? 'DATA' )?
+    ;
+
+createSchema
+    : 'CREATE' ( 'DATABASE' | 'SCHEMA' ) notExists? name ( 'AUTHORIZATION' name )?
+      ( 'DEFAULT'?
+        ( 'CHARACTER' 'SET' '='? name
+        | 'COLLATE' '='? name
+        | 'ENCRYPTION' '='? ( 'Y' | 'N' )
+        )
+      )*
+      ( 'OWNER' name )?
+      create*
+   ;
+
 createTable
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
-      'TABLE' ifNotExists? qname
+      'TABLE' notExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
@@ -154,13 +224,18 @@ createTable
       ( createTableOptions ( ',' createTableOptions )? )?
       ;
 
+  columnDef
+        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
+        ;
+
+
   createTableOptions
     : 'STRICT' | 'WITHOUT' 'ROWID' // SQLite
     ;
 
 // https://www.sqlite.org/vtab.html
 createVirtualTable
-    : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
+    : 'CREATE' 'VIRTUAL' 'TABLE' notExists? qname
       'USING' qname ( '(' ( moduleArgument ( ',' moduleArgument?  )*  )? ')' )?
     ;
 
@@ -174,8 +249,27 @@ createVirtualTable
 //        | EQ
         ;
 
+createRole
+    : 'CREATE' 'ROLE' name 'WITH'?
+        ( 'ADMIN' names0
+        | 'BYPASSRLS' | 'NOBYPASSRLS'
+        | 'CONNECTION' 'LIMIT' INTEGER
+        | 'CREATEDB' | 'NOCREATEDB'
+        | 'CREATEROLE' | 'NOCREATEROLE'
+        | 'ENCRYPTED'? 'PASSWORD' ( string | 'NULL' )
+        | 'IN'? 'GROUP' names0
+        | 'IN'? 'ROLE' names0
+        | 'INHERIT' | 'NOINHERIT'
+        | 'LOGIN' | 'NOLOGIN'
+        | 'REPLICATION' | 'NOREPLICATION'
+        | 'SUPERUSER' | 'NOSUPERUSER'
+        | 'SYSID' string //  TODO need UUID token ?
+        | 'VALID' 'UNTIL' string // TODO need timestamp ?
+        )*
+      ;
+
 createTrigger
-     : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+     : 'CREATE' temporary? 'TRIGGER' notExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
        'BEGIN' (( update | insert | delete | query ) ';' )+
@@ -185,46 +279,23 @@ createTrigger
 
 temporary : 'TEMP' | 'TEMPORARY' ;
 
+// https://www.postgresql.org/docs/current/sql-createview.html
+// https://learn.microsoft.com/en-us/sql/t-sql/statements/create-view-transact-sql
 createView
-      : 'CREATE' temporary?
-        // Postgres?
-        ( 'OR' 'REPLACE' )?
-        'VIEW' ifNotExists? qname qnames? 'AS' query ;
+      : 'CREATE' ( 'OR' ( 'REPLACE' | 'ALTER' ))?
+       temporary? 'RECURSIVE'? // Postgres
+        ( 'ALGORITHM' '=' ('UNDEFINED' | 'MERGE' | 'TEMPTABLE' ))? // MySQL
+        ( 'DEFINER' '=' name )? // MySQL
+        ( 'SQL' 'SECURITY' ( 'DEFINER' | 'INVOKER' )*)? // MySQL
+        'VIEW' notExists? qname qnames?
+        ( 'WITH' names0 )? // Transact-SQL
+        ( 'WITH' '(' .*? ')' )? // Postgres
+        'AS' query
+        ( 'WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION' )?
+      ;
 
-createSchema
-    : 'CREATE' ( 'DATABASE' | 'SCHEMA' ) ( 'IF' 'NOT' 'EXISTS' )? name
-      ( 'DEFAULT'?
-        ( 'CHARACTER' 'SET' '='? name
-        | 'COLLATE' '='? name
-        | 'ENCRYPTION' '='? ( 'Y' | 'N' )
-        )
-      )*
-      ( 'OWNER' name )?
-      ( 'AUTHORIZATION' name )?
-   ;
-
-createIndex
-      : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
-//    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
-//    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
-//    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
-//    | 'CREATE' ROLE id (WITH ADMIN grantor)?
-//    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
-//    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
-
-    indexedColumn
-//        : ( qname | term ) sortDir? ;
-//        : qname sortDir? ;
-        : term sortDir? ;
-
-    indexedColumns
-        : '(' indexedColumn ( ',' indexedColumn )* ')' ;
-
-    ifNotExists : 'IF' 'NOT' 'EXISTS' ;
-
-    columnDef
-        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
-        ;
+    exists : ( 'IF' 'EXISTS' ) ;
+    notExists : 'IF' 'NOT' 'EXISTS' ;
 
     columnStuff
         : ( 'CONSTRAINT' name )?
@@ -331,7 +402,8 @@ update
       'ONLY'? // Postgres
       ( 'OR' afirr )? // SQLite
       'LOW_PRIORITY'? 'IGNORE'? // MySQL
-      tableRef ( '*' | ( ',' tableRef )* ) // Postgres or MySQL
+//      tableRef ( '*' | ( ',' tableRef )* ) // Postgres or MySQL
+      tables // MySQL
       indexedBy?
       'SET' setters
       ( 'FROM' tables )?
@@ -1038,6 +1110,9 @@ qnames
 
 qname
     : name ( '.' name )* ( '.' '*' )? ;
+
+names0
+    : name ( ',' name )* ;
 
 names
     : '(' name ( ',' name )* ')' ;
