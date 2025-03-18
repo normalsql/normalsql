@@ -1,4 +1,4 @@
-// Copyright 2010-2023 Jason Osgood
+// Copyright 2010-2025 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 /*
@@ -36,58 +36,34 @@ contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
 // convenience for debugging
 aaa1 : script ;
 
-script : ( statement | ';' )* EOF ;
-//script : statement ( ';' statement )* EOF ;
-
-transaction
-    // Postgres
-    : 'BEGIN'  ( 'TRANSACTION' | 'WORK' )?  ( transactionModePostgres ( ',' transactionModePostgres )* )?
-    // MySQL
-    | 'START' 'TRANSACTION' (transactionModeMySQL (',' transactionModeMySQL)* )?
-    // MySQL
-    | 'COMMIT' ( 'TRANSACTION' | 'WORK' )? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
-    // MySQL
-    | 'ROLLBACK' ( 'TRANSACTION' | 'WORK' )? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
-     | 'ROLLBACK' ( 'TRANSACTION' | 'WORK' )? (( 'TO' 'SAVEPOINT'? )? name )?
-     | 'SAVEPOINT' qname
-    | 'END' 'TRANSACTION'?
-    | 'RELEASE' 'SAVEPOINT'? qname
-    | 'RESET' qname
-   ;
-//    ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' | 'TRANSACTION' | 'WORK' )?
-
-  transactionModePostgres
-    : 'ISOLATION' 'LEVEL' ( 'SERIALIZABLE' | 'REPEATABLE' 'READ' | 'READ' ( 'COMMITTED' | 'UNCOMMITTED' ))*
-    | 'READ' ( 'WRITE' |  'ONLY' )
-    | 'NOT'? 'DEFERRABLE'
-    ;
-
-    transactionModeMySQL
-        : 'WITH' 'CONSISTENT' 'SNAPSHOT'
-        | 'READ' 'WRITE'
-        | 'READ' 'ONLY'
-        ;
+script : statement? ( ';' statement? )* EOF ;
 
 statement
-    :  explain?
+    : explain?
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
     | 'ATTACH' 'DATABASE'? term 'AS' ( qname | 'NULL' )
-    | transaction
-    | create
+    | 'BEGIN' ( 'DEFERRED' | 'EXCLUSIVE' | 'IMMEDIATE' )? 'TRANSACTION'? name?
+    | 'COMMIT' 'TRANSACTION'?
+    | createIndex
+    | createTable
+    | createTrigger
+    | createView
+//    | createVirtualTable
     | delete
     | 'DETACH' 'DATABASE'? term
     | drop
+    | 'END' 'TRANSACTION'?
     | insert
     | merge
     | pragma
     | query
     | 'REINDEX' qname?
+    | 'RELEASE' 'SAVEPOINT'? qname
+    | 'RESET' qname
+    | 'ROLLBACK' 'TRANSACTION'? (( 'TO' 'SAVEPOINT'? )? name )?
+    | 'SAVEPOINT' qname
     | set
-    | 'SHOW' 'CREATE'
-      ( 'DATABASE' | 'EVENT' | 'FUNCTION' | 'PROCEDURE' | 'SCHEMA' | 'TABLE' | 'TRIGGER' | 'USER' | 'VIEW' ) name // MySQL
-    | 'SHOW' 'EXTENDED'? 'FULL'? 'TABLES' ( 'FROM' | 'IN' ) qname ( 'LIKE' string | 'WHERE' term ) // MySQL
-    | 'SHOW' ( 'ALL' | name ) // Postgres
     | update
     | 'VACUUM' qname? ( 'INTO' term )?
     )
@@ -96,6 +72,8 @@ statement
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
 
         pragmaValue : literal | signedNumber | name ;
+
+
 
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
@@ -114,30 +92,23 @@ explain
         | 'FORMAT' ( 'TEXT' | 'XML' | 'JSON' | 'YAML' )
         ;
 
-// https://www.postgresql.org/docs/current/sql-altertable.html
 alter
     : 'ALTER' 'TABLE' qname
       ( 'RENAME' ( 'COLUMN'? qname )? 'TO' qname
-      | 'ADD' 'COLUMN'? notExists? columnDef
-      | 'ALTER' 'COLUMN' qname
-        ( 'SET' 'STATISTICS' ( signedInteger |  'DEFAULT' )
-        | 'SET' 'STORAGE'  ( 'PLAIN' | 'EXTERNAL' | 'EXTENDED' | 'MAIN' | 'DEFAULT' )
-        )
-      | 'DROP' 'COLUMN'? qname exists?
+      | 'ADD' 'COLUMN'? columnDef
+      | 'DROP' 'COLUMN'? qname
       )
     ;
 
-
-
 // TODO so much more to add
 set
-    : 'SET' ( 'LOCAL' | 'GLOBAL' | 'SESSION' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
+    : 'SET' ( 'LOCAL' | 'GLOBAL' )? ( qname | VARIABLE ) ( '=' | 'TO' ) terms ;
 
 //reset
 //    : 'RESET' qname;
 
 drop
-    : 'DROP' dropsicle exists? qnames0 ( 'CASCADE' | 'RESTRICT' )?
+    : 'DROP' dropsicle ( 'IF' 'EXISTS' )? qnames0 ( 'CASCADE' | 'RESTRICT' )?
 //    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( '(' ( type ( ',' type )* )? ')' )?
     ;
 
@@ -165,22 +136,41 @@ drop
         | 'VIEW'
         ;
 
-create
-    : createSchema
-    | createIndex
-    | createMaterializedView
-    | createRole
-    | createTable
-    | createTrigger
-    | createView
-    | createVirtualTable
-    ;
+createTable
+    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
+      'TABLE' ifNotExists? qname
+      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
+      ) // TODO (COMMENT string)? (WITH properties)?
+      // SQLite
+      'STRICT'?
+      ;
+
+
+createTrigger
+     : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+       ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
+       ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
+       'BEGIN' (( update | insert | delete | query ) ';' )+
+       // TODO remove '?' after testing!!
+       'END'?
+     ;
+
+temporary : 'TEMP' | 'TEMPORARY' ;
+
+createView
+      : 'CREATE' temporary?
+        // Postgres?
+        ( 'OR' 'REPLACE' )?
+        'VIEW' ifNotExists? qname qnames? 'AS' query ;
 
 createIndex
-      : 'CREATE' 'UNIQUE'? 'INDEX' notExists? qname 'ON' qname indexedColumns where?
-      ;
+      : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
 //    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
 //    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
+//    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
+//    | 'CREATE' ROLE id (WITH ADMIN grantor)?
+//    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
 //    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
 
     indexedColumn
@@ -191,173 +181,36 @@ createIndex
     indexedColumns
         : '(' indexedColumn ( ',' indexedColumn )* ')' ;
 
+    ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
-createMaterializedView
-    : 'CREATE' 'MATERIALIZED' 'VIEW' notExists? qname  qnames?
-//    (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
-        ( 'USING' . )?
-        ( 'WITH' '(' .*? ')' )?
-        ( 'TABLESPACE' . )?
-        'AS' query
-        ( 'WITH' ( 'NO' )? 'DATA' )?
-    ;
-
-createSchema
-    : 'CREATE' ( 'DATABASE' | 'SCHEMA' ) notExists? name ( 'AUTHORIZATION' name )?
-      ( 'DEFAULT'?
-        ( 'CHARACTER' 'SET' '='? name
-        | 'COLLATE' '='? name
-        | 'ENCRYPTION' '='? ( 'Y' | 'N' )
-        )
-      )*
-      ( 'OWNER' name )?
-      create*
-   ;
-
-createTableOld
-    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
-      'TABLE' notExists? qname
-      ( '(' ( columnDefOld ( ',' columnDefOld )* ( ',' tableStuff )* )? ')' ( 'WITHOUT' ID )?
-      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
-      ) // TODO (COMMENT string)? (WITH properties)?
-
-      ( createTableOptions ( ',' createTableOptions )? )?
-      ;
-
-  columnDefOld
-        : name ( type | columnConstraint )*
+    columnDef
+        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
         ;
 
-  columnDef
-        : name type ( 'STORAGE' ( 'PLAIN' | 'EXTERNAL' | 'EXTENDED' | 'MAIN' | 'DEFAULT' ) )? ( 'COMPRESSION' ( 'DEFAULT' | name ) )? ( 'COLLATE' name )? columnConstraint*
-//        | table_constraint
-        | 'LIKE' qname likeOption*
-        ;
-
-  createTableOptions
-    : 'STRICT' | 'WITHOUT' 'ROWID' // SQLite
-    ;
-
-createTable
-    : 'CREATE' ( ( 'GLOBAL' | 'LOCAL' )? temporary | 'UNLOGGED' )? 'TABLE' notExists? qname '(' ( columnDef ( ',' columnDef )*  )? ')'
-      ( 'INHERITS' qnames )?
-//      ( 'PARTITION' 'BY' ( 'RANGE' | 'LIST' | 'HASH' )* '(' ( column_name | '(' expression ')' )* ( 'COLLATE' collation )? ( opclass )? (',' ... )? ')' )? // Postgres
-      ( 'USING' string )?
-      ( 'WITH' ( '(' name '=' . )  ')' | 'WITHOUT' 'OIDS' )?  // Postgres
-      ( 'ON' 'COMMIT' ( 'PRESERVE' 'ROWS' | 'DELETE' 'ROWS' | 'DROP' )* )?  // Postgres
-      ( 'TABLESPACE' qname )? // Postgres
-      ;
-
-likeOption
-    :  ( 'INCLUDING' | 'EXCLUDING' )
-       ( 'ALL' | 'COMMENTS' | 'COMPRESSION' | 'CONSTRAINTS' | 'DEFAULTS' | 'GENERATED' | 'IDENTITY' | 'INDEXES' | 'STATISTICS' | 'STORAGE' )
-    ;
-
-
-// https://www.sqlite.org/vtab.html
-createVirtualTable
-    : 'CREATE' 'VIRTUAL' 'TABLE' notExists? qname
-      'USING' qname ( '(' ( moduleArgument ( ',' moduleArgument?  )*  )? ')' )?
-    ;
-
-    moduleArgument
-        : ( name | literal | type )+
-        | ( name | literal )+ ( '=' ( name | literal )* )?
-//        | compare
-//        | COMPARE
-//        | assign
-//        | ASSIGN
-//        | EQ
-        ;
-
-createRole
-    : 'CREATE' 'ROLE' name 'WITH'?
-        ( 'ADMIN' names0
-        | 'BYPASSRLS' | 'NOBYPASSRLS'
-        | 'CONNECTION' 'LIMIT' INTEGER
-        | 'CREATEDB' | 'NOCREATEDB'
-        | 'CREATEROLE' | 'NOCREATEROLE'
-        | 'ENCRYPTED'? 'PASSWORD' ( string | 'NULL' )
-        | 'IN'? 'GROUP' names0
-        | 'IN'? 'ROLE' names0
-        | 'INHERIT' | 'NOINHERIT'
-        | 'LOGIN' | 'NOLOGIN'
-        | 'REPLICATION' | 'NOREPLICATION'
-        | 'SUPERUSER' | 'NOSUPERUSER'
-        | 'SYSID' string //  TODO need UUID token ?
-        | 'VALID' 'UNTIL' string // TODO need timestamp ?
-        )*
-      ;
-
-createTrigger
-     : 'CREATE' temporary? 'TRIGGER' notExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
-       ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
-       ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
-       'BEGIN' (( update | insert | delete | query ) ';' )+
-       // TODO remove '?' after testing!!
-       'END'?
-     ;
-
-temporary : 'TEMP' | 'TEMPORARY' ;
-
-// https://www.postgresql.org/docs/current/sql-createview.html
-// https://learn.microsoft.com/en-us/sql/t-sql/statements/create-view-transact-sql
-createView
-      : 'CREATE' ( 'OR' ( 'REPLACE' | 'ALTER' ))?
-       temporary? 'RECURSIVE'? // Postgres
-        ( 'ALGORITHM' '=' ('UNDEFINED' | 'MERGE' | 'TEMPTABLE' ))? // MySQL
-        ( 'DEFINER' '=' name )? // MySQL
-        ( 'SQL' 'SECURITY' ( 'DEFINER' | 'INVOKER' )*)? // MySQL
-        'VIEW' notExists? qname qnames?
-        ( 'WITH' names0 )? // Transact-SQL
-        ( 'WITH' '(' .*? ')' )? // Postgres
-        'AS' query
-        ( 'WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION' )?
-      ;
-
-    exists : 'IF' 'EXISTS' ;
-    notExists : 'IF' 'NOT' 'EXISTS' ;
-
-// https://www.postgresql.org/docs/current/sql-createtable.html
-// https://dev.mysql.com/doc/refman/8.0/en/create-table.html
-    columnConstraint
+    columnStuff
         : ( 'CONSTRAINT' name )?
-          ( 'AUTOINCREMENT' // Postgres
-          |  'AUTO_INCREMENT' // MySQL
-          | ( 'VISIBLE' | 'INVISIBLE' ) // MySQL
-          | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )? // Postgres
-          | 'CHECK' '(' term ')' onConflict? // SQLite
-          | 'COLLATE' collationName
+          ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
+          | 'AUTOINCREMENT'
           | 'COUNTER'
-          | 'DEFAULT' ( literal | term ) // Postgres
-//          | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
-          | 'GENERATED' 'ALWAYS' 'AS' '(' term ')' 'STORED' // Postgres
-//           | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' )* 'AS' 'IDENTITY' ( '(' sequence_options ')' )? |
+          | 'NOT'? 'NULL' onConflict?
+          | 'UNIQUE' onConflict?
+          | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
+          | 'DEFAULT' ( literal | term )
+          | 'COLLATE' collationName
+          | foreignKey
+          | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
           | 'INVISIBLE'
           | 'IMPLICITLY'? 'HIDDEN'
-          | 'NOT'? 'NULL' onConflict?
-          | 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
-          | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict? // SQLite ?
-          | 'PRIMARY' 'KEY' '(' name 'AUTOINCREMENT' ')' // SQLite per autoinc.test autoinc-7.1
-          | ( 'FOREIGN' 'KEY' names foreignKey ) // SQLite
-          | foreignKey
-//          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' 'FULL' | 'MATCH' 'PARTIAL' | 'MATCH' 'SIMPLE' )? ( 'ON' 'DELETE' referential_action )? ( 'ON' 'UPDATE' referential_action )?  // Postgres
-          | 'UNIQUE' onConflict?
-         |  'UNIQUE' ( 'NULLS'  'NOT'? 'DISTINCT' )? ( column=name constraint=name )? // Postgres
-         |  'UNIQUE' ( 'NULLS'  'NOT'? 'DISTINCT' )? names ( 'INCLUDE' names )? // (table constraint) // Postgres
           )
-          (  'NOT'? 'DEFERRABLE' )? ( 'INITIALLY' ( 'DEFERRED' |  'IMMEDIATE' ))? // Postgres
-
-//          ( 'CONSTRAINT' name )* // SQLite undocumented
+          // SQLite undocumented
+          ( 'CONSTRAINT' name )*
         ;
-
-      //    'PRIMARY' 'KEY' index_parameters |
 
     // SQLite
     tableStuff
         : ( 'CONSTRAINT' name)?
           ( 'CHECK' '(' term ')' onConflict?
-          | ( 'FOREIGN' 'KEY' names foreignKey )
+          | ( 'FOREIGN' 'KEY' columns foreignKey )
           | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict?
           // SQLite per autoinc.test autoinc-7.1
           | 'PRIMARY' 'KEY' '(' name 'AUTOINCREMENT' ')'
@@ -371,7 +224,7 @@ createView
             ;
 
         foreignKey
-            : 'REFERENCES' name names?
+            : 'REFERENCES' name columns?
               ( 'ON' ( 'DELETE' | 'UPDATE' )
                 ( 'SET' ( 'NULL' | 'DEFAULT' )
                 | 'CASCADE'
@@ -391,13 +244,13 @@ with
     cte
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
-          '(' ( query | insert | update ) ')'
-          ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
-          ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
+        '(' query ')'
+        ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
+        ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
         ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? tableRef
+    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )?
       indexedBy?
       // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
       // Postgres
@@ -408,79 +261,63 @@ delete
 
 insert
     : with?
-        // TODO this is getting too nutty; split into rule per dialect
       ( 'INSERT' ( 'OR' afirr )? | 'REPLACE' )
-      ( 'LOW_PRIORITY' | 'DELAYED' | 'HIGH_PRIORITY' )? 'IGNORE'? // MySQL
-      'OVERWRITE'? // Hive, Snowflake
-      'INTO'? tableRef
-      ( 'PARTITION'  ( qnames | '(' setters ')'  ) )? // MySQL or Hive
+      'INTO' qname ( 'AS' name )? columns?
       overriding?
-
-      ( names? ( query upsert* | 'DEFAULT' 'VALUES' )
-      | 'SET' setters ( 'AS' name names? )? // MySQL
-      )
-
-      ( 'ON' 'DUPLICATE' 'KEY' 'UPDATE' setters )? // MySQL
+//      ( source upsert* | 'DEFAULT' 'VALUES' )
+      ( query upsert* | 'DEFAULT' 'VALUES' )
       returning?
     ;
 
-    // Postgres?
     overriding
         : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
 
     // SQLite
     upsert
         : 'ON' 'CONFLICT' ( terms where? )?
-          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setters where? )
+          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
         ;
 
-update
-    : with? 'UPDATE'
-      'ONLY'? // Postgres
-      ( 'OR' afirr )? // SQLite
-      'LOW_PRIORITY'? 'IGNORE'? // MySQL
-//      tableRef ( '*' | ( ',' tableRef )* ) // Postgres or MySQL
-      tables // MySQL
-      indexedBy?
-      'SET' setters
-      ( 'FROM' tables )?
-      where? returning? orderBy? limit? offset?
-    ;
-
-    setters
-        : setter ( ',' setter )* ;
-
-    setter
-        : ( qname | qnames ) '=' term ;
-
-    afirr
-        : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
-
-    returning
-        : 'RETURNING' returned ( ',' returned )* ;
-
-        returned
-            : term ( 'AS'? alias )?
-//            : '*' | term ( 'AS'? alias )?
-            ;
-
-tableRef
-    : qname ( 'AS'? name )?
-    ;
-
 merge
-    : with? 'MERGE' 'INTO' 'ONLY'? tableRef
-      'USING' 'ONLY'? ( query | qname alias? ) 'ON' terms
+    : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
+//      'USING' 'ONLY'? source 'ON' terms
+      'USING' 'ONLY'? query 'ON' terms
       when*
     ;
 
     when
         : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
           ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
-          | 'UPDATE' 'SET' setters ( 'DELETE'? where )?
+          | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
           | 'DELETE'
           | 'DO' 'NOTHING'
           )
+        ;
+
+update
+    : with? 'UPDATE' ( 'OR' afirr )?
+      qname ( 'AS'? name )? indexedBy?
+      'SET' setter ( ',' setter )*
+      // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
+//      ( 'FROM' sources )?
+      where? returning? orderBy? limit? offset?
+    ;
+
+    setter
+        : ( qname | qnames ) '=' term ;
+
+afirr
+    : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
+
+// SQLite
+indexedBy
+    : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
+
+returning
+    : 'RETURNING' returned ( ',' returned )* ;
+
+    returned
+        : '*' | term ( 'AS'? alias )?
         ;
 
 query
@@ -518,21 +355,16 @@ query
         : tables ',' tables
           // TODO validate this. added ON clause to pass sqlite's tkt2141.test
           ( 'ON' term )?
-        | tables join tables ( 'ON' term | 'USING' qnames )?
+        | tables join tables  ( 'ON' term | 'USING' qnames )?
 
         | ( qname | '(' qname ')' ) tableAlias?
-          ( 'USE' 'INDEX' names // H2
-          | ( 'USE' | 'IGNORE' | 'FORCE' ) 'INDEX' ( 'FOR' 'JOIN' )? '(' id ')' // Postgres? MySQL?
+          ( ( 'USE' 'INDEX' columns ) // H2
           | indexedBy // SQLite
-          | 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? // Postgres
           )?
 
-        | 'LATERAL'?
-          ( '(' query ')'
-          | function
+        | ( '(' query ')'
           | values
           | tableFunc
-          | tableRows
           | deltaTable
           | tableCollection
           | 'JSON_TABLE' // TODO
@@ -547,16 +379,17 @@ query
         ;
 
         join
+            // TODO add 'LATERAL'
             : 'NATURAL'?
               ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
               | ( 'RIGHT' | 'FULL' ) 'OUTER'?
               | 'INNER'
               | 'CROSS'
               )?
-              'JOIN' 'LATERAL'?
+              'JOIN'
             ;
 
-    tableAlias : 'AS'? alias names? ;
+    tableAlias : 'AS'? alias columns? ;
 
     values : 'VALUES' terms ;
 
@@ -568,7 +401,7 @@ query
     tableCollection : 'TABLE' '(' term ')' ;
 
     unnest
-        : 'UNNEST' '(' ( (qname | array ) ( ',' (qname | array ) )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
+        : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
 
     tableFunc
         // H2 table function http://h2database.com/html/functions.html#table
@@ -579,18 +412,6 @@ query
         tableFuncParam
 //            : name ( type | qname | 'NULL' ) '=' subterm ;
             : name ( type | 'NULL' ) '=' subterm ;
-
-    tableRows
-        : 'ROWS' 'FROM' '(' tableRowsFunc ( ',' tableRowsFunc )* ')'
-        ;
-
-    tableRowsFunc
-        : function 'AS' '(' tableRowsFuncType ( ',' tableRowsFuncType )* ')'
-        ;
-
-    tableRowsFuncType
-        : name type // ( 'COLLATE' qname )?
-        ;
 
     offset
         : 'OFFSET' term rowRows? ;
@@ -621,8 +442,7 @@ query
 
     item
         : term ( 'AS'? alias )?                       # ItemTerm
-        | ( qname | '*' ) ( 'EXCEPT' qnames )?  # ItemColumns
-//        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
+        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
 
     into
@@ -694,10 +514,6 @@ query
         xmlColumn
            : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' ) ;
 
-    // SQLite
-    indexedBy
-        : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
-
 terms
     : term ( ',' term )* ;
 
@@ -723,9 +539,6 @@ subterm
 
     | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
     | ( 'NOT' | '!' ) subterm                  # SubtermUnary
-    // Postgres unary operators: absolute value, square root, and mystery
-    // https://www.postgresql.org/docs/17/typeconv-oper.html
-    | ( '@' | '|/' | '||/' ) subterm                  # SubtermUnary
     | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
     | function ( '.' name )*                   # SubtermFunction
 //    | function ( '.' name | index | '::' type )* # SubtermFunction
@@ -733,7 +546,7 @@ subterm
     | subterm '::' type                        # SubtermTypecast
     | 'CASE' term whenSimple+ caseElse? 'END'       # CaseSimple
     | 'CASE' whenSearch+ caseElse? 'END'            # CaseSearch
-    | 'INTERVAL' subterm timeCast?                   # SubtermInterval
+    | 'INTERVAL' subterm timeCast                   # SubtermInterval
     | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
     | array                                      # SubtermArray
@@ -743,14 +556,12 @@ subterm
 
     | subterm compare subterm                                                         # SubtermCompare
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
-//    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
-    | subterm 'IS' 'NOT'? subterm                                                    # SubtermLogical
+    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # SubtermDistinct
     | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # SubtermJSON
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # SubtermOfType
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # SubtermBETWEEN
-    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | qname )?                      # SubtermIN
-    // can't remember why I had to split SubtermLIKE. IIRC, ambiguity something something
+    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # SubtermIN
 //    | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # SubtermLIKE
     | subterm 'NOT'? likes subterm 'ESCAPE' subterm                                   # SubtermLIKE
     | subterm 'NOT'? likes subterm                                                    # SubtermLIKE
@@ -758,18 +569,16 @@ subterm
 
     | <assoc=right> subterm '^' subterm                   # SubtermOperator
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm         # SubtermOperator
-    | subterm  ( '||' | '->>' | '->' | '#>>' | '#>' ) subterm            # SubtermOperator
+    | subterm  ( '||' | '->' | '->>' ) subterm            # SubtermOperator
     | subterm ( '*' | '/' | 'DIV' | '%' | 'MOD' ) subterm # SubtermOperator
     | subterm ( '+' | '-' ) subterm                       # SubtermOperator
     | VARIABLE assign subterm                             # SubtermAssign
-    | '*' # SubtermAll
     ;
 
 predicate
     : compare subterm                                                         # PredicateCompare
     | ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # PredicateFixme
-//    | 'IS' 'NOT'? logicals                                                    # PredicateLogical
-    | 'IS' 'NOT'? subterm                                                    # PredicateLogical
+    | 'IS' 'NOT'? logicals                                                    # PredicateLogical
     | 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # PredicateDistinct
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # PredicateJSON
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # PredicateOfType
@@ -800,15 +609,13 @@ predicate
         ;
 
     likes
-        : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' | 'SIMILAR' 'TO' ;
+        : 'LIKE' | 'RLIKE' | 'ILIKE' | 'REGEXP' | 'GLOB' | 'MATCH' ;
 
     assign
         : EQ | ASSIGN ;
 
     compare
-        : EQ | COMPARE | TILDE | MATCH
-        | POSTGRES_COMPARE | STARTS_WITH
-        ;
+        : EQ | COMPARE | TILDE | MATCH ;
 
     collationName
         : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
@@ -879,7 +686,7 @@ scalar
     | 'DOUBLE' 'PRECISION'?
     | 'FLOAT' length?
     | 'INT'
-    | ( 'BIG' | 'UNSIGNED' )? 'INTEGER'
+    | 'BIG'? 'INTEGER'
     | 'INTERVAL'
     | 'JSON'
     | 'JSONB'
@@ -900,7 +707,6 @@ scalar
     | 'VARINT'
     | 'XML'
     | id precision?
-    | string
     ;
 
  chars
@@ -931,52 +737,34 @@ array
     arrayNested
         : arrayTerms ( ',' arrayTerms )* ;
 
-
 function
-    : coreFunction
-    | aggregateFunction
-    | analyticFunction
-    | windowFunction
-    | '{fn' function '}' //  ODBC style
-    | simpleFunction
-    ;
-
-coreFunction
-    : 'ARRAY' '(' query ')' // Postgres
-    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
-    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
+    : 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
     | 'CURRENT_DATE' params?
     | 'CURRENT_TIME' params?
     | 'CURRENT_TIMESTAMP' params?
-    | 'CURRENT_CATALOG'
-    | 'CURRENT_ROLE'
-    | 'CURRENT_SCHEMA'
-    | 'CURRENT_USER' params?
-    | 'DATEADD' '(' timeUnit ',' signedInteger ',' datetime ')'
-    | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
-    | 'DATE_TRUNC' '(' timeUnit ',' datetime ')'
-    | 'EXISTS' '(' query ')'
-    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
-    | 'JSON_ARRAYAGG' '(' qname orderBy? onNull?
-//      uniqueKeys?
-      ')'
-//      filter? over?
-    | 'JSON_OBJECTAGG' '(' jsonPair orderBy? onNull?
-      uniqueKeys?
-      ')'
-      filter?
-//      over?
-    | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
-    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
     | 'LOCALTIME' params?
     | 'LOCALTIMESTAMP' params?
-    | 'SESSION_USER'
-    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
-    | 'SYSTEM_USER'
+    | 'CURRENT_USER' params?
     | 'USER' params?
+    | 'CURRENT_ROLE'
+    | 'SESSION_USER'
+    | 'CURRENT_CATALOG'
+    | 'CURRENT_SCHEMA'
+    | 'SYSTEM_USER'
+    | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
+    | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
+    | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
+    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
+    | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
     | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'
+    | 'EXISTS' '(' query ')'
+    | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
+    | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
     | 'TIMESTAMPDIFF' '(' timeUnit ',' string ',' string ')'
-    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
+    | 'DATEADD' '(' timeUnit ',' signedInteger ',' datetime ')'
+    | 'DATE_TRUNC' '(' timeUnit ',' datetime ')'
+    | 'COLLECT' '(' ( 'DISTINCT' | 'UNIQUE' ) name orderBy? ')'
+
     | 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME'? name ( ',' terms )? ')'
@@ -987,6 +775,11 @@ coreFunction
     | 'XMLPI' '(' 'NAME' name ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
+
+    | 'ARRAY' '(' query ')' // Postgres
+    | '{fn' function '}' //  ODBC style
+
+    | aggregateFunction
     ;
 
     params
@@ -1015,31 +808,51 @@ coreFunction
 ////    | keyword '.' keyword '(' terms? ')' // TODO: T-SQL style?
 //        'SUM' '(' allDistinct? term ')' filter? over?
 
-    simpleFunction
-        : qname '(' term ( ',' term )* ')'
-//        : qname '(' ( '*' |  term ( ',' term )*  ) ')'
-        ;
-
-    windowFunction
-        : qname '(' terms ')' filter? over
-        ;
-
     aggregateFunction
-        : 'GROUP_CONCAT' '(' 'DISTINCT'? terms orderBy? ( 'SEPARATOR' term )? ')' filter?
-       // https://docs.oracle.com/en/database/oracle/oracle-database/12.2/sqlrf/LISTAGG.html
-        | 'LISTAGG' '(' ( 'ALL' | 'DISTINCT' )? terms ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' ))? ')' 'WITHIN' 'GROUP' '(' orderBy? ')' filter? over?
-        | qname '(' ( 'ALL' | 'DISTINCT' )? terms orderBy? ')' filter? over?
-        // https://docs.oracle.com/en/database/oracle/oracle-database/12.2/sqlrf/NTH_VALUE.html
-        | qname '('  terms ')' ( 'FROM' firstLast )? nullTreatment? over?
-        | qname '(' 'DISTINCT'? terms ')' 'WITHIN' 'GROUP' '(' orderBy? ')' filter? over?
-        | qname '('  terms ')' nullTreatment '(' orderBy? ')' filter?
+        : functionName
+          '(' ( ( qname '.' )? '*' | allDistinct? ( term ( ',' term )* )? )
+          orderBy?
+    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
+          ( 'ON' 'OVERFLOW' 'ERROR' )?
+          ( 'SEPARATOR' term )? onNull?
+    //      respectIgnore?  // TODO: Oracle
+          ')'
+          withinGroup?
+          filter?
+          ( 'FROM' firstLast )?
+          nullTreatment? over?
         ;
 
-    //    ( 'ON' 'OVERFLOW' ( 'ERROR' | 'TRUNCATE' name? withWithout 'COUNT' ))?
-//          ( 'ON' 'OVERFLOW' 'ERROR' )?
+//      ( ')' withinGroup
+//      | ')' nullTreatment? over
+//      | nullTreatment ')' over
+//      | ')'
+//      )
 
-    analyticFunction
-        : id '(' signedNumber? ')' withinGroup? over?
+
+    //    analyticFunction
+//        : ( 'FIRST_VALUE'
+//          | 'LAST_VALUE'
+//          | 'NTH_VALUE'
+//          )
+//          '(' terms respectIgnore? ')' respectIgnore? over
+//        // Generic syntax for all analytic functions?
+//        | qname '(' term respectIgnore? ')' respectIgnore? over
+//
+//        ;
+
+    functionName
+        : name
+        | 'RIGHT'
+        | 'LEFT'
+        | 'SECOND'
+        | 'YEAR'
+        | 'MINUTE'
+        | 'MONTH'
+        | 'HOUR'
+        | 'SET'
+        | 'ANY'
+        | 'SOME'
         ;
 
     withinGroup
@@ -1058,35 +871,43 @@ coreFunction
         : 'DOCUMENT' | 'CONTENT' ;
 
 window
-    : '(' name? partitionBy? orderBy? frameRange? ')'
+    : '(' name? partitionBy? orderBy? windowFrame? ')'
     | name
     ;
 
     partitionBy
         : 'PARTITION' 'BY' terms ;
 
-    frameRange
+    windowFrame
         : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-          ( 'BETWEEN' start=framePoint 'AND' )? end=framePoint
-          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
+          ( preceding | 'BETWEEN' following 'AND' following )
+          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
         ;
 
-        framePoint
-            : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
+        preceding
+//            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
+            : term 'PRECEDING'
             | 'CURRENT' 'ROW'
+            ;
+
+        following
+//            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
+            : term 'FOLLOWING'
+            | preceding
             ;
 
 orderBy
     : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )* ;
 
     orderByTerm
-        : term sortDir? ( 'NULLS' firstLast )?
-        ;
+        : term sortDir? ( 'NULLS' firstLast )? ;
 
     sortDir
         : 'ASC'
         | 'DESC'
-        | 'USING' compare // Postgres?
+        // Postgres
+//        | 'USING' compare
+//        | 'USING' ( EQ | COMPARE )
         ;
 
     jsonPairs
@@ -1116,7 +937,6 @@ formatJson
 onNull
     : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
-// TODO inline
 nullTreatment
     : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
 
@@ -1142,20 +962,19 @@ alias
 qnames0
     : qname ( ',' qname )* ;
 
+// TODO unnecessary? use columns rule instead?
 qnames
     : '(' qname ( ',' qname )* ')' ;
 
 qname
-    : name ( '.' name )* ( '.' '*' )? ;
+    : name ( '.' name )* ;
 
-names0
-    : name ( ',' name )* ;
-
-names
+columns
     : '(' name ( ',' name )* ')' ;
 
 name
     : id
+    // BOZO these two are redundant, no?
     | QUOTED // TODO try changing QUOTED token into parser rule
     | BACKTICKS
     | string
@@ -1179,7 +998,7 @@ string
 // Exclude everything but this grammar's tokens and ID tokens.
 id :
     // exclude punctuation
-    ~( EQ | COMPARE | ASSIGN | TILDE | MATCH  | POSTGRES_COMPARE | STARTS_WITH
+    ~( EQ | COMPARE | ASSIGN | TILDE | MATCH
     | '!' | '+' | '-' | '*' | '/' | '%' | '^'
     | '>>' | '<<' | '->' | '->>' | '|' | '||' | '&' | '&&'
     | '.' | ':' | '::' | ';'
@@ -1214,19 +1033,10 @@ ASSIGN  : ':=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' ;
 COMPARE : '==' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | '&&' ;
 TILDE   : '~' ;
 MATCH   : '~*' | '!~' | '!~*' ;
-STARTS_WITH : '^@' ;
-
-// TODO gotta catch them all
-// https://www.postgresql.org/docs/current/functions-array.html
-// https://www.postgresql.org/docs/current/functions-range.html
-// https://www.postgresql.org/docs/current/functions-geometry.html
-POSTGRES_COMPARE
-    : '@@' | '@>' | '@<' | '<->' | '&>' | '&<'
-    ;
 
 // TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
-UNICODE_STRING : 'U' '&'? STRING ;
+UNICODE_STRING : 'U&' STRING ;
 
 NATIONAL_STRING : [NE] STRING ;
 
@@ -1236,13 +1046,14 @@ STRING
     | '$$' .*? '$$'
     ;
 
+// TODO merge backticks, quoted, ID, UNICODE_ID?
 BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
-//ID : [A-Z_] [A-Z_0-9#$@]* ;
-ID : [A-Z_\u007F-\uFFFF] [A-Z_0-9#$@\u007F-\uFFFF]* ;
+ID : [A-Z_] [A-Z_0-9#$@]* ;
 
+// TODO inline uescape?
 UNICODE_ID : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
 
 BITS
@@ -1255,7 +1066,7 @@ BYTES
     | 'X' '\'' ( [A-F0-9] | ' ' | '\'\'' )* '\''
     ;
 
- OCTALS : '0o' [0-7]+ ;
+OCTALS : '0o' [0-7]+ ;
 
 // TODO support underscore (visual grouping) in numbers
 INTEGER
