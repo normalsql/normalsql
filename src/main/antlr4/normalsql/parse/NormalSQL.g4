@@ -214,24 +214,45 @@ createSchema
       create*
    ;
 
-createTable
+createTableOld
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
       'TABLE' notExists? qname
-      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+      ( '(' ( columnDefOld ( ',' columnDefOld )* ( ',' tableStuff )* )? ')' ( 'WITHOUT' ID )?
       | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
 
       ( createTableOptions ( ',' createTableOptions )? )?
       ;
 
-  columnDef
-        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
+  columnDefOld
+        : name ( type | columnConstraint )*
         ;
 
+  columnDef
+        : name type ( 'STORAGE' ( 'PLAIN' | 'EXTERNAL' | 'EXTENDED' | 'MAIN' | 'DEFAULT' ) )? ( 'COMPRESSION' ( 'DEFAULT' | name ) )? ( 'COLLATE' name )? columnConstraint*
+//        | table_constraint
+        | 'LIKE' qname likeOption*
+        ;
 
   createTableOptions
     : 'STRICT' | 'WITHOUT' 'ROWID' // SQLite
     ;
+
+createTable
+    : 'CREATE' ( ( 'GLOBAL' | 'LOCAL' )? temporary | 'UNLOGGED' )? 'TABLE' notExists? qname '(' ( columnDef ( ',' columnDef )*  )? ')'
+      ( 'INHERITS' qnames )?
+//      ( 'PARTITION' 'BY' ( 'RANGE' | 'LIST' | 'HASH' )* '(' ( column_name | '(' expression ')' )* ( 'COLLATE' collation )? ( opclass )? (',' ... )? ')' )? // Postgres
+      ( 'USING' string )?
+      ( 'WITH' ( '(' name '=' . )  ')' | 'WITHOUT' 'OIDS' )?  // Postgres
+      ( 'ON' 'COMMIT' ( 'PRESERVE' 'ROWS' | 'DELETE' 'ROWS' | 'DROP' )* )?  // Postgres
+      ( 'TABLESPACE' qname )? // Postgres
+      ;
+
+likeOption
+    :  ( 'INCLUDING' | 'EXCLUDING' )
+       ( 'ALL' | 'COMMENTS' | 'COMPRESSION' | 'CONSTRAINTS' | 'DEFAULTS' | 'GENERATED' | 'IDENTITY' | 'INDEXES' | 'STATISTICS' | 'STORAGE' )
+    ;
+
 
 // https://www.sqlite.org/vtab.html
 createVirtualTable
@@ -294,27 +315,43 @@ createView
         ( 'WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION' )?
       ;
 
-    exists : ( 'IF' 'EXISTS' ) ;
+    exists : 'IF' 'EXISTS' ;
     notExists : 'IF' 'NOT' 'EXISTS' ;
 
-    columnStuff
+// https://www.postgresql.org/docs/current/sql-createtable.html
+// https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+    columnConstraint
         : ( 'CONSTRAINT' name )?
-          ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
-          | 'AUTOINCREMENT'
-          | 'COUNTER'
-          | 'NOT'? 'NULL' onConflict?
-          | 'UNIQUE' onConflict?
-          | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
-          | 'DEFAULT' ( literal | term )
+          ( 'AUTOINCREMENT' // Postgres
+          |  'AUTO_INCREMENT' // MySQL
+          | ( 'VISIBLE' | 'INVISIBLE' ) // MySQL
+          | 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )? // Postgres
+          | 'CHECK' '(' term ')' onConflict? // SQLite
           | 'COLLATE' collationName
-          | foreignKey
-          | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
+          | 'COUNTER'
+          | 'DEFAULT' ( literal | term ) // Postgres
+//          | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
+          | 'GENERATED' 'ALWAYS' 'AS' '(' term ')' 'STORED' // Postgres
+//           | 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' )* 'AS' 'IDENTITY' ( '(' sequence_options ')' )? |
           | 'INVISIBLE'
           | 'IMPLICITLY'? 'HIDDEN'
+          | 'NOT'? 'NULL' onConflict?
+          | 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
+          | ( 'PRIMARY' 'KEY' | 'UNIQUE' ) indexedColumns onConflict? // SQLite ?
+          | 'PRIMARY' 'KEY' '(' name 'AUTOINCREMENT' ')' // SQLite per autoinc.test autoinc-7.1
+          | ( 'FOREIGN' 'KEY' names foreignKey ) // SQLite
+          | foreignKey
+//          | 'REFERENCES' reftable ( '(' refcolumn ')' )? ( 'MATCH' 'FULL' | 'MATCH' 'PARTIAL' | 'MATCH' 'SIMPLE' )? ( 'ON' 'DELETE' referential_action )? ( 'ON' 'UPDATE' referential_action )?  // Postgres
+          | 'UNIQUE' onConflict?
+         |  'UNIQUE' ( 'NULLS'  'NOT'? 'DISTINCT' )? ( column=name constraint=name )? // Postgres
+         |  'UNIQUE' ( 'NULLS'  'NOT'? 'DISTINCT' )? names ( 'INCLUDE' names )? // (table constraint) // Postgres
           )
-          // SQLite undocumented
-          ( 'CONSTRAINT' name )*
+          (  'NOT'? 'DEFERRABLE' )? ( 'INITIALLY' ( 'DEFERRED' |  'IMMEDIATE' ))? // Postgres
+
+//          ( 'CONSTRAINT' name )* // SQLite undocumented
         ;
+
+      //    'PRIMARY' 'KEY' index_parameters |
 
     // SQLite
     tableStuff
@@ -1189,7 +1226,7 @@ POSTGRES_COMPARE
 
 // TODO compare each dialect's rules for identifiers and strings. eg SQLite allows ':'?
 
-UNICODE_STRING : 'U&' STRING ;
+UNICODE_STRING : 'U' '&'? STRING ;
 
 NATIONAL_STRING : [NE] STRING ;
 
@@ -1203,7 +1240,8 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
-ID : [A-Z_] [A-Z_0-9#$@]* ;
+//ID : [A-Z_] [A-Z_0-9#$@]* ;
+ID : [A-Z_\u007F-\uFFFF] [A-Z_0-9#$@\u007F-\uFFFF]* ;
 
 UNICODE_ID : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
 
