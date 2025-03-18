@@ -41,7 +41,7 @@
  */
 
 
-grammar SQLiteParser;
+grammar SQLite;
 
 options {
     caseInsensitive = true;
@@ -61,8 +61,8 @@ statement
       | create_trigger
       | create_view
       | create_virtual_table
-      | delete
-      | delete_limited
+//      | delete
+      | delete ( orderBy? limit )?
       | detach
       | drop
       | insert
@@ -72,8 +72,8 @@ statement
       | rollback
       | savepoint
       | select
-      | update
-      | update_limited
+//      | update
+      | update ( orderBy? limit )?
       | vacuum
     )
 ;
@@ -96,15 +96,15 @@ attach
     : 'ATTACH' 'DATABASE'? expr 'AS' name ;
 
 begin
-    : 'BEGIN' ('DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE')? ('TRANSACTION' name? )?
+    : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )?
 ;
 
 commit
-    : ('COMMIT' | 'END') 'TRANSACTION'?
+    : ( 'COMMIT' | 'END' ) 'TRANSACTION'?
 ;
 
 rollback
-    : 'ROLLBACK' 'TRANSACTION'? ('TO' 'SAVEPOINT'? name)?
+    : 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
 ;
 
 savepoint
@@ -116,17 +116,20 @@ release
 ;
 
 create_index
-    : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name '(' indexed_column (
-        ',' indexed_column
-    )* ')' ('WHERE' expr)?
-;
+  : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where?
+  ;
 
-indexed_column
-    : (name | expr) ('COLLATE' name)? sortDir?
-;
+
+columnIndexes
+  : '(' columnIndex ( ',' columnIndex )* ')'
+  ;
+
+columnIndex
+  : ( name | expr ) ('COLLATE' name)? sortDir?
+  ;
 
 create_table
-    : 'CREATE' ('TEMP' | 'TEMPORARY')? 'TABLE' ifNotExists? qname (
+    : 'CREATE' temp? 'TABLE' ifNotExists? qname (
         '(' column_def (',' column_def)*? (',' table_constraint)* ')' (
             'WITHOUT' row_ROW_ID = ID
         )?
@@ -165,15 +168,15 @@ signed_number
 
 table_constraint
     : ('CONSTRAINT' name)? (
-        ('PRIMARY' 'KEY' | 'UNIQUE') '(' indexed_column (',' indexed_column)* ')' conflict?
+        ('PRIMARY' 'KEY' | 'UNIQUE') columnIndexes conflict?
         | 'CHECK' '(' expr ')'
         | 'FOREIGN' 'KEY' columns foreign_key
     )
 ;
 
 foreign_key
-    : 'REFERENCES' name columns? (
-        'ON' ('DELETE' | 'UPDATE') (
+    : 'REFERENCES' name columns?
+      ( 'ON' ('DELETE' | 'UPDATE') (
             'SET' ('NULL' | 'DEFAULT')
             | 'CASCADE'
             | 'RESTRICT'
@@ -188,21 +191,20 @@ conflict
 ;
 
 create_trigger
-    : 'CREATE' ('TEMP' | 'TEMPORARY')? 'TRIGGER' ifNotExists? qname (
-        'BEFORE'
-        | 'AFTER'
-        | 'INSTEAD' 'OF'
-    )? ('DELETE' | 'INSERT' | 'UPDATE' ('OF' name ( ',' name)*)?) 'ON' name (
-        'FOR' 'EACH' 'ROW'
-    )? ('WHEN' expr)? 'BEGIN' (
-        (update | insert | delete | select) ';'
-    )+ 'END'
-;
+  : 'CREATE' temp? 'TRIGGER' ifNotExists? qname
+    ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+    ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
+    'ON' name ( 'FOR' 'EACH' 'ROW' )?
+    ( 'WHEN' expr )?
+    'BEGIN' ( (update | insert | delete | select) ';' )+ 'END'
+  ;
 
 create_view
-    : 'CREATE' ('TEMP' | 'TEMPORARY')? 'VIEW' ifNotExists? qname
+    : 'CREATE'? 'VIEW' ifNotExists? qname
       columns? 'AS' select
     ;
+    
+temp : 'TEMP' | 'TEMPORARY' ;
 
 create_virtual_table
     : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname 'USING' name (
@@ -227,13 +229,7 @@ cte
     : name columns? 'AS' '(' select ')' ;
 
 delete
-    : with? 'DELETE' 'FROM' qualifiedName ('WHERE' expr)? returning?
-;
-
-delete_limited
-    : with? 'DELETE' 'FROM' qualifiedName ('WHERE' expr)? returning? (
-        orderBy? limit
-    )?
+    : with? 'DELETE' 'FROM' qualifiedName where? returning?
 ;
 
 detach
@@ -299,22 +295,24 @@ expr
       | qname
       | qname '(' (exprs)? ')'
       )
-    | (('NOT')? 'EXISTS')? '(' select ')'
+    | ( 'NOT'? 'EXISTS' )? '(' select ')'
     | 'CASE' expr? ('WHEN' expr 'THEN' expr)+ ('ELSE' expr)? 'END'
     | raise
 ;
 
 raise
-    : 'RAISE' '(' ('IGNORE' | ('ROLLBACK' | 'ABORT' | 'FAIL') ',' STRING) ')'
+    : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' STRING ) ')'
+;
+
+
+
+values
+    : 'VALUES' value_row (',' value_row)*
 ;
 
 
 value_row
     : '(' exprs ')'
-;
-
-values
-    : 'VALUES' value_row (',' value_row)*
 ;
 
 insert
@@ -325,32 +323,25 @@ insert
     ) 'INTO' qname ('AS' name)? columns? (( ( values | select) upsert_clause?) | 'DEFAULT' 'VALUES') returning?
 ;
 
-returning
-    : 'RETURNING' items
-;
-
-
+returning : 'RETURNING' items ;
 
 upsert_clause
-    : 'ON' 'CONFLICT' 
-    (
-        '(' indexed_column (',' indexed_column)* ')' ('WHERE' expr)?
-    )? 'DO' (
-        'NOTHING'
-        | 'UPDATE' 'SET' (
+    : 'ON' 'CONFLICT' ( columnIndexes where? )?
+      'DO'
+        ( 'NOTHING'
+        | 'UPDATE' 'SET'
             (name | columns) '=' expr (
                 ',' (name | columns) '=' expr
-            )* ('WHERE' expr)?
+            )* where?
+
         )
-    )
-;
+    ;
 
 pragma
     : 'PRAGMA' qname 
-    (
-        '=' pragma_value
-        | '(' pragma_value ')'
-    )?
+      ( '=' pragma_value
+      | '(' pragma_value ')'
+      )?
 ;
 
 pragma_value
@@ -372,14 +363,15 @@ join_clause
 ;
 
 select_core
-    : (
-        'SELECT' ('DISTINCT' | 'ALL')? items (
-            'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause)
-        )? ('WHERE' whereExpr = expr)? (
-            'GROUP' 'BY' groupByExpr += expr (',' groupByExpr += expr)* (
+    : ( 'SELECT' ('DISTINCT' | 'ALL')? items
+        ( 'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause) )?
+        ('WHERE' whereExpr = expr)?
+        ( 'GROUP' 'BY' groupByExpr += expr (',' groupByExpr += expr )* (
                 'HAVING' havingExpr = expr
             )?
-        )? ('WINDOW' name 'AS' window_defn ( ',' name 'AS' window_defn)*)?
+        )?
+
+        ('WINDOW' name 'AS' window_defn ( ',' name 'AS' window_defn)*)?
     )
     | values
 ;
@@ -399,12 +391,6 @@ compound_select_stmt
 ;
 
 table_or_subquery
-//    : (
-//        qname ('AS'? name)? (
-//            'INDEXED' 'BY' name
-//            | 'NOT' 'INDEXED'
-//        )?
-//    )
     : qualifiedName
     | qname '(' exprs ')' alias?
     | '(' (table_or_subquery (',' table_or_subquery)* | join_clause) ')'
@@ -424,7 +410,7 @@ item
 
 join_operator
     : ','
-    | 'NATURAL'? (('LEFT' | 'RIGHT' | 'FULL') 'OUTER'? | 'INNER' | 'CROSS')? 'JOIN'
+    | 'NATURAL'? ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )? 'JOIN'
 ;
 
 join_constraint
@@ -444,18 +430,11 @@ update
         | columns
     ) '=' expr (',' (name | columns) '=' expr)* (
         'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause)
-    )? ('WHERE' expr)? returning?
+    )? where? returning?
 ;
 
 
-update_limited
-    : with? 'UPDATE' ('OR' ('ROLLBACK' | 'ABORT' | 'REPLACE' | 'FAIL' | 'IGNORE'))? qualifiedName 'SET' (
-        name
-        | columns
-    ) '=' expr (',' (name | columns) '=' expr)* ('WHERE' expr)? returning? (
-        orderBy? limit
-    )?
-;
+where : 'WHERE' expr ;
 
 qualifiedName
     : qname ('AS' name)?
