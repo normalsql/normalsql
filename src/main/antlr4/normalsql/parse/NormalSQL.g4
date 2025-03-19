@@ -635,11 +635,11 @@ literal
     ;
 
 datetime
-    : 'DATE' string
-    | ( '{d' | '{t' | '{ts' ) string '}'
-    | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
-    | 'CURRENT_TIMESTAMP'
-    ;
+  : 'DATE' string
+  | ( '{d' | '{t' | '{ts' ) string '}'
+  | ( 'TIME' | 'TIMESTAMP' ) ( withWithout timeZone )? string?
+  | 'CURRENT_TIMESTAMP'
+  ;
 
 boolean
     : 'TRUE' | 'FALSE' ;
@@ -648,26 +648,26 @@ timeCast
     : timeUnit precision? ( 'TO' timeUnit precision? )? ;
 
 timeUnit
-    : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
-    | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
-    | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
-    | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
-    | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
-    | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
-    | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
+  : 'EPOCH' | 'MILLENNIUM' | 'CENTURY' | 'DECADE' | 'YEAR' | 'YEARS'
+  | 'QUARTER' | 'MONTH' | 'MONTHS' | 'WEEK' | 'WEEKS' | 'DAY' | 'DAYS'
+  | 'HOUR' | 'HOURS' | 'MINUTE' | 'MINUTES' | 'SECOND' | 'SECONDS'
+  | 'MCS' | 'MILLISECOND' | 'MICROSECOND' | 'NS' | 'NANOSECOND'
+  | 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' | 'TIMEZONE_SECOND'
+  | 'ISO_WEEK_YEAR' | 'ISO_YEAR' | 'ISOYEAR'
+  | 'ISO_DAY_OF_WEEK' | 'DAY_OF_WEEK' | 'ISODOW' | 'DOW' ;
 
-    whenSimple : 'WHEN' ( predicate | terms ) caseThen ;
-        whenSearch : 'WHEN' term caseThen ;
-        caseThen : 'THEN' term ;
-        caseElse : 'ELSE' term ;
+  whenSimple : 'WHEN' ( predicate | terms ) caseThen ;
+    whenSearch : 'WHEN' term caseThen ;
+    caseThen : 'THEN' term ;
+    caseElse : 'ELSE' term ;
 
 type
-    : 'ROW' '(' name type ( ',' name type )* ')'
-    | 'SETOF' type
-    | type 'ARRAY' ( '[' INTEGER ']' )?
-    | type ( '[' INTEGER? ']' )+
-    | scalar
-    ;
+  : 'ROW' '(' name type ( ',' name type )* ')'
+  | 'SETOF' type
+  | type 'ARRAY' ( '[' INTEGER ']' )?
+  | type ( '[' INTEGER? ']' )+
+  | scalar
+  ;
 
 scalar
     : 'BIGINT'
@@ -709,14 +709,14 @@ scalar
     | id precision?
     ;
 
- chars
-    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
-    | 'VARCHAR'
-    | 'VARCHAR2'
-    | 'VARCHAR_IGNORECASE'
-    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
-    | 'STRING'
-    ;
+chars
+  : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
+  | 'VARCHAR'
+  | 'VARCHAR2'
+  | 'VARCHAR_IGNORECASE'
+  | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+  | 'STRING'
+  ;
 
 length
     : '(' INTEGER ')' ;

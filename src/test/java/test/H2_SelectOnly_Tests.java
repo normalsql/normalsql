@@ -45,7 +45,8 @@ public class
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
+//		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
+		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
 
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()

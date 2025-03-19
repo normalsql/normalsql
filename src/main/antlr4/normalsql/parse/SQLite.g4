@@ -44,7 +44,7 @@
 grammar SQLite;
 
 options {
-    caseInsensitive = true;
+caseInsensitive = true;
 }
 
 parse
@@ -71,7 +71,7 @@ statement
     | release
     | rollback
     | savepoint
-    | combine
+    | selectCombo
     | update ( orderBy? limit )?
     | vacuum
     )
@@ -81,7 +81,7 @@ alter
   : 'ALTER' 'TABLE' qname
     ( 'RENAME'
     ( 'TO' name | 'COLUMN'? name 'TO' name )
-    | 'ADD' 'COLUMN'? column_def
+    | 'ADD' 'COLUMN'? columnDef
     | 'DROP' 'COLUMN'? name
     )
   ;
@@ -104,8 +104,8 @@ create_index
 
 create_table
   : 'CREATE' temp? 'TABLE' ifNotExists? qname
-    ( '(' column_def ( ',' column_def )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
-    | 'AS' combine
+    ( '(' columnDef ( ',' columnDef )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
+    | 'AS' selectCombo
     )
   ;
 
@@ -115,11 +115,11 @@ create_trigger
     ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
     'ON' name ( 'FOR' 'EACH' 'ROW' )?
     ( 'WHEN' expr )?
-    'BEGIN' ( ( update | insert | delete | combine ) ';' )+ 'END'
+    'BEGIN' ( ( update | insert | delete | selectCombo ) ';' )+ 'END'
   ;
 
 create_view
-  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' combine
+  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' selectCombo
   ;
 
 create_virtual_table
@@ -153,17 +153,15 @@ columnIndex
 
 ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
-column_def
-  : name type_name? column_constraint* ;
+columnDef
+  : name type? constraint* ;
 
-type_name
-  : name*
-    ( '(' signed_number ')'
-    | '(' signed_number ',' signed_number ')'
-    )?
+type
+  : name+
+//  (  '(' signed_number ( ',' signed_number )? ')' )?
   ;
 
-column_constraint
+constraint
   : ( 'CONSTRAINT' name )?
     ( ( 'PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'? )
     | ( 'NOT'? 'NULL' | 'UNIQUE' ) conflict?
@@ -208,7 +206,7 @@ with
   ;
 
 cte
-  : name columns? 'AS' '(' combine ')' ;
+  : name columns? 'AS' '(' selectCombo ')' ;
 
 exprs : expr ( ',' expr )* ;
 
@@ -238,17 +236,17 @@ expr
   | expr 'OR' expr
   | name '(' ( 'DISTINCT'? exprs  | '*' )? ')' filter? over?
   | '(' exprs ')'
-  | 'CAST' '(' expr 'AS' type_name ')'
+  | 'CAST' '(' expr 'AS' type ')'
   | expr 'COLLATE' name
   | expr 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) expr ( 'ESCAPE' expr )?
   | expr ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
   | expr 'IS' 'NOT'? expr
   | expr 'NOT'? 'BETWEEN' expr 'AND' expr
   | expr 'NOT'? 'IN'
-    ( '(' ( combine | exprs )? ')'
+    ( '(' ( selectCombo | exprs )? ')'
     | qname ( '(' exprs? ')' )?
     )
-  | ( 'NOT'? 'EXISTS' )? '(' combine ')'
+  | ( 'NOT'? 'EXISTS' )? '(' selectCombo ')'
   | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
   | raise
   ;
@@ -270,7 +268,7 @@ insert
     | 'INSERT' 'OR' action
     )
     'INTO' qname alias? columns?
-    ( ( values | combine ) upsert?
+    ( ( values | selectCombo ) upsert?
     | 'DEFAULT' 'VALUES'
     )
     returning?
@@ -306,7 +304,7 @@ pragma_value
 reindex
   : 'REINDEX' qname? ;
 
-combine
+selectCombo
   : with?
     select (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) select )*
     orderBy? limit?
@@ -331,7 +329,7 @@ table_or_subquery
     : qualifiedName
     | qname '(' exprs ')' alias?
     | '(' (table_or_subquery (',' table_or_subquery)* | join_clause) ')'
-    | '(' combine ')' alias?
+    | '(' selectCombo ')' alias?
 ;
 
 items : item ( ',' item )* ;
@@ -358,7 +356,6 @@ update
     ( 'FROM' ( table_or_subquery ( ',' table_or_subquery)* | join_clause ) )?
     where? returning?
   ;
-
 
 where : 'WHERE' expr ;
 
@@ -460,7 +457,7 @@ sortDir
 module_argument
     :
     expr
-    | column_def
+    | columnDef
 ;
 
 alias : 'AS'? gorp ;
@@ -485,7 +482,7 @@ name
   ;
 
 // http://www.sqlite.org/lang_keywords.html
-
+// TODO remove reserved keywords
 keyword
     : 'ABORT'
     | 'ACTION'
