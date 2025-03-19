@@ -101,7 +101,7 @@ extends
 			// Drill down to first row
 //			var termList = context.source().values().terms().term();
 			var termList = context.query().combine().values().terms().term();
-			var subterm = termList.get( 0 ).subterm();
+			var subterm = termList.getFirst().subterm();
 
 
 			if( subterm instanceof SubtermRowContext )
@@ -124,11 +124,13 @@ extends
 				if( found.size() == maybes.size() )
 				{
 					Insert child = new Insert();
-					// TODO unnecessary null check?
-					if( context.tableRef() != null )
-					{
-						child.table = context.tableRef().qname();
-					}
+//					// TODO unnecessary null check?
+//					if( context.tableRef() != null )
+//					{
+//						child.table = context.tableRef().qname();
+//					}
+					child.table = context.qname();
+
 
 					if( context.names() != null )
 					{

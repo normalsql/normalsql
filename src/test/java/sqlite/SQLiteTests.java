@@ -17,7 +17,7 @@ public class SQLiteTests {
     public static void main( String[] args )
         throws IOException
     {
-        String dir = "/Users/jasonosgood/Projects/sqlite.org/sqlite/chat/";
+        String dir = "/Users/jasonosgood/Projects/sqlite/chat/";
         List<Path> files = getAllTheFiles( dir );
         int count = 0;
         int errors = 0;

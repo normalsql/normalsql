@@ -3,14 +3,15 @@
 
 package test;
 
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
-import static normalsql.parse.NormalSQLParser.*;
+import normalsql.parse.*;
+//import static normalsql.parse.NormalSQLParser.*;
+import static normalsql.parse.SQLiteParser.*;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.Tree;
+import org.apache.velocity.runtime.directive.Parse;
 
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -45,8 +46,8 @@ select (  select 1 )
 		}
 	}
 
-	 NormalSQLParser parser = null;
-	 ScriptContext script = null;
+	SQLiteParser parser = null;
+	 ParseContext script = null;
 
 	public  boolean parse( Path p, String sql )
 	{
@@ -69,36 +70,39 @@ select (  select 1 )
 		var errors = new ArrayList<SyntaxError>();
 
 		var chars = CharStreams.fromString( sql );
-		var lexer = new NormalSQLLexer( chars );
+//		var lexer = new NormalSQLLexer( chars );
+		var lexer = new SQLiteLexer( chars );
 //		lexer.bracketsEnabled = bracketsEnabled;
 		var tokens = new CommonTokenStream( lexer );
-		parser = new NormalSQLParser( tokens );
+//		parser = new NormalSQLParser( tokens );
+		parser = new SQLiteParser( tokens );
 //		parser.removeErrorListeners();
 
 //		parser.addErrorListener( new DiagnosticErrorListener() );
 
-//		parser.addErrorListener( new BaseErrorListener() {
-//			@Override
-//			public void syntaxError(Recognizer<?, ?> recognizer,
-//									Object offendingSymbol,
-//									int line,
-//									int charPositionInLine,
-//									String msg,
-//									RecognitionException e)
-//			{
-//				var error = new SyntaxError();
-//				error.recognizer = recognizer;
-//				error.offendingSymbol = offendingSymbol;
-//				error.line = line;
-//				error.charPositionInLine = charPositionInLine;
-//				error.msg = msg;
-//				error.e = e;
-//				errors.add( error );
-//			}
-//
-//		} );
+		parser.addErrorListener( new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer,
+									Object offendingSymbol,
+									int line,
+									int charPositionInLine,
+									String msg,
+									RecognitionException e)
+			{
+				var error = new SyntaxError();
+				error.recognizer = recognizer;
+				error.offendingSymbol = offendingSymbol;
+				error.line = line;
+				error.charPositionInLine = charPositionInLine;
+				error.msg = msg;
+				error.e = e;
+				errors.add( error );
+			}
 
-		script = parser.script();
+		} );
+
+//		script = parser.script();
+		script = parser.parse();
 		if( errors.isEmpty() ) return true;
 
 //		var visitor = new KnockoutVisitor();

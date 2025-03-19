@@ -375,7 +375,7 @@ filter
   ;
 
 windowDef
-  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy frame_spec? ')'
+  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? frame_spec? ')'
   ;
 
 over
@@ -392,20 +392,6 @@ frame_clause
       )
     ;
 
-//simple_function_invocation
-//    : name '(' (exprs | '*') ')'
-//;
-//
-//aggregate_function_invocation
-//    : name '(' ('DISTINCT'? exprs | '*')? ')' filter?
-//;
-//
-//window_function_invocation
-//    : window_function '(' ( exprs | '*' )? ')' filter? 'OVER' (
-//        window_defn
-//        | name
-//    )
-//;
 
 limit
   : 'LIMIT' expr (( 'OFFSET' | ',' ) expr)? ;
@@ -429,6 +415,22 @@ frame_single
   | 'UNBOUNDED' 'PRECEDING'
   | 'CURRENT' 'ROW'
   ;
+
+
+//simple_function_invocation
+//    : name '(' (exprs | '*') ')'
+//;
+//
+//aggregate_function_invocation
+//    : name '(' ('DISTINCT'? exprs | '*')? ')' filter?
+//;
+//
+//window_function_invocation
+//    : window_function '(' ( exprs | '*' )? ')' filter? 'OVER' (
+//        window_defn
+//        | name
+//    )
+//;
 
 //window_function
 //  : ('FIRST_VALUE' | 'LAST_VALUE') '(' expr ')' 'OVER' '(' partitionBy? orderBy frame_clause? ')'
