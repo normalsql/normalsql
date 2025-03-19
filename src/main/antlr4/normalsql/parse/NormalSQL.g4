@@ -220,7 +220,7 @@ createIndex
           ;
 
         onConflict
-            : 'ON' 'CONFLICT' afirr
+            : 'ON' 'CONFLICT' action
             ;
 
         foreignKey
@@ -261,7 +261,7 @@ delete
 
 insert
     : with?
-      ( 'INSERT' ( 'OR' afirr )? | 'REPLACE' )
+      ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
       'INTO' qname ( 'AS' name )? columns?
       overriding?
 //      ( source upsert* | 'DEFAULT' 'VALUES' )
@@ -295,7 +295,7 @@ merge
         ;
 
 update
-    : with? 'UPDATE' ( 'OR' afirr )?
+    : with? 'UPDATE' ( 'OR' action )?
       qname ( 'AS'? name )? indexedBy?
       'SET' setter ( ',' setter )*
       // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
@@ -306,8 +306,8 @@ update
     setter
         : ( qname | qnames ) '=' term ;
 
-afirr
-    : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
+action
+  : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
 
 // SQLite
 indexedBy
@@ -492,10 +492,10 @@ query
         : 'HAVING' terms ;
 
     windows
-        : 'WINDOW' windowAlias ( ',' windowAlias )* ;
+        : 'WINDOW' window ( ',' window )* ;
 
-        windowAlias
-            : alias 'AS' window ;
+        window
+            : alias 'AS' windowDef ;
 
     qualify
         : 'QUALIFY' term ;
@@ -862,7 +862,7 @@ function
         : 'FILTER' '(' 'WHERE' term ')' ;
 
     over
-        : 'OVER' window ;
+        : 'OVER' windowDef ;
 
     xmlAttrib
         : term ( 'AS' alias )? ;
@@ -870,19 +870,19 @@ function
     xmlContent
         : 'DOCUMENT' | 'CONTENT' ;
 
-window
-    : '(' name? partitionBy? orderBy? windowFrame? ')'
-    | name
+windowDef
+  : '(' name? partitionBy? orderBy? windowFrame? ')'
+  | name
+  ;
+
+  partitionBy
+    : 'PARTITION' 'BY' terms ;
+
+  windowFrame
+    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+      ( preceding | 'BETWEEN' following 'AND' following )
+      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
     ;
-
-    partitionBy
-        : 'PARTITION' 'BY' terms ;
-
-    windowFrame
-        : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-          ( preceding | 'BETWEEN' following 'AND' following )
-          ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-        ;
 
         preceding
 //            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'

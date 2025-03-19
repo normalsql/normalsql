@@ -47,132 +47,144 @@ options {
     caseInsensitive = true;
 }
 
-parse : statement? ( ';' statement? )* EOF ;
+parse
+  : statement? ( ';' statement? )* EOF ;
 
 statement
-    : ('EXPLAIN' ('QUERY' 'PLAN')?)?
-      ( alter_table
-      | analyze
-      | attach
-      | begin
-      | commit
-      | create_index
-      | create_table
-      | create_trigger
-      | create_view
-      | create_virtual_table
-//      | delete
-      | delete ( orderBy? limit )?
-      | detach
-      | drop
-      | insert
-      | pragma
-      | reindex
-      | release
-      | rollback
-      | savepoint
-      | select
-//      | update
-      | update ( orderBy? limit )?
-      | vacuum
+  : ( 'EXPLAIN' ( 'QUERY' 'PLAN' )? )?
+    ( alter
+    | analyze
+    | attach
+    | begin
+    | commit
+    | create_index
+    | create_table
+    | create_trigger
+    | create_view
+    | create_virtual_table
+    | delete ( orderBy? limit )?
+    | detach
+    | drop
+    | insert
+    | pragma
+    | reindex
+    | release
+    | rollback
+    | savepoint
+    | combine
+    | update ( orderBy? limit )?
+    | vacuum
     )
-;
+  ;
 
-alter_table
-    : 'ALTER' 'TABLE' qname
-      ( 'RENAME'
-        ( 'TO' new_table_name = name
-        | 'COLUMN'? old_column_name = name 'TO' new_column_name = name
-        )
-      | 'ADD' 'COLUMN'? column_def
-      | 'DROP' 'COLUMN'? name
-      )
-    ;
+alter
+  : 'ALTER' 'TABLE' qname
+    ( 'RENAME'
+    ( 'TO' name | 'COLUMN'? name 'TO' name )
+    | 'ADD' 'COLUMN'? column_def
+    | 'DROP' 'COLUMN'? name
+    )
+  ;
 
 analyze
-    : 'ANALYZE' qname? ;
+  : 'ANALYZE' qname? ;
 
 attach
-    : 'ATTACH' 'DATABASE'? expr 'AS' name ;
+  : 'ATTACH' 'DATABASE'? expr 'AS' name ;
 
 begin
-    : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )?
-;
+  : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )? ;
 
 commit
-    : ( 'COMMIT' | 'END' ) 'TRANSACTION'?
-;
-
-rollback
-    : 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )?
-;
-
-savepoint
-    : 'SAVEPOINT' name
-;
-
-release
-    : 'RELEASE' 'SAVEPOINT'? name
-;
+  : ( 'COMMIT' | 'END' ) 'TRANSACTION'? ;
 
 create_index
   : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where?
   ;
 
+create_table
+  : 'CREATE' temp? 'TABLE' ifNotExists? qname
+    ( '(' column_def ( ',' column_def )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
+    | 'AS' combine
+    )
+  ;
+
+create_trigger
+  : 'CREATE' temp? 'TRIGGER' ifNotExists? qname
+    ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
+    ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
+    'ON' name ( 'FOR' 'EACH' 'ROW' )?
+    ( 'WHEN' expr )?
+    'BEGIN' ( ( update | insert | delete | combine ) ';' )+ 'END'
+  ;
+
+create_view
+  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' combine
+  ;
+
+create_virtual_table
+  : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname 'USING' name
+    ( '(' module_argument ( ',' module_argument )* ')' )?
+  ;
+
+delete
+  : with? 'DELETE' 'FROM' qualifiedName where? returning? ;
+
+detach
+  : 'DETACH' 'DATABASE'? name ;
+
+drop
+  : 'DROP' ( 'INDEX' | 'TABLE' | 'TRIGGER' | 'VIEW' ) ( 'IF' 'EXISTS' )? qname ;
+
+rollback
+  : 'ROLLBACK' 'TRANSACTION'? ( 'TO' 'SAVEPOINT'? name )? ;
+
+savepoint
+  : 'SAVEPOINT' name ;
+
+release
+  : 'RELEASE' 'SAVEPOINT'? name ;
 
 columnIndexes
-  : '(' columnIndex ( ',' columnIndex )* ')'
-  ;
+  : '(' columnIndex ( ',' columnIndex )* ')' ;
 
 columnIndex
-  : ( name | expr ) ('COLLATE' name)? sortDir?
-  ;
-
-create_table
-    : 'CREATE' temp? 'TABLE' ifNotExists? qname (
-        '(' column_def (',' column_def)*? (',' table_constraint)* ')' (
-            'WITHOUT' row_ROW_ID = ID
-        )?
-        | 'AS' select
-    )
-;
+  : ( name | expr ) ( 'COLLATE' name )? sortDir? ;
 
 ifNotExists : 'IF' 'NOT' 'EXISTS' ;
 
 column_def
-    : name type_name? column_constraint*
-;
+  : name type_name? column_constraint* ;
 
 type_name
-    : name*
-      ( '(' signed_number ')'
-      | '(' signed_number ',' signed_number ')'
-      )?
-;
+  : name*
+    ( '(' signed_number ')'
+    | '(' signed_number ',' signed_number ')'
+    )?
+  ;
 
 column_constraint
-    : ('CONSTRAINT' name)? (
-        ('PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'?)
-        | ('NOT'? 'NULL' | 'UNIQUE') conflict?
-        | 'CHECK' '(' expr ')'
-        | 'DEFAULT' (signed_number | literal | '(' expr ')')
-        | 'COLLATE' name
-        | foreign_key
-        | ('GENERATED' 'ALWAYS')? 'AS' '(' expr ')' ('STORED' | 'VIRTUAL')?
+  : ( 'CONSTRAINT' name )?
+    ( ( 'PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'? )
+    | ( 'NOT'? 'NULL' | 'UNIQUE' ) conflict?
+    | 'CHECK' '(' expr ')'
+    | 'DEFAULT' ( signed_number | literal | '(' expr ')' )
+    | 'COLLATE' name
+    | foreign_key
+    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' expr ')' ( 'STORED' | 'VIRTUAL' )?
     )
-;
+  ;
 
 signed_number
-    : ('+' | '-')? NUMBER
-;
+  : ('+' | '-')? NUMBER ;
 
 table_constraint
-    : ('CONSTRAINT' name)? (
-        ('PRIMARY' 'KEY' | 'UNIQUE') columnIndexes conflict?
-        | 'CHECK' '(' expr ')'
-        | 'FOREIGN' 'KEY' columns foreign_key
+  : ( 'CONSTRAINT' name )?
+    ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) columnIndexes conflict?
+    | 'CHECK' '(' expr ')'
+    | 'FOREIGN' 'KEY' columns foreign_key
     )
-;
+  ;
 
 foreign_key
     : 'REFERENCES' name columns?
@@ -187,58 +199,16 @@ foreign_key
 ;
 
 conflict
-    : 'ON' 'CONFLICT' ('ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE')
-;
+  : 'ON' 'CONFLICT' action ;
 
-create_trigger
-  : 'CREATE' temp? 'TRIGGER' ifNotExists? qname
-    ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
-    ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
-    'ON' name ( 'FOR' 'EACH' 'ROW' )?
-    ( 'WHEN' expr )?
-    'BEGIN' ( (update | insert | delete | select) ';' )+ 'END'
-  ;
-
-create_view
-    : 'CREATE'? 'VIEW' ifNotExists? qname
-      columns? 'AS' select
-    ;
-    
 temp : 'TEMP' | 'TEMPORARY' ;
 
-create_virtual_table
-    : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname 'USING' name (
-        '(' module_argument (',' module_argument)* ')'
-    )?
-;
-
 with
-    : 'WITH' 'RECURSIVE'? cte_table_name 'AS' '(' select ')'
-      ( ',' cte_table_name 'AS' '(' select ')' )*
-;
-
-cte_table_name
-    : name columns?
-;
-
-recursive_cte
-    : cte_table_name 'AS' '(' select 'UNION' 'ALL'? select ')'
-;
+  : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
+  ;
 
 cte
-    : name columns? 'AS' '(' select ')' ;
-
-delete
-    : with? 'DELETE' 'FROM' qualifiedName where? returning?
-;
-
-detach
-    : 'DETACH' 'DATABASE'? name
-;
-
-drop
-    : 'DROP' object = ( 'INDEX' | 'TABLE' | 'TRIGGER' | 'VIEW' ) ( 'IF' 'EXISTS' )? qname
-;
+  : name columns? 'AS' '(' combine ')' ;
 
 exprs : expr ( ',' expr )* ;
 
@@ -254,193 +224,149 @@ exprs : expr ( ',' expr )* ;
     OR
  */
 expr
-    : literal
-    | PARAM
-    | qname
-    | ('-'
-    | '+'
-    | '~'
-    | 'NOT') expr
-    | expr '||' expr
-    | expr ( '*' | '/' | '%') expr
-    | expr ( '+' | '-') expr
-    | expr ( '<<' | '>>' | '&' | '|') expr
-    | expr ( '<' | '<=' | '>' | '>=') expr
-    | expr (
-        '='
-        | '=='
-        | '!='
-        | '<>'
-        | 'IS'
-        | 'IS' 'NOT'
-        | 'IS' 'NOT'? 'DISTINCT' 'FROM'
-        | 'IN'
-        | 'LIKE'
-        | 'GLOB'
-        | 'MATCH'
-        | 'REGEXP'
-    ) expr
-    | expr 'AND' expr
-    | expr 'OR' expr
-    | name '(' (('DISTINCT'? expr ( ',' expr)*) | '*')? ')' filter? over?
-    | '(' exprs ')'
-    | 'CAST' '(' expr 'AS' type_name ')'
-    | expr 'COLLATE' name
-    | expr 'NOT'? ('LIKE' | 'GLOB' | 'REGEXP' | 'MATCH') expr ('ESCAPE' expr)?
-    | expr ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL')
-    | expr 'IS' 'NOT'? expr
-    | expr 'NOT'? 'BETWEEN' expr 'AND' expr
-    | expr 'NOT'? 'IN'
-      ( '(' (select | expr ( ',' expr)*)? ')'
-      | qname
-      | qname '(' (exprs)? ')'
-      )
-    | ( 'NOT'? 'EXISTS' )? '(' select ')'
-    | 'CASE' expr? ('WHEN' expr 'THEN' expr)+ ('ELSE' expr)? 'END'
-    | raise
-;
+  : literal
+  | PARAM
+  | qname
+  | ( '-' | '+' | '~' | 'NOT' ) expr
+  | expr '||' expr
+  | expr ( '*' | '/' | '%' ) expr
+  | expr ( '+' | '-' ) expr
+  | expr ( '<<' | '>>' | '&' | '|' ) expr
+  | expr ( '<' | '<=' | '>' | '>=' ) expr
+  | expr ( '=' | '==' | '!=' | '<>' | 'IS' | 'IS' 'NOT' | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) expr
+  | expr 'AND' expr
+  | expr 'OR' expr
+  | name '(' ( 'DISTINCT'? exprs  | '*' )? ')' filter? over?
+  | '(' exprs ')'
+  | 'CAST' '(' expr 'AS' type_name ')'
+  | expr 'COLLATE' name
+  | expr 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) expr ( 'ESCAPE' expr )?
+  | expr ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
+  | expr 'IS' 'NOT'? expr
+  | expr 'NOT'? 'BETWEEN' expr 'AND' expr
+  | expr 'NOT'? 'IN'
+    ( '(' ( combine | exprs )? ')'
+    | qname ( '(' exprs? ')' )?
+    )
+  | ( 'NOT'? 'EXISTS' )? '(' combine ')'
+  | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
+  | raise
+  ;
 
 raise
-    : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' STRING ) ')'
-;
-
-
+  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' STRING ) ')'
+  ;
 
 values
-    : 'VALUES' value_row (',' value_row)*
-;
-
+  : 'VALUES' value_row ( ',' value_row )* ;
 
 value_row
-    : '(' exprs ')'
-;
+  : '(' exprs ')' ;
 
 insert
-    : with? (
-        'INSERT'
-        | 'REPLACE'
-        | 'INSERT' 'OR' ( 'REPLACE' | 'ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE')
-    ) 'INTO' qname ('AS' name)? columns? (( ( values | select) upsert_clause?) | 'DEFAULT' 'VALUES') returning?
+  : with?
+    ( 'INSERT'
+    | 'REPLACE'
+    | 'INSERT' 'OR' action
+    )
+    'INTO' qname alias? columns?
+    ( ( values | combine ) upsert?
+    | 'DEFAULT' 'VALUES'
+    )
+    returning?
 ;
 
-returning : 'RETURNING' items ;
+action
+  : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
 
-upsert_clause
-    : 'ON' 'CONFLICT' ( columnIndexes where? )?
-      'DO'
-        ( 'NOTHING'
-        | 'UPDATE' 'SET'
-            (name | columns) '=' expr (
-                ',' (name | columns) '=' expr
-            )* where?
+returning
+  : 'RETURNING' items ;
 
-        )
-    ;
+upsert
+  : 'ON' 'CONFLICT' ( columnIndexes where? )?
+    'DO' ( 'NOTHING' | 'UPDATE' setter where? )
+  ;
+
+setter : 'SET' assign ( ',' assign )* ;
+
+assign : ( name | columns ) '=' expr ;
 
 pragma
-    : 'PRAGMA' qname 
-      ( '=' pragma_value
-      | '(' pragma_value ')'
-      )?
-;
+  : 'PRAGMA' qname
+    ( '=' pragma_value
+    | '(' pragma_value ')'
+    )?
+  ;
 
 pragma_value
-    : signed_number
-    | name
-    | STRING
-;
+  : signed_number
+  | name
+  ;
 
 reindex
-    : 'REINDEX' qname?
-;
+  : 'REINDEX' qname? ;
 
-select
-    : common_table_stmt? select_core (compound_operator select_core)* orderBy? limit?
-;
+combine
+  : with?
+    select (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) select )*
+    orderBy? limit?
+  ;
 
 join_clause
-    : table_or_subquery (join_operator table_or_subquery join_constraint?)*
-;
+  : table_or_subquery ( join_operator table_or_subquery join_constraint? )* ;
 
-select_core
-    : ( 'SELECT' ('DISTINCT' | 'ALL')? items
-        ( 'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause) )?
-        ('WHERE' whereExpr = expr)?
-        ( 'GROUP' 'BY' groupByExpr += expr (',' groupByExpr += expr )* (
-                'HAVING' havingExpr = expr
-            )?
-        )?
-
-        ('WINDOW' name 'AS' window_defn ( ',' name 'AS' window_defn)*)?
+select
+  : ( 'SELECT' ('DISTINCT' | 'ALL')? items
+    ( 'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause) )?
+      where?
+      ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
+      ('WINDOW' window ( ',' window )*)?
     )
-    | values
+  | values
 ;
 
-factored_select_stmt
-    : select
-;
-
-simple_select_stmt
-    : common_table_stmt? select_core orderBy? limit?
-;
-
-compound_select_stmt
-    : common_table_stmt? select_core (
-        ('UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT') select_core
-    )+ orderBy? limit?
-;
+window : name 'AS' windowDef ;
 
 table_or_subquery
     : qualifiedName
     | qname '(' exprs ')' alias?
     | '(' (table_or_subquery (',' table_or_subquery)* | join_clause) ')'
-//    | '(' select ')' ('AS'? name)?
-    | '(' select ')' alias?
+    | '(' combine ')' alias?
 ;
 
 items : item ( ',' item )* ;
 
 item
-    : '*'
-    | name '.' '*'
-    | expr alias?
-;
-
-
+  : '*'
+  | name '.' '*'
+  | expr alias?
+  ;
 
 join_operator
-    : ','
-    | 'NATURAL'? ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )? 'JOIN'
-;
+  : ','
+  | 'NATURAL'? ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )? 'JOIN'
+  ;
 
 join_constraint
-    : 'ON' expr
-    | 'USING' columns
-;
-
-compound_operator
-    : 'UNION' 'ALL'?
-    | 'INTERSECT'
-    | 'EXCEPT'
-;
+  : 'ON' expr
+  | 'USING' columns
+  ;
 
 update
-    : with? 'UPDATE' ('OR' ('ROLLBACK' | 'ABORT' | 'REPLACE' | 'FAIL' | 'IGNORE'))? qualifiedName 'SET' (
-        name
-        | columns
-    ) '=' expr (',' (name | columns) '=' expr)* (
-        'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause)
-    )? where? returning?
-;
+  : with? 'UPDATE' ( 'OR' action )? qualifiedName
+    setter
+    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery)* | join_clause ) )?
+    where? returning?
+  ;
 
 
 where : 'WHERE' expr ;
 
 qualifiedName
-    : qname ('AS' name)?
-      ( 'INDEXED' 'BY' name
-      | 'NOT' 'INDEXED'
-      )?
+  : qname alias?
+    ( 'INDEXED' 'BY' name
+    | 'NOT' 'INDEXED'
+    )?
   ;
 
 vacuum
@@ -449,96 +375,75 @@ vacuum
 
 filter
   : 'FILTER' '(' 'WHERE' expr ')'
-;
+  ;
 
-window_defn
-    : '(' name? ('PARTITION' 'BY' exprs)? orderBy frame_spec? ')'
-;
+windowDef
+  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy frame_spec? ')'
+  ;
 
 over
-    : 'OVER' (
-        name
-        | '(' name? ('PARTITION' 'BY' exprs)? orderBy? frame_spec? ')'
-    )
-;
+  : 'OVER' ( name | windowDef ) ;
 
 frame_spec
-    : frame_clause ('EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES'))?
+    : frame_clause ( 'EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES' ))?
 ;
 
 frame_clause
-    : ('RANGE' | 'ROWS' | 'GROUPS')
+    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
       ( frame_single
       | 'BETWEEN' frame_left 'AND' frame_right
       )
     ;
 
-simple_function_invocation
-    : name '(' (exprs | '*') ')'
-;
-
-aggregate_function_invocation
-    : name '(' ('DISTINCT'? exprs | '*')? ')' filter?
-;
-
-window_function_invocation
-    : window_function '(' ( exprs | '*' )? ')' filter? 'OVER' (
-        window_defn
-        | name
-    )
-;
-
-common_table_stmt
-    : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
-;
-
+//simple_function_invocation
+//    : name '(' (exprs | '*') ')'
+//;
+//
+//aggregate_function_invocation
+//    : name '(' ('DISTINCT'? exprs | '*')? ')' filter?
+//;
+//
+//window_function_invocation
+//    : window_function '(' ( exprs | '*' )? ')' filter? 'OVER' (
+//        window_defn
+//        | name
+//    )
+//;
 
 limit
-    : 'LIMIT' expr (('OFFSET' | ',') expr)?
-;
-
+  : 'LIMIT' expr (( 'OFFSET' | ',' ) expr)? ;
 
 frame_left
-    : expr 'PRECEDING'
-    | expr 'FOLLOWING'
-    | 'CURRENT' 'ROW'
-    | 'UNBOUNDED' 'PRECEDING'
-;
+  : expr 'PRECEDING'
+  | expr 'FOLLOWING'
+  | 'CURRENT' 'ROW'
+  | 'UNBOUNDED' 'PRECEDING'
+  ;
 
 frame_right
-    : expr 'PRECEDING'
-    | expr 'FOLLOWING'
-    | 'CURRENT' 'ROW'
-    | 'UNBOUNDED' 'FOLLOWING'
-;
+  : expr 'PRECEDING'
+  | expr 'FOLLOWING'
+  | 'CURRENT' 'ROW'
+  | 'UNBOUNDED' 'FOLLOWING'
+  ;
 
 frame_single
-    : expr 'PRECEDING'
-    | 'UNBOUNDED' 'PRECEDING'
-    | 'CURRENT' 'ROW'
-;
+  : expr 'PRECEDING'
+  | 'UNBOUNDED' 'PRECEDING'
+  | 'CURRENT' 'ROW'
+  ;
 
+//window_function
+//  : ('FIRST_VALUE' | 'LAST_VALUE') '(' expr ')' 'OVER' '(' partitionBy? orderBy frame_clause? ')'
+//  | ('CUME_DIST' | 'PERCENT_RANK') '(' ')' 'OVER' '(' partitionBy? orderBy? ')'
+//  | ('DENSE_RANK' | 'RANK' | 'ROW_NUMBER') '(' ')' 'OVER' '(' partitionBy? orderBy ')'
+//  | ('LAG' | 'LEAD') '(' expr (',' signed_number)? (',' signed_number)? ')' 'OVER' '(' partitionBy? orderBy ')'
+//  | 'NTH_VALUE' '(' expr ',' signed_number ')' 'OVER' '(' partitionBy? orderBy frame_clause? ')'
+//  | 'NTILE' '(' expr ')' 'OVER' '(' partitionBy? orderBy ')'
+//  ;
 
-window_function
-    : ('FIRST_VALUE' | 'LAST_VALUE') '(' expr ')' 'OVER' '(' partition_by? orderBy frame_clause? ')'
-    | ('CUME_DIST' | 'PERCENT_RANK') '(' ')' 'OVER' '(' partition_by? orderBy? ')'
-    | ('DENSE_RANK' | 'RANK' | 'ROW_NUMBER') '(' ')' 'OVER' '(' partition_by? orderBy ')'
-    | ('LAG' | 'LEAD') '(' expr offset? default_value? ')' 'OVER' '(' partition_by? orderBy ')'
-    | 'NTH_VALUE' '(' expr ',' signed_number ')' 'OVER' '(' partition_by? orderBy frame_clause? ')'
-    | 'NTILE' '(' expr ')' 'OVER' '(' partition_by? orderBy ')'
-;
-
-offset
-    : ',' signed_number
-;
-
-default_value
-    : ',' signed_number
-;
-
-partition_by
-    : 'PARTITION' 'BY' expr+
-;
+//partitionBy
+//  : 'PARTITION' 'BY' expr+ ;
 
 orderBy
   : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )*
@@ -549,10 +454,7 @@ orderingTerm
   ;
 
 sortDir
-  : 'ASC'
-  | 'DESC'
-  ;
-
+  : 'ASC' | 'DESC' ;
 
 //TODO BOTH OF THESE HAVE TO BE REWORKED TO FOLLOW THE SPEC
 module_argument
@@ -564,23 +466,22 @@ module_argument
 alias : 'AS'? gorp ;
 
 gorp
-    : ID
-    | STRING
-;
+  : ID
+  | STRING
+  | keyword // ???
+  ;
 
 qname
-    : name ( '.' name )*
-    ;
+  : name ( '.' name )* ;
 
 columns
-    : '(' name ( ',' name )* ')'
-;
+  : '(' name ( ',' name )* ')' ;
 
 name
-    : ID
-    | keyword
-    | STRING
-    | '(' name ')'
+  : ID
+  | keyword
+  | STRING
+  | '(' name ')'
   ;
 
 // http://www.sqlite.org/lang_keywords.html
@@ -744,17 +645,16 @@ keyword
     ;
 
 literal
-    : NUMBER
-    | STRING
-    | BLOB
-    | 'NULL'
-    | 'TRUE'
-    | 'FALSE'
-    | 'CURRENT_TIME'
-    | 'CURRENT_DATE'
-    | 'CURRENT_TIMESTAMP'
-;
-
+  : NUMBER
+  | STRING
+  | BLOB
+  | 'NULL'
+  | 'TRUE'
+  | 'FALSE'
+  | 'CURRENT_TIME'
+  | 'CURRENT_DATE'
+  | 'CURRENT_TIMESTAMP'
+  ;
 
 ID
   : '"' (~'"' | '""')* '"'
@@ -764,23 +664,21 @@ ID
   ;
 
 NUMBER
-  : ( DIGIT+ ( '.' DIGIT* )?
-    | '.' DIGIT+
-    )
-    ('E' [-+]? DIGIT+)?
+  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS )
+    ( 'E' [-+]? DIGITS )?
   | '0x' HEX_DIGIT+
   ;
 
 PARAM
-  : '?' DIGIT*
+  : '?' DIGITS*
   | [:@$] ID
   ;
 
-STRING : '\'' ( ~'\'' | '\'\'')* '\'';
+STRING : '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-BLOB : 'X' STRING;
+BLOB : 'X' STRING ;
 
-SINGLE_LINE_COMMENT: '--' ~[\r\n]* (('\r'? '\n') | EOF) -> channel(HIDDEN);
+SINGLE_LINE_COMMENT: '--' ~[\r\n]* (( '\r'? '\n' ) | EOF ) -> channel(HIDDEN);
 
 MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
 
@@ -789,4 +687,4 @@ SPACES: [ \u000B\t\r\n] -> channel(HIDDEN);
 UNEXPECTED_CHAR: . ;
 
 fragment HEX_DIGIT : [0-9A-F];
-fragment DIGIT     : [0-9];
+fragment DIGITS    : [0-9]+;
