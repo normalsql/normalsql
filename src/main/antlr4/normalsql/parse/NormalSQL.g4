@@ -878,23 +878,17 @@ windowDef
   partitionBy
     : 'PARTITION' 'BY' terms ;
 
-  windowFrame
-    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-      ( preceding | 'BETWEEN' following 'AND' following )
-      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
-    ;
+windowFrame
+  : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+    ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds
+    ( 'EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES' ))?
+//    ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' )? )?
+  ;
 
-        preceding
-//            : ( 'UNBOUNDED' | 'CATEGORY' | term ) 'PRECEDING'
-            : term 'PRECEDING'
-            | 'CURRENT' 'ROW'
-            ;
-
-        following
-//            : ( 'UNBOUNDED' | term ) 'FOLLOWING'
-            : term 'FOLLOWING'
-            | preceding
-            ;
+windowFrameBounds
+  : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
+  | 'CURRENT' 'ROW'
+  ;
 
 orderBy
     : 'ORDER' 'BY' orderByTerm ( ',' orderByTerm )* ;

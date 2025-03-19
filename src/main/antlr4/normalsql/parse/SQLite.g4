@@ -374,47 +374,26 @@ filter
   : 'FILTER' '(' 'WHERE' expr ')'
   ;
 
-windowDef
-  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? frame_spec? ')'
-  ;
-
 over
   : 'OVER' ( name | windowDef ) ;
 
-frame_spec
-    : frame_clause ( 'EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES' ))?
-;
+windowDef
+  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? windowFrame? ')'
+  ;
 
-frame_clause
-    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-      ( frame_single
-      | 'BETWEEN' frame_left 'AND' frame_right
-      )
-    ;
+windowFrame
+  : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+    ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds
+    ( 'EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES' ))?
+  ;
 
+windowFrameBounds
+  : ( expr | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
+  | 'CURRENT' 'ROW'
+  ;
 
 limit
   : 'LIMIT' expr (( 'OFFSET' | ',' ) expr)? ;
-
-frame_left
-  : expr 'PRECEDING'
-  | expr 'FOLLOWING'
-  | 'CURRENT' 'ROW'
-  | 'UNBOUNDED' 'PRECEDING'
-  ;
-
-frame_right
-  : expr 'PRECEDING'
-  | expr 'FOLLOWING'
-  | 'CURRENT' 'ROW'
-  | 'UNBOUNDED' 'FOLLOWING'
-  ;
-
-frame_single
-  : expr 'PRECEDING'
-  | 'UNBOUNDED' 'PRECEDING'
-  | 'CURRENT' 'ROW'
-  ;
 
 
 //simple_function_invocation
@@ -449,7 +428,7 @@ orderBy
   ;
 
 orderingTerm
-  : expr ('COLLATE' name)? sortDir? ('NULLS' ('FIRST' | 'LAST'))?
+  : expr ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
   ;
 
 sortDir

@@ -8,12 +8,18 @@ public class ABC
     public static void main( String[] args ) throws Exception
     {
         var sw = new StringWriter();
-//        char x;
-        var scan = new Scanner( System.in );
+//        var scan = new Scanner( "abc \t \n 132" ).useDelimiter("[ ]+");
+        var scan = new Scanner( System.in ).useDelimiter("[ ]+");
+//        while( scan.hasNext() )
+//        {
+//            var t = scan.next();
+//            System.out.println( t );
+//        }
         while( scan.hasNext() )
         {
             var t = scan.next();
-            if( t.equals( "xx" ))
+            System.out.println( "ffs: " + t );
+            if( t.contains( "xx" ))
             {
                 System.out.println( sw );
                 sw = new StringWriter();
@@ -32,11 +38,20 @@ public class ABC
                 case "::=" -> ":";
                 case "*" -> "'*'";
                 case "." -> "'.'";
+
+                case "\t" -> "\t";
+                case "\r" -> "\r";
+                case "\n" -> "\n";
                 case "|" -> "|";
                 case "," -> "','";
+
                 case ",...n" -> "(',' '' )*";
                 default ->
                 {
+                    if( t.isBlank() )
+                    {
+                        yield t;
+                    }
                     if( t.toUpperCase().equals(  t )) {
                         yield '\'' + t + '\'';
                     }
@@ -50,11 +65,6 @@ public class ABC
             sw.append( u + ' ' );
         }
 
-
-//        while( ( x = (char) System.in.read()) != 'x' )
-//        {
-//            sw.append( x );
-//        }
 
     }
 }

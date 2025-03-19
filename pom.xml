@@ -173,6 +173,46 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+<!--                <groupId>org.antlr</groupId>-->
+<!--                <artifactId>antlr4test-maven-plugin</artifactId>-->
+                <groupId>com.khubla.antlr</groupId>
+                <artifactId>antlr4test-maven-plugin</artifactId>
+                <version>1.22</version>
+                <configuration>
+<!--                    <scenarios>-->
+<!--                        <scenario>-->
+<!--                            <scenarioName>ABC</scenarioName>-->
+                            <verbose>true</verbose>
+                            <showTree>true</showTree>
+                            <entryPoint>script</entryPoint>
+                            <grammarName>NormalSQL</grammarName>
+                            <packageName>normalsql.parse</packageName>
+                            <testFileExtension>.sql</testFileExtension>
+                            <exampleFiles>examples</exampleFiles>
+<!--                        </scenario>-->
+<!--                        <scenario>-->
+<!--                            <scenarioName>Package-Initialize-IgnoreSpaces</scenarioName>-->
+<!--                            <verbose>true</verbose>-->
+<!--                            <showTree>true</showTree>-->
+<!--                            <entryPoint>attrib_list</entryPoint>-->
+<!--                            <grammarName>TestGrammar</grammarName>-->
+<!--                            <packageName>dummy</packageName>-->
+<!--                            <testFileExtension>.txt</testFileExtension>-->
+<!--                            <exampleFiles>src/test/resources/initializeIgnoreSpacesScenario/</exampleFiles>-->
+<!--                            <grammarInitializer>dummy.TestGrammarInitializer</grammarInitializer>-->
+<!--                        </scenario>-->
+<!--                    </scenarios>-->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+            </plugin>
             <!--
                 control h2database server:
                 $ mvn exec:java@h2-start

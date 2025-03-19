@@ -54,7 +54,7 @@ public class CLI
             for( var arg : args )
             {
                 // Copy command line up to end of options
-                if( arg.equals( BASH_END_OF_OPTIONS ) ) break;
+                if( arg.equals( BASH_END_OF_OPTIONS )) break;
                 _args.add( arg );
             }
         }
@@ -83,7 +83,7 @@ public class CLI
         for( int i = 0; i < size; i++ )
         {
             var key = _args.get( i );
-            if( key.equals( name ) || key.equals( shortName ) )
+            if( key.equals( name ) || key.equals( shortName ))
             {
                 if( i + 1 < size )
                 {

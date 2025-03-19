@@ -47,8 +47,9 @@ Corpus
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
 //		String wick = "/Users/jasonosgood/Learn/DerekStride/tree-sitter-sql/test/corpus";
-		String wick = "/Users/jasonosgood/Learn/m-novikov/tree-sitter-sql/test/corpus";
+//		String wick = "/Users/jasonosgood/Learn/m-novikov/tree-sitter-sql/test/corpus";
 //		String wick = "/Users/jasonosgood/Learn/dhcmrlchtdj/tree-sitter-sqlite/test/corpus";
+		String wick = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples";
 		Path sourceRoot = Paths.get( wick );
 
 		ArrayList<Path> files = new ArrayList<>();
@@ -61,7 +62,8 @@ Corpus
 					// Skip "hidden" dotfiles
 					if( sourceFileName.startsWith( "." ) ) return FileVisitResult.CONTINUE;
 
-					String extension = ".txt";
+//					String extension = ".txt";
+					String extension = ".sql";
 					if( sourceFileName.toLowerCase().endsWith( extension ) )
 					{
 						files.add( sourceFile );

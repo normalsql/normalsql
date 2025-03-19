@@ -132,9 +132,9 @@ extends
 					child.table = context.qname();
 
 
-					if( context.names() != null )
+					if( context.columns() != null )
 					{
-						child.columns = context.names().name();
+						child.columns = context.columns().name();
 					}
 
 					Row row = new Row( context, child );
