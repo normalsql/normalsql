@@ -310,29 +310,20 @@ selectCombo
     orderBy? limit?
   ;
 
-join_clause
-  : table_or_subquery ( join_operator table_or_subquery join_constraint? )* ;
-
 select
   : 'SELECT' ( 'DISTINCT' | 'ALL' )? items
-    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
+    ( 'FROM' tables )?
     where?
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
-
+  | '(' selectCombo ')'
   | values
 ;
 
 window : name 'AS' windowDef ;
 
-table_or_subquery
-    : qualifiedName
-    | qname '(' exprs ')' alias?
-    | '(' (table_or_subquery (',' table_or_subquery)* | join_clause) ')'
-    | '(' selectCombo ')' alias?
-;
-
-items : item ( ',' item )* ;
+items
+  : item ( ',' item )* ;
 
 item
   : '*'
@@ -340,9 +331,19 @@ item
   | expr alias?
   ;
 
-join_operator
-  : ','
-  | 'NATURAL'? ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )? 'JOIN'
+tables
+  : tables ( ',' tables )+
+  | tables join tables join_constraint?
+  | qualifiedName
+  | qname '(' exprs ')' alias?
+  | '(' selectCombo ')' alias?
+  | '(' tables ')' alias?
+  ;
+
+join
+  : 'NATURAL'?
+    ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
+    'JOIN'
   ;
 
 join_constraint
@@ -353,7 +354,7 @@ join_constraint
 update
   : with? 'UPDATE' ( 'OR' action )? qualifiedName
     setter
-    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
+    ( 'FROM' tables  )?
     where? returning?
   ;
 
