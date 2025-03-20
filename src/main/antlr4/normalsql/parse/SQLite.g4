@@ -314,12 +314,12 @@ join_clause
   : table_or_subquery ( join_operator table_or_subquery join_constraint? )* ;
 
 select
-  : ( 'SELECT' ('DISTINCT' | 'ALL')? items
-    ( 'FROM' (table_or_subquery (',' table_or_subquery)* | join_clause) )?
-      where?
-      ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
-      ('WINDOW' window ( ',' window )*)?
-    )
+  : 'SELECT' ( 'DISTINCT' | 'ALL' )? items
+    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
+    where?
+    ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
+    ( 'WINDOW' window ( ',' window )* )?
+
   | values
 ;
 
@@ -353,7 +353,7 @@ join_constraint
 update
   : with? 'UPDATE' ( 'OR' action )? qualifiedName
     setter
-    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery)* | join_clause ) )?
+    ( 'FROM' ( table_or_subquery ( ',' table_or_subquery )* | join_clause ) )?
     where? returning?
   ;
 
@@ -393,7 +393,7 @@ windowFrameBounds
   ;
 
 limit
-  : 'LIMIT' expr (( 'OFFSET' | ',' ) expr)? ;
+  : 'LIMIT' expr (( 'OFFSET' | ',' ) expr )? ;
 
 
 //simple_function_invocation
@@ -459,7 +459,7 @@ name
   : ID
   | keyword
   | STRING
-  | '(' name ')'
+  | '(' name ')' // TODO what's this for?
   ;
 
 // http://www.sqlite.org/lang_keywords.html
@@ -635,15 +635,14 @@ literal
   ;
 
 ID
-  : '"' (~'"' | '""')* '"'
-  | '`' (~'`' | '``')* '`'
+  : '"' ( ~'"' | '""' )* '"'
+  | '`' ( ~'`' | '``' )* '`'
   | '[' ~']'* ']'
   | [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]*
   ;
 
 NUMBER
-  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS )
-    ( 'E' [-+]? DIGITS )?
+  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS ) ( 'E' [-+]? DIGITS )?
   | '0x' HEX_DIGIT+
   ;
 
@@ -662,7 +661,7 @@ MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
 
 SPACES: [ \u000B\t\r\n] -> channel(HIDDEN);
 
-UNEXPECTED_CHAR: . ;
+UNEXPECTED_CHAR : . ;
 
-fragment HEX_DIGIT : [0-9A-F];
 fragment DIGITS    : [0-9]+;
+fragment HEX_DIGIT : [0-9A-F];
