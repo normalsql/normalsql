@@ -18,7 +18,8 @@ public class SQLiteTests {
         throws IOException
     {
 //        String dir = "/Users/jasonosgood/Projects/sqlite/chat/";
-        String dir = "/Users/jasonosgood/Projects/normalsql/spare/SQLite";
+//        String dir = "/Users/jasonosgood/Projects/normalsql/spare/SQLite";
+        String dir = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite";
         List<Path> files = getAllTheFiles( dir );
         int count = 0;
         int errors = 0;

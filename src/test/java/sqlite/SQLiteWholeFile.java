@@ -5,6 +5,8 @@ package sqlite;
 
 import normalsql.parse.NormalSQLLexer;
 import normalsql.parse.NormalSQLParser;
+import normalsql.parse.SQLiteLexer;
+import normalsql.parse.SQLiteParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -54,7 +56,8 @@ SQLiteWholeFile
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-		Path sourceRoot = Paths.get( "src/test/sql/sqlite" );
+//		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
+		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources" );
 
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
@@ -92,15 +95,23 @@ SQLiteWholeFile
 			{
 				System.out.println( file );
 
-				List<String> lines = Files.readAllLines( file );
+//				List<String> lines = Files.readAllLines( file );
+//				Files.readString( file );
+//				int nth = 0;
+//				for( String line : lines )
+//				{
+//					nth++;
+//					Work w = new Work( file, line, nth );
+//					workList.add( w );
+//					SQLiteWholeFile.count();
+//				}
+
+				var sql = Files.readString( file );
 				int nth = 0;
-				for( String line : lines )
-				{
-					nth++;
-					Work w = new Work( file, line, nth );
-					workList.add( w );
-					SQLiteWholeFile.count();
-				}
+				nth++;
+				Work w = new Work( file, sql, nth );
+				workList.add( w );
+				SQLiteWholeFile.count();
 			}
 		}
 		catch( Exception e )
@@ -139,9 +150,12 @@ SQLiteWholeFile
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new NormalSQLLexer( chars );
+		var lexer = new SQLiteLexer( chars );
+//		var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new NormalSQLParser( tokens );
+		var parser = new SQLiteParser( tokens );
+//		var parser = new NormalSQLParser( tokens );
+
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
@@ -153,7 +167,7 @@ SQLiteWholeFile
 			                        String msg,
 			                        RecognitionException e)
 			{
-				if( !sql.equals( last ))
+//				if( !sql.equals( last ))
 				{
 					error();
 //					fails.add( msg );
@@ -206,6 +220,6 @@ SQLiteWholeFile
 		} );
 
 		parser.setProfile( true );
-		var result = parser.script();
+		var result = parser.parse();
 	}
 }

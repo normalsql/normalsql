@@ -57,11 +57,11 @@ statement
     | attach
     | begin
     | commit
-    | create_index
-    | create_table
-    | create_trigger
-    | create_view
-    | create_virtual_table
+    | createIndex
+    | createTable
+    | createTrigger
+    | createView
+    | createVirtualTable
     | delete ( orderBy? limit )?
     | detach
     | drop
@@ -98,37 +98,39 @@ begin
 commit
   : ( 'COMMIT' | 'END' ) 'TRANSACTION'? ;
 
-create_index
+createIndex
   : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where?
   ;
 
-create_table
+createTable
   : 'CREATE' temp? 'TABLE' ifNotExists? qname
     ( '(' columnDef ( ',' columnDef )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
     | 'AS' select
     )
   ;
 
-create_trigger
+createTrigger
   : 'CREATE' temp? 'TRIGGER' ifNotExists? qname
     ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
     ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
-    'ON' name ( 'FOR' 'EACH' 'ROW' )?
+    'ON' qname ( 'FOR' 'EACH' 'ROW' )?
     ( 'WHEN' expr )?
     'BEGIN' ( ( update | insert | delete | select ) ';' )+ 'END'
   ;
 
-create_view
+createView
   : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' select
   ;
 
-create_virtual_table
-  : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname 'USING' name
-    ( '(' module_argument ( ',' module_argument )* ')' )?
+createVirtualTable
+  : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
+     // TODO support "tokenize=<tokenizer name> <tokenizer args>" module arguments
+     // https://www.sqlite.org/fts3.html#creating_and_destroying_fts_tables
+    'USING' name ( '(' columnDef ( ',' columnDef )* ')' )?
   ;
 
 delete
-  : with? 'DELETE' 'FROM' qualifiedName where? returning? ;
+  : with? 'DELETE' 'FROM' indexedBy where? returning? ;
 
 detach
   : 'DETACH' 'DATABASE'? name ;
@@ -157,8 +159,7 @@ columnDef
   : name type? constraint* ;
 
 type
-  : name+
-//  (  '(' signed_number ( ',' signed_number )? ')' )?
+  : name+ (  '(' signed_number ( ',' signed_number )? ')' )?
   ;
 
 constraint
@@ -186,14 +187,11 @@ table_constraint
 
 foreign_key
     : 'REFERENCES' name columns?
-      ( 'ON' ('DELETE' | 'UPDATE') (
-            'SET' ('NULL' | 'DEFAULT')
-            | 'CASCADE'
-            | 'RESTRICT'
-            | 'NO' 'ACTION'
-        )
+      ( 'ON' ( 'DELETE' | 'UPDATE' )
+        ( 'SET' ( 'NULL' | 'DEFAULT' ) | 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION' )
         | 'MATCH' name
-    )* ('NOT'? 'DEFERRABLE' ('INITIALLY' ('DEFERRED' | 'IMMEDIATE'))?)?
+      )*
+      ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
 ;
 
 conflict
@@ -272,7 +270,7 @@ insert
     | 'DEFAULT' 'VALUES'
     )
     returning?
-;
+  ;
 
 action
   : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
@@ -318,7 +316,7 @@ selectCore
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
   | values
-;
+  ;
 
 window : name 'AS' windowDef ;
 
@@ -332,22 +330,23 @@ item
   ;
 
 tables
-  : tables ( ',' tables )+
-  | tables join tables ( 'ON' expr | 'USING' columns )?
-  | qualifiedName
-  | qname '(' exprs ')' alias?
+//  : tables ( ',' tables )+
+//  | tables join tables ( 'ON' expr | 'USING' columns )?
+  : tables join tables ( 'ON' expr | 'USING' columns )?
+  | indexedBy
+  | qname '(' exprs ')' alias? // table function
   | '(' select ')' alias?
   | '(' tables ')' alias?
   ;
 
 join
-  : 'NATURAL'?
+  : ',' |'NATURAL'?
     ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
     'JOIN'
   ;
 
 update
-  : with? 'UPDATE' ( 'OR' action )? qualifiedName
+  : with? 'UPDATE' ( 'OR' action )? indexedBy
     setter
     ( 'FROM' tables  )?
     where? returning?
@@ -355,7 +354,7 @@ update
 
 where : 'WHERE' expr ;
 
-qualifiedName
+indexedBy
   : qname alias?
     ( 'INDEXED' 'BY' name
     | 'NOT' 'INDEXED'
@@ -416,9 +415,6 @@ limit
 //  | 'NTILE' '(' expr ')' 'OVER' '(' partitionBy? orderBy ')'
 //  ;
 
-//partitionBy
-//  : 'PARTITION' 'BY' expr+ ;
-
 orderBy
   : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )*
   ;
@@ -430,20 +426,7 @@ orderingTerm
 sortDir
   : 'ASC' | 'DESC' ;
 
-//TODO BOTH OF THESE HAVE TO BE REWORKED TO FOLLOW THE SPEC
-module_argument
-    :
-    expr
-    | columnDef
-;
-
-alias : 'AS'? gorp ;
-
-gorp
-  : ID
-  | STRING
-  | keyword // ???
-  ;
+alias : 'AS'? name ;
 
 qname
   : name ( '.' name )* ;
@@ -453,9 +436,9 @@ columns
 
 name
   : ID
-  | keyword
   | STRING
-  | '(' name ')' // TODO what's this for?
+  | keyword
+//  | '(' name ')' // TODO what's this for?
   ;
 
 // http://www.sqlite.org/lang_keywords.html
