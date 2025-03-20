@@ -131,7 +131,6 @@ extends
 //					}
 					child.table = context.qname();
 
-
 					if( context.columns() != null )
 					{
 						child.columns = context.columns().name();

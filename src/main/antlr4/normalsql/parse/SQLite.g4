@@ -71,7 +71,7 @@ statement
     | release
     | rollback
     | savepoint
-    | selectCombo
+    | select
     | update ( orderBy? limit )?
     | vacuum
     )
@@ -105,7 +105,7 @@ create_index
 create_table
   : 'CREATE' temp? 'TABLE' ifNotExists? qname
     ( '(' columnDef ( ',' columnDef )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
-    | 'AS' selectCombo
+    | 'AS' select
     )
   ;
 
@@ -115,11 +115,11 @@ create_trigger
     ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
     'ON' name ( 'FOR' 'EACH' 'ROW' )?
     ( 'WHEN' expr )?
-    'BEGIN' ( ( update | insert | delete | selectCombo ) ';' )+ 'END'
+    'BEGIN' ( ( update | insert | delete | select ) ';' )+ 'END'
   ;
 
 create_view
-  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' selectCombo
+  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' select
   ;
 
 create_virtual_table
@@ -206,7 +206,7 @@ with
   ;
 
 cte
-  : name columns? 'AS' '(' selectCombo ')' ;
+  : name columns? 'AS' '(' select ')' ;
 
 exprs : expr ( ',' expr )* ;
 
@@ -243,10 +243,10 @@ expr
   | expr 'IS' 'NOT'? expr
   | expr 'NOT'? 'BETWEEN' expr 'AND' expr
   | expr 'NOT'? 'IN'
-    ( '(' ( selectCombo | exprs )? ')'
+    ( '(' ( select | exprs )? ')'
     | qname ( '(' exprs? ')' )?
     )
-  | ( 'NOT'? 'EXISTS' )? '(' selectCombo ')'
+  | ( 'NOT'? 'EXISTS' )? '(' select ')'
   | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
   | raise
   ;
@@ -268,7 +268,7 @@ insert
     | 'INSERT' 'OR' action
     )
     'INTO' qname alias? columns?
-    ( ( values | selectCombo ) upsert?
+    ( ( values | select ) upsert?
     | 'DEFAULT' 'VALUES'
     )
     returning?
@@ -304,19 +304,19 @@ pragma_value
 reindex
   : 'REINDEX' qname? ;
 
-selectCombo
+select
   : with?
-    select (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) select )*
+    selectCore (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
     orderBy? limit?
+  | '(' select ')'
   ;
 
-select
+selectCore
   : 'SELECT' ( 'DISTINCT' | 'ALL' )? items
     ( 'FROM' tables )?
     where?
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
-  | '(' selectCombo ')'
   | values
 ;
 
@@ -333,10 +333,10 @@ item
 
 tables
   : tables ( ',' tables )+
-  | tables join tables join_constraint?
+  | tables join tables ( 'ON' expr | 'USING' columns )?
   | qualifiedName
   | qname '(' exprs ')' alias?
-  | '(' selectCombo ')' alias?
+  | '(' select ')' alias?
   | '(' tables ')' alias?
   ;
 
@@ -344,11 +344,6 @@ join
   : 'NATURAL'?
     ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
     'JOIN'
-  ;
-
-join_constraint
-  : 'ON' expr
-  | 'USING' columns
   ;
 
 update
