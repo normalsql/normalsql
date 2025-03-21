@@ -27,8 +27,8 @@ Labels for rule alts use UPPERCASE for SQL keywords, MixedCase for other rules. 
 grammar NormalSQL;
 
 options {
-caseInsensitive=true;
-contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
+  caseInsensitive=true;
+  contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
 }
 
 @parser::header { import static normalsql.parse.Reserved.*; }
@@ -39,7 +39,7 @@ aaa1 : script ;
 script : statement? ( ';' statement? )* EOF ;
 
 statement
-    : explain?
+  : explain?
     ( alter
     | ( 'ANALYZE' | 'ANALYSE' ) qname?
     | 'ATTACH' 'DATABASE'? term 'AS' ( qname | 'NULL' )
@@ -67,7 +67,7 @@ statement
     | update
     | 'VACUUM' qname? ( 'INTO' term )?
     )
-    ;
+  ;
 
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
 
