@@ -43,7 +43,7 @@
 grammar SQLite;
 
 options {
-caseInsensitive = true;
+  caseInsensitive = true;
 }
 
 parse
@@ -118,7 +118,7 @@ createTrigger
   ;
 
 createView
-  : 'CREATE'? 'VIEW' ifNotExists? qname columns? 'AS' select
+  : 'CREATE'? temp? 'VIEW' ifNotExists? qname columns? 'AS' select
   ;
 
 createVirtualTable
@@ -302,7 +302,7 @@ select
   : with?
     selectCore (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
     orderBy? limit?
-  | '(' select ')'
+//  | '(' select ')'
   ;
 
 selectCore
@@ -311,6 +311,7 @@ selectCore
     where?
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
+  | '(' select ')'
   ;
 
 window : name 'AS' windowDef ;
@@ -334,7 +335,8 @@ tables
   ;
 
 join
-  : ',' |'NATURAL'?
+  : ','
+  | 'NATURAL'?
     ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
     'JOIN'
   ;
