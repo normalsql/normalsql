@@ -10,7 +10,6 @@
 
  We'll see.
 
-
 */
 
 /*
@@ -80,9 +79,9 @@ statement
 alter
   : 'ALTER' 'TABLE' qname
     ( 'RENAME'
-    ( 'TO' name | 'COLUMN'? name 'TO' name )
-    | 'ADD' 'COLUMN'? columnDef
-    | 'DROP' 'COLUMN'? name
+      ( 'TO' name | 'COLUMN'? name 'TO' name )
+      | 'ADD' 'COLUMN'? columnDef
+      | 'DROP' 'COLUMN'? name
     )
   ;
 
@@ -250,14 +249,11 @@ expr
   ;
 
 raise
-  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' STRING ) ')'
+  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')'
   ;
 
 values
-  : 'VALUES' value_row ( ',' value_row )* ;
-
-value_row
-  : '(' exprs ')' ;
+  : 'VALUES' exprs ;
 
 insert
   : with?
@@ -315,7 +311,6 @@ selectCore
     where?
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
-  | values
   ;
 
 window : name 'AS' windowDef ;
@@ -330,13 +325,12 @@ item
   ;
 
 tables
-//  : tables ( ',' tables )+
-//  | tables join tables ( 'ON' expr | 'USING' columns )?
   : tables join tables ( 'ON' expr | 'USING' columns )?
   | indexedBy
   | qname '(' exprs ')' alias? // table function
-  | '(' select ')' alias?
+  | '(' select  ')' alias?
   | '(' tables ')' alias?
+  | values alias?
   ;
 
 join
@@ -436,10 +430,12 @@ columns
 
 name
   : ID
-  | STRING
+  | string
   | keyword
 //  | '(' name ')' // TODO what's this for?
   ;
+
+string : STRING+ ;
 
 // http://www.sqlite.org/lang_keywords.html
 // TODO remove reserved keywords
@@ -603,7 +599,7 @@ keyword
 
 literal
   : NUMBER
-  | STRING
+  | string
   | BLOB
   | 'NULL'
   | 'TRUE'
