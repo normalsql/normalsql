@@ -3,8 +3,10 @@
 
 package corpus;
 
-import normalsql.parse.NormalSQLLexer;
-import normalsql.parse.NormalSQLParser;
+//import normalsql.parse.NormalSQLLexer;
+//import normalsql.parse.NormalSQLParser;
+import normalsql.parse.SQLiteLexer;
+import normalsql.parse.SQLiteParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -46,10 +48,11 @@ Corpus
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-//		String wick = "/Users/jasonosgood/Learn/DerekStride/tree-sitter-sql/test/corpus";
+//		String wick = "/Users/jasonosgood/Learn/DerekStride";
+		String wick = "/Users/jasonosgood/Learn/DerekStride/tree-sitter-sql/test/corpus";
 //		String wick = "/Users/jasonosgood/Learn/m-novikov/tree-sitter-sql/test/corpus";
 //		String wick = "/Users/jasonosgood/Learn/dhcmrlchtdj/tree-sitter-sqlite/test/corpus";
-		String wick = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples";
+//		String wick = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples";
 		Path sourceRoot = Paths.get( wick );
 
 		ArrayList<Path> files = new ArrayList<>();
@@ -62,8 +65,8 @@ Corpus
 					// Skip "hidden" dotfiles
 					if( sourceFileName.startsWith( "." ) ) return FileVisitResult.CONTINUE;
 
-//					String extension = ".txt";
-					String extension = ".sql";
+					String extension = ".txt";
+//					String extension = ".sql";
 					if( sourceFileName.toLowerCase().endsWith( extension ) )
 					{
 						files.add( sourceFile );
@@ -154,9 +157,9 @@ Corpus
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new NormalSQLLexer( chars );
+		var lexer = new SQLiteLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new NormalSQLParser( tokens );
+		var parser = new SQLiteParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
@@ -222,6 +225,6 @@ Corpus
 		} );
 
 		parser.setProfile( true );
-		var result = parser.script();
+		var result = parser.parse();
 	}
 }

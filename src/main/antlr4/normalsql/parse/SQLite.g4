@@ -92,7 +92,10 @@ attach
   : 'ATTACH' 'DATABASE'? expr 'AS' name ;
 
 begin
-  : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )? ;
+  : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )?
+    ( statement ';' )*
+    'END'
+  ;
 
 commit
   : ( 'COMMIT' | 'END' ) 'TRANSACTION'? ;
@@ -245,6 +248,7 @@ expr
     )
   | ( 'NOT'? 'EXISTS' )? '(' select ')'
   | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
+  | select
   | raise
   ;
 
@@ -262,7 +266,8 @@ insert
     | 'INSERT' 'OR' action
     )
     'INTO' qname alias? columns?
-    ( ( values | select ) upsert?
+//    ( ( values | select ) upsert?
+    ( select upsert?
     | 'DEFAULT' 'VALUES'
     )
     returning?
@@ -311,6 +316,7 @@ selectCore
     where?
     ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
     ( 'WINDOW' window ( ',' window )* )?
+  | values
   | '(' select ')'
   ;
 
@@ -321,13 +327,13 @@ items
 
 item
   : '*'
-  | name '.' '*'
+  | qname '.' '*'
   | expr alias?
   ;
 
 tables
   : tables join tables ( 'ON' expr | 'USING' columns )?
-  | indexedBy
+ indexedBy
   | qname '(' exprs ')' alias? // table function
   | '(' select  ')' alias?
   | '(' tables ')' alias?
@@ -546,7 +552,7 @@ keyword
     | 'ROW'
     | 'ROWS'
     | 'SAVEPOINT'
-    | 'SELECT'
+//    | 'SELECT'
     | 'SET'
     | 'TABLE'
     | 'TEMP'
