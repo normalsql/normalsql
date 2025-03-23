@@ -332,12 +332,11 @@ item
   ;
 
 tables
-  : tables join tables ( 'ON' expr | 'USING' columns )?
- indexedBy
-  | qname '(' exprs ')' alias? // table function
-  | '(' select  ')' alias?
-  | '(' tables ')' alias?
-  | values alias?
+  : tables join tables ( 'ON' expr | 'USING' columns )? indexedBy?
+  | qname (alias columns? )?
+  | '(' select  ')' (alias columns? )?
+  | '(' tables ')' (alias columns? )?
+  | values (alias columns? )?
   ;
 
 join

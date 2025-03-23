@@ -45,8 +45,8 @@ public class
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-//		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
-		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
+		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
+//		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
 
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
@@ -146,9 +146,11 @@ public class
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new NormalSQLLexer( chars );
+//		var lexer = new NormalSQLLexer( chars );
+		var lexer = new SQLiteLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new NormalSQLParser( tokens );
+//		var parser = new NormalSQLParser( tokens );
+		var parser = new SQLiteParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
@@ -213,6 +215,7 @@ public class
 		} );
 
 		parser.setProfile( true );
-		var result = parser.script();
+//		var result = parser.script();
+		var result = parser.parse();
 	}
 }

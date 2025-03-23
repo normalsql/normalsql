@@ -57,7 +57,10 @@ SQLiteWholeFile
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
 //		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
-		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources" );
+		String first ;
+//		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
+		first = "/Users/jasonosgood/Learn";
+		Path sourceRoot = Paths.get(first);
 
 		ArrayList<Path> files = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
