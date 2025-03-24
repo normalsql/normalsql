@@ -4,11 +4,14 @@
 /*
  SQLite.g4
 
- Synthesis of Bart Keirs' (et al) SQLiteParser.g4 (see license below) and NormalSQL grammars.
+ Synthesis of Bart Keirs' (et al) sqlite-parser and my NormalSQL grammar.
 
- Part of my ongoing effort use same semantic (post parse) processing for multiple dialects.
+ Goal is to have grammars for misc dialects to all emit similiarly structured parse
+ trees.
 
  We'll see.
+
+ TODO: Does not correctly handle precedent for BETWEEN vs AND.
 
 */
 
@@ -89,7 +92,7 @@ analyze
   : 'ANALYZE' qname? ;
 
 attach
-  : 'ATTACH' 'DATABASE'? expr 'AS' name ;
+  : 'ATTACH' 'DATABASE'? term 'AS' name ;
 
 begin
   : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )? ;
@@ -112,7 +115,7 @@ createTrigger
     ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
     ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
     'ON' qname ( 'FOR' 'EACH' 'ROW' )?
-    ( 'WHEN' expr )?
+    ( 'WHEN' term )?
     'BEGIN' ( ( update | insert | delete | select ) ';' )+ 'END'
   ;
 
@@ -148,7 +151,7 @@ columnIndexes
   : '(' columnIndex ( ',' columnIndex )* ')' ;
 
 columnIndex
-  : ( name | expr ) ( 'COLLATE' name )? sortDir? ;
+  : ( name | term ) ( 'COLLATE' name )? sortDir? ;
 
 ifNotExists
   : 'IF' 'NOT' 'EXISTS' ;
@@ -163,11 +166,11 @@ constraint
   : ( 'CONSTRAINT' name )?
     ( ( 'PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'? )
     | ( 'NOT' 'NULL' | 'UNIQUE' ) conflict?
-    | 'CHECK' '(' expr ')'
-    | 'DEFAULT' ( signed_number | literal | '(' expr ')' )
+    | 'CHECK' '(' term ')'
+    | 'DEFAULT' ( signed_number | literal | '(' term ')' )
     | 'COLLATE' name
     | foreign_key
-    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' expr ')' ( 'STORED' | 'VIRTUAL' )?
+    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'STORED' | 'VIRTUAL' )?
     )
   ;
 
@@ -177,7 +180,7 @@ signed_number
 table_constraint
   : ( 'CONSTRAINT' name )?
     ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) columnIndexes conflict?
-    | 'CHECK' '(' expr ')'
+    | 'CHECK' '(' term ')'
     | 'FOREIGN' 'KEY' columns foreign_key
     )
   ;
@@ -203,33 +206,33 @@ with
 cte
   : name columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
 
-exprs
-  : expr ( ',' expr )* ;
+terms
+  : term ( ',' term )* ;
 
-expr
+term
   : literal
   | PARAM
   | qname
-  | ( '-' | '+' | '~' | 'NOT' ) expr
-  | expr '||' expr
-  | expr ( '*' | '/' | '%' ) expr
-  | expr ( '+' | '-' ) expr
-  | expr ( '<<' | '>>' | '&' | '|' ) expr
-  | expr ( '<' | '<=' | '>' | '>=' ) expr
-  | expr ( '=' | '==' | '!=' | '<>' | 'IS' 'NOT'? | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) expr
-  | expr 'AND' expr
-  | expr 'OR' expr
-  | name '(' ( 'DISTINCT'? exprs  | '*' )? ')' filter? over?
-  | '(' exprs ')'
-  | 'CAST' '(' expr 'AS' type ')'
-  | expr 'COLLATE' name
-  | expr 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) expr ( 'ESCAPE' expr )?
-  | expr ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-  | expr 'IS' 'NOT'? expr
-  | expr 'NOT'? 'BETWEEN' expr 'AND' expr
-  | expr 'NOT'? 'IN' ( '(' ( select | exprs )? ')' | qname ( '(' exprs? ')' )? )
+  | ( '-' | '+' | '~' | 'NOT' ) term
+  | term '||' term
+  | term ( '*' | '/' | '%' ) term
+  | term ( '+' | '-' ) term
+  | term ( '<<' | '>>' | '&' | '|' ) term
+  | term ( '<' | '<=' | '>' | '>=' ) term
+  | term ( '=' | '==' | '!=' | '<>' | 'IS' 'NOT'? | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) term
+  | term 'AND' term
+  | term 'OR' term
+  | name '(' ( 'DISTINCT'? terms  | '*' )? ')' filter? over?
+  | '(' terms ')'
+  | 'CAST' '(' term 'AS' type ')'
+  | term 'COLLATE' name
+  | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term ( 'ESCAPE' term )?
+  | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
+  | term 'IS' 'NOT'? term
+  | term 'NOT'? 'BETWEEN' term 'AND' term
+  | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? )
   | ( 'NOT'? 'EXISTS' )? '(' select ')'
-  | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
+  | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'
   | select
   | raise
   ;
@@ -238,7 +241,7 @@ raise
   : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
 
 values
-  : 'VALUES' exprs ;
+  : 'VALUES' terms ;
 
 insert
   : with?
@@ -266,7 +269,7 @@ setter
   : 'SET' assign ( ',' assign )* ;
 
 assign
-  : ( name | columns ) '=' expr ;
+  : ( name | columns ) '=' term ;
 
 pragma
   : 'PRAGMA' qname
@@ -294,7 +297,7 @@ selectCore
   : 'SELECT' ( 'DISTINCT' | 'ALL' )? items
     ( 'FROM' tables )?
     where?
-    ( 'GROUP' 'BY' exprs ( 'HAVING' expr )? )?
+    ( 'GROUP' 'BY' terms ( 'HAVING' term )? )?
     ( 'WINDOW' window ( ',' window )* )?
   | values
   | '(' select ')'
@@ -309,11 +312,11 @@ items
 item
   : '*'
   | qname '.' '*'
-  | expr alias?
+  | term alias?
   ;
 
 tables
-  : tables join tables ( 'ON' expr | 'USING' columns )? indexedBy?
+  : tables join tables ( 'ON' term | 'USING' columns )? indexedBy?
   | qname tableAlias?
   | '(' select  ')' tableAlias?
   | '(' tables ')' tableAlias?
@@ -338,7 +341,7 @@ update
   ;
 
 where
-  : 'WHERE' expr ;
+  : 'WHERE' term ;
 
 indexedBy
   : qname alias?
@@ -351,13 +354,13 @@ vacuum
   : 'VACUUM' name? ( 'INTO' name )? ;
 
 filter
-  : 'FILTER' '(' 'WHERE' expr ')' ;
+  : 'FILTER' '(' 'WHERE' term ')' ;
 
 over
   : 'OVER' ( name | windowDef ) ;
 
 windowDef
-  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? windowFrame? ')' ;
+  : '(' name? ( 'PARTITION' 'BY' terms )? orderBy? windowFrame? ')' ;
 
 windowFrame
   : ( 'RANGE' | 'ROWS' | 'GROUPS' )
@@ -366,18 +369,18 @@ windowFrame
   ;
 
 windowFrameBounds
-  : ( expr | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
+  : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
   | 'CURRENT' 'ROW'
   ;
 
 limit
-  : 'LIMIT' expr (( 'OFFSET' | ',' ) expr )? ;
+  : 'LIMIT' term (( 'OFFSET' | ',' ) term )? ;
 
 orderBy
   : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )* ;
 
 orderingTerm
-  : expr ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
+  : term ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
 
 sortDir
   : 'ASC' | 'DESC' ;
@@ -392,170 +395,72 @@ columns
   : '(' name ( ',' name )* ')' ;
 
 name
-  : ID | string | keyword ;
+  : ID | string | unreservedKeyword ;
 
 string
   : STRING+ ;
 
-// http://www.sqlite.org/lang_keywords.html
-// TODO remove reserved keywords
-keyword
-    : 'ABORT'
-    | 'ACTION'
-    | 'ADD'
-    | 'AFTER'
-    | 'ALL'
-    | 'ALTER'
-    | 'ANALYZE'
-    | 'AND'
-    | 'AS'
-    | 'ASC'
-    | 'ATTACH'
-    | 'AUTOINCREMENT'
-    | 'BEFORE'
-    | 'BEGIN'
-    | 'BETWEEN'
-    | 'BY'
-    | 'CASCADE'
-    | 'CASE'
-    | 'CAST'
-    | 'CHECK'
-    | 'COLLATE'
-    | 'COLUMN'
-    | 'COMMIT'
-    | 'CONFLICT'
-    | 'CONSTRAINT'
-    | 'CREATE'
-    | 'CROSS'
-    | 'CURRENT_DATE'
-    | 'CURRENT_TIME'
-    | 'CURRENT_TIMESTAMP'
-    | 'DATABASE'
-    | 'DEFAULT'
-    | 'DEFERRABLE'
-    | 'DEFERRED'
-    | 'DELETE'
-    | 'DESC'
-    | 'DETACH'
-    | 'DISTINCT'
-    | 'DROP'
-    | 'EACH'
-    | 'ELSE'
-    | 'END'
-    | 'ESCAPE'
-    | 'EXCEPT'
-    | 'EXCLUSIVE'
-    | 'EXISTS'
-    | 'EXPLAIN'
-    | 'FAIL'
-    | 'FOR'
-    | 'FOREIGN'
-    | 'FROM'
-    | 'FULL'
-    | 'GLOB'
-    | 'GROUP'
-    | 'HAVING'
-    | 'IF'
-    | 'IGNORE'
-    | 'IMMEDIATE'
-    | 'IN'
-    | 'INDEX'
-    | 'INDEXED'
-    | 'INITIALLY'
-    | 'INNER'
-    | 'INSERT'
-    | 'INSTEAD'
-    | 'INTERSECT'
-    | 'INTO'
-    | 'IS'
-    | 'ISNULL'
-    | 'JOIN'
-    | 'KEY'
-    | 'LEFT'
-    | 'LIKE'
-    | 'LIMIT'
-    | 'MATCH'
-    | 'NATURAL'
-    | 'NO'
-    | 'NOT'
-    | 'NOTNULL'
-    | 'NULL'
-    | 'OF'
-    | 'OFFSET'
-    | 'ON'
-    | 'OR'
-    | 'ORDER'
-    | 'OUTER'
-    | 'PLAN'
-    | 'PRAGMA'
-    | 'PRIMARY'
-    | 'QUERY'
-    | 'RAISE'
-    | 'RECURSIVE'
-    | 'REFERENCES'
-    | 'REGEXP'
-    | 'REINDEX'
-    | 'RELEASE'
-    | 'RENAME'
-    | 'REPLACE'
-    | 'RESTRICT'
-    | 'RIGHT'
-    | 'ROLLBACK'
-    | 'ROW'
-    | 'ROWS'
-    | 'SAVEPOINT'
-//    | 'SELECT'
-    | 'SET'
-    | 'TABLE'
-    | 'TEMP'
-    | 'TEMPORARY'
-    | 'THEN'
-    | 'TO'
-    | 'TRANSACTION'
-    | 'TRIGGER'
-    | 'UNION'
-    | 'UNIQUE'
-    | 'UPDATE'
-    | 'USING'
-    | 'VACUUM'
-    | 'VALUES'
-    | 'VIEW'
-    | 'VIRTUAL'
-    | 'WHEN'
-    | 'WHERE'
-    | 'WITH'
-    | 'WITHOUT'
-    | 'FIRST_VALUE'
-    | 'OVER'
-    | 'PARTITION'
-    | 'RANGE'
-    | 'PRECEDING'
-    | 'UNBOUNDED'
-    | 'CURRENT'
-    | 'FOLLOWING'
-    | 'CUME_DIST'
-    | 'DENSE_RANK'
-    | 'LAG'
-    | 'LAST_VALUE'
-    | 'LEAD'
-    | 'NTH_VALUE'
-    | 'NTILE'
-    | 'PERCENT_RANK'
-    | 'RANK'
-    | 'ROW_NUMBER'
-    | 'GENERATED'
-    | 'ALWAYS'
-    | 'STORED'
-    | 'TRUE'
-    | 'FALSE'
-    | 'WINDOW'
-    | 'NULLS'
-    | 'FIRST'
-    | 'LAST'
-    | 'FILTER'
-    | 'GROUPS'
-    | 'EXCLUDE'
-    ;
+unreservedKeyword
+  : 'ABORT'
+  | 'AFTER'
+  | 'ALWAYS'
+  | 'ANALYZE'
+  | 'ATTACH'
+  | 'AUTOINCREMENT'
+  | 'BEFORE'
+  | 'CONFLICT'
+  | 'DATABASE'
+  | 'DETACH'
+  | 'DO'
+  | 'EXCLUDE'
+  | 'EXCLUSIVE'
+  | 'EXPLAIN'
+  | 'FAIL'
+  | 'FILTER'
+  | 'FOLLOWING'
+  | 'GENERATED'
+  | 'GLOB'
+  | 'GROUPS'
+  | 'IF'
+  | 'IGNORE'
+  | 'INDEXED'
+  | 'INSTEAD'
+  | 'ISNULL'
+  | 'LIMIT'
+  | 'MATERIALIZED'
+  | 'NOTHING'
+  | 'NOTNULL'
+  | 'NULLS'
+  | 'OFFSET'
+  | 'OTHERS'
+  | 'OVER'
+  | 'PARTITION'
+  | 'PLAN'
+  | 'PRAGMA'
+  | 'PRECEDING'
+  | 'QUERY'
+  | 'RAISE'
+  | 'RANGE'
+  | 'RECURSIVE'
+  | 'REGEXP'
+  | 'REINDEX'
+  | 'RELEASE'
+  | 'RENAME'
+  | 'REPLACE'
+  | 'RETURNING'
+  | 'ROWS'
+  | 'SAVEPOINT'
+  | 'STORED'
+  | 'TEMP'
+  | 'TIES'
+  | 'TRIGGER'
+  | 'UNBOUNDED'
+  | 'USING'
+  | 'VACUUM'
+  | 'VIRTUAL'
+  | 'WINDOW'
+  | 'WITHOUT'
+  ;
 
 literal
   : NUMBER
