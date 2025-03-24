@@ -92,17 +92,13 @@ attach
   : 'ATTACH' 'DATABASE'? expr 'AS' name ;
 
 begin
-  : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )?
-    ( statement ';' )*
-    'END'
-  ;
+  : 'BEGIN' ( 'DEFERRED' | 'IMMEDIATE' | 'EXCLUSIVE' )? ( 'TRANSACTION' name? )? ;
 
 commit
   : ( 'COMMIT' | 'END' ) 'TRANSACTION'? ;
 
 createIndex
-  : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where?
-  ;
+  : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where? ;
 
 createTable
   : 'CREATE' temp? 'TABLE' ifNotExists? qname
@@ -121,8 +117,7 @@ createTrigger
   ;
 
 createView
-  : 'CREATE'? temp? 'VIEW' ifNotExists? qname columns? 'AS' select
-  ;
+  : 'CREATE'? temp? 'VIEW' ifNotExists? qname columns? 'AS' select ;
 
 createVirtualTable
   : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
@@ -155,19 +150,19 @@ columnIndexes
 columnIndex
   : ( name | expr ) ( 'COLLATE' name )? sortDir? ;
 
-ifNotExists : 'IF' 'NOT' 'EXISTS' ;
+ifNotExists
+  : 'IF' 'NOT' 'EXISTS' ;
 
 columnDef
   : name type? constraint* ;
 
 type
-  : name+ (  '(' signed_number ( ',' signed_number )? ')' )?
-  ;
+  : name+ (  '(' signed_number ( ',' signed_number )? ')' )? ;
 
 constraint
   : ( 'CONSTRAINT' name )?
     ( ( 'PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'? )
-    | ( 'NOT'? 'NULL' | 'UNIQUE' ) conflict?
+    | ( 'NOT' 'NULL' | 'UNIQUE' ) conflict?
     | 'CHECK' '(' expr ')'
     | 'DEFAULT' ( signed_number | literal | '(' expr ')' )
     | 'COLLATE' name
@@ -206,21 +201,11 @@ with
   ;
 
 cte
-  : name columns? 'AS' '(' select ')' ;
+  : name columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
 
-exprs : expr ( ',' expr )* ;
+exprs
+  : expr ( ',' expr )* ;
 
-/*
- SQLite understands the following binary operators, in order from highest to lowest precedence:
-    ||
-    * / %
-    + -
-    << >> & |
-    < <= > >=
-    = == != <> IS IS NOT IS DISTINCT FROM IS NOT DISTINCT FROM IN LIKE GLOB MATCH REGEXP
-    AND
-    OR
- */
 expr
   : literal
   | PARAM
@@ -231,7 +216,7 @@ expr
   | expr ( '+' | '-' ) expr
   | expr ( '<<' | '>>' | '&' | '|' ) expr
   | expr ( '<' | '<=' | '>' | '>=' ) expr
-  | expr ( '=' | '==' | '!=' | '<>' | 'IS' | 'IS' 'NOT' | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) expr
+  | expr ( '=' | '==' | '!=' | '<>' | 'IS' 'NOT'? | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) expr
   | expr 'AND' expr
   | expr 'OR' expr
   | name '(' ( 'DISTINCT'? exprs  | '*' )? ')' filter? over?
@@ -242,10 +227,7 @@ expr
   | expr ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
   | expr 'IS' 'NOT'? expr
   | expr 'NOT'? 'BETWEEN' expr 'AND' expr
-  | expr 'NOT'? 'IN'
-    ( '(' ( select | exprs )? ')'
-    | qname ( '(' exprs? ')' )?
-    )
+  | expr 'NOT'? 'IN' ( '(' ( select | exprs )? ')' | qname ( '(' exprs? ')' )? )
   | ( 'NOT'? 'EXISTS' )? '(' select ')'
   | 'CASE' expr? ( 'WHEN' expr 'THEN' expr )+ ( 'ELSE' expr )? 'END'
   | select
@@ -253,8 +235,7 @@ expr
   ;
 
 raise
-  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')'
-  ;
+  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
 
 values
   : 'VALUES' exprs ;
@@ -266,10 +247,7 @@ insert
     | 'INSERT' 'OR' action
     )
     'INTO' qname alias? columns?
-//    ( ( values | select ) upsert?
-    ( select upsert?
-    | 'DEFAULT' 'VALUES'
-    )
+    ( select upsert? | 'DEFAULT' 'VALUES' )
     returning?
   ;
 
@@ -284,9 +262,11 @@ upsert
     'DO' ( 'NOTHING' | 'UPDATE' setter where? )
   ;
 
-setter : 'SET' assign ( ',' assign )* ;
+setter
+  : 'SET' assign ( ',' assign )* ;
 
-assign : ( name | columns ) '=' expr ;
+assign
+  : ( name | columns ) '=' expr ;
 
 pragma
   : 'PRAGMA' qname
@@ -320,7 +300,8 @@ selectCore
   | '(' select ')'
   ;
 
-window : name 'AS' windowDef ;
+window
+  : name 'AS' windowDef ;
 
 items
   : item ( ',' item )* ;
@@ -333,11 +314,14 @@ item
 
 tables
   : tables join tables ( 'ON' expr | 'USING' columns )? indexedBy?
-  | qname (alias columns? )?
-  | '(' select  ')' (alias columns? )?
-  | '(' tables ')' (alias columns? )?
-  | values (alias columns? )?
+  | qname tableAlias?
+  | '(' select  ')' tableAlias?
+  | '(' tables ')' tableAlias?
+  | values tableAlias?
   ;
+
+tableAlias
+  : alias columns? ;
 
 join
   : ','
@@ -353,7 +337,8 @@ update
     where? returning?
   ;
 
-where : 'WHERE' expr ;
+where
+  : 'WHERE' expr ;
 
 indexedBy
   : qname alias?
@@ -363,19 +348,16 @@ indexedBy
   ;
 
 vacuum
-  : 'VACUUM' name? ( 'INTO' name )?
-  ;
+  : 'VACUUM' name? ( 'INTO' name )? ;
 
 filter
-  : 'FILTER' '(' 'WHERE' expr ')'
-  ;
+  : 'FILTER' '(' 'WHERE' expr ')' ;
 
 over
   : 'OVER' ( name | windowDef ) ;
 
 windowDef
-  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? windowFrame? ')'
-  ;
+  : '(' name? ( 'PARTITION' 'BY' exprs )? orderBy? windowFrame? ')' ;
 
 windowFrame
   : ( 'RANGE' | 'ROWS' | 'GROUPS' )
@@ -391,43 +373,17 @@ windowFrameBounds
 limit
   : 'LIMIT' expr (( 'OFFSET' | ',' ) expr )? ;
 
-
-//simple_function_invocation
-//    : name '(' (exprs | '*') ')'
-//;
-//
-//aggregate_function_invocation
-//    : name '(' ('DISTINCT'? exprs | '*')? ')' filter?
-//;
-//
-//window_function_invocation
-//    : window_function '(' ( exprs | '*' )? ')' filter? 'OVER' (
-//        window_defn
-//        | name
-//    )
-//;
-
-//window_function
-//  : ('FIRST_VALUE' | 'LAST_VALUE') '(' expr ')' 'OVER' '(' partitionBy? orderBy frame_clause? ')'
-//  | ('CUME_DIST' | 'PERCENT_RANK') '(' ')' 'OVER' '(' partitionBy? orderBy? ')'
-//  | ('DENSE_RANK' | 'RANK' | 'ROW_NUMBER') '(' ')' 'OVER' '(' partitionBy? orderBy ')'
-//  | ('LAG' | 'LEAD') '(' expr (',' signed_number)? (',' signed_number)? ')' 'OVER' '(' partitionBy? orderBy ')'
-//  | 'NTH_VALUE' '(' expr ',' signed_number ')' 'OVER' '(' partitionBy? orderBy frame_clause? ')'
-//  | 'NTILE' '(' expr ')' 'OVER' '(' partitionBy? orderBy ')'
-//  ;
-
 orderBy
-  : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )*
-  ;
+  : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )* ;
 
 orderingTerm
-  : expr ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))?
-  ;
+  : expr ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
 
 sortDir
   : 'ASC' | 'DESC' ;
 
-alias : 'AS'? name ;
+alias
+  : 'AS'? name ;
 
 qname
   : name ( '.' name )* ;
@@ -436,13 +392,10 @@ columns
   : '(' name ( ',' name )* ')' ;
 
 name
-  : ID
-  | string
-  | keyword
-//  | '(' name ')' // TODO what's this for?
-  ;
+  : ID | string | keyword ;
 
-string : STRING+ ;
+string
+  : STRING+ ;
 
 // http://www.sqlite.org/lang_keywords.html
 // TODO remove reserved keywords
@@ -620,8 +573,14 @@ ID
   : '"' ( ~'"' | '""' )* '"'
   | '`' ( ~'`' | '``' )* '`'
   | '[' ~']'* ']'
-  | [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]*
+  | [A-Z_\u007F-\uFFFF] [A-Z0-9_$\u007F-\uFFFF]*
   ;
+
+STRING
+  : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+
+BLOB
+  : 'X' STRING ;
 
 NUMBER
   : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS ) ( 'E' [-+]? DIGITS )?
@@ -633,17 +592,14 @@ PARAM
   | [:@$] ID
   ;
 
-STRING : '\'' ( ~'\'' | '\'\'' )* '\'' ;
+COMMENT
+  : '--' ~[\r\n]* (( '\r'? '\n' ) | EOF ) -> channel(HIDDEN) ;
 
-BLOB : 'X' STRING ;
+BLOCK_COMMENT
+  : '/*' .*? '*/' -> channel(HIDDEN) ;
 
-SINGLE_LINE_COMMENT: '--' ~[\r\n]* (( '\r'? '\n' ) | EOF ) -> channel(HIDDEN);
-
-MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
-
-SPACES: [ \u000B\t\r\n] -> channel(HIDDEN);
-
-UNEXPECTED_CHAR : . ;
+WHITESPACE
+  : [ \u000B\t\r\n] -> channel(HIDDEN) ;
 
 fragment DIGITS    : [0-9]+;
 fragment HEX_DIGIT : [0-9A-F];
