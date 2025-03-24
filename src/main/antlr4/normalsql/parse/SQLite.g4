@@ -326,6 +326,7 @@ tables
 tableAlias
   : alias columns? ;
 
+// TODO comma-joins should have lower precedence
 join
   : ','
   | 'NATURAL'?
