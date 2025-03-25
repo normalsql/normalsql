@@ -73,8 +73,6 @@ statement
 
         pragmaValue : literal | signedNumber | name ;
 
-
-
 explain
     : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
     | 'EXPLAIN' 'QUERY' 'PLAN'

@@ -19,7 +19,9 @@ public class SQLiteTests {
     {
 //        String dir = "/Users/jasonosgood/Projects/sqlite/chat/";
 //        String dir = "/Users/jasonosgood/Projects/normalsql/spare/SQLite";
-        String dir = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite";
+//        String dir = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite";
+        String dir = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
+        dir = "/Users/jasonosgood/Projects/normalsql-resources/sqllogictest/test";
         List<Path> files = getAllTheFiles( dir );
         int count = 0;
         int errors = 0;
@@ -67,7 +69,8 @@ public class SQLiteTests {
             throw new NoSuchFileException( "not found: " + sourceRoot );
         }
         ArrayList<Path> files = new ArrayList<>();
-        String extension = ".sql";
+        String extension = ".test";
+//        String extension = ".sql";
 
         SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<>()
         {

@@ -316,23 +316,38 @@ item
   ;
 
 tables
-  : tables join tables ( 'ON' term | 'USING' columns )? indexedBy?
-  | qname tableAlias?
+  // this weird rule forces correct precedence and arrangement of JOINs
+  : tables ',' tables2  joinConstraint?
+  | tables2
+  ;
+
+tables2
+  : tables2 joinOp tables2 joinConstraint?
   | '(' select  ')' tableAlias?
   | '(' tables ')' tableAlias?
   | values tableAlias?
+  | qname tableAlias?
   ;
+
+joinOp
+  : 'NATURAL'?
+    ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
+    'JOIN'
+  ;
+
+//tables
+//  : tables join tables ( 'ON' term | 'USING' columns )? indexedBy?
+//  | qname tableAlias?
+//  | '(' select  ')' tableAlias?
+//  | '(' tables ')' tableAlias?
+//  | values tableAlias?
+//  ;
 
 tableAlias
   : alias columns? ;
 
-// TODO comma-joins should have lower precedence
-join
-  : ','
-  | 'NATURAL'?
-    ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
-    'JOIN'
-  ;
+joinConstraint
+  : 'ON' term | 'USING' columns ;
 
 update
   : with? 'UPDATE' ( 'OR' action )? indexedBy
