@@ -197,11 +197,11 @@ foreign_key
 conflict
   : 'ON' 'CONFLICT' action ;
 
-temp : 'TEMP' | 'TEMPORARY' ;
+temp
+  : 'TEMP' | 'TEMPORARY' ;
 
 with
-  : 'WITH' 'RECURSIVE'? cte ( ',' cte )*
-  ;
+  : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
 
 cte
   : name columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
@@ -222,7 +222,7 @@ term
   | term ( '=' | '==' | '!=' | '<>' | 'IS' 'NOT'? | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) term
   | term 'AND' term
   | term 'OR' term
-  | name '(' ( 'DISTINCT'? terms  | '*' )? ')' filter? over?
+  | name '(' ( ( 'DISTINCT'? terms orderBy? ) | '*'  )? ')' filter? over?
   | '(' terms ')'
   | 'CAST' '(' term 'AS' type ')'
   | term 'COLLATE' name
