@@ -146,11 +146,11 @@ public class
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-//		var lexer = new NormalSQLLexer( chars );
-		var lexer = new SQLiteLexer( chars );
+		var lexer = new NormalSQLLexer( chars );
+//		var lexer = new SQLiteLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-//		var parser = new NormalSQLParser( tokens );
-		var parser = new SQLiteParser( tokens );
+		var parser = new NormalSQLParser( tokens );
+//		var parser = new SQLiteParser( tokens );
 		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {

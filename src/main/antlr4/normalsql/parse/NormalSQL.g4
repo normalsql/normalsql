@@ -36,6 +36,8 @@ options {
 // convenience for debugging
 aaa1 : script ;
 
+parse : script ;
+
 script : statement? ( ';' statement? )* EOF ;
 
 statement
@@ -57,7 +59,7 @@ statement
     | insert
     | merge
     | pragma
-    | query
+    | select
     | 'REINDEX' qname?
     | 'RELEASE' 'SAVEPOINT'? qname
     | 'RESET' qname
@@ -138,7 +140,7 @@ createTable
     : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
       'TABLE' ifNotExists? qname
       ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' query ( 'WITH' 'NO'? 'DATA' )?
+      | 'AS' select ( 'WITH' 'NO'? 'DATA' )?
       ) // TODO (COMMENT string)? (WITH properties)?
       // SQLite
       'STRICT'?
@@ -149,7 +151,7 @@ createTrigger
      : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
        ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' qnames0 )? ) 'ON' qname
        ( 'FOR' 'EACH' 'ROW' )? ( 'WHEN' term )?
-       'BEGIN' (( update | insert | delete | query ) ';' )+
+       'BEGIN' (( update | insert | delete | select ) ';' )+
        // TODO remove '?' after testing!!
        'END'?
      ;
@@ -160,7 +162,7 @@ createView
       : 'CREATE' temporary?
         // Postgres?
         ( 'OR' 'REPLACE' )?
-        'VIEW' ifNotExists? qname qnames? 'AS' query ;
+        'VIEW' ifNotExists? qname qnames? 'AS' select ;
 
 createIndex
       : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
@@ -242,7 +244,7 @@ with
     cte
         // TODO add rule for column aliases
         : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
-        '(' query ')'
+        '(' select ')'
         ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
         ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
         ;
@@ -263,7 +265,7 @@ insert
       'INTO' qname ( 'AS' name )? columns?
       overriding?
 //      ( source upsert* | 'DEFAULT' 'VALUES' )
-      ( query upsert* | 'DEFAULT' 'VALUES' )
+      ( select upsert* | 'DEFAULT' 'VALUES' )
       returning?
     ;
 
@@ -279,7 +281,7 @@ insert
 merge
     : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
 //      'USING' 'ONLY'? source 'ON' terms
-      'USING' 'ONLY'? query 'ON' terms
+      'USING' 'ONLY'? select 'ON' terms
       when*
     ;
 
@@ -318,25 +320,26 @@ returning
         : '*' | term ( 'AS'? alias )?
         ;
 
-query
-    : with? combine
+select
+    : with?
+      selectCore ( combine selectCore )*
       // Because various dialects order these clauses differently
       // TODO: Allow just one of each clause (somehow)
       ( orderBy | offset | fetch | limit | forUpdate )*
     ;
 
     combine
-        : combine ( 'INTERSECT' | 'MINUS' ) combine
-        | combine ( 'UNION' 'ALL'? | 'EXCEPT' ) combine
-        | combine 'MULTISET' combine
-        | select
-        | '(' query ')'
-        | values
-        // MySQL table statement
-        | 'TABLE' qname
+        : 'INTERSECT'
+        | 'MINUS'
+        | 'UNION' 'ALL'?
+        | 'EXCEPT'
+        | 'MULTISET'
+//        | selectCore
+//        | '(' query ')'
+//        | values
         ;
 
-    select
+    selectCore
         : 'SELECT' quantifier?
           top?
           ( item ( ',' item )* ','? )?
@@ -347,6 +350,10 @@ query
           having?
           windows?
           qualify?
+        | values
+        | '(' select ')'
+        // MySQL table statement
+        | 'TABLE' qname
         ;
 
     tables
@@ -360,7 +367,7 @@ query
           | indexedBy // SQLite
           )?
 
-        | ( '(' query ')'
+        | ( '(' select ')'
           | values
           | tableFunc
           | deltaTable
@@ -459,7 +466,7 @@ query
               '('
                 aliasedFunction ( ',' aliasedFunction )*
                 'FOR' ( qname | qnames )
-                'IN' '(' ( query | 'ANY' ) ')'
+                'IN' '(' ( select | 'ANY' ) ')'
               ')'
             ;
 
@@ -537,8 +544,9 @@ subterm
 
     | ( '+' | '-' | TILDE ) subterm            # SubtermUnary
     | ( 'NOT' | '!' ) subterm                  # SubtermUnary
-    | ( 'ANY' | 'SOME' | 'ALL' ) '(' query ')' # SubtermFixme
-    | function ( '.' name )*                   # SubtermFunction
+    | ( 'ANY' | 'SOME' | 'ALL' ) '(' select ')' # SubtermFixme
+    | name '(' terms? ')'                   # SubtermFunction
+//    | function ( '.' name )*                   # SubtermFunction
 //    | function ( '.' name | index | '::' type )* # SubtermFunction
     | subterm index                            # SubtermIndex
     | subterm '::' type                        # SubtermTypecast
@@ -548,7 +556,8 @@ subterm
     | subterm 'AT' ( 'LOCAL' | timeZone string ) # SubtermAtTZ
     | ( 'NEXT' | 'CURRENT' ) 'VALUE' 'FOR' qname # SubtermSequence
     | array                                      # SubtermArray
-    | '(' query ')'                              # SubtermSubquery
+    | select                              # SubtermSubquery
+//    | '(' select ')'                              # SubtermSubquery
     | 'ROW'? '(' terms? ')' ( '.' name )?        # SubtermRow
     | subterm 'COLLATE' collationName            # SubtermCollate
 
@@ -559,7 +568,10 @@ subterm
     | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # SubtermJSON
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # SubtermOfType
     | subterm 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # SubtermBETWEEN
-    | subterm 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # SubtermIN
+//    | subterm 'NOT'? 'IN' ( select | terms )?                      # SubtermIN
+
+    | subterm 'NOT'? 'IN' ( '(' ( select | terms )? ')' | name )?                      # SubtermIN
+
 //    | subterm 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # SubtermLIKE
     | subterm 'NOT'? likes subterm 'ESCAPE' subterm                                   # SubtermLIKE
     | subterm 'NOT'? likes subterm                                                    # SubtermLIKE
@@ -581,7 +593,7 @@ predicate
     | 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # PredicateJSON
     | 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # PredicateOfType
     | 'NOT'? 'BETWEEN' ( 'ASYMMETRIC' | 'SYMMETRIC' )? subterm 'AND' subterm  # PredicateBETWEEN
-    | 'NOT'? 'IN' ( '(' ( query | terms )? ')' | name )?                      # PredicateIN
+    | 'NOT'? 'IN' ( '(' ( select | terms )? ')' | name )?                      # PredicateIN
     | 'NOT'? likes subterm ( 'ESCAPE' subterm )?                              # PredicateLIKE
     | 'NOT'? 'LIKE' ( 'ANY' | 'ALL' ) '(' terms ')'                           # PredicateLIKETerms
     ;
@@ -752,10 +764,10 @@ function
     | 'SUBSTRING' '(' term 'FROM' term ( 'FOR' term )? ')'
     | 'JSON_OBJECTAGG' '(' jsonPairs onNull? uniqueKeys? ')' filter? over?
     | 'JSON_OBJECT' '(' jsonPairs? onNull? uniqueKeys? formatJson? ')'
-    | 'JSON_ARRAY' '(' ( terms | '(' query ')' )? formatJson? onNull? ')'
+    | 'JSON_ARRAY' '(' ( terms | '(' select ')' )? formatJson? onNull? ')'
     | ( 'CAST' | 'TRY_CAST' ) '(' term 'AS' type ( 'FORMAT' string )? ')'
-    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' query ')'
-    | 'EXISTS' '(' query ')'
+    | 'UNIQUE' ( ( 'ALL' | 'NOT' )? 'DISTINCT' )? '(' select ')'
+    | 'EXISTS' '(' select ')'
     | 'EXTRACT' '(' timeUnit 'FROM' subterm ')'
     | 'DATEDIFF' '(' timeUnit ',' string ',' string ')'
     | 'TIMESTAMPDIFF' '(' timeUnit ',' string ',' string ')'
@@ -774,7 +786,7 @@ function
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' ( term | 'NO' 'VALUE' ) ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) ')'
     | 'XMLSERIALIZE' '(' xmlContent term 'AS' type ')'
 
-    | 'ARRAY' '(' query ')' // Postgres
+    | 'ARRAY' '(' select ')' // Postgres
     | '{fn' function '}' //  ODBC style
 
     | aggregateFunction
