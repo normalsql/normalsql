@@ -578,7 +578,7 @@ subterm
     | 'ROW'? '(' terms? ')' ( '.' name )?        # SubtermRow
 
     | subterm ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )                                 # SubtermFixme
-    | subterm 'IS' 'NOT'? logicals                                                    # SubtermLogical
+    | subterm 'IS' 'NOT'? subterm                                                    # SubtermLogical
     | subterm 'IS' 'NOT'? 'DISTINCT' 'FROM' subterm                                   # SubtermDistinct
     | subterm 'IS' 'NOT'? 'JSON' jsonType? uniqueKeys?                                # SubtermJSON
     | subterm 'IS' 'NOT'? 'OF' 'TYPE'? '(' 'ONLY'? type ( ',' type )* ')'             # SubtermOfType
@@ -967,7 +967,6 @@ withTies
 withWithout
     : 'WITH' | 'WITHOUT' ;
 
-// TODO inline rule name, DRY the misc alias
 alias
     : 'AS'? name ;
 

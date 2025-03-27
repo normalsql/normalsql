@@ -3,8 +3,7 @@
 
 package test;
 
-import normalsql.grammar.SQLiteLexer;
-import normalsql.grammar.SQLiteParser;
+import normalsql.grammar.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -46,7 +45,7 @@ public class
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-		Path sourceRoot = Paths.get( "src/test/sql/scrappedFromH2" );
+		Path sourceRoot = Paths.get( "test/sql/scrappedFromH2" );
 //		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
 
 		ArrayList<Path> files = new ArrayList<>();
