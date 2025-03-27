@@ -131,6 +131,11 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>src</sourceDirectory>
+<!--        <resources>src</resources>-->
+        <testSourceDirectory>test</testSourceDirectory>
+        <outputDirectory>target/classes</outputDirectory>
+        <testOutputDirectory>target/test-classes</testOutputDirectory>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -168,8 +173,8 @@
                 <configuration>
                     <visitor>true</visitor>
                     <listener>false</listener>
-                    <!--                    <sourceDirectory>src/main/antlr4</sourceDirectory>-->
-                    <!--                    <outputDirectory>target/generated-sources/antlr4</outputDirectory>-->
+                    <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                    <outputDirectory>target/generated-sources/antlr4</outputDirectory>
                 </configuration>
             </plugin>
 
@@ -187,7 +192,7 @@
                             <showTree>true</showTree>
                             <entryPoint>script</entryPoint>
                             <grammarName>NormalSQL</grammarName>
-                            <packageName>normalsql.parse</packageName>
+                            <packageName>normalsql.grammar</packageName>
                             <testFileExtension>.sql</testFileExtension>
                             <exampleFiles>examples</exampleFiles>
 <!--                        </scenario>-->
