@@ -143,7 +143,7 @@
                 <version>3.2.1</version>
                 <executions>
                     <execution>
-                        <phase>validate</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>create</goal>
                         </goals>
@@ -185,18 +185,31 @@
                 <artifactId>antlr4test-maven-plugin</artifactId>
                 <version>1.22</version>
                 <configuration>
-<!--                    <scenarios>-->
-<!--                        <scenario>-->
-<!--                            <scenarioName>ABC</scenarioName>-->
+                    <scenarios>
+                        <!--
+                        <scenario>
+                            <scenarioName>NormalSQL</scenarioName>
                             <verbose>true</verbose>
                             <showTree>true</showTree>
-                            <entryPoint>script</entryPoint>
+                            <entryPoint>parse</entryPoint>
                             <grammarName>NormalSQL</grammarName>
                             <packageName>normalsql.grammar</packageName>
                             <testFileExtension>.sql</testFileExtension>
                             <exampleFiles>examples</exampleFiles>
-<!--                        </scenario>-->
-<!--                        <scenario>-->
+                        </scenario>
+                        -->
+                        <scenario>
+                            <scenarioName>PostgreSQL</scenarioName>
+                            <verbose>false</verbose>
+                            <showTree>true</showTree>
+                            <entryPoint>root</entryPoint>
+                            <grammarName>PostgreSQL</grammarName>
+                            <packageName>normalsql.grammar</packageName>
+                            <testFileExtension>.sql</testFileExtension>
+                            <exampleFiles>corpus</exampleFiles>
+                        </scenario>
+
+                        <!--                        <scenario>-->
 <!--                            <scenarioName>Package-Initialize-IgnoreSpaces</scenarioName>-->
 <!--                            <verbose>true</verbose>-->
 <!--                            <showTree>true</showTree>-->
@@ -207,7 +220,7 @@
 <!--                            <exampleFiles>src/test/resources/initializeIgnoreSpacesScenario/</exampleFiles>-->
 <!--                            <grammarInitializer>dummy.TestGrammarInitializer</grammarInitializer>-->
 <!--                        </scenario>-->
-<!--                    </scenarios>-->
+                    </scenarios>
                 </configuration>
                 <executions>
                     <execution>
