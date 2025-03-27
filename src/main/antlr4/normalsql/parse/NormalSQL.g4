@@ -241,10 +241,10 @@ with
 
     cte
         // TODO add rule for column aliases
-      : alias ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )?
+      : name columns? 'AS' ( 'NOT'? 'MATERIALIZED' )?
       '(' select ')'
-      ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' name ( ',' name )* 'SET' name )?
-      ( 'CYCLE' name ( ',' name )* 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
+      ( 'SEARCH' ( 'BREADTH' | 'DEPTH' ) 'FIRST' 'BY' names 'SET' name )?
+      ( 'CYCLE' names 'SET' name ( 'TO' literal 'DEFAULT' literal )? ( 'USING' name )? )?
       ;
 
 delete
@@ -277,7 +277,7 @@ insert
         ;
 
 merge
-    : with? 'MERGE' 'INTO' 'ONLY'? name ( 'AS'? name )?
+    : with? 'MERGE' 'INTO' 'ONLY'? name alias?
 //      'USING' 'ONLY'? source 'ON' terms
       'USING' 'ONLY'? select 'ON' terms
       when*
@@ -294,7 +294,7 @@ merge
 
 update
     : with? 'UPDATE' ( 'OR' action )?
-      qname ( 'AS'? name )? indexedBy?
+      qname alias? indexedBy?
       'SET' setter ( ',' setter )*
       // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
 //      ( 'FROM' sources )?
@@ -315,7 +315,7 @@ returning
     : 'RETURNING' returned ( ',' returned )* ;
 
     returned
-        : '*' | term ( 'AS'? alias )?
+        : '*' | term alias?
         ;
 
 select
@@ -392,7 +392,7 @@ select
               'JOIN'
             ;
 
-    tableAlias : 'AS'? alias columns? ;
+    tableAlias : alias columns? ;
 
     values : 'VALUES' terms ;
 
@@ -444,7 +444,7 @@ select
         : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : term ( 'AS'? alias )?                       # ItemTerm
+        : term alias?                       # ItemTerm
         | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
         ;
 
@@ -468,7 +468,7 @@ select
               ')'
             ;
 
-            aliasedFunction : function ( 'AS'? alias )? ;
+            aliasedFunction : function alias? ;
 
         unpivot
             : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
@@ -498,7 +498,7 @@ select
         : 'WINDOW' window ( ',' window )* ;
 
         window
-            : alias 'AS' windowDef ;
+            : name 'AS' windowDef ;
 
     qualify
         : 'QUALIFY' term ;
@@ -521,7 +521,7 @@ terms
     : term ( ',' term )* ;
 
 aliasedTerm
-    : term ( 'AS'? alias )? ;
+    : term alias? ;
 
 aliasedTerms
     : aliasedTerm ( ',' aliasedTerm )* ;
@@ -969,7 +969,7 @@ withWithout
 
 // TODO inline rule name, DRY the misc alias
 alias
-    : name ;
+    : 'AS'? name ;
 
 qnames0
     : qname ( ',' qname )* ;
@@ -983,6 +983,9 @@ qname
 
 columns
     : '(' name ( ',' name )* ')' ;
+
+names
+     : name ( ',' name )* ;
 
 name
     : id
