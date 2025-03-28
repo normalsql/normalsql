@@ -164,8 +164,8 @@ type
 
 constraint
   : ( 'CONSTRAINT' name )?
-    ( ( 'PRIMARY' 'KEY' sortDir? conflict? 'AUTOINCREMENT'? )
-    | ( 'NOT' 'NULL' | 'UNIQUE' ) conflict?
+    ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
+    | ( 'NOT'? 'NULL' | 'UNIQUE' ) onConflict?
     | 'CHECK' '(' term ')'
     | 'DEFAULT' ( signed_number | literal | '(' term ')' )
     | 'COLLATE' name
@@ -179,7 +179,7 @@ signed_number
 
 table_constraint
   : ( 'CONSTRAINT' name )?
-    ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) columnIndexes conflict?
+    ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) columnIndexes onConflict?
     | 'CHECK' '(' term ')'
     | 'FOREIGN' 'KEY' columns foreign_key
     )
@@ -194,7 +194,7 @@ foreign_key
       ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
 ;
 
-conflict
+onConflict
   : 'ON' 'CONFLICT' action ;
 
 temp
@@ -385,7 +385,8 @@ windowFrame
   ;
 
 windowFrameBounds
-  : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
+  : ( 'UNBOUNDED'  | term  ) ( 'PRECEDING' | 'FOLLOWING' )
+//  : ( 'UNBOUNDED'   ) ( 'PRECEDING' | 'FOLLOWING' )
   | 'CURRENT' 'ROW'
   ;
 

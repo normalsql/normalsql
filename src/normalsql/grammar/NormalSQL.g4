@@ -83,7 +83,7 @@ explain
     option
       : 'ANALYZE' boolean?
       | 'VERBOSE' boolean?
-      | 'COSTS' boolean?
+      | 'COSTS' ( boolean | 'ON' | 'OFF' )?
       | 'SETTINGS' boolean?
       | 'BUFFERS' boolean?
       | 'WAL' boolean?
@@ -109,7 +109,7 @@ set
 
 drop
   : 'DROP' dropsicle ( 'IF' 'EXISTS' )? qnames0 ( 'CASCADE' | 'RESTRICT' )?
-//    | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? table ( '(' ( type ( ',' type )* )? ')' )?
+  | 'DROP' 'TEMPORARY'? 'FUNCTION' ifExists? qname ( '(' ( type ( ',' type )* )? ')' )?
   ;
 
     // TODO new name. this copypasta from Postgres probably needs to be validated.
@@ -137,14 +137,18 @@ drop
       ;
 
 createTable
-    : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
-      'TABLE' ifNotExists? qname
-      ( '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
-      | 'AS' select ( 'WITH' 'NO'? 'DATA' )?
-      ) // TODO (COMMENT string)? (WITH properties)?
-      // SQLite
-      'STRICT'?
-      ;
+  : 'CREATE' ( 'CACHED' | 'MEMORY' )? ( 'LOCAL' | 'GLOBAL' )? temporary? 'UNLOGGED'?
+    'TABLE' ifNotExists? qname
+    ( '(' ')'
+    | '(' columnDef ( ',' columnDef )* ( ',' tableStuff )* ')' ( 'WITHOUT' ID )?
+    | 'AS' select ( 'WITH' 'NO'? 'DATA' )?
+    ) // TODO (COMMENT string)? (WITH properties)?
+    // SQLite
+    'STRICT'?
+
+    // PostgreSQL
+    ( 'INHERITS' '(' columnDef ( ',' columnDef )* ')' )?
+  ;
 
 createTrigger
   : 'CREATE' temporary? 'TRIGGER' ifNotExists? qname ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
@@ -162,16 +166,17 @@ createView
   : 'CREATE' temporary?
     // Postgres?
     ( 'OR' 'REPLACE' )?
-    'VIEW' ifNotExists? qname qnames? 'AS' select ;
+    'VIEW' ifNotExists? qname qnames? 'AS' select
+  ;
 
 createIndex
-      : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
-//    : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
-//    | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
-//    | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
-//    | 'CREATE' ROLE id (WITH ADMIN grantor)?
-//    | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
-//    | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
+  : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' qname indexedColumns where? ;
+//  : 'CREATE' (OR REPLACE)? TEMPORARY? FUNCTION tableRef '(' (sqlParameterDeclaration (',' sqlParameterDeclaration)*)? ')' RETURNS type (COMMENT string)? routineCharacteristics routineBody
+//  | 'CREATE' (OR REPLACE)? VIEW tableRef (SECURITY (DEFINER | INVOKER))? AS query
+//  | 'CREATE' MATERIALIZED VIEW (IF NOT EXISTS)? tableRef (COMMENT string)? (WITH properties)? AS (query | '(' query ')' )
+//  | 'CREATE' ROLE id (WITH ADMIN grantor)?
+//  | 'CREATE' SCHEMA (IF NOT EXISTS)? tableRef (WITH properties)?
+//  | 'CREATE' TYPE tableRef AS ( '(' sqlParameterDeclaration (',' sqlParameterDeclaration)* ')' | type)
 
     indexedColumn
       : term sortDir? ;
@@ -182,11 +187,14 @@ createIndex
     ifNotExists
       : 'IF' 'NOT' 'EXISTS' ;
 
-    columnDef
-        : name ( type | columnStuff )*  // TODO (COMMENT string)? (WITH properties)?
-        ;
+    ifExists
+      : 'IF' 'EXISTS' ;
 
-    columnStuff
+    columnDef
+      : name ( type | constraint )*  // TODO (COMMENT string)? (WITH properties)?
+      ;
+
+    constraint
       : ( 'CONSTRAINT' name )?
         ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'?
         | 'AUTOINCREMENT'
@@ -216,25 +224,24 @@ createIndex
         )+
         // SQLite undocumented
         ( 'CONSTRAINT' name )*
-        ;
+      ;
 
         onConflict
-          : 'ON' 'CONFLICT' action
-          ;
+          : 'ON' 'CONFLICT' action ;
 
         foreignKey
-            : 'REFERENCES' name columns?
-              ( 'ON' ( 'DELETE' | 'UPDATE' )
-                ( 'SET' ( 'NULL' | 'DEFAULT' )
-                | 'CASCADE'
-                | 'RESTRICT'
-                | 'NO' 'ACTION'
-                )
-              | 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' )
-//              | 'MATCH' name
-              )*
-              ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))? )?
-            ;
+          : 'REFERENCES' name columns?
+            ( 'ON' ( 'DELETE' | 'UPDATE' )
+              ( 'SET' ( 'NULL' | 'DEFAULT' )
+              | 'CASCADE'
+              | 'RESTRICT'
+              | 'NO' 'ACTION'
+              )
+            | 'MATCH' ( 'FULL' |  'PARTIAL' |  'SIMPLE' )
+//          | 'MATCH' name
+            )*
+            ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))? )?
+          ;
 
 with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
@@ -248,49 +255,49 @@ with
       ;
 
 delete
-    : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )?
-      indexedBy?
-      // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
-      // Postgres
+  : with? 'DELETE' 'FROM' 'ONLY'? qname ( 'AS' name )?
+    indexedBy?
+    // TODO need sources which doesn't collide with this rule's orderBy, limit, offset
+    // Postgres
 //      ( 'USING' sources ( ',' sources )* )?
 //      ( 'USING' sources )?
-      where? returning? orderBy? limit? offset?
-    ;
+    where? returning? orderBy? limit? offset?
+  ;
 
 insert
-    : with?
-      ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
-      'INTO' qname ( 'AS' name )? columns?
-      overriding?
+  : with?
+    ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
+    'INTO' qname ( 'AS' name )? columns?
+    overriding?
 //      ( source upsert* | 'DEFAULT' 'VALUES' )
-      ( select upsert* | 'DEFAULT' 'VALUES' )
-      returning?
-    ;
+    ( select upsert* | 'DEFAULT' 'VALUES' )
+    returning?
+  ;
 
     overriding
-        : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
+      : 'OVERRIDING' ( 'SYSTEM' | 'USER' ) 'VALUE' ;
 
     // SQLite
     upsert
-        : 'ON' 'CONFLICT' ( terms where? )?
-          'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
-        ;
+      : 'ON' 'CONFLICT' ( terms where? )?
+        'DO' ( 'NOTHING' | 'UPDATE' 'SET' setter ( ',' setter )* where? )
+      ;
 
 merge
-    : with? 'MERGE' 'INTO' 'ONLY'? name alias?
+  : with? 'MERGE' 'INTO' 'ONLY'? name alias?
 //      'USING' 'ONLY'? source 'ON' terms
-      'USING' 'ONLY'? select 'ON' terms
-      when*
-    ;
+    'USING' 'ONLY'? select 'ON' terms
+    when*
+  ;
 
     when
-        : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
-          ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
-          | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
-          | 'DELETE'
-          | 'DO' 'NOTHING'
-          )
-        ;
+      : 'WHEN' 'NOT'? 'MATCHED' ( 'AND' subterm )* 'THEN'
+        ( 'INSERT' qnames? overriding? ( values | 'DEFAULT' 'VALUES' ) where?
+        | 'UPDATE' 'SET' setter ( ',' setter )* ( 'DELETE'? where )?
+        | 'DELETE'
+        | 'DO' 'NOTHING'
+        )
+      ;
 
 update
     : with? 'UPDATE' ( 'OR' action )?
@@ -302,95 +309,89 @@ update
     ;
 
     setter
-        : ( qname | qnames ) '=' term ;
+      : ( qname | qnames ) '=' term ;
 
 action
   : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
 
 // SQLite
 indexedBy
-    : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
+  : 'NOT' 'INDEXED' | 'INDEXED' 'BY' qname ;
 
 returning
-    : 'RETURNING' returned ( ',' returned )* ;
+  : 'RETURNING' returned ( ',' returned )* ;
 
     returned
-        : '*' | term alias?
-        ;
+      : '*' | term alias? ;
 
 select
-    : with?
-      selectCore ( combine selectCore )*
-      // Because various dialects order these clauses differently
-      // TODO: Allow just one of each clause (somehow)
-      ( orderBy | offset | fetch | limit | forUpdate )*
-    ;
+  : with?
+    selectCore ( combine selectCore )*
+    // Because various dialects order these clauses differently
+    // TODO: Allow just one of each clause (somehow)
+    ( orderBy | offset | fetch | limit | forUpdate )*
+  ;
 
     combine
-        : 'INTERSECT'
-        | 'MINUS'
-        | 'UNION' 'ALL'?
-        | 'EXCEPT'
-        | 'MULTISET'
-//        | selectCore
-//        | '(' query ')'
-//        | values
-        ;
+      : ( 'INTERSECT' | 'UNION' | 'EXCEPT' ) 'ALL'?
+      | 'MINUS'
+      | 'MULTISET'
+      ;
 
     selectCore
-        : 'SELECT' quantifier?
-          top?
-          ( item ( ',' item )* ','? )?
-          into?
-          ( 'FROM' tables )?
-          where?
-          groupBy?
-          having?
-          windows?
-          qualify?
-        | values
-        | '(' select ')'
-        // MySQL table statement
-        | 'TABLE' qname
-        ;
+      : 'SELECT' quantifier?
+        top?
+        ( item ( ',' item )* ','? )?
+        into?
+        ( 'FROM' tables )?
+        where?
+        groupBy?
+        having?
+        windows?
+        qualify?
+      | values
+      | '(' select ')'
+      // MySQL table statement
+      | 'TABLE' qname
+      ;
 
     tables
-        : tables ',' tables
-          // TODO validate this. added ON clause to pass sqlite's tkt2141.test
-          ( 'ON' term )?
-        | tables join tables  ( 'ON' term | 'USING' qnames )?
+      : tables ',' tables
+        // TODO validate this. added ON clause to pass sqlite's tkt2141.test
+        ( 'ON' term )?
+      | tables join tables  ( 'ON' term | 'USING' qnames )?
 
-        | ( qname | '(' qname ')' ) tableAlias?
-          ( ( 'USE' 'INDEX' columns ) // H2
-          | indexedBy // SQLite
-          )?
+      | ( qname | '(' qname ')' ) tableAlias?
+        ( ( 'USE' 'INDEX' columns ) // H2
+        | indexedBy // SQLite
+        )?
 
-        | ( '(' select ')'
-          | values
-          | tableFunc
-          | deltaTable
-          | tableCollection
-          | 'JSON_TABLE' // TODO
-          | xmlTable
-          | unnest
-          | pivot
-          | unpivot
-          )
-          tableAlias?
+      | ( '(' select ')'
+        | values
+        | tableFunc
+        | deltaTable
+        | tableCollection
+        | 'JSON_TABLE' // TODO
+        | xmlTable
+        | unnest
+        | pivot
+        | unpivot
+        )
+        tableAlias?
 
-        | '(' tables ')' tableAlias?
-        ;
+      | '(' tables ')' tableAlias?
+      ;
 
+        // TODO add 'LATERAL'
         join
-            // TODO add 'LATERAL'
-            : 'NATURAL'?
-              ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
-              | ( 'RIGHT' | 'FULL' ) 'OUTER'?
-              | 'INNER'
-              | 'CROSS'
-              )?
-              'JOIN'
-            ;
+          : 'NATURAL'?
+            ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?
+            | ( 'RIGHT' | 'FULL' ) 'OUTER'?
+            | 'INNER'
+            | 'CROSS'
+            )?
+            'JOIN'
+          ;
 
     tableAlias : alias columns? ;
 
@@ -404,135 +405,138 @@ select
     tableCollection : 'TABLE' '(' term ')' ;
 
     unnest
-        : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
+      : 'UNNEST' '(' ( array ( ',' array )* )? ')' ( 'WITH' 'ORDINALITY' )? ;
 
     tableFunc
-        // H2 table function http://h2database.com/html/functions.html#table
-        : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')'
-        |  'SYSTEM_RANGE' '(' term ',' term ( ',' term )? ')'
-        ;
+      // H2 table function http://h2database.com/html/functions.html#table
+      : ( 'TABLE' | 'TABLE_DISTINCT' ) '(' tableFuncParam ( ',' tableFuncParam )* ')'
+//        |  'SYSTEM_RANGE' '(' term ',' term ( ',' term )? ')'
+      // TODO should probably limit this to simple functions
+      | function
+      ;
 
         tableFuncParam
 //            : name ( type | qname | 'NULL' ) '=' subterm ;
-            : name ( type | 'NULL' ) '=' subterm ;
+          : name ( type | 'NULL' ) '=' subterm ;
 
     offset
-        : 'OFFSET' term rowRows? ;
+      : 'OFFSET' term rowRows? ;
 
     limit
-        : 'LIMIT' term ( ',' term )? ;
+      : 'LIMIT' term ( ',' term )? ;
 
     fetch
-        : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
+      : 'FETCH' ( 'FIRST' | 'NEXT' ) ( term 'PERCENT'? )? rowRows ( 'ONLY' | withTies ) ;
 
     forUpdate
-        : 'FOR'
-          ( 'READ' 'ONLY'
-          | ( 'NO' 'KEY' )? 'UPDATE'
-          | 'KEY'? 'SHARE'
-          )
-          ( 'OF' qname ( ',' qname )* )?
-          ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
-        ;
+      : 'FOR'
+        ( 'READ' 'ONLY'
+        | ( 'NO' 'KEY' )? 'UPDATE'
+        | 'KEY'? 'SHARE'
+        )
+        ( 'OF' qname ( ',' qname )* )?
+        ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
+      ;
 
     quantifier
-        : 'DISTINCT' ( 'ON' '(' terms ')' )?
-        | 'ALL'
-        ;
+      : 'DISTINCT' ( 'ON' '(' terms ')' )?
+      | 'ALL'
+      ;
 
     top
-        : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
+      : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
-        : term alias?                       # ItemTerm
-        | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
-        ;
+      : term alias?                       # ItemTerm
+      | (( qname '.' )? '*' ) ( 'EXCEPT' qnames )?  # ItemTableRef
+      ;
 
     into
-        : 'INTO' ( temporary | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
+      : 'INTO' ( temporary | 'UNLOGGED' )? 'TABLE'? ( qname | VARIABLE ) ( ',' ( qname | VARIABLE ) )* ;
 
         pivot
-            // T-SQL, PL/SQL
-            : 'PIVOT'
-              '('
-                aliasedFunction ( ',' aliasedFunction )*
-                'FOR' ( qname | qnames )
-                'IN' '(' aliasedTerms ')'
-              ')'
-            // PL/SQL
-            | 'PIVOT' 'XML'
-              '('
-                aliasedFunction ( ',' aliasedFunction )*
-                'FOR' ( qname | qnames )
-                'IN' '(' ( select | 'ANY' ) ')'
-              ')'
-            ;
+          // T-SQL, PL/SQL
+          : 'PIVOT'
+            '('
+              aliasedFunction ( ',' aliasedFunction )*
+              'FOR' ( qname | qnames )
+              'IN' '(' aliasedTerms ')'
+            ')'
+          // PL/SQL
+          | 'PIVOT' 'XML'
+            '('
+              aliasedFunction ( ',' aliasedFunction )*
+              'FOR' ( qname | qnames )
+              'IN' '(' ( select | 'ANY' ) ')'
+            ')'
+          ;
 
-            aliasedFunction : function alias? ;
+            aliasedFunction
+              : function alias? ;
 
         unpivot
-            : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
-              '('
-                ( qname | qnames )
-                'FOR' ( qname | qnames )
-                'IN' '(' aliasedTerms ')'
-              ')'
-            ;
+          : 'UNPIVOT' (( 'INCLUDE' | 'EXCLUDE' ) 'NULLS' )?
+            '('
+              ( qname | qnames )
+              'FOR' ( qname | qnames )
+              'IN' '(' aliasedTerms ')'
+            ')'
+          ;
 
     where
-        : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
+      : 'WHERE' ( term | 'CURRENT' 'OF' name ) ;
 
     groupBy
-        : 'GROUP' 'BY' allDistinct? groupByItem ( ',' groupByItem )* ;
+      : 'GROUP' 'BY' allDistinct? groupByItem ( ',' groupByItem )* ;
 
         groupByItem
-            : terms
-            | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
-            | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
-            ;
+          : terms
+          | 'ROLLUP' '(' terms ')' | 'CUBE' '(' terms ')'
+          | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
+          ;
 
     having
-        : 'HAVING' terms ;
+      : 'HAVING' terms ;
 
     windows
-        : 'WINDOW' window ( ',' window )* ;
+      : 'WINDOW' window ( ',' window )* ;
 
         window
-            : name 'AS' windowDef ;
+          : name 'AS' windowDef ;
 
     qualify
-        : 'QUALIFY' term ;
+      : 'QUALIFY' term ;
 
     xmlTable
-        : 'XMLTABLE'
-          '('
-            subterm passing?
-            'COLUMNS' xmlColumn ( ',' xmlColumn )*
-          ')'
-        ;
+      : 'XMLTABLE'
+        '('
+          subterm passing?
+          'COLUMNS' xmlColumn ( ',' xmlColumn )*
+        ')'
+      ;
 
         passing
-            : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
+          : 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ))? aliasedTerms ;
 
         xmlColumn
-           : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' ) ;
+          : name ( type ( 'PATH' subterm )? | 'FOR' 'ORDINALITY' ) ;
 
 terms
-    : term ( ',' term )* ;
+  : term ( ',' term )* ;
 
 aliasedTerm
-    : term alias? ;
+  : term alias? ;
 
 aliasedTerms
-    : aliasedTerm ( ',' aliasedTerm )* ;
+  : aliasedTerm ( ',' aliasedTerm )* ;
 
 term
-    : term 'OR' term
-    | term 'AND' term
-    | subterm
-    // TODO: '||' as logical OR
-    // TODO: 'XOR'
-    ;
+  : term 'OR' term
+  | term 'AND' term
+  | subterm
+  // TODO: '||' as logical OR
+  // TODO: 'XOR'
+  ;
 
 // TODO verify precedences
 // TODO combine operators into lexer rules
@@ -907,6 +911,7 @@ windowFrame
   ;
 
 windowFrameBounds
+  // TODO resolve ambig, cuz term -> qname also matches 'UNBOUNDED'
   : ( term | 'UNBOUNDED' ) ( 'PRECEDING' | 'FOLLOWING' )
   | 'CURRENT' 'ROW'
   ;
@@ -1065,7 +1070,7 @@ BACKTICKS : '`' ( ~( '`' ) | '``' )* '`' ;
 
 QUOTED : '"' ( ~( '"' ) | '""' )* '"' ;
 
-ID : [A-Z_] [A-Z_0-9#$@]* ;
+ID : [A-Z_\u007F-\uFFFF] [A-Z_0-9#$@\u007F-\uFFFF]* ;
 
 // TODO inline uescape?
 UNICODE_ID : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;

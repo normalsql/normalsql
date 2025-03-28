@@ -3,6 +3,8 @@
 
 package sqlite;
 
+import normalsql.grammar.PostgreSQLLexer;
+import normalsql.grammar.PostgreSQLParser;
 import normalsql.grammar.SQLiteLexer;
 import normalsql.grammar.SQLiteParser;
 import org.antlr.v4.runtime.*;
@@ -53,10 +55,11 @@ SQLiteWholeFile
 	public static void main( String[] args ) throws Exception
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
-//		Path sourceRoot = Paths.get( "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/examples" );
 		String first ;
 //		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
-		first = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
+//		first = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
+//		first = "/Users/jasonosgood/Projects/normalsql/examples";
+		first = "/Users/jasonosgood/Projects/normalsql/corpus/examples";
 //		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
 //		first = "/Users/jasonosgood/Learn";
 		Path sourceRoot = Paths.get(first);
@@ -96,17 +99,6 @@ SQLiteWholeFile
 			for( Path file : files )
 			{
 				System.out.println( file );
-
-//				List<String> lines = Files.readAllLines( file );
-//				Files.readString( file );
-//				int nth = 0;
-//				for( String line : lines )
-//				{
-//					nth++;
-//					Work w = new Work( file, line, nth );
-//					workList.add( w );
-//					SQLiteWholeFile.count();
-//				}
 
 				var sql = Files.readString( file );
 				int nth = 0;
@@ -152,10 +144,12 @@ SQLiteWholeFile
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new SQLiteLexer( chars );
+		var lexer = new PostgreSQLLexer( chars );
+//		var lexer = new SQLiteLexer( chars );
 //		var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new SQLiteParser( tokens );
+		var parser = new PostgreSQLParser( tokens );
+//		var parser = new SQLiteParser( tokens );
 //		var parser = new NormalSQLParser( tokens );
 
 		parser.removeErrorListeners();
@@ -169,11 +163,13 @@ SQLiteWholeFile
 			                        String msg,
 			                        RecognitionException e)
 			{
-//				if( !sql.equals( last ))
+				if( !sql.equals( last ))
 				{
 					error();
+					fails.add( "\nerror" );
 //					fails.add( msg );
-					fails.add( sql );
+					fails.add( sourceFile.toString() );
+//					fails.add( sql );
 					last = sql;
 				}
 			}
@@ -188,12 +184,14 @@ SQLiteWholeFile
 	{
 //		var span = sql.substring( startIndex, stopIndex );
 //		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
-//		if( !sql.equals( last ))
-//		{
-//			ambig();
+		if( !sql.equals( last/**/ ))
+		{
+			ambig();
+		fails.add( "\nambig" );
+			fails.add( sourceFile.toString() );
 //			fails.add( sql );
-//			last = sql;
-//		}
+			last = sql;
+		}
 	}
 
 	@Override
@@ -205,7 +203,7 @@ SQLiteWholeFile
 											ATNConfigSet configs)
 	{
 //		fails.add( "full " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + sql );
-
+//
 	}
 
 	@Override

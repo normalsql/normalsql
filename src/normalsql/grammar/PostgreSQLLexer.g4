@@ -103,14 +103,9 @@ TYPECAST: '::';
 PERCENT: '%';
 
 PARAM: '$' ([0-9])+;
-//
-
-// OPERATORS (4.1.3)
-
-//
+//PARAM: [:$] ([0-9])+;
 
 // this rule does not allow + or - at the end of a multi-character operator
-
 Operator:
     (
         (
@@ -1211,13 +1206,13 @@ Identifier: IdentifierStartChar IdentifierChar*;
 fragment IdentifierStartChar options {
     caseInsensitive = false;
 }: // these are the valid identifier start characters below 0x7F
-    [a-zA-Z_]
-    | // these are the valid characters from 0x80 to 0xFF
-    [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
-    |                               // these are the letters above 0xFF which only need a single UTF-16 code unit
-    [\u0100-\uD7FF\uE000-\uFFFF]    {this.CharIsLetter()}?
-    |                               // letters which require multiple UTF-16 code units
-    [\uD800-\uDBFF] [\uDC00-\uDFFF] {this.CheckIfUtf32Letter()}?
+    [a-zA-Z_\u007F-\uFFFF]
+//    | // these are the valid characters from 0x80 to 0xFF
+//    [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
+//    |                               // these are the letters above 0xFF which only need a single UTF-16 code unit
+//    [\u0100-\uD7FF\uE000-\uFFFF]    {this.CharIsLetter()}?
+//    |                               // letters which require multiple UTF-16 code units
+//    [\uD800-\uDBFF] [\uDC00-\uDFFF] {this.CheckIfUtf32Letter()}?
 ;
 
 fragment IdentifierChar: StrictIdentifierChar | '$';

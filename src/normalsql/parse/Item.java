@@ -21,7 +21,7 @@ public class Item
 	public String      localName;
 	public String      alias;
 	/**
-	 * Actual source code of original SELECT item. Not called "source" to disambiquate.
+	 * Actual source code of original SELECT item. Not called "source" to disambiguate.
 	 */
 	public String verbatim;
 }
