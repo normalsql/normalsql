@@ -1198,117 +1198,28 @@ OPEN: 'OPEN';
 FORMAT: 'FORMAT';
 
 
+Identifier: [a-zA-Z_\u007F-\uFFFF] [a-zA-Z_$0-9\u007F-\uFFFF]*;
 
-
-
-Identifier: IdentifierStartChar IdentifierChar*;
-
-fragment IdentifierStartChar options {
-    caseInsensitive = false;
-}: // these are the valid identifier start characters below 0x7F
-    [a-zA-Z_\u007F-\uFFFF]
-//    | // these are the valid characters from 0x80 to 0xFF
-//    [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
-//    |                               // these are the letters above 0xFF which only need a single UTF-16 code unit
-//    [\u0100-\uD7FF\uE000-\uFFFF]    {this.CharIsLetter()}?
-//    |                               // letters which require multiple UTF-16 code units
-//    [\uD800-\uDBFF] [\uDC00-\uDFFF] {this.CheckIfUtf32Letter()}?
-;
-
-fragment IdentifierChar: StrictIdentifierChar | '$';
-
-fragment StrictIdentifierChar: IdentifierStartChar | [0-9];
-/* Quoted Identifiers
- *
- *   These are divided into four separate tokens, allowing distinction of valid quoted identifiers from invalid quoted
- *   identifiers without sacrificing the ability of the lexer to reliably recover from lexical errors in the input.
- */
-
-QuotedIdentifier: UnterminatedQuotedIdentifier '"';
-// This is a quoted identifier which only contains valid characters but is not terminated
-
-UnterminatedQuotedIdentifier: '"' ('""' | ~ [\u0000"])*;
-// This is a quoted identifier which is terminated but contains a \u0000 character
-
-InvalidQuotedIdentifier: InvalidUnterminatedQuotedIdentifier '"';
-// This is a quoted identifier which is unterminated and contains a \u0000 character
-
-InvalidUnterminatedQuotedIdentifier: '"' ('""' | ~ '"')*;
-/* Unicode Quoted Identifiers
- *
- *   These are divided into four separate tokens, allowing distinction of valid Unicode quoted identifiers from invalid
- *   Unicode quoted identifiers without sacrificing the ability of the lexer to reliably recover from lexical errors in
- *   the input. Note that escape sequences are never checked as part of this determination due to the ability of users
- *   to change the escape character with a UESCAPE clause following the Unicode quoted identifier.
- *
- * TODO: these rules assume "" is still a valid escape sequence within a Unicode quoted identifier.
- */
+QuotedIdentifier: '"' ('""' | ~ [\u0000"])* '"';
 
 UnicodeQuotedIdentifier: 'U' '&' QuotedIdentifier;
-// This is a Unicode quoted identifier which only contains valid characters but is not terminated
 
-UnterminatedUnicodeQuotedIdentifier: 'U' '&' UnterminatedQuotedIdentifier;
-// This is a Unicode quoted identifier which is terminated but contains a \u0000 character
-
-InvalidUnicodeQuotedIdentifier: 'U' '&' InvalidQuotedIdentifier;
-// This is a Unicode quoted identifier which is unterminated and contains a \u0000 character
-
-InvalidUnterminatedUnicodeQuotedIdentifier: 'U' '&' InvalidUnterminatedQuotedIdentifier;
-//
-
-// CONSTANTS (4.1.2)
-
-//
-
-// String Constants (4.1.2.1)
-
-StringConstant: UnterminatedStringConstant '\'';
-
-UnterminatedStringConstant: '\'' ('\'\'' | ~ '\'')*;
-// String Constants with C-style Escapes (4.1.2.2)
+StringConstant: '\'' ('\'\'' | ~ '\'')* '\'';
 
 BeginEscapeStringConstant: 'E' '\'' -> more, pushMode (EscapeStringConstantMode);
-// String Constants with Unicode Escapes (4.1.2.3)
 
-//
-
-//   Note that escape sequences are never checked as part of this token due to the ability of users to change the escape
-
-//   character with a UESCAPE clause following the Unicode string constant.
-
-//
-
-// TODO: these rules assume '' is still a valid escape sequence within a Unicode string constant.
-
-UnicodeEscapeStringConstant: UnterminatedUnicodeEscapeStringConstant '\'';
-
-UnterminatedUnicodeEscapeStringConstant: 'U' '&' UnterminatedStringConstant;
-// Dollar-quoted String Constants (4.1.2.4)
+UnicodeEscapeStringConstant: 'U' '&' '\'' ('\'\'' | ~ '\'')* '\'';
 
 BeginDollarStringConstant: '$' Tag? '$' {this.PushTag();} -> pushMode (DollarQuotedStringMode);
 /* "The tag, if any, of a dollar-quoted string follows the same rules as an
  * unquoted identifier, except that it cannot contain a dollar sign."
  */
 
-fragment Tag: IdentifierStartChar StrictIdentifierChar*;
-// Bit-strings Constants (4.1.2.5)
+fragment Tag: [a-zA-Z_\u007F-\uFFFF] ([a-zA-Z_\u007F-\uFFFF] | [0-9])*;
 
-BinaryStringConstant: UnterminatedBinaryStringConstant '\'';
+BinaryStringConstant: 'B' '\'' [01]* '\'';
 
-UnterminatedBinaryStringConstant: 'B' '\'' [01]*;
-
-InvalidBinaryStringConstant: InvalidUnterminatedBinaryStringConstant '\'';
-
-InvalidUnterminatedBinaryStringConstant: 'B' UnterminatedStringConstant;
-
-HexadecimalStringConstant: UnterminatedHexadecimalStringConstant '\'';
-
-UnterminatedHexadecimalStringConstant: 'X' '\'' [0-9A-F]*;
-
-InvalidHexadecimalStringConstant: InvalidUnterminatedHexadecimalStringConstant '\'';
-
-InvalidUnterminatedHexadecimalStringConstant: 'X' UnterminatedStringConstant;
-// Numeric Constants (4.1.2.6)
+HexadecimalStringConstant: 'X' '\'' [0-9A-F]* '\'';
 
 Integral: Digits;
 
@@ -1318,10 +1229,9 @@ OctalIntegral: '0o' Digits;
 
 HexadecimalIntegral: '0x' Digits;
 
-NumericFail: Digits '..' {this.HandleNumericFail();};
-
 Numeric:
-    Digits '.' Digits? /*? replaced with + to solve problem with DOT_DOT .. but this surely must be rewriten */ (
+    Digits '.' Digits?
+    (
         'E' [+-]? Digits
     )?
     | '.' Digits ('E' [+-]? Digits)?
@@ -1333,20 +1243,10 @@ fragment Digits: [0-9]+;
 PLSQLVARIABLENAME: ':' [A-Z_] [A-Z_0-9$]*;
 
 PLSQLIDENTIFIER: ':"' ('\\' . | '""' | ~ ('"' | '\\'))* '"';
-//
-
-// WHITESPACE (4.1)
-
-//
 
 Whitespace: [ \t]+ -> channel (HIDDEN);
 
 Newline: ('\r' '\n'? | '\n') -> channel (HIDDEN);
-//
-
-// COMMENTS (4.1.5)
-
-//
 
 LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
 
@@ -1354,51 +1254,13 @@ BlockComment:
     ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
 ;
 
-UnterminatedBlockComment:
-    '/*' (
-        '/'* BlockComment
-        | // these characters are not part of special sequences in a block comment
-        ~ [/*]
-        | // handle / or * characters which are not part of /* or */ and do not appear at the end of the file
-        ('/'+ ~ [/*] | '*'+ ~ [/*])
-    )*
-    // Handle the case of / or * characters at the end of the file, or a nested unterminated block comment
-    ('/'+ | '*'+ | '/'* UnterminatedBlockComment)?
-    // Optional assertion to make sure this rule is working as intended
-    {this.UnterminatedBlockCommentDebugAssert();}
-;
-//
-
-// META-COMMANDS
-
-//
-
-// http://www.postgresql.org/docs/9.3/static/app-psql.html
-
 MetaCommand: '\\' -> pushMode(META), more ;
-
-//
-
-// ERROR
-
-//
-
-// Any character which does not match one of the above rules will appear in the token stream as an ErrorCharacter token.
-
-// This ensures the lexer itself will never encounter a syntax error, so all error handling may be performed by the
-
-// parser.
 
 ErrorCharacter: .;
 
 mode EscapeStringConstantMode;
 EscapeStringConstant: EscapeStringText '\'' -> mode (AfterEscapeStringConstantMode);
 
-UnterminatedEscapeStringConstant:
-    EscapeStringText
-    // Handle a final unmatched \ character appearing at the end of the file
-    '\\'? EOF
-;
 
 fragment EscapeStringText options { caseInsensitive = false; }:
     (
@@ -1415,8 +1277,6 @@ fragment EscapeStringText options { caseInsensitive = false; }:
         | ~ ['\\]
     )*
 ;
-
-InvalidEscapeStringConstant: InvalidEscapeStringText '\'' -> mode (AfterEscapeStringConstantMode);
 
 InvalidUnterminatedEscapeStringConstant:
     InvalidEscapeStringText
