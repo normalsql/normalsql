@@ -33,12 +33,7 @@ options {
 
 @parser::header { import static normalsql.parse.Reserved.*; }
 
-// convenience for debugging
-aaa1 : script ;
-
-parse : script ;
-
-script : statement? ( ';' statement? )* EOF ;
+parse : statement? ( ';' statement? )* EOF ;
 
 statement
   : explain?
