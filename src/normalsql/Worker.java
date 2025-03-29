@@ -94,7 +94,7 @@ public class
 		 var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
 		var parser = new NormalSQLParser( tokens );
-		var script = parser.script();
+		var script = parser.parse();
 
 		var visitor = new KnockoutVisitor();
 		visitor.parser = parser;

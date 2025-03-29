@@ -184,14 +184,14 @@ SQLiteWholeFile
 	{
 //		var span = sql.substring( startIndex, stopIndex );
 //		fails.add( "ambig " + startIndex + ":" + stopIndex + " token " + recognizer.getCurrentToken() + "   " + span );
-		if( !sql.equals( last/**/ ))
-		{
-			ambig();
-		fails.add( "\nambig" );
-			fails.add( sourceFile.toString() );
-//			fails.add( sql );
-			last = sql;
-		}
+//		if( !sql.equals( last/**/ ))
+//		{
+//			ambig();
+//		fails.add( "\nambig" );
+//			fails.add( sourceFile.toString() );
+////			fails.add( sql );
+//			last = sql;
+//		}
 	}
 
 	@Override

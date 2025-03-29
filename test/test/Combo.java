@@ -89,7 +89,7 @@ public class Combo
 //
 //		} );
 
-		var expr = parser.aaa1();
+		var expr = parser.parse();
 //		if( errors.isEmpty() ) return true;
 
 //		var visitor = new KnockoutVisitor();

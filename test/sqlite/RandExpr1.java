@@ -179,6 +179,6 @@ public class RandExpr1 {
 		} );
 
 		parser.setProfile( true );
-		var result = parser.script();
+		var result = parser.parse();
 	}
 }

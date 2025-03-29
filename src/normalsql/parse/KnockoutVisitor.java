@@ -32,13 +32,13 @@ extends
 	public Statement root;
 
 	@Override
-	public Void visitScript( ScriptContext context )
+	public Void visitParse( ParseContext context )
 	{
 		root = new Statement();
 		statementStack.add( root );
 		// TODO create contexts stack, so rules can match on parent too
 
-		return super.visitScript( context );
+		return super.visitParse( context );
 	}
 
 	@Override

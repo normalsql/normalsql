@@ -52,7 +52,7 @@ public void reportAmbiguity( Parser parser,
 	}
 
 		});
-	    var script = parser.script();
+	    var script = parser.parse();
 //	    var script = parser.item();
 //	    var script = parser.stuff();
 		System.out.println( toStringTree( script, Arrays.asList(parser.getRuleNames() )));
