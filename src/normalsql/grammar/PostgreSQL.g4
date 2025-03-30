@@ -2996,11 +2996,11 @@ mathop
     | '>='
     | '<>'
     | '&'
-    | '&&'
-    | '@@'
-    | '==='
-    | '===='
-| '!=='
+//    | '&&'
+//    | '@@'
+//    | '==='
+//    | '===='
+//| '!=='
     ;
 
 qual_op
@@ -3014,11 +3014,11 @@ qual_op
     | '!='
     | '~'
     | '@'
-    | '@@'
-    | '@>'
-    | '<@'
-    | '|/'
-    | '||/'
+//    | '@@'
+//    | '@>'
+//    | '<@'
+//    | '|/'
+//    | '||/'
     | '*<'
     | '*<='
     | '*<>'
@@ -3026,14 +3026,14 @@ qual_op
     | '*>'
     | '*='
     | '&'
-    | '&&'
-    | '&<'
-    | '&>'
+//    | '&&'
+//    | '&<'
+//    | '&>'
     | '?'
     | '!!'
     | '|'
     | '-|-'
-    | '==='
+//    | '==='
 
     | 'OPERATOR' '(' any_operator ')'
     ;
@@ -4355,32 +4355,18 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-
-Dollar: '$';
-
-TYPECAST: '::';
+snuff : stinky* ;
+stinky : Operator ;
 
 
-PARAM: '$' ([0-9])+;
-//PARAM: [:$] ([0-9])+;
-
+//  : '~' .*? '~'
 Operator
-  : '~' .*? '~'
+  : [~!@%^&|`?#] [*<>=~!@%^&|`?#/+-]*
+//  : [~]+ // [*<>=~!@%^&|`?#]* [-+]?
+  | [*<>=+] [*<>=~!@%^&|`?#/+-]* [*<>=~!@%^&|`?#]
   ;
-// this rule does not allow + or - at the end of a multi-character operator
-//Operator:
-//    (
-//        (
-//            OperatorCharacter
-//            | ('+' | '-' {this.CheckLaMinus()}? )+ (OperatorCharacter | '/' {this.CheckLaStar()}? )
-//            | '/'        {this.CheckLaStar()}?
-//        )+
-//        | // special handling for the single-character operators + and -
-//        [+-]
-//    )
-//    //TODO somehow rewrite this part without using Actions
-//    {this.HandleLessLessGreaterGreater();}
-//;
+
+
 
 /* This rule handles operators which end with + or -, and sets the token type to Operator. It is comprised of four
  * parts, in order:
@@ -4411,6 +4397,13 @@ Operator
 //
 //fragment OperatorCharacterAllowPlusMinusAtEnd: [~!@%^&|`?#];
 
+ PARAM: '$' ([0-9])+;
+  //PARAM: [:$] ([0-9])+;
+
+
+//  Dollar: '$';
+
+//  TYPECAST: '::';
 
 
 Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
