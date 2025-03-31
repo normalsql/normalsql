@@ -1578,8 +1578,7 @@ oper_argtypes
     ;
 
 any_operator
-    : ( name '.' )* ( Operator  )
-//    : ( name '.' )* ( Operator | mathop )
+    : ( name '.' )* (Operator | mathop)
     ;
 
 operator_with_argtypes_list
@@ -2995,7 +2994,7 @@ mathop
     | '<='
     | '>='
     | '<>'
-    | '&'
+//    | '&'
 //    | '&&'
 //    | '@@'
 //    | '==='
@@ -3005,34 +3004,34 @@ mathop
 
 qual_op
     : Operator
-    | '||'
-    | '->'
-    | '->>'
-    | '#-'
-    | '#>'
-    | '#>>'
-    | '!='
-    | '~'
+//    | '||'
+//    | '->'
+//    | '->>'
+//    | '#-'
+//    | '#>'
+//    | '#>>'
+//    | '!='
+//    | '~'
 //    | '@'
 //    | '@@'
 //    | '@>'
 //    | '<@'
 //    | '|/'
 //    | '||/'
-    | '*<'
-    | '*<='
-    | '*<>'
-    | '*>='
-    | '*>'
-    | '*='
-    | '&'
+//    | '*<'
+//    | '*<='
+//    | '*<>'
+//    | '*>='
+//    | '*>'
+//    | '*='
+//    | '&'
 //    | '&&'
 //    | '&<'
 //    | '&>'
-    | '?'
-    | '!!'
-    | '|'
-    | '-|-'
+//    | '?'
+//    | '!!'
+//    | '|'
+//    | '-|-'
 //    | '==='
 
     | 'OPERATOR' '(' any_operator ')'
@@ -4355,43 +4354,33 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-snuff : stinky* ;
-stinky : Operator ;
+noise : Operator* ;
+
+//Dollar: '$';
+//
+//TYPECAST: '::';
 
 
-//  : '~' .*? '~'
+PARAM: '$' ([0-9])+;
+//PARAM: [:$] ([0-9])+;
+
+LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
+
 Operator
-//  : [@] [*<>=~!@%^&|`?#/+-]*
-  : '@+@'
-  | '@-@'
+  :
+   [~!@%^&|`?#] [*<>=~!@%^&|`?#+-]*
+  |
+  [*<>=+] [*<>=~!@%^&|`?#+-]* [*<>=~!@%^&|`?#]
+  | '-|-' // range type thing
+  | '->' | '->>' // JSON things (?)
 
-//  : [~!@%^&|`?#] [*<>=~!@%^&|`?#/+-]*
-//  : [~]+ // [*<>=~!@%^&|`?#]* [-+]?
-//  | [*<>=+] [*<>=~!@%^&|`?#/+-]* [*<>=~!@%^&|`?#]
   ;
 
 
+//  : '~' .*? '~'
+//  ;
 
-/* This rule handles operators which end with + or -, and sets the token type to Operator. It is comprised of four
- * parts, in order:
- *
- *   1. 'A' prefix, which does not contain a character from the required set which allows + or - to appear at the end of
- *      the operator.
- *   2. 'A' character from the required set which allows + or - to appear at the end of the operator.
- *   3. An optional sub-token which takes the form of an operator which does not include a + or - at the end of the
- *      sub-token.
- *   4. 'A' suffix sequence of + and - characters.
- */
 
-//OperatorEndingWithPlusMinus:
-//    (OperatorCharacterNotAllowPlusMinusAtEnd | '-' {this.CheckLaMinus()}? | '/' {this.CheckLaStar()}? )* OperatorCharacterAllowPlusMinusAtEnd Operator? (
-//        '+'
-//        | '-' {this.CheckLaMinus()}?
-//    )+        -> type (Operator)
-//;
-// Each of the following fragment rules omits the +, -, and / characters, which must always be handled in a special way
-
-// by the operator rules above.
 
 //fragment OperatorCharacter: [*<>=~!@%^&|`?#];
 //// these are the operator characters that don't count towards one ending with + or -
@@ -4401,13 +4390,6 @@ Operator
 //
 //fragment OperatorCharacterAllowPlusMinusAtEnd: [~!@%^&|`?#];
 
- PARAM: '$' ([0-9])+;
-  //PARAM: [:$] ([0-9])+;
-
-
-//  Dollar: '$';
-
-//  TYPECAST: '::';
 
 
 Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
@@ -4464,7 +4446,6 @@ Whitespace: [ \t]+ -> channel (HIDDEN);
 
 Newline: ('\r' '\n'? | '\n') -> channel (HIDDEN);
 
-LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
 
 BlockComment:
     ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
@@ -4474,65 +4455,6 @@ BlockComment:
 
 ErrorCharacter: .;
 
-//mode EscapeStringConstantMode;
-//EscapeStringConstant: EscapeStringText '\'' -> mode (AfterEscapeStringConstantMode);
-//
-//
-//fragment EscapeStringText options { caseInsensitive = false; }:
-//    (
-//        '\'\''
-//        | '\\' (
-//            // two-digit hex escapes are still valid when treated as single-digit escapes
-//            'x' [0-9a-fA-F]
-//            | 'u' [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
-//            | 'U' [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
-//            | // Any character other than the Unicode escapes can follow a backslash. Some have special meaning,
-//            // but that doesn't affect the syntax.
-//            ~ [xuU]
-//        )
-//        | ~ ['\\]
-//    )*
-//;
-//
-//InvalidUnterminatedEscapeStringConstant:
-//    InvalidEscapeStringText
-//    // Handle a final unmatched \ character appearing at the end of the file
-//    '\\'? 'EOF'
-//;
-//
-//fragment InvalidEscapeStringText: ('\'\'' | '\\' . | ~ ['\\])*;
-
-//mode AfterEscapeStringConstantMode;
-//AfterEscapeStringConstantMode_Whitespace: Whitespace -> type (Whitespace), channel (HIDDEN);
-//
-//AfterEscapeStringConstantMode_Newline:
-//    Newline -> type (Newline), channel (HIDDEN), mode (AfterEscapeStringConstantWithNewlineMode)
-//;
-
-//mode AfterEscapeStringConstantWithNewlineMode;
-//AfterEscapeStringConstantWithNewlineMode_Whitespace:
-//    Whitespace -> type (Whitespace), channel (HIDDEN)
-//;
-//
-//AfterEscapeStringConstantWithNewlineMode_Newline: Newline -> type (Newline), channel (HIDDEN);
-//
-//AfterEscapeStringConstantWithNewlineMode_Continued:
-//    '\'' -> more, mode (EscapeStringConstantMode)
-//;
-
-//mode DollarQuotedStringMode;
-//DollarText:
-//    ~ '$'+
-//    //| '$'([0-9])+
-//    | // this alternative improves the efficiency of handling $ characters within a dollar-quoted string which are
-//
-//    // not part of the ending tag.
-//    '$' ~ '$'*
-//;
-
-//// NB: Next rule on two lines in order to make transformGrammar.py easy.
-//EndDollarStringConstant: ('$' Tag? '$') {this.IsTag()}?
-//    {this.PopTag();} -> popMode;
 
 META : '\\' ~[;\r\n\\"] .*? ('\\\\' | [\r\n]+) -> skip // type(SEMI)
 ;

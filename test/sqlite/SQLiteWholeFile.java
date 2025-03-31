@@ -98,7 +98,7 @@ SQLiteWholeFile
 		{
 			for( Path file : files )
 			{
-				System.out.println( file );
+//				System.out.println( file );
 
 				var sql = Files.readString( file );
 				int nth = 0;
@@ -152,7 +152,7 @@ SQLiteWholeFile
 //		var parser = new SQLiteParser( tokens );
 //		var parser = new NormalSQLParser( tokens );
 
-		parser.removeErrorListeners();
+//		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
@@ -167,9 +167,9 @@ SQLiteWholeFile
 				{
 					error();
 					fails.add( "\nerror" );
-//					fails.add( msg );
+					fails.add( msg );
+					fails.add( sql );
 					fails.add( sourceFile.toString() );
-//					fails.add( sql );
 					last = sql;
 				}
 			}
