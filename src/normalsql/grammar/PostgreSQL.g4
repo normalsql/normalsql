@@ -26,7 +26,7 @@ options {
 }
 
 parse
-  : statement? ( ';' statement? )* EOF
+  : statement? ( SEMI statement? )* EOF
   ;
 
 statement
@@ -212,12 +212,14 @@ add_drop
     ;
 
 createschemastmt
-    : 'CREATE' 'SCHEMA' ifNotExists? ( name? 'AUTHORIZATION' rolespec | name ) (createstmt
-    | indexstmt
-    | createseqstmt
-    | createtrigstmt
-    | grantstmt
-    | viewstmt)*
+    : 'CREATE' 'SCHEMA' ifNotExists? ( name? 'AUTHORIZATION' rolespec | name )
+      ( createstmt
+      | indexstmt
+      | createseqstmt
+      | createtrigstmt
+      | grantstmt
+      | viewstmt
+      )*
     ;
 
 variablesetstmt
@@ -230,22 +232,18 @@ set_rest
     | set_rest_more
     ;
 
-generic_set
-    : name ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
-    ;
-
 set_rest_more
-    : generic_set
-    | name 'FROM' 'CURRENT'
-    | 'TIME' 'ZONE' zone_value
-    | 'CATALOG' string
-    | 'SCHEMA' string
-    | 'NAMES' encoding_?
-    | 'ROLE' nonreservedword_or_sconst
-    | 'SESSION' 'AUTHORIZATION' nonreservedword_or_sconst
-    | 'XML' 'OPTION' document_or_content
-    | 'TRANSACTION' 'SNAPSHOT' string
-    ;
+  : qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
+  | name 'FROM' 'CURRENT'
+  | 'TIME' 'ZONE' zone_value
+  | 'CATALOG' string
+  | 'SCHEMA' string
+  | 'NAMES' encoding_?
+  | 'ROLE' nonreservedword_or_sconst
+  | 'SESSION' 'AUTHORIZATION' nonreservedword_or_sconst
+  | 'XML' 'OPTION' document_or_content
+  | 'TRANSACTION' 'SNAPSHOT' string
+  ;
 
 
 var_list
@@ -273,8 +271,8 @@ boolean_or_string_
 zone_value
     : string
     | identifier
-    | constinterval string interval_?
-    | constinterval '(' integer ')' string
+    | 'INTERVAL' string interval_?
+    | 'INTERVAL' '(' integer ')' string
     | numericonly
     | 'DEFAULT'
     | 'LOCAL'
@@ -291,12 +289,14 @@ nonreservedword_or_sconst
     ;
 
 variableresetstmt
-    : 'RESET' (name
+  : 'RESET'
+    ( name
     | 'ALL'
     | 'TIME' 'ZONE'
     | 'TRANSACTION' 'ISOLATION' 'LEVEL'
-    | 'SESSION' 'AUTHORIZATION')
-    ;
+    | 'SESSION' 'AUTHORIZATION'
+    )
+  ;
 
 setresetclause
     : 'SET' set_rest
@@ -304,7 +304,8 @@ setresetclause
     ;
 
 variableshowstmt
-    : 'SHOW' ( name | 'TIME' 'ZONE' | 'TRANSACTION' 'ISOLATION' 'LEVEL' | 'SESSION' 'AUTHORIZATION' | 'ALL' )
+    : 'SHOW'
+    ( name | 'TIME' 'ZONE' | 'TRANSACTION' 'ISOLATION' 'LEVEL' | 'SESSION' 'AUTHORIZATION' | 'ALL' )
     ;
 
 constraintssetstmt
@@ -356,7 +357,7 @@ alter_table_cmd
     | 'ALTER' column_? name set_data_? 'TYPE' typename collate_clause_? alter_using?
     | 'ALTER' column_? name alter_generic_options
     | 'ADD' tableconstraint
-    | 'ALTER' 'CONSTRAINT' name constraintattributespec
+    | 'ALTER' 'CONSTRAINT' name constraintattributespec*
     | 'VALIDATE' 'CONSTRAINT' name
     | 'DROP' 'CONSTRAINT' 'IF' 'EXISTS' name drop_behavior_?
     | 'DROP' 'CONSTRAINT' name drop_behavior_?
@@ -627,11 +628,11 @@ tableconstraint
     ;
 
 constraintelem
-    : 'CHECK' '(' a_expr ')' constraintattributespec
-    | 'UNIQUE' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec | existingindex constraintattributespec )
-    | 'PRIMARY' 'KEY' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec | existingindex constraintattributespec )
-    | 'EXCLUDE' (using)? '(' exclusionconstraintelem ( ',' exclusionconstraintelem )* ')' c_include_? definition_? optconstablespace? ('WHERE' '(' a_expr ')')? constraintattributespec
-    | 'FOREIGN' 'KEY' '(' names ')' 'REFERENCES' qname (name_list_)? key_match? key_actions? constraintattributespec
+    : 'CHECK' '(' a_expr ')' constraintattributespec*
+    | 'UNIQUE' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec* | existingindex constraintattributespec* )
+    | 'PRIMARY' 'KEY' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec* | existingindex constraintattributespec* )
+    | 'EXCLUDE' (using)? '(' exclusionconstraintelem ( ',' exclusionconstraintelem )* ')' c_include_? definition_? optconstablespace? ('WHERE' '(' a_expr ')')? constraintattributespec*
+    | 'FOREIGN' 'KEY' '(' names ')' 'REFERENCES' qname (name_list_)? key_match? key_actions? constraintattributespec*
     ;
 
 c_include_
@@ -895,7 +896,8 @@ createforeigntablestmt
     ;
 
 importforeignschemastmt
-    : 'IMPORT' 'FOREIGN' 'SCHEMA' name ( 'LIMIT' 'TO' | 'EXCEPT' ) '(' relation_expr_list ')'? 'FROM' 'SERVER' name 'INTO' name create_generic_options?
+    : 'IMPORT' 'FOREIGN' 'SCHEMA' name  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' relation_expr_list ')' )?
+      'FROM' 'SERVER' name 'INTO' name create_generic_options?
     ;
 
 createusermappingstmt
@@ -941,14 +943,16 @@ createamstmt
     ;
 
 createtrigstmt
-    : 'CREATE'            'TRIGGER' name triggeractiontime triggerevents 'ON' qname ('REFERENCING' triggertransition)* ('FOR' ('EACH')? triggerfortype)?                      triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
-    | 'CREATE' 'CONSTRAINT' 'TRIGGER' name 'AFTER' triggerevents             'ON' qname optconstrfromtable? constraintattributespec 'FOR' 'EACH' 'ROW' triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
-    ;
+    : 'CREATE' 'TRIGGER' name
+      ('BEFORE' | 'AFTER' | 'INSTEAD' 'OF') triggerevents 'ON' qname
+      ('REFERENCING' triggertransition+ )?
+      ('FOR' ('EACH')? ('ROW' | 'STATEMENT'))?
+      triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
 
-triggeractiontime
-    : 'BEFORE'
-    | 'AFTER'
-    | 'INSTEAD' 'OF'
+    | 'CREATE' 'CONSTRAINT' 'TRIGGER' name
+      'AFTER' triggerevents 'ON' qname
+      ('FROM' qname)? constraintattributespec* 'FOR' 'EACH' 'ROW'
+      triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
     ;
 
 triggerevents
@@ -965,11 +969,6 @@ triggeroneevent
 
 triggertransition
     : ('NEW' | 'OLD') ('TABLE' | 'ROW') 'AS'? name
-    ;
-
-triggerfortype
-    : 'ROW'
-    | 'STATEMENT'
     ;
 
 triggerwhen
@@ -992,30 +991,17 @@ triggerfuncarg
     | colLabel
     ;
 
-optconstrfromtable
-    : 'FROM' qname
-    ;
-
 constraintattributespec
-    : constraintattributeElem*
-    ;
-
-constraintattributeElem
-    : 'NOT' 'DEFERRABLE'
-    | 'DEFERRABLE'
-    | 'INITIALLY' 'IMMEDIATE'
-    | 'INITIALLY' 'DEFERRED'
+    : 'NOT'? 'DEFERRABLE'
+    | 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' )?
     | 'NOT' 'VALID'
     | 'NO' 'INHERIT'
     ;
 
 createeventtrigstmt
-    : 'CREATE' 'EVENT' 'TRIGGER' name 'ON' colLabel 'EXECUTE' function_or_procedure func_name '(' ')'
-    | 'CREATE' 'EVENT' 'TRIGGER' name 'ON' colLabel 'WHEN' event_trigger_when_list 'EXECUTE' function_or_procedure func_name '(' ')'
-    ;
-
-event_trigger_when_list
-    : event_trigger_when_item ( 'AND' event_trigger_when_item )*
+    : 'CREATE' 'EVENT' 'TRIGGER' name 'ON' colLabel
+      ( 'WHEN' event_trigger_when_item ( 'AND' event_trigger_when_item )* )?
+      'EXECUTE' function_or_procedure func_name '(' ')'
     ;
 
 event_trigger_when_item
@@ -1032,7 +1018,7 @@ enable_trigger
     ;
 
 createassertionstmt
-    : 'CREATE' 'ASSERTION' qname 'CHECK' '(' a_expr ')' constraintattributespec
+    : 'CREATE' 'ASSERTION' qname 'CHECK' '(' a_expr ')' constraintattributespec*
     ;
 
 definestmt
@@ -1080,7 +1066,7 @@ old_aggr_elem
     ;
 
 alterenumstmt
-    : 'ALTER' 'TYPE' qname 'ADD' 'VALUE' (ifNotExists)? string (( 'BEFORE' | 'AFTER' ) string )?
+    : 'ALTER' 'TYPE' qname 'ADD' 'VALUE' ifNotExists? string (( 'BEFORE' | 'AFTER' ) string )?
     | 'ALTER' 'TYPE' qname 'RENAME' 'VALUE' string 'TO' string
     ;
 
@@ -1093,8 +1079,8 @@ opclass_item_list
     ;
 
 opclass_item
-    : 'OPERATOR' integer any_operator opclass_purpose? ('RECHECK')?
-    | 'OPERATOR' integer operator_with_argtypes opclass_purpose? ('RECHECK')?
+    : 'OPERATOR' integer any_operator opclass_purpose? 'RECHECK'?
+    | 'OPERATOR' integer operator_with_argtypes opclass_purpose? 'RECHECK'?
     | 'FUNCTION' integer function_with_argtypes
     | 'FUNCTION' integer '(' type_list ')' function_with_argtypes
     | 'STORAGE' typename
@@ -1889,7 +1875,7 @@ ruleactionlist
     ;
 
 ruleactionmulti
-    : (ruleactionstmt)? ( ';' (ruleactionstmt)? )*
+    : (ruleactionstmt)? ( SEMI (ruleactionstmt)? )*
     ;
 
 ruleactionstmt
@@ -1997,7 +1983,7 @@ altercollationstmt
     ;
 
 altersystemstmt
-    : 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) generic_set
+    : 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
     ;
 
 createdomainstmt
@@ -2489,8 +2475,8 @@ simpletypename
     | bit
     | character
     | constdatetime
-    | constinterval ( interval_? | '(' integer ')' )
-    | jsonType
+    | 'INTERVAL' ( interval_? | '(' integer ')' )
+    | 'JSON'
     ;
 
 consttypename
@@ -2498,7 +2484,7 @@ consttypename
     | constbit
     | constcharacter
     | constdatetime
-    | jsonType
+    | 'JSON'
     ;
 
 generictype
@@ -2526,7 +2512,6 @@ numeric
 
 float_
     : '(' integer ')'
-
     ;
 
 //todo: merge alts
@@ -2542,11 +2527,11 @@ constbit
     ;
 
 bitwithlength
-    : 'BIT' varying_? '(' expr_list ')'
+    : 'BIT' 'VARYING'? '(' expr_list ')'
     ;
 
 bitwithoutlength
-    : 'BIT' varying_?
+    : 'BIT' 'VARYING'?
     ;
 
 character
@@ -2558,30 +2543,13 @@ constcharacter
     ;
 
 character_c
-    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) varying_?
+    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
     | 'VARCHAR'
-    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) varying_?
-    ;
-
-varying_
-    : 'VARYING'
-
+    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
     ;
 
 constdatetime
-    : ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? timezone_?
-    ;
-
-constinterval
-    : 'INTERVAL'
-    ;
-
-//TODO with_la was used
-
-timezone_
-    : 'WITH' 'TIME' 'ZONE'
-    | 'WITHOUT' 'TIME' 'ZONE'
-
+    : ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )?
     ;
 
 interval_
@@ -2595,20 +2563,10 @@ interval_
     | 'DAY' 'TO' ( 'HOUR' | 'MINUTE' | interval_second )
     | 'HOUR' 'TO' ( 'MINUTE' | interval_second )
     | 'MINUTE' 'TO' interval_second
-
     ;
 
 interval_second
     : 'SECOND' ( '(' integer ')' )?
-    ;
-
-jsonType
-    : 'JSON'
-    ;
-
-escape_
-    : 'ESCAPE' a_expr
-
     ;
 
 //precendence accroding to Table 4.2. Operator Precedence ( highest to lowest)
@@ -2678,35 +2636,21 @@ a_expr_or
     : a_expr_and ( 'OR' a_expr_and )*
     ;
 
-/*16*/
-
 a_expr_and
     : a_expr_between ( 'AND' a_expr_between )*
     ;
-
-/*21*/
 
 a_expr_between
     : a_expr_in ( 'NOT'? 'BETWEEN' 'SYMMETRIC'? a_expr_in 'AND' a_expr_in )?
     ;
 
-/*20*/
-
 a_expr_in
     : a_expr_unary_not ( 'NOT'? 'IN' in_expr )?
     ;
 
-/*15*/
-
 a_expr_unary_not
     : 'NOT'? a_expr_isnull
     ;
-
-/*14*/
-
-/*moved to c_expr*/
-
-/*13*/
 
 a_expr_isnull
     : a_expr_is_not ( 'ISNULL' | 'NOTNULL' )?
@@ -2735,7 +2679,7 @@ a_expr_compare
     ;
 
 a_expr_like
-    : a_expr_qual_op ( 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) a_expr_qual_op escape_? )?
+    : a_expr_qual_op ( 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) a_expr_qual_op ('ESCAPE' a_expr)? )?
     ;
 
 a_expr_qual_op
@@ -2802,7 +2746,7 @@ c_expr
     | 'GROUPING' '(' expr_list ')'                        # c_expr_expr
     | 'UNIQUE' select_with_parens                                 # c_expr_expr
     | qname                                                        # c_expr_expr
-    | aexprconst                                                       # c_expr_expr
+    | literal                                                       # c_expr_expr
     | '(' a_expr_in_parens = a_expr ')' indirection_el* # c_expr_expr
     | case_expr                                                        # c_expr_case
     | func_expr                                                        # c_expr_expr
@@ -3247,6 +3191,7 @@ qnames
     ;
 
 qname
+//    : name ( '.' '*' ) // indirection_el*
     : name indirection_el*
     ;
 
@@ -3264,7 +3209,7 @@ func_name
     | name indirection_el+
     ;
 
-aexprconst
+literal
     : integer
     | Numeric
     | string
@@ -3272,7 +3217,7 @@ aexprconst
     | HexadecimalStringConstant
     | func_name ( string | '(' func_arg_list orderBy? ')' string )
     | consttypename string
-    | constinterval ( string interval_? | '(' integer ')' string )
+    | 'INTERVAL' ( string interval_? | '(' integer ')' string )
     | 'TRUE'
     | 'FALSE'
     | 'NULL'
@@ -3286,35 +3231,30 @@ integer
     ;
 
 string
-    : string_ ( 'UESCAPE' string_ )?
-    ;
+  : string_ ( 'UESCAPE' string_ )? ;
 
 string_
-    : StringConstant
-    | UnicodeEscapeStringConstant
-//    | BeginDollarStringConstant DollarText* EndDollarStringConstant
-//    | EscapeStringConstant
-    ;
+  : StringConstant
+  | UnicodeEscapeStringConstant
+  ;
 
 signedInteger
-    : ('+' | '-')? integer
-    ;
+  : ('+' | '-')? integer ;
 
 rolespec
-    : nonreservedword
-    | 'CURRENT_USER'
-    | 'SESSION_USER'
-    ;
+  : nonreservedword
+  | 'CURRENT_USER'
+  | 'SESSION_USER'
+  ;
 
 role_list
-    : rolespec ( ',' rolespec )*
-    ;
+  : rolespec ( ',' rolespec )* ;
 
 name
-    : identifier
-    | unreserved_keyword
-    | col_name_keyword
-    ;
+  : identifier
+  | unreserved_keyword
+  | col_name_keyword
+  ;
 
 type_function_name
     : identifier
@@ -3335,7 +3275,6 @@ colLabel
     | col_name_keyword
     | type_func_name_keyword
     | reserved_keyword
-    | 'EXIT' //NB: not in gram.y official source.
     ;
 
 /*
@@ -4354,43 +4293,20 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-noise : Operator* ;
-
-//Dollar: '$';
-//
-//TYPECAST: '::';
-
+noise : StringConstant* ;
 
 PARAM: '$' ([0-9])+;
 //PARAM: [:$] ([0-9])+;
 
-LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
 
+
+// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+// FIXME discern comments /* and -- from operators
+// FIXME disallow '+' ending (per rules)
 Operator
-  :
-   [~!@%^&|`?#] [*<>=~!@%^&|`?#+-]*
-  |
-  [*<>=+] [*<>=~!@%^&|`?#+-]* [*<>=~!@%^&|`?#]
-  | '-|-' // range type thing
-  | '->' | '->>' // JSON things (?)
-
+//  : ( [+-/<>=~!@#%^&|`?] | '*' )* ( [/<>=~!@#%^&|`?] | '*' )
+  : ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [/<>=~!@#%^&|`?] | '*' )
   ;
-
-
-//  : '~' .*? '~'
-//  ;
-
-
-
-//fragment OperatorCharacter: [*<>=~!@%^&|`?#];
-//// these are the operator characters that don't count towards one ending with + or -
-//
-//fragment OperatorCharacterNotAllowPlusMinusAtEnd: [*<>=+];
-//// an operator may end with + or - if it contains one of these characters
-//
-//fragment OperatorCharacterAllowPlusMinusAtEnd: [~!@%^&|`?#];
-
-
 
 Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
 
@@ -4400,20 +4316,16 @@ UnicodeQuotedIdentifier: 'U' '&' QuotedIdentifier;
 
 StringConstant
   : '\'' ('\'\'' | ~ '\'')* '\''
-      // Postgres
-      | '$$' .*? '$$'
+  // FIXME nested dollar quoted strings
+  | TAG .*? TAG
   ;
 
-//BeginEscapeStringConstant: 'E' '\'' -> more, pushMode (EscapeStringConstantMode);
+fragment TAG
+  : '$' ( [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]* )? '$' ;
 
-UnicodeEscapeStringConstant: 'U' '&' '\'' ('\'\'' | ~ '\'')* '\'';
-
-//BeginDollarStringConstant: '$' Tag? '$' {this.PushTag();} -> pushMode (DollarQuotedStringMode);
-///* "The tag, if any, of a dollar-quoted string follows the same rules as an
-// * unquoted identifier, except that it cannot contain a dollar sign."
-// */
-
-//fragment Tag: [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]*;
+UnicodeEscapeStringConstant
+  : 'U' '&' '\'' ('\'\'' | ~ '\'')* '\''
+  | 'E' '\'' ('\\\'' | ~ '\'')* '\'';
 
 BinaryStringConstant: 'B' '\'' [01]* '\'';
 
@@ -4436,25 +4348,34 @@ Numeric:
     | Digits 'E' [+-]? Digits
 ;
 
-fragment Digits: [0-9]+;
 
 PLSQLVARIABLENAME: ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
 
 PLSQLIDENTIFIER: ':"' ('\\' . | '""' | ~ ('"' | '\\'))* '"';
 
+
+LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
+
+
+
+BlockComment
+  : ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
+;
+
+SEMI : ';' ;
+
+META
+//  : '\\' ~[;\r\n\\"] .*? ( ';' | '\\\\' | [\r\n]+ )? -> type( SEMI )
+  : '\\' ~[\r\n\\]* -> type( SEMI )
+  ;
+
+
+
 Whitespace: [ \t]+ -> channel (HIDDEN);
 
-Newline: ('\r' '\n'? | '\n') -> channel (HIDDEN);
+Newline
+  : ('\r' '\n'? | '\n') -> channel (HIDDEN) ;
 
+UNKNOWN : . ;
 
-BlockComment:
-    ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
-;
-
-//MetaCommand: '\\' -> pushMode(META), more ;
-
-ErrorCharacter: .;
-
-
-META : '\\' ~[;\r\n\\"] .*? ('\\\\' | [\r\n]+) -> skip // type(SEMI)
-;
+fragment Digits: [0-9]+;

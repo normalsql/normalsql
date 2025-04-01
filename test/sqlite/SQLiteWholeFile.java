@@ -11,9 +11,11 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 
+import java.io.File;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 
 public class
@@ -64,7 +66,7 @@ SQLiteWholeFile
 //		first = "/Users/jasonosgood/Learn";
 		Path sourceRoot = Paths.get(first);
 
-		ArrayList<Path> files = new ArrayList<>();
+		ArrayList<String> names = new ArrayList<>();
 		Files.walkFileTree( sourceRoot, new SimpleFileVisitor<>()
 			{
 				@Override
@@ -77,7 +79,9 @@ SQLiteWholeFile
 					String extension = ".sql";
 					if( sourceFileName.toLowerCase().endsWith( extension ) )
 					{
-						files.add( sourceFile );
+						var full = sourceFile.toString();
+						names.add( full );
+//						names.add( sourceFileName );
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -90,20 +94,22 @@ SQLiteWholeFile
 			}
 			);
 
-		System.out.printf( "files found %d\n", files.size() );
+		System.out.printf( "files found %d\n", names.size() );
 
 		ArrayList<Work> workList = new ArrayList<>();
+		names.sort( null );
 
 		try
 		{
-			for( Path file : files )
+			for( String name : names )
 			{
 //				System.out.println( file );
-
-				var sql = Files.readString( file );
+				var file = new File(  name );
+				Path path = file.toPath();
+				var sql = Files.readString( path );
 				int nth = 0;
 				nth++;
-				Work w = new Work( file, sql, nth );
+				Work w = new Work( path, sql, nth );
 				workList.add( w );
 				SQLiteWholeFile.count();
 			}
@@ -129,7 +135,7 @@ SQLiteWholeFile
 		for( String fail : fails )
 		{
 			System.out.println( fail );
-			System.out.println( );
+//			System.out.println( );
 		}
 
 		System.out.println( "statements found: " + count );
@@ -152,7 +158,7 @@ SQLiteWholeFile
 //		var parser = new SQLiteParser( tokens );
 //		var parser = new NormalSQLParser( tokens );
 
-//		parser.removeErrorListeners();
+		parser.removeErrorListeners();
 		// TODO catch all the errors
 		parser.addErrorListener( new BaseErrorListener() {
 			@Override
@@ -170,6 +176,7 @@ SQLiteWholeFile
 					fails.add( msg );
 					fails.add( sql );
 					fails.add( sourceFile.toString() );
+//					fails.add( sql );
 					last = sql;
 				}
 			}

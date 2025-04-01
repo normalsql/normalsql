@@ -1116,14 +1116,3 @@ BLOCK_COMMENT
   : '/*' ( BLOCK_COMMENT | . )*? '*/' -> channel( HIDDEN ) ;
 
 OTHER : . ;
-
-// TODO BOZO this crude OPERATOR token accepts way more than spec'd
-
-// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
-//OPERATOR
-////    : ( '+' | '-' | [*/<>=~!@#%^&|`?] )+
-////    : ( '+' | '-' | [*/<>=~!@#%^&|`] )+
-//    :
-//     { operatorEnabled }?
-//    [*/<>=!@#%^&|`]+
-//    ;
