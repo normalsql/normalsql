@@ -94,13 +94,13 @@ SQLiteWholeFile
 			}
 			);
 
+		ArrayList<Work> workList = new ArrayList<>();
 		System.out.printf( "files found %d\n", names.size() );
 
-		ArrayList<Work> workList = new ArrayList<>();
-		names.sort( null );
 
 		try
 		{
+			names.sort( null );
 			for( String name : names )
 			{
 //				System.out.println( file );
@@ -172,9 +172,9 @@ SQLiteWholeFile
 				if( !sql.equals( last ))
 				{
 					error();
-					fails.add( "\nerror" );
+//					fails.add( "\nerror" );
 					fails.add( msg );
-					fails.add( sql );
+//					fails.add( sql );
 					fails.add( sourceFile.toString() );
 //					fails.add( sql );
 					last = sql;

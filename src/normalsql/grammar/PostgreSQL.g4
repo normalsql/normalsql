@@ -4293,7 +4293,7 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-noise : StringConstant* ;
+noise : Operator* ;
 
 PARAM: '$' ([0-9])+;
 //PARAM: [:$] ([0-9])+;
@@ -4305,7 +4305,7 @@ PARAM: '$' ([0-9])+;
 // FIXME disallow '+' ending (per rules)
 Operator
 //  : ( [+-/<>=~!@#%^&|`?] | '*' )* ( [/<>=~!@#%^&|`?] | '*' )
-  : ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [/<>=~!@#%^&|`?] | '*' )
+  : ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [-/<>=~!@#%^&|`?] | '*' )
   ;
 
 Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
@@ -4320,12 +4320,17 @@ StringConstant
   | TAG .*? TAG
   ;
 
-fragment TAG
-  : '$' ( [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]* )? '$' ;
-
 UnicodeEscapeStringConstant
-  : 'U' '&' '\'' ('\'\'' | ~ '\'')* '\''
-  | 'E' '\'' ('\\\'' | ~ '\'')* '\'';
+  : 'U' '&' '\'' ( '\'\'' | ~ '\'' )* '\''
+  // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
+  | 'E' '\'' ( '\'\'' | ESCAPE_SEQUENCE | ~( '\'' | '\\' ) )* '\''
+  ;
+
+
+// FIXME add octal, hex, unicode sequences
+fragment ESCAPE_SEQUENCE
+    : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
+    ;
 
 BinaryStringConstant: 'B' '\'' [01]* '\'';
 
@@ -4362,11 +4367,12 @@ BlockComment
   : ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
 ;
 
-SEMI : ';' ;
+SEMI : ';'   | '\\' ';' ;
 
 META
 //  : '\\' ~[;\r\n\\"] .*? ( ';' | '\\\\' | [\r\n]+ )? -> type( SEMI )
-  : '\\' ~[\r\n\\]* -> type( SEMI )
+  : '\\' ~[;]? ~[\r\n\\]* -> type( SEMI )
+//  | '\\' ';' -> type( SEMI )
   ;
 
 
@@ -4379,3 +4385,8 @@ Newline
 UNKNOWN : . ;
 
 fragment Digits: [0-9]+;
+
+fragment TAG
+  : '$' ( [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]* )? '$' ;
+
+
