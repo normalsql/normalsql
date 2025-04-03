@@ -4300,12 +4300,26 @@ PARAM: '$' ([0-9])+;
 
 
 
-// Postgres 4.1.3 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+// Postgres Lexical Structure Operators 4.1.3
+// https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
+
 // FIXME discern comments /* and -- from operators
 // FIXME disallow '+' ending (per rules)
 Operator
-//  : ( [+-/<>=~!@#%^&|`?] | '*' )* ( [/<>=~!@#%^&|`?] | '*' )
-  : ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [-/<>=~!@#%^&|`?] | '*' )
+//  ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [-/<>=~!@#%^&|`?] | '*' )
+
+  // first try everything
+  : ( [-/<>=~!@#%^&|`?] | '*' | '+' )+
+    // fail if it's a line comment
+    { !getText().contains( "--" ) }?
+  // second try without '-' chars
+  | ( [/<>=~!@#%^&|`?] | '*' | '+' )+
+    // fail if it's start of block comment
+    { !getText().contains( "/*" ) }?
+  // third try without '/' chars
+  | ( [<>=~!@#%^&|`?] | '*' | '+' )+
+    // fail if it's start of block comment
+    { !( getText().contains( "/*" ) }?
   ;
 
 Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
@@ -4324,6 +4338,7 @@ UnicodeEscapeStringConstant
   : 'U' '&' '\'' ( '\'\'' | ~ '\'' )* '\''
   // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
   | 'E' '\'' ( '\'\'' | ESCAPE_SEQUENCE | ~( '\'' | '\\' ) )* '\''
+//    { System.out.println( "escaped " + getText() ); }
   ;
 
 
@@ -4388,5 +4403,3 @@ fragment Digits: [0-9]+;
 
 fragment TAG
   : '$' ( [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]* )? '$' ;
-
-
