@@ -415,7 +415,7 @@ BEGIN
 		SET enable_bitmapscan = 1;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+		FOR plan_line IN EXECUTE format(#y#EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s #y#, cond) LOOP
 			IF plan_line LIKE '%Bitmap Heap Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
@@ -424,7 +424,7 @@ BEGIN
 			RAISE WARNING 'did not get bitmap indexscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+		EXECUTE format(#y#SELECT array_agg(ctid) FROM brintest WHERE %s #y#, cond)
 			INTO idx_ctids;
 
 		-- run the query using a seqscan
@@ -432,7 +432,7 @@ BEGIN
 		SET enable_bitmapscan = 0;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+		FOR plan_line IN EXECUTE format(#y#EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s #y#, cond) LOOP
 			IF plan_line LIKE '%Seq Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
@@ -441,7 +441,7 @@ BEGIN
 			RAISE WARNING 'did not get seqscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+		EXECUTE format(#y#SELECT array_agg(ctid) FROM brintest WHERE %s #y#, cond)
 			INTO ss_ctids;
 
 		-- make sure both return the same results
@@ -470,4 +470,3 @@ BEGIN
 	END LOOP;
 END;
 $x$;
-

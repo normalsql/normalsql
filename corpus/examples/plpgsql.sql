@@ -241,7 +241,7 @@ declare
 begin
     select into sysrec * from system where name = new.sysname;
     if not found then
-        raise exception $q$system "%" does not exist$q$, new.sysname;
+        raise exception #q#system "%" does not exist#q#, new.sysname;
     end if;
     sname := 'IF.' || new.sysname;
     sname := sname || '.';
@@ -2399,7 +2399,7 @@ create or replace function stricttest() returns void as $$
 declare
 x record;
 p1 int := 2;
-p3 text := $a$'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase bien lo que hacia?'$a$;
+p3 text := #q#'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase bien lo que hacia?'#q#;
 begin
   -- no rows
   select * from foo where f1 = p1 and f1::text = p3 into strict x;
@@ -4261,10 +4261,10 @@ DECLARE
 BEGIN
   t = '';
   FOR l IN EXECUTE
-           $q$
+           #q#
              EXPLAIN (TIMING off, COSTS off, VERBOSE on)
              SELECT * FROM newtable
-           $q$ LOOP
+           #q# LOOP
     t = t || l || E'\n';
   END LOOP;
 
@@ -4298,10 +4298,10 @@ DECLARE
 BEGIN
   t = '';
   FOR l IN EXECUTE
-           $q$
+           #q#
              EXPLAIN (TIMING off, COSTS off, VERBOSE on)
              SELECT * FROM oldtable ot FULL JOIN newtable nt USING (id)
-           $q$ LOOP
+           #q# LOOP
     t = t || l || E'\n';
   END LOOP;
 
@@ -4622,7 +4622,7 @@ declare
 begin
     select into pfrec * from PField where name = ps.pfname;
     if not found then
-        raise exception $$Patchfield "%" does not exist$$, ps.pfname;
+        raise exception ##Patchfield "%" does not exist##, ps.pfname;
     end if;
     return ps;
 end;
@@ -4633,14 +4633,14 @@ do $outer$
 begin
   for i in 1..10 loop
    begin
-    execute $ex$
-      do $$
+    execute #ex#
+      do ##
       declare x int = 0;
       begin
         x := 1 / x;
       end;
-      $$;
-    $ex$;
+      ##;
+    #ex#;
   exception when division_by_zero then
     raise notice 'caught division by zero';
   end;

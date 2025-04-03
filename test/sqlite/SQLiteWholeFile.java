@@ -62,7 +62,7 @@ SQLiteWholeFile
 //		first = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
 //		first = "/Users/jasonosgood/Projects/normalsql/examples";
 		first = "/Users/jasonosgood/Projects/normalsql/corpus/examples";
-		first = "/Users/jasonosgood/Projects/normalsql/corpus/goofy";
+//		first = "/Users/jasonosgood/Projects/normalsql/corpus/goofy";
 //		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
 //		first = "/Users/jasonosgood/Learn";
 		Path sourceRoot = Paths.get(first);
@@ -175,7 +175,7 @@ SQLiteWholeFile
 					error();
 //					fails.add( "\nerror" );
 					fails.add( msg );
-//					fails.add( sql );
+					fails.add( sql );
 					fails.add( sourceFile.toString() );
 //					fails.add( sql );
 					last = sql;

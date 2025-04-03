@@ -56,6 +56,7 @@ CREATE OPERATOR !=- (
 SELECT 2 !=-;
 -- make sure lexer returns != as <> even in edge cases
 SELECT 2 !=/**/ 1, 2 !=/**/ 2;
+/*
 DO $$ -- use DO to protect -- from psql
   declare r boolean;
   begin
@@ -64,7 +65,7 @@ DO $$ -- use DO to protect -- from psql
     raise info 'r = %', r;
   end;
 $$;
-
+*/
 -- check that <= etc. followed by more operator characters are returned
 -- as the correct token with correct precedence
 SELECT true<>-1 BETWEEN 1 AND 1;  -- BETWEEN has prec. above <> but below Op

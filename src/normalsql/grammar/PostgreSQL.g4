@@ -290,7 +290,7 @@ nonreservedword_or_sconst
 
 variableresetstmt
   : 'RESET'
-    ( name
+    ( qname
     | 'ALL'
     | 'TIME' 'ZONE'
     | 'TRANSACTION' 'ISOLATION' 'LEVEL'
@@ -3191,7 +3191,6 @@ qnames
     ;
 
 qname
-//    : name ( '.' '*' ) // indirection_el*
     : name indirection_el*
     ;
 
@@ -4293,7 +4292,7 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-noise : Operator* ;
+//noise : Operator* ;
 
 PARAM: '$' ([0-9])+;
 //PARAM: [:$] ([0-9])+;
@@ -4303,30 +4302,34 @@ PARAM: '$' ([0-9])+;
 // Postgres Lexical Structure Operators 4.1.3
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
 
+// FIXME pattern matching fails on edge cases, switch to mode
 // FIXME discern comments /* and -- from operators
 // FIXME disallow '+' ending (per rules)
 Operator
 //  ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [-/<>=~!@#%^&|`?] | '*' )
-
-  // first try everything
-  : ( [-/<>=~!@#%^&|`?] | '*' | '+' )+
-    // fail if it's a line comment
-    { !getText().contains( "--" ) }?
-  // second try without '-' chars
-  | ( [/<>=~!@#%^&|`?] | '*' | '+' )+
-    // fail if it's start of block comment
-    { !getText().contains( "/*" ) }?
-  // third try without '/' chars
-  | ( [<>=~!@#%^&|`?] | '*' | '+' )+
-    // fail if it's start of block comment
-    { !( getText().contains( "/*" ) }?
+  : (  [<>=~!@#%^&|`?] | '*' )+
+  | '<->'
+  | '@-@'
+  | '@+@'
+  | '!=-'
+  | '|/' // square root
+  | '||/' // cube root
+  | '->' // JSON thing
+  | '->>' // JSON thing
+  | '-|-'
+  | '!+!'
+  | '?' '|' '|'
+  | '?' '-' '|'
   ;
 
-Identifier: [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
+Identifier
+  : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
 
-QuotedIdentifier: '"' ('""' | ~ [\u0000"])* '"';
+QuotedIdentifier
+  : '"' ('""' | ~ [\u0000"])* '"';
 
-UnicodeQuotedIdentifier: 'U' '&' QuotedIdentifier;
+UnicodeQuotedIdentifier
+  : 'U' '&' QuotedIdentifier;
 
 StringConstant
   : '\'' ('\'\'' | ~ '\'')* '\''
@@ -4338,14 +4341,13 @@ UnicodeEscapeStringConstant
   : 'U' '&' '\'' ( '\'\'' | ~ '\'' )* '\''
   // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE
   | 'E' '\'' ( '\'\'' | ESCAPE_SEQUENCE | ~( '\'' | '\\' ) )* '\''
-//    { System.out.println( "escaped " + getText() ); }
   ;
 
 
 // FIXME add octal, hex, unicode sequences
 fragment ESCAPE_SEQUENCE
-    : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
-    ;
+  : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
+  ;
 
 BinaryStringConstant: 'B' '\'' [01]* '\'';
 
@@ -4380,24 +4382,22 @@ LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);
 
 BlockComment
   : ('/*' ('/'* BlockComment | ~ [/*] | '/'+ ~ [/*] | '*'+ ~ [/*])* '*'* '*/') -> channel (HIDDEN)
-;
+  ;
 
 SEMI : ';'   | '\\' ';' ;
 
 META
-//  : '\\' ~[;\r\n\\"] .*? ( ';' | '\\\\' | [\r\n]+ )? -> type( SEMI )
   : '\\' ~[;]? ~[\r\n\\]* -> type( SEMI )
-//  | '\\' ';' -> type( SEMI )
   ;
 
-
-
-Whitespace: [ \t]+ -> channel (HIDDEN);
+Whitespace
+  : [ \t]+ -> channel (HIDDEN);
 
 Newline
   : ('\r' '\n'? | '\n') -> channel (HIDDEN) ;
 
-UNKNOWN : . ;
+UNKNOWN
+  : . ;
 
 fragment Digits: [0-9]+;
 
