@@ -52,7 +52,7 @@ statement
     | alterseqstmt
     | altersystemstmt
     | altertablestmt
-    | altertblspcstmt
+    | alterTablespace
     | altercompositetypestmt
     | alterpublicationstmt
     | alterrolesetstmt
@@ -109,8 +109,8 @@ statement
     | discardstmt
     | dostmt
     | dropcaststmt
-    | dropopclassstmt
-    | dropopfamilystmt
+    | dropOperator
+//    | dropopfamilystmt
     | dropownedstmt
     | dropstmt
     | dropsubscriptionstmt
@@ -135,7 +135,7 @@ statement
     | notifystmt
     | preparestmt
     | reassignownedstmt
-    | reindexstmt
+    | reindex
     | removeaggrstmt
     | removefuncstmt
     | removeoperstmt
@@ -191,7 +191,7 @@ alterrolestmt
     ;
 
 alterrolesetstmt
-    : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? rolespec ('IN' 'DATABASE' name)? setresetclause
+    : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? rolespec ('IN' 'DATABASE' id)? setresetclause
     ;
 
 droprolestmt
@@ -212,7 +212,7 @@ add_drop
     ;
 
 createschemastmt
-    : 'CREATE' 'SCHEMA' ifNotExists? ( name? 'AUTHORIZATION' rolespec | name )
+    : 'CREATE' 'SCHEMA' ifNotExists? ( id? 'AUTHORIZATION' rolespec | id )
       ( createstmt
       | indexstmt
       | createseqstmt
@@ -227,20 +227,30 @@ variablesetstmt
     ;
 
 set_rest
-    : 'TRANSACTION' transaction_mode_list
-    | 'SESSION' 'CHARACTERISTICS' 'AS' 'TRANSACTION' transaction_mode_list
+    : ( 'SESSION' 'CHARACTERISTICS' 'AS' )? 'TRANSACTION' transaction_mode_list
     | set_rest_more
     ;
 
+ transaction_mode_list
+     : transaction_mode_item ( ','? transaction_mode_item )*
+     ;
+
+ transaction_mode_item
+     : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
+     | 'READ' ( 'ONLY' |  'WRITE' )
+     | 'NOT'? 'DEFERRABLE'
+     ;
+
+
 set_rest_more
   : qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
-  | name 'FROM' 'CURRENT'
+  | id 'FROM' 'CURRENT'
   | 'TIME' 'ZONE' zone_value
   | 'CATALOG' string
   | 'SCHEMA' string
-  | 'NAMES' encoding_?
-  | 'ROLE' nonreservedword_or_sconst
-  | 'SESSION' 'AUTHORIZATION' nonreservedword_or_sconst
+  | 'NAMES' (string | 'DEFAULT')?
+  | 'ROLE' name
+  | 'SESSION' 'AUTHORIZATION' name
   | 'XML' 'OPTION' document_or_content
   | 'TRANSACTION' 'SNAPSHOT' string
   ;
@@ -255,38 +265,25 @@ var_value
     | numericonly
     ;
 
-iso_level
-    : 'READ' ( 'UNCOMMITTED' | 'COMMITTED' )
-    | 'REPEATABLE' 'READ'
-    | 'SERIALIZABLE'
-    ;
-
 boolean_or_string_
     : 'TRUE'
     | 'FALSE'
     | 'ON'
-    | nonreservedword_or_sconst
+    | name
     ;
 
 zone_value
     : string
     | identifier
-    | 'INTERVAL' string interval_?
+    | 'INTERVAL' string timeUnit?
     | 'INTERVAL' '(' integer ')' string
     | numericonly
     | 'DEFAULT'
     | 'LOCAL'
     ;
 
-encoding_
-    : string
-    | 'DEFAULT'
-    ;
-
-nonreservedword_or_sconst
-    : nonreservedword
-    | string
-    ;
+name
+  : id | string ;
 
 variableresetstmt
   : 'RESET'
@@ -305,11 +302,11 @@ setresetclause
 
 variableshowstmt
     : 'SHOW'
-    ( name | 'TIME' 'ZONE' | 'TRANSACTION' 'ISOLATION' 'LEVEL' | 'SESSION' 'AUTHORIZATION' | 'ALL' )
+       ( id | 'TIME' 'ZONE' | 'TRANSACTION' 'ISOLATION' 'LEVEL' | 'SESSION' 'AUTHORIZATION' | 'ALL' )
     ;
 
 constraintssetstmt
-    : 'SET' 'CONSTRAINTS' ('ALL' | qnames) ('DEFERRED' | 'IMMEDIATE')
+    : 'SET' 'CONSTRAINTS' ( 'ALL' | qnames ) ('DEFERRED' | 'IMMEDIATE')
     ;
 
 discardstmt
@@ -317,15 +314,12 @@ discardstmt
     ;
 
 altertablestmt
-    : 'ALTER' 'TABLE' ifExists? relation_expr ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec
-    | 'DETACH' 'PARTITION' qname) )
+    : 'ALTER' 'TABLE' ifExists? relation_expr ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec | 'DETACH' 'PARTITION' qname ) )
     | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
-    | 'ALTER' 'TABLE' 'ALL' 'IN' 'TABLESPACE' name ( 'OWNED' 'BY' role_list  )? 'SET' 'TABLESPACE' name ('NOWAIT')?
-    | 'ALTER' 'INDEX' 'ALL' 'IN' 'TABLESPACE' name ( 'OWNED' 'BY' role_list )? 'SET' 'TABLESPACE' name ('NOWAIT')?
+    | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' role_list )? 'SET' 'TABLESPACE' id 'NOWAIT'?
     | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
     | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname alter_table_cmds
-    | 'ALTER' 'MATERIALIZED' 'VIEW' 'ALL' 'IN' 'TABLESPACE' name ( 'OWNED' 'BY' role_list )? 'SET' 'TABLESPACE' name ('NOWAIT')?
     | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr alter_table_cmds
     ;
 
@@ -334,63 +328,49 @@ alter_table_cmds
     ;
 
 alter_table_cmd
-    : 'ADD' columnDef
-    | 'ADD' ifNotExists columnDef
-    | 'ADD' 'COLUMN' columnDef
-    | 'ADD' 'COLUMN' ifNotExists columnDef
-    | 'ALTER' column_? name alter_column_default
-    | 'ALTER' column_? name 'DROP' 'NOT' 'NULL'
-    | 'ALTER' column_? name 'SET' 'NOT' 'NULL'
-    | 'ALTER' column_? name 'DROP' 'EXPRESSION'
-    | 'ALTER' column_? name 'DROP' 'EXPRESSION' 'IF' 'EXISTS'
-    | 'ALTER' column_? name 'SET' 'STATISTICS' signedInteger
-    | 'ALTER' column_? integer 'SET' 'STATISTICS' signedInteger
-    | 'ALTER' column_? name 'SET' reloptions
-    | 'ALTER' column_? name 'RESET' reloptions
-    | 'ALTER' column_? name 'SET' 'STORAGE' name
-    | 'ALTER' column_? name 'ADD' 'GENERATED' generated_when 'AS' 'IDENTITY' optparenthesizedseqoptlist?
-    | 'ALTER' column_? name alter_identity_column_option_list
-    | 'ALTER' column_? name 'DROP' 'IDENTITY'
-    | 'ALTER' column_? name 'DROP' 'IDENTITY' 'IF' 'EXISTS'
-    | 'DROP' column_? 'IF' 'EXISTS' name drop_behavior_?
-    | 'DROP' column_? name drop_behavior_?
-    | 'ALTER' column_? name set_data_? 'TYPE' typename collate_clause_? alter_using?
-    | 'ALTER' column_? name alter_generic_options
-    | 'ADD' tableconstraint
-    | 'ALTER' 'CONSTRAINT' name constraintattributespec*
-    | 'VALIDATE' 'CONSTRAINT' name
-    | 'DROP' 'CONSTRAINT' 'IF' 'EXISTS' name drop_behavior_?
-    | 'DROP' 'CONSTRAINT' name drop_behavior_?
+    : 'ADD' tableconstraint
+          | 'ADD' ifNotExists? columnDef
+    | 'ADD' 'COLUMN' ifNotExists? columnDef
+    | 'ALTER' 'COLUMN'? id alter_column_default
+    | 'ALTER' 'COLUMN'? id 'DROP' 'NOT' 'NULL'
+    | 'ALTER' 'COLUMN'? id 'SET' 'NOT' 'NULL'
+    | 'ALTER' 'COLUMN'? id 'DROP' 'EXPRESSION' ifExists?
+    | 'ALTER' 'COLUMN'? id 'SET' 'STATISTICS' signedInteger
+    | 'ALTER' 'COLUMN'? integer 'SET' 'STATISTICS' signedInteger
+    | 'ALTER' 'COLUMN'? id 'SET' reloptions
+    | 'ALTER' 'COLUMN'? id 'RESET' reloptions
+    | 'ALTER' 'COLUMN'? id 'SET' 'STORAGE' id
+    | 'ALTER' 'COLUMN'? id 'ADD' 'GENERATED' generated_when 'AS' 'IDENTITY' ('(' seqoptelem+ ')')?
+    | 'ALTER' 'COLUMN'? id alter_identity_column_option+
+    | 'ALTER' 'COLUMN'? id 'DROP' 'IDENTITY' ifExists?
+    | 'DROP' 'COLUMN'? ifExists? id drop_behavior_?
+    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' typename collate_clause_? ('USING' a_expr)?
+    | 'ALTER' 'COLUMN'? id alter_generic_options
+    | 'ALTER' 'CONSTRAINT' id constraintattributespec*
+    | 'VALIDATE' 'CONSTRAINT' id
+    | 'DROP' 'CONSTRAINT' ifExists? id drop_behavior_?
     | 'SET' 'WITHOUT' 'OIDS'
-    | 'CLUSTER' 'ON' name
+    | 'CLUSTER' 'ON' id
     | 'SET' 'WITHOUT' 'CLUSTER'
     | 'SET' 'LOGGED'
     | 'SET' 'UNLOGGED'
-    | 'ENABLE' 'TRIGGER' name
-    | 'ENABLE' 'ALWAYS' 'TRIGGER' name
-    | 'ENABLE' 'REPLICA' 'TRIGGER' name
-    | 'ENABLE' 'TRIGGER' 'ALL'
-    | 'ENABLE' 'TRIGGER' 'USER'
-    | 'DISABLE' 'TRIGGER' name
-    | 'DISABLE' 'TRIGGER' 'ALL'
-    | 'DISABLE' 'TRIGGER' 'USER'
-    | 'ENABLE' 'RULE' name
-    | 'ENABLE' 'ALWAYS' 'RULE' name
-    | 'ENABLE' 'REPLICA' 'RULE' name
-    | 'DISABLE' 'RULE' name
+    | ( 'DISABLE' | 'ENABLE' ) ( 'ALWAYS' | 'REPLICA' )? 'TRIGGER' id
+    | ( 'DISABLE' | 'ENABLE' ) 'TRIGGER' ( 'ALL' | 'USER' )
+
+    | 'ENABLE' 'RULE' id
+    | 'ENABLE' 'ALWAYS' 'RULE' id
+    | 'ENABLE' 'REPLICA' 'RULE' id
+    | 'DISABLE' 'RULE' id
     | 'INHERIT' qname
     | 'NO' 'INHERIT' qname
     | 'OF' qname
     | 'NOT' 'OF'
     | 'OWNER' 'TO' rolespec
-    | 'SET' 'TABLESPACE' name
+    | 'SET' 'TABLESPACE' id
     | 'SET' reloptions
     | 'RESET' reloptions
     | 'REPLICA' 'IDENTITY' replica_identity
-    | 'ENABLE' 'ROW' 'LEVEL' 'SECURITY'
-    | 'DISABLE' 'ROW' 'LEVEL' 'SECURITY'
-    | 'FORCE' 'ROW' 'LEVEL' 'SECURITY'
-    | 'NO' 'FORCE' 'ROW' 'LEVEL' 'SECURITY'
+    | ( 'DISABLE' | 'ENABLE' | 'NO'? 'FORCE' ) 'ROW' 'LEVEL' 'SECURITY'
     | alter_generic_options
     ;
 
@@ -408,35 +388,23 @@ collate_clause_
     : 'COLLATE' qname
     ;
 
-alter_using
-    : 'USING' a_expr
-    ;
-
 replica_identity
     : 'NOTHING'
     | 'FULL'
     | 'DEFAULT'
-    | 'USING' 'INDEX' name
+    | 'USING' 'INDEX' id
     ;
 
 reloptions
-    : '(' reloption_list ')'
+    : '(' reloption_elem ( ',' reloption_elem )* ')'
     ;
 
 reloptions_
     : 'WITH' reloptions
     ;
 
-reloption_list
-    : reloption_elem ( ',' reloption_elem )*
-    ;
-
 reloption_elem
-    : colLabel ( '=' def_arg | '.' colLabel ( '=' def_arg )? )?
-    ;
-
-alter_identity_column_option_list
-    : alter_identity_column_option+
+    : qname ( '=' def_arg )?
     ;
 
 alter_identity_column_option
@@ -452,7 +420,7 @@ partitionboundspec
     ;
 
 hash_partbound_elem
-    : nonreservedword integer
+    : id integer
     ;
 
 hash_partbound
@@ -469,22 +437,17 @@ alter_type_cmds
 
 alter_type_cmd
     : 'ADD' 'ATTRIBUTE' tablefuncelement drop_behavior_?
-    | 'DROP' 'ATTRIBUTE' ifExists? name drop_behavior_?
-    | 'ALTER' 'ATTRIBUTE' name set_data_? 'TYPE' typename collate_clause_? drop_behavior_?
+    | 'DROP' 'ATTRIBUTE' ifExists? id drop_behavior_?
+    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' typename collate_clause_? drop_behavior_?
     ;
 
 closeportalstmt
-    : 'CLOSE' ( name | 'ALL' )
+    : 'CLOSE' ( id | 'ALL' )
     ;
 
 copystmt
-    : 'COPY' ('BINARY')? qname (name_list_)? copy_from ('PROGRAM')? copy_file_name copy_delimiter? 'WITH'? copy_options where?
-    | 'COPY' '(' preparablestmt ')' 'TO' ('PROGRAM')? copy_file_name 'WITH'? copy_options
-    ;
-
-copy_from
-    : 'FROM'
-    | 'TO'
+    : 'COPY' 'BINARY'? qname idsList? ('FROM' | 'TO') 'PROGRAM'? copy_file_name ('USING'? 'DELIMITERS' string)? 'WITH'? copy_options where?
+    | 'COPY' '(' preparablestmt ')' 'TO' 'PROGRAM'? copy_file_name 'WITH'? copy_options
     ;
 
 copy_file_name
@@ -507,15 +470,10 @@ copy_opt_item
     | 'HEADER'
     | 'QUOTE' 'AS'? string
     | 'ESCAPE' 'AS'? string
-    | 'FORCE' 'QUOTE' names
+    | 'FORCE' 'QUOTE' ids
     | 'FORCE' 'QUOTE' '*'
-    | 'FORCE' 'NOT' 'NULL' names
-    | 'FORCE' 'NULL' names
+    | 'FORCE' 'NOT'? 'NULL' ids
     | 'ENCODING' string
-    ;
-
-copy_delimiter
-    : 'USING'? 'DELIMITERS' string
     ;
 
 copy_generic_opt_list
@@ -523,7 +481,7 @@ copy_generic_opt_list
     ;
 
 copy_generic_opt_elem
-    : colLabel copy_generic_opt_arg?
+    : id copy_generic_opt_arg?
     ;
 
 copy_generic_opt_arg
@@ -539,12 +497,12 @@ copy_generic_opt_arg_list
     ;
 
 createstmt
-    : 'CREATE' opttemp? 'TABLE' ifNotExists? qname (
-        '(' (tableelementlist)? ')' optinherit? (partitionspec)? using? optwith? oncommitoption? opttablespace?
-        | 'OF' qname opttypedtableelementlist? (partitionspec)? using? optwith? oncommitoption? opttablespace?
-        | 'PARTITION' 'OF' qname opttypedtableelementlist? partitionboundspec (partitionspec)? using? optwith? oncommitoption?
-            opttablespace?
-    )
+    : 'CREATE' opttemp? 'TABLE' ifNotExists? qname 
+      ( '(' tableelementlist? ')' optinherit?
+      | 'OF' qname opttypedtableelementlist?
+      | 'PARTITION' 'OF' qname opttypedtableelementlist? partitionboundspec
+      )
+      partitionspec? ( 'USING' id )? optwith? oncommitoption? opttablespace?
     ;
 
 opttemp
@@ -557,7 +515,7 @@ opttypedtableelementlist
     ;
 
     typedtableelement
-        : name ( 'WITH' 'OPTIONS' )? colconstraint*
+        : id ( 'WITH' 'OPTIONS' )? colconstraint*
         | tableconstraint
         ;
 
@@ -574,11 +532,11 @@ tableelement
 
 
 columnDef
-    : name typename create_generic_options? colconstraint*
+    : id typename create_generic_options? colconstraint*
     ;
 
 colconstraint
-    : 'CONSTRAINT' name colconstraintelem
+    : 'CONSTRAINT' id colconstraintelem
     | colconstraintelem
     | constraintattr
     | 'COLLATE' qname
@@ -591,10 +549,10 @@ colconstraintelem
     | 'CHECK' '(' a_expr ')' ('NO' 'INHERIT')?
     | 'DEFAULT' b_expr
     | 'GENERATED' generated_when 'AS' (
-        'IDENTITY' optparenthesizedseqoptlist?
+        'IDENTITY' ('(' seqoptelem+ ')')?
         | '(' a_expr ')' 'STORED'
     )
-    | 'REFERENCES' qname (name_list_)? key_match? key_actions?
+    | 'REFERENCES' qname idsList? key_match? key_actions?
     ;
 
 generated_when
@@ -624,19 +582,20 @@ tablelikeoption
     ;
 
 tableconstraint
-    : ( 'CONSTRAINT' name )? constraintelem
+    : ( 'CONSTRAINT' id )? constraintelem
     ;
 
 constraintelem
     : 'CHECK' '(' a_expr ')' constraintattributespec*
-    | 'UNIQUE' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec* | existingindex constraintattributespec* )
-    | 'PRIMARY' 'KEY' ( '(' names ')' c_include_? definition_? optconstablespace? constraintattributespec* | existingindex constraintattributespec* )
-    | 'EXCLUDE' (using)? '(' exclusionconstraintelem ( ',' exclusionconstraintelem )* ')' c_include_? definition_? optconstablespace? ('WHERE' '(' a_expr ')')? constraintattributespec*
-    | 'FOREIGN' 'KEY' '(' names ')' 'REFERENCES' qname (name_list_)? key_match? key_actions? constraintattributespec*
+    | 'UNIQUE' ( ('(' ids ')')? c_include_? definition_? (optconstablespace?  | existingindex) constraintattributespec* )
+    | 'PRIMARY' 'KEY' ( ('(' ids ')')? c_include_? definition_? (optconstablespace? | existingindex) constraintattributespec* )
+    | 'EXCLUDE' ( 'USING' id )? '(' exclusionconstraintelem ( ',' exclusionconstraintelem )* ')' c_include_? definition_? optconstablespace?
+      ( 'WHERE' '(' a_expr ')')? constraintattributespec*
+    | 'FOREIGN' 'KEY' '(' ids ')' 'REFERENCES' qname idsList? key_match? key_actions? constraintattributespec*
     ;
 
 c_include_
-    : 'INCLUDE' '(' names ')'
+    : 'INCLUDE' '(' ids ')'
     ;
 
 key_match
@@ -648,11 +607,8 @@ exclusionconstraintelem
     ;
 
 key_actions
-    : key_update
-    | key_delete
-    | key_update key_delete
-    | key_delete key_update
-
+    : key_update? key_delete
+    | key_delete? key_update
     ;
 
 key_update
@@ -675,7 +631,7 @@ optinherit
     ;
 
 partitionspec
-    : 'PARTITION' 'BY' name '(' part_params ')'
+    : 'PARTITION' 'BY' id '(' part_params ')'
     ;
 
 part_params
@@ -683,13 +639,9 @@ part_params
     ;
 
 part_elem
-    : name collate_? (qname)?
+    : id collate_? (qname)?
     | func_expr_windowless collate_? (qname)?
     | '(' a_expr ')' collate_? (qname)?
-    ;
-
-using
-    : 'USING' name
     ;
 
 optwith
@@ -702,19 +654,19 @@ oncommitoption
     ;
 
 opttablespace
-    : 'TABLESPACE' name
+    : 'TABLESPACE' id
     ;
 
 optconstablespace
-    : 'USING' 'INDEX' 'TABLESPACE' name
+    : 'USING' 'INDEX' 'TABLESPACE' id
     ;
 
 existingindex
-    : 'USING' 'INDEX' name
+    : 'USING' 'INDEX' id
     ;
 
 createstatsstmt
-    : 'CREATE' 'STATISTICS' ifNotExists? qname name_list_? 'ON' expr_list 'FROM' from_list
+    : 'CREATE' 'STATISTICS' ifNotExists? qname idsList? 'ON' expr_list 'FROM' from_list
     ;
 
 alterstatsstmt
@@ -726,7 +678,7 @@ createasstmt
     ;
 
 create_as_target
-    : qname (name_list_)? using? optwith? oncommitoption? opttablespace?
+    : qname idsList? ( 'USING' id )? optwith? oncommitoption? opttablespace?
     ;
 
 with_data_
@@ -734,15 +686,12 @@ with_data_
     ;
 
 creatematviewstmt
-    : 'CREATE' ('UNLOGGED')? 'MATERIALIZED' 'VIEW' ifNotExists? create_mv_target 'AS' selectstmt with_data_?
-    ;
-
-create_mv_target
-    : qname (name_list_)? using? reloptions_? opttablespace?
+    : 'CREATE' 'UNLOGGED'? 'MATERIALIZED' 'VIEW' ifNotExists? qname idsList?
+      ( 'USING' id )? reloptions_? opttablespace? 'AS' selectstmt with_data_?
     ;
 
 refreshmatviewstmt
-    : 'REFRESH' 'MATERIALIZED' 'VIEW' ('CONCURRENTLY')? qname with_data_?
+    : 'REFRESH' 'MATERIALIZED' 'VIEW' 'CONCURRENTLY'? qname with_data_?
     ;
 
 createseqstmt
@@ -753,15 +702,11 @@ alterseqstmt
     : 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+
     ;
 
-optparenthesizedseqoptlist
-    : '(' seqoptelem+ ')'
-    ;
-
 seqoptelem
     : 'AS' simpletypename
     | 'CACHE' numericonly
     | 'CYCLE'
-    | 'INCREMENT' ('BY')? numericonly
+    | 'INCREMENT' 'BY'? numericonly
     | 'MAXVALUE' numericonly
     | 'MINVALUE' numericonly
     | 'NO' ( 'MAXVALUE' | 'MINVALUE' | 'CYCLE' )
@@ -778,18 +723,14 @@ numericonly
     | signedInteger
     ;
 
-numericonly_list
-    : numericonly ( ',' numericonly )*
-    ;
-
 createplangstmt
-    : 'CREATE' orReplace? 'TRUSTED'? 'PROCEDURAL'? 'LANGUAGE' name (
-        'HANDLER' handler_name inline_handler_? validator_clause?
-     )?
+    : 'CREATE' orReplace? 'TRUSTED'? 'PROCEDURAL'? 'LANGUAGE' id
+      ( 'HANDLER' handler_name inline_handler_? validator_clause? )?
     ;
 
+// TODO replace w/ qname rule?
 handler_name
-    : name ( '.' colLabel )*
+    : id ( '.' id )*
     ;
 
 inline_handler_
@@ -802,49 +743,47 @@ validator_clause
     ;
 
 createtablespacestmt
-    : 'CREATE' 'TABLESPACE' name ('OWNER' rolespec)? 'LOCATION' string reloptions_?
+    : 'CREATE' 'TABLESPACE' id ('OWNER' rolespec)? 'LOCATION' string reloptions_?
     ;
 
 droptablespacestmt
-    : 'DROP' 'TABLESPACE' ifExists? name
+    : 'DROP' 'TABLESPACE' ifExists? id
     ;
 
 createextensionstmt
-    : 'CREATE' 'EXTENSION' ifNotExists? name 'WITH'? create_extension_opt_item*
+    : 'CREATE' 'EXTENSION' ifNotExists? id 'WITH'?
+      ( 'SCHEMA' id
+      | 'VERSION' name
+      | 'FROM' name
+      | 'CASCADE'
+      )*
     ;
 
 ifExists : 'IF' 'EXISTS'  ;
 ifNotExists : 'IF' 'NOT' 'EXISTS'  ;
 
-create_extension_opt_item
-    : 'SCHEMA' name
-    | 'VERSION' nonreservedword_or_sconst
-    | 'FROM' nonreservedword_or_sconst
-    | 'CASCADE'
-    ;
-
 alterextensionstmt
-    : 'ALTER' 'EXTENSION' name 'UPDATE' ('TO' nonreservedword_or_sconst)*
+    : 'ALTER' 'EXTENSION' id 'UPDATE' ('TO' name)*
     ;
 
 alterextensioncontentsstmt
-    : 'ALTER' 'EXTENSION' name add_drop object_type_name name
-    | 'ALTER' 'EXTENSION' name add_drop object_type_any_name qname
-    | 'ALTER' 'EXTENSION' name add_drop 'AGGREGATE' aggregate_with_argtypes
-    | 'ALTER' 'EXTENSION' name add_drop 'CAST' '(' typename 'AS' typename ')'
-    | 'ALTER' 'EXTENSION' name add_drop 'DOMAIN' typename
-    | 'ALTER' 'EXTENSION' name add_drop 'FUNCTION' function_with_argtypes
-    | 'ALTER' 'EXTENSION' name add_drop 'OPERATOR' operator_with_argtypes
-    | 'ALTER' 'EXTENSION' name add_drop 'OPERATOR' 'CLASS' qname 'USING' name
-    | 'ALTER' 'EXTENSION' name add_drop 'OPERATOR' 'FAMILY' qname 'USING' name
-    | 'ALTER' 'EXTENSION' name add_drop 'PROCEDURE' function_with_argtypes
-    | 'ALTER' 'EXTENSION' name add_drop 'ROUTINE' function_with_argtypes
-    | 'ALTER' 'EXTENSION' name add_drop 'TRANSFORM' 'FOR' typename 'LANGUAGE' name
-    | 'ALTER' 'EXTENSION' name add_drop 'TYPE' typename
+    : 'ALTER' 'EXTENSION' id add_drop object_type_name id
+    | 'ALTER' 'EXTENSION' id add_drop object_type_any_name qname
+    | 'ALTER' 'EXTENSION' id add_drop 'AGGREGATE' aggregate_with_argtypes
+    | 'ALTER' 'EXTENSION' id add_drop 'CAST' '(' typename 'AS' typename ')'
+    | 'ALTER' 'EXTENSION' id add_drop 'DOMAIN' typename
+    | 'ALTER' 'EXTENSION' id add_drop 'FUNCTION' function_with_argtypes
+    | 'ALTER' 'EXTENSION' id add_drop 'OPERATOR' operator_with_argtypes
+    | 'ALTER' 'EXTENSION' id add_drop 'OPERATOR' 'CLASS' qname 'USING' id
+    | 'ALTER' 'EXTENSION' id add_drop 'OPERATOR' 'FAMILY' qname 'USING' id
+    | 'ALTER' 'EXTENSION' id add_drop 'PROCEDURE' function_with_argtypes
+    | 'ALTER' 'EXTENSION' id add_drop 'ROUTINE' function_with_argtypes
+    | 'ALTER' 'EXTENSION' id add_drop 'TRANSFORM' 'FOR' typename 'LANGUAGE' id
+    | 'ALTER' 'EXTENSION' id add_drop 'TYPE' typename
     ;
 
 createfdwstmt
-    : 'CREATE' 'FOREIGN' 'DATA' 'WRAPPER' name (fdw_option+)? create_generic_options?
+    : 'CREATE' 'FOREIGN' 'DATA' 'WRAPPER' id fdw_option* create_generic_options?
     ;
 
 fdw_option
@@ -855,8 +794,8 @@ fdw_option
     ;
 
 alterfdwstmt
-    : 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' name fdw_option* alter_generic_options
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' name fdw_option+
+    : 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id
+      ( fdw_option* alter_generic_options |  fdw_option+ )
     ;
 
 create_generic_options
@@ -871,15 +810,15 @@ alter_generic_option_elem
     : generic_option_elem
     | 'SET' generic_option_elem
     | 'ADD' generic_option_elem
-    | 'DROP' colLabel
+    | 'DROP' id
     ;
 
 generic_option_elem
-    : colLabel string
+    : id string
     ;
 
 createforeignserverstmt
-    : 'CREATE' 'SERVER' ifNotExists? name ( 'TYPE' string )? foreign_server_version? 'FOREIGN' 'DATA' 'WRAPPER' name create_generic_options?
+    : 'CREATE' 'SERVER' ifNotExists? id ( 'TYPE' string )? foreign_server_version? 'FOREIGN' 'DATA' 'WRAPPER' id create_generic_options?
     ;
 
 foreign_server_version
@@ -887,21 +826,24 @@ foreign_server_version
     ;
 
 alterforeignserverstmt
-    : 'ALTER' 'SERVER' name ( alter_generic_options | foreign_server_version alter_generic_options? )
+    : 'ALTER' 'SERVER' id ( alter_generic_options | foreign_server_version alter_generic_options? )
     ;
 
 createforeigntablestmt
-    : 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname '(' tableelementlist? ')' optinherit? 'SERVER' name create_generic_options?
-    | 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname 'PARTITION' 'OF' qname opttypedtableelementlist? partitionboundspec 'SERVER' name create_generic_options?
+    : 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname
+      ( '(' tableelementlist? ')' optinherit?
+      | 'PARTITION' 'OF' qname opttypedtableelementlist? partitionboundspec
+      )
+      'SERVER' id create_generic_options?
     ;
 
 importforeignschemastmt
-    : 'IMPORT' 'FOREIGN' 'SCHEMA' name  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' relation_expr_list ')' )?
-      'FROM' 'SERVER' name 'INTO' name create_generic_options?
+    : 'IMPORT' 'FOREIGN' 'SCHEMA' id  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' relation_expr_list ')' )?
+      'FROM' 'SERVER' id 'INTO' id create_generic_options?
     ;
 
 createusermappingstmt
-    : 'CREATE' 'USER' 'MAPPING' ifNotExists? 'FOR' auth_ident 'SERVER' name create_generic_options?
+    : 'CREATE' 'USER' 'MAPPING' ifNotExists? 'FOR' auth_ident 'SERVER' id create_generic_options?
     ;
 
 auth_ident
@@ -910,20 +852,20 @@ auth_ident
     ;
 
 dropusermappingstmt
-    : 'DROP' 'USER' 'MAPPING' ifExists? 'FOR' auth_ident 'SERVER' name
+    : 'DROP' 'USER' 'MAPPING' ifExists? 'FOR' auth_ident 'SERVER' id
     ;
 
 alterusermappingstmt
-    : 'ALTER' 'USER' 'MAPPING' 'FOR' auth_ident 'SERVER' name alter_generic_options
+    : 'ALTER' 'USER' 'MAPPING' 'FOR' auth_ident 'SERVER' id alter_generic_options
     ;
 
 createpolicystmt
-    : 'CREATE' 'POLICY' name 'ON' qname ('AS' identifier)? rowsecuritydefaultforcmd? ('TO' role_list)? rowsecurityoptionalexpr?
+    : 'CREATE' 'POLICY' id 'ON' qname ('AS' identifier)? rowsecuritydefaultforcmd? ('TO' role_list)? rowsecurityoptionalexpr?
         rowsecurityoptionalwithcheck?
     ;
 
 alterpolicystmt
-    : 'ALTER' 'POLICY' name 'ON' qname ('TO' role_list)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
+    : 'ALTER' 'POLICY' id 'ON' qname ('TO' role_list)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
     ;
 
 rowsecurityoptionalexpr
@@ -939,20 +881,20 @@ rowsecuritydefaultforcmd
     ;
 
 createamstmt
-    : 'CREATE' 'ACCESS' 'METHOD' name 'TYPE' ('INDEX' | 'TABLE') 'HANDLER' handler_name
+    : 'CREATE' 'ACCESS' 'METHOD' id 'TYPE' ('INDEX' | 'TABLE') 'HANDLER' handler_name
     ;
 
 createtrigstmt
-    : 'CREATE' 'TRIGGER' name
+    : 'CREATE' 'TRIGGER' id
       ('BEFORE' | 'AFTER' | 'INSTEAD' 'OF') triggerevents 'ON' qname
       ('REFERENCING' triggertransition+ )?
-      ('FOR' ('EACH')? ('ROW' | 'STATEMENT'))?
-      triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
+      ('FOR' 'EACH'? ('ROW' | 'STATEMENT'))?
+      triggerwhen? 'EXECUTE' function_or_procedure qname '(' triggerfuncargs? ')'
 
-    | 'CREATE' 'CONSTRAINT' 'TRIGGER' name
+    | 'CREATE' 'CONSTRAINT' 'TRIGGER' id
       'AFTER' triggerevents 'ON' qname
       ('FROM' qname)? constraintattributespec* 'FOR' 'EACH' 'ROW'
-      triggerwhen? 'EXECUTE' function_or_procedure func_name '(' triggerfuncargs? ')'
+      triggerwhen? 'EXECUTE' function_or_procedure qname '(' triggerfuncargs? ')'
     ;
 
 triggerevents
@@ -962,13 +904,12 @@ triggerevents
 triggeroneevent
     : 'INSERT'
     | 'DELETE'
-    | 'UPDATE'
-    | 'UPDATE' 'OF' names
+    | 'UPDATE' ('OF' ids)?
     | 'TRUNCATE'
     ;
 
 triggertransition
-    : ('NEW' | 'OLD') ('TABLE' | 'ROW') 'AS'? name
+    : ('NEW' | 'OLD') ('TABLE' | 'ROW') 'AS'? id
     ;
 
 triggerwhen
@@ -988,7 +929,7 @@ triggerfuncarg
     : integer
     | Numeric
     | string
-    | colLabel
+    | id
     ;
 
 constraintattributespec
@@ -999,17 +940,17 @@ constraintattributespec
     ;
 
 createeventtrigstmt
-    : 'CREATE' 'EVENT' 'TRIGGER' name 'ON' colLabel
+    : 'CREATE' 'EVENT' 'TRIGGER' id 'ON' id
       ( 'WHEN' event_trigger_when_item ( 'AND' event_trigger_when_item )* )?
-      'EXECUTE' function_or_procedure func_name '(' ')'
+      'EXECUTE' function_or_procedure qname '(' ')'
     ;
 
 event_trigger_when_item
-    : name 'IN' '(' string ( ',' string )* ')'
+    : id 'IN' '(' string ( ',' string )* ')'
     ;
 
 altereventtrigstmt
-    : 'ALTER' 'EVENT' 'TRIGGER' name enable_trigger
+    : 'ALTER' 'EVENT' 'TRIGGER' id enable_trigger
     ;
 
 enable_trigger
@@ -1022,22 +963,16 @@ createassertionstmt
     ;
 
 definestmt
-    : 'CREATE' orReplace? 'AGGREGATE' func_name aggr_args definition
-    | 'CREATE' orReplace? 'AGGREGATE' func_name old_aggr_definition
+    : 'CREATE' orReplace? 'AGGREGATE' aggregate_with_argtypes definition
+    | 'CREATE' orReplace? 'AGGREGATE' qname old_aggr_definition
     | 'CREATE' 'OPERATOR' any_operator definition
-    | 'CREATE' 'TYPE' qname definition
-    | 'CREATE' 'TYPE' qname
-    | 'CREATE' 'TYPE' qname 'AS' '(' (tablefuncelementlist)? ')'
+    | 'CREATE' 'TYPE' qname definition?
+    | 'CREATE' 'TYPE' qname 'AS' '(' tablefuncelementlist? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'ENUM' '(' ( string ( ',' string )* )? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'RANGE' definition
-    | 'CREATE' 'TEXT' 'SEARCH' 'PARSER' qname definition
-    | 'CREATE' 'TEXT' 'SEARCH' 'DICTIONARY' qname definition
-    | 'CREATE' 'TEXT' 'SEARCH' 'TEMPLATE' qname definition
-    | 'CREATE' 'TEXT' 'SEARCH' 'CONFIGURATION' qname definition
-    | 'CREATE' 'COLLATION' qname definition
-    | 'CREATE' 'COLLATION' ifNotExists qname definition
-    | 'CREATE' 'COLLATION' qname 'FROM' qname
-    | 'CREATE' 'COLLATION' ifNotExists qname 'FROM' qname
+    | 'CREATE' textSearchConfig qname definition
+    | 'CREATE' 'COLLATION' ifNotExists? qname definition
+    | 'CREATE' 'COLLATION' ifNotExists? qname 'FROM' qname
     ;
 
 definition
@@ -1045,7 +980,11 @@ definition
     ;
 
 def_elem
-    : colLabel ( '=' def_arg )?
+    : id ( '=' def_arg )?
+    ;
+
+old_aggr_elem
+    : identifier '=' def_arg
     ;
 
 def_arg
@@ -1061,9 +1000,6 @@ old_aggr_definition
     : '(' old_aggr_elem ( ',' old_aggr_elem )* ')'
     ;
 
-old_aggr_elem
-    : identifier '=' def_arg
-    ;
 
 alterenumstmt
     : 'ALTER' 'TYPE' qname 'ADD' 'VALUE' ifNotExists? string (( 'BEFORE' | 'AFTER' ) string )?
@@ -1071,7 +1007,7 @@ alterenumstmt
     ;
 
 createopclassstmt
-    : 'CREATE' 'OPERATOR' 'CLASS' qname 'DEFAULT'? 'FOR' 'TYPE' typename 'USING' name ('FAMILY' qname)? 'AS' opclass_item_list
+    : 'CREATE' 'OPERATOR' 'CLASS' qname 'DEFAULT'? 'FOR' 'TYPE' typename 'USING' id ('FAMILY' qname)? 'AS' opclass_item_list
     ;
 
 opclass_item_list
@@ -1091,33 +1027,30 @@ opclass_purpose
     ;
 
 createopfamilystmt
-    : 'CREATE' 'OPERATOR' 'FAMILY' qname 'USING' name
+    : 'CREATE' 'OPERATOR' 'FAMILY' qname 'USING' id
     ;
 
 alteropfamilystmt
-    : 'ALTER' 'OPERATOR' 'FAMILY' qname 'USING' name 'ADD' opclass_item_list
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname 'USING' name 'DROP' opclass_drop_list
+    : 'ALTER' 'OPERATOR' 'FAMILY' qname 'USING' id
+      ('ADD' opclass_item_list | 'DROP' opclass_drop_list)
     ;
 
 
 opclass_drop_list
-    : opclass_drop (',' opclass_drop)*
+    : opclass_drop ( ',' opclass_drop )*
     ;
 
 opclass_drop
-    : 'OPERATOR' integer '(' type_list ')'
-    | 'FUNCTION' integer '(' type_list ')'
+    : ('OPERATOR' | 'FUNCTION') integer '(' type_list ')'
     ;
 
-dropopclassstmt
-    : 'DROP' 'OPERATOR' 'CLASS' qname 'USING' name drop_behavior_?
-    | 'DROP' 'OPERATOR' 'CLASS' ifExists qname using drop_behavior_?
+dropOperator
+    : 'DROP' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) ifExists? qname 'USING' id drop_behavior_?
     ;
 
-dropopfamilystmt
-    : 'DROP' 'OPERATOR' 'FAMILY' qname using drop_behavior_?
-    | 'DROP' 'OPERATOR' 'FAMILY' ifExists qname using drop_behavior_?
-    ;
+//dropopfamilystmt
+//    : 'DROP' 'OPERATOR' 'FAMILY' ifExists? qname 'USING' id drop_behavior_?
+//    ;
 
 dropownedstmt
     : 'DROP' 'OWNED' 'BY' role_list drop_behavior_?
@@ -1128,18 +1061,11 @@ reassignownedstmt
     ;
 
 dropstmt
-    : 'DROP' object_type_any_name ifExists qnames drop_behavior_?
-    | 'DROP' object_type_any_name qnames drop_behavior_?
-    | 'DROP' drop_type_name ifExists names drop_behavior_?
-    | 'DROP' drop_type_name names drop_behavior_?
-    | 'DROP' object_type_name_on_any_name name 'ON' qname drop_behavior_?
-    | 'DROP' object_type_name_on_any_name ifExists name 'ON' qname drop_behavior_?
-    | 'DROP' 'TYPE' type_name_list drop_behavior_?
-    | 'DROP' 'TYPE' ifExists type_name_list drop_behavior_?
-    | 'DROP' 'DOMAIN' type_name_list drop_behavior_?
-    | 'DROP' 'DOMAIN' ifExists type_name_list drop_behavior_?
-    | 'DROP' 'INDEX' 'CONCURRENTLY' qnames drop_behavior_?
-    | 'DROP' 'INDEX' 'CONCURRENTLY' ifExists qnames drop_behavior_?
+    : 'DROP' object_type_any_name ifExists? qnames drop_behavior_?
+    | 'DROP' object_type_name_on_any_name ifExists? id 'ON' qname drop_behavior_?
+    | 'DROP' drop_type_name ifExists? ids drop_behavior_?
+    | 'DROP' ( 'TYPE' | 'DOMAIN' ) ifExists? typename ( ',' typename )* drop_behavior_?
+    | 'DROP' 'INDEX' 'CONCURRENTLY' ifExists? qnames drop_behavior_?
     ;
 
 object_type_any_name
@@ -1152,10 +1078,7 @@ object_type_any_name
     | 'COLLATION'
     | 'CONVERSION'
     | 'STATISTICS'
-    | 'TEXT' 'SEARCH' 'PARSER'
-    | 'TEXT' 'SEARCH' 'DICTIONARY'
-    | 'TEXT' 'SEARCH' 'TEMPLATE'
-    | 'TEXT' 'SEARCH' 'CONFIGURATION'
+    | textSearchConfig
     ;
 
 object_type_name
@@ -1171,7 +1094,7 @@ drop_type_name
     | 'EVENT' 'TRIGGER'
     | 'EXTENSION'
     | 'FOREIGN' 'DATA' 'WRAPPER'
-    | ('PROCEDURAL')? 'LANGUAGE'
+    | 'PROCEDURAL'? 'LANGUAGE'
     | 'PUBLICATION'
     | 'SCHEMA'
     | 'SERVER'
@@ -1183,44 +1106,34 @@ object_type_name_on_any_name
     | 'TRIGGER'
     ;
 
-type_name_list
-    : typename ( ',' typename )*
-    ;
-
 truncatestmt
-    : 'TRUNCATE' ('TABLE')? relation_expr_list (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? drop_behavior_?
+    : 'TRUNCATE' 'TABLE'? relation_expr_list (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? drop_behavior_?
     ;
 
 commentstmt
-    : 'COMMENT' 'ON' object_type_any_name qname 'IS' comment_text
-    | 'COMMENT' 'ON' 'COLUMN' qname 'IS' comment_text
-    | 'COMMENT' 'ON' object_type_name name 'IS' comment_text
-    | 'COMMENT' 'ON' 'TYPE' typename 'IS' comment_text
-    | 'COMMENT' 'ON' 'DOMAIN' typename 'IS' comment_text
-    | 'COMMENT' 'ON' 'AGGREGATE' aggregate_with_argtypes 'IS' comment_text
-    | 'COMMENT' 'ON' 'FUNCTION' function_with_argtypes 'IS' comment_text
-    | 'COMMENT' 'ON' 'OPERATOR' operator_with_argtypes 'IS' comment_text
-    | 'COMMENT' 'ON' 'CONSTRAINT' name 'ON' qname 'IS' comment_text
-    | 'COMMENT' 'ON' 'CONSTRAINT' name 'ON' 'DOMAIN' qname 'IS' comment_text
-    | 'COMMENT' 'ON' object_type_name_on_any_name name 'ON' qname 'IS' comment_text
-    | 'COMMENT' 'ON' 'PROCEDURE' function_with_argtypes 'IS' comment_text
-    | 'COMMENT' 'ON' 'ROUTINE' function_with_argtypes 'IS' comment_text
-    | 'COMMENT' 'ON' 'TRANSFORM' 'FOR' typename 'LANGUAGE' name 'IS' comment_text
-    | 'COMMENT' 'ON' 'OPERATOR' 'CLASS' qname using 'IS' comment_text
-    | 'COMMENT' 'ON' 'OPERATOR' 'FAMILY' qname using 'IS' comment_text
-    | 'COMMENT' 'ON' 'LARGE' 'OBJECT' numericonly 'IS' comment_text
-    | 'COMMENT' 'ON' 'CAST' '(' typename 'AS' typename ')' 'IS' comment_text
-    ;
-
-comment_text
-    : string
-    | 'NULL'
-    ;
+  : 'COMMENT' 'ON'
+    ( object_type_any_name qname
+    | 'COLUMN' qname
+    | object_type_name id
+    | 'TYPE' typename
+    | 'DOMAIN' typename
+    | 'AGGREGATE' aggregate_with_argtypes
+    | ('FUNCTION' | 'PROCEDURE' | 'ROUTINE') function_with_argtypes
+    | 'OPERATOR' operator_with_argtypes
+    | 'CONSTRAINT' id 'ON' 'DOMAIN'? qname?
+    | object_type_name_on_any_name id 'ON' qname
+   | 'TRANSFORM' 'FOR' typename 'LANGUAGE' id
+    | 'OPERATOR' ('CLASS' | 'FAMILY' ) qname 'USING' id
+    | 'LARGE' 'OBJECT' numericonly
+    | 'CAST' '(' typename 'AS' typename ')'
+    )
+    'IS' ( string | 'NULL' )
+  ;
 
 seclabelstmt
     : 'SECURITY' 'LABEL' provider_? 'ON' object_type_any_name qname 'IS' security_label
     | 'SECURITY' 'LABEL' provider_? 'ON' 'COLUMN' qname 'IS' security_label
-    | 'SECURITY' 'LABEL' provider_? 'ON' object_type_name name 'IS' security_label
+    | 'SECURITY' 'LABEL' provider_? 'ON' object_type_name id 'IS' security_label
     | 'SECURITY' 'LABEL' provider_? 'ON' 'TYPE' typename 'IS' security_label
     | 'SECURITY' 'LABEL' provider_? 'ON' 'DOMAIN' typename 'IS' security_label
     | 'SECURITY' 'LABEL' provider_? 'ON' 'AGGREGATE' aggregate_with_argtypes 'IS' security_label
@@ -1231,7 +1144,7 @@ seclabelstmt
     ;
 
 provider_
-    : 'FOR' nonreservedword_or_sconst
+    : 'FOR' name
     ;
 
 security_label
@@ -1240,26 +1153,24 @@ security_label
     ;
 
 fetchstmt
-    : 'FETCH' fetch_args
-    | 'MOVE' fetch_args
-    ;
+    : ('FETCH' | 'MOVE') fetch_args ;
 
 fetch_args
-    : from_in? name
-    | 'NEXT' (from_in)? name
-    | 'PRIOR' (from_in)? name
-    | 'FIRST' (from_in)? name
-    | 'LAST' (from_in)? name
-    | 'ABSOLUTE' signedInteger (from_in)? name
-    | 'RELATIVE' signedInteger (from_in)? name
-    | signedInteger (from_in)? name
-    | 'ALL' (from_in)? name
-    | 'FORWARD' (from_in)? name
-    | 'FORWARD' signedInteger (from_in)? name
-    | 'FORWARD' 'ALL' (from_in)? name
-    | 'BACKWARD' (from_in)? name
-    | 'BACKWARD' signedInteger (from_in)? name
-    | 'BACKWARD' 'ALL' (from_in)? name
+    : from_in? id
+    | 'NEXT' from_in? id
+    | 'PRIOR' from_in? id
+    | 'FIRST' from_in? id
+    | 'LAST' from_in? id
+    | 'ABSOLUTE' signedInteger from_in? id
+    | 'RELATIVE' signedInteger from_in? id
+    | signedInteger from_in? id
+    | 'ALL' from_in? id
+    | 'FORWARD' from_in? id
+    | 'FORWARD' signedInteger from_in? id
+    | 'FORWARD' 'ALL' from_in? id
+    | 'BACKWARD' from_in? id
+    | 'BACKWARD' signedInteger from_in? id
+    | 'BACKWARD' 'ALL' from_in? id
     ;
 
 from_in
@@ -1279,9 +1190,7 @@ revokestmt
 privileges
     : privilege_list
     | 'ALL'
-    | 'ALL' 'PRIVILEGES'
-    | 'ALL' '(' names ')'
-    | 'ALL' 'PRIVILEGES' '(' names ')'
+    | 'ALL' 'PRIVILEGES'? ( '(' ids ')' )?
     ;
 
 privilege_list
@@ -1289,33 +1198,30 @@ privilege_list
     ;
 
 privilege
-    : 'SELECT' (name_list_)?
-    | 'REFERENCES' (name_list_)?
-    | 'CREATE' (name_list_)?
-    | name (name_list_)?
+    : ( 'SELECT' | 'REFERENCES' | 'CREATE' | id ) idsList?
     ;
 
 privilege_target
     : qnames
     | 'TABLE' qnames
     | 'SEQUENCE' qnames
-    | 'FOREIGN' 'DATA' 'WRAPPER' names
-    | 'FOREIGN' 'SERVER' names
+    | 'FOREIGN' 'DATA' 'WRAPPER' ids
+    | 'FOREIGN' 'SERVER' ids
     | 'FUNCTION' function_with_argtypes_list
     | 'PROCEDURE' function_with_argtypes_list
     | 'ROUTINE' function_with_argtypes_list
-    | 'DATABASE' names
+    | 'DATABASE' ids
     | 'DOMAIN' qnames
-    | 'LANGUAGE' names
-    | 'LARGE' 'OBJECT' numericonly_list
-    | 'SCHEMA' names
-    | 'TABLESPACE' names
+    | 'LANGUAGE' ids
+    | 'LARGE' 'OBJECT' numericonly ( ',' numericonly )*
+    | 'SCHEMA' ids
+    | 'TABLESPACE' ids
     | 'TYPE' qnames
-    | 'ALL' 'TABLES' 'IN' 'SCHEMA' names
-    | 'ALL' 'SEQUENCES' 'IN' 'SCHEMA' names
-    | 'ALL' 'FUNCTIONS' 'IN' 'SCHEMA' names
-    | 'ALL' 'PROCEDURES' 'IN' 'SCHEMA' names
-    | 'ALL' 'ROUTINES' 'IN' 'SCHEMA' names
+    | 'ALL' 'TABLES' 'IN' 'SCHEMA' ids
+    | 'ALL' 'SEQUENCES' 'IN' 'SCHEMA' ids
+    | 'ALL' 'FUNCTIONS' 'IN' 'SCHEMA' ids
+    | 'ALL' 'PROCEDURES' 'IN' 'SCHEMA' ids
+    | 'ALL' 'ROUTINES' 'IN' 'SCHEMA' ids
     ;
 
 grantee_list
@@ -1347,7 +1253,7 @@ alterdefaultprivilegesstmt
     ;
 
 defacloption
-    : 'IN' 'SCHEMA' names
+    : 'IN' 'SCHEMA' ids
     | 'FOR' 'ROLE' role_list
     | 'FOR' 'USER' role_list
     ;
@@ -1368,26 +1274,19 @@ defacl_privilege_target
     ;
 
 indexstmt
-    : 'CREATE' ('UNIQUE')? 'INDEX' ('CONCURRENTLY')? (ifNotExists? name)? 'ON' relation_expr (using)? '(' index_params ')' ('INCLUDE' '(' index_including_params ')')? reloptions_? opttablespace? where?
+    : 'CREATE' 'UNIQUE'? 'INDEX' 'CONCURRENTLY'? (ifNotExists? id)?
+      'ON' relation_expr ( 'USING' id )? '(' index_params ')'
+      ('INCLUDE' '(' index_params ')')? reloptions_? opttablespace? where?
     ;
 
 index_params
-    : index_elem ( ',' index_elem )*
-    ;
+  : index_elem ( ',' index_elem )*
+  ;
 
-index_elem_options
-    : collate_? ( qname reloptions? )? sortDir? nulls_order_?
-    ;
-
-index_elem
-    : name index_elem_options
-    | func_expr_windowless index_elem_options
-    | '(' a_expr ')' index_elem_options
-    ;
-
-index_including_params
-    : index_elem ( ',' index_elem )*
-    ;
+    index_elem
+      : ( id | func_expr_windowless | '(' a_expr ')' )
+        collate_? ( qname reloptions? )? sortDir? nullsOrder?
+      ;
 
 collate_
     : 'COLLATE' qname
@@ -1398,22 +1297,19 @@ sortDir
     | 'DESC'
     ;
 
-nulls_order_
+nullsOrder
     : 'NULLS' ('FIRST' |  'LAST')
     ;
 
 createfunctionstmt
-    : 'CREATE' orReplace? ( 'FUNCTION' | 'PROCEDURE' ) func_name func_args_with_defaults (
-        'RETURNS' ( func_type | 'TABLE' '(' table_func_column_list ')' )
-     )? createfunc_opt_item+
-    ;
+  : 'CREATE' orReplace? ( 'FUNCTION' | 'PROCEDURE' ) qname
+    '(' ( func_arg_with_default ( ',' func_arg_with_default )* )? ')'
+    ( 'RETURNS' ( func_type | 'TABLE' '(' table_func_column_list ')' ) )?
+    createfunc_opt_item+
+  ;
 
 orReplace
     : 'OR' 'REPLACE'
-    ;
-
-func_args
-    : '(' func_args_list? ')'
     ;
 
 func_args_list
@@ -1425,23 +1321,17 @@ function_with_argtypes_list
     ;
 
 function_with_argtypes
-    : func_name func_args
-    | type_func_name_keyword
-    | name (indirection_el)*
+    : qname ( '(' func_args_list? ')' )?
     ;
 
-func_args_with_defaults
-    : '(' func_args_with_defaults_list? ')'
-    ;
+func_arg_with_default
+      : func_arg ( ( 'DEFAULT' | '=' ) a_expr )?
+      ;
 
-func_args_with_defaults_list
-    : func_arg_with_default ( ',' func_arg_with_default )*
-    ;
+
 
 func_arg
-    : arg_class (type_function_name)? func_type
-    | type_function_name arg_class? func_type
-    | func_type
+    : ( arg_class id? | id arg_class? )? func_type
     ;
 
 arg_class
@@ -1453,23 +1343,11 @@ arg_class
 
 func_type
     : typename
-    | 'SETOF'? type_function_name ( '.' colLabel )+ '%' 'TYPE'
-    ;
-
-func_arg_with_default
-    : func_arg ( ( 'DEFAULT' | '=' ) a_expr )?
-    ;
-
-aggr_args
-    : '(' ( '*' | (func_args_list? 'ORDER' 'BY' )? func_args_list ) ')'
+    | 'SETOF'? id ( '.' id )+ '%' 'TYPE'
     ;
 
 aggregate_with_argtypes
-    : func_name aggr_args
-    ;
-
-aggregate_with_argtypes_list
-    : aggregate_with_argtypes ( ',' aggregate_with_argtypes )*
+    : qname '(' ( '*' | (func_args_list? 'ORDER' 'BY' )? func_args_list ) ')'
     ;
 
 common_func_opt_item
@@ -1479,10 +1357,7 @@ common_func_opt_item
     | 'IMMUTABLE'
     | 'STABLE'
     | 'VOLATILE'
-    | 'EXTERNAL' 'SECURITY' 'DEFINER'
-    | 'EXTERNAL' 'SECURITY' 'INVOKER'
-    | 'SECURITY' 'DEFINER'
-    | 'SECURITY' 'INVOKER'
+    | 'EXTERNAL'? 'SECURITY' ( 'DEFINER' | 'INVOKER' )
     | 'LEAKPROOF'
     | 'NOT' 'LEAKPROOF'
     | 'COST' numericonly
@@ -1490,12 +1365,12 @@ common_func_opt_item
     | 'SUPPORT' qname
     | 'SET' set_rest_more
     | variableresetstmt
-    | 'PARALLEL' name
+    | 'PARALLEL' id
     ;
 
 createfunc_opt_item
     : 'AS' func_as
-    | 'LANGUAGE' nonreservedword_or_sconst
+    | 'LANGUAGE' name
     | 'TRANSFORM' transform_type_list
     | 'WINDOW'
     | common_func_opt_item
@@ -1516,13 +1391,14 @@ definition_
     : 'WITH' definition
     ;
 
-table_func_column
-    : type_function_name func_type
-    ;
 
 table_func_column_list
-    : table_func_column ( ',' table_func_column )*
-    ;
+  : table_func_column ( ',' table_func_column )*
+  ;
+
+    table_func_column
+      : id func_type
+      ;
 
 alterfunctionstmt
     : 'ALTER' ( 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ) function_with_argtypes alterfunc_opt_list restrict_?
@@ -1538,22 +1414,17 @@ restrict_
     ;
 
 removefuncstmt
-    : 'DROP' 'FUNCTION' function_with_argtypes_list drop_behavior_?
-    | 'DROP' 'FUNCTION' ifExists function_with_argtypes_list drop_behavior_?
-    | 'DROP' 'PROCEDURE' function_with_argtypes_list drop_behavior_?
-    | 'DROP' 'PROCEDURE' ifExists function_with_argtypes_list drop_behavior_?
-    | 'DROP' 'ROUTINE' function_with_argtypes_list drop_behavior_?
-    | 'DROP' 'ROUTINE' ifExists function_with_argtypes_list drop_behavior_?
+    : 'DROP' 'FUNCTION' ifExists? function_with_argtypes_list drop_behavior_?
+    | 'DROP' 'PROCEDURE' ifExists? function_with_argtypes_list drop_behavior_?
+    | 'DROP' 'ROUTINE' ifExists? function_with_argtypes_list drop_behavior_?
     ;
 
 removeaggrstmt
-    : 'DROP' 'AGGREGATE' aggregate_with_argtypes_list drop_behavior_?
-    | 'DROP' 'AGGREGATE' ifExists aggregate_with_argtypes_list drop_behavior_?
+    : 'DROP' 'AGGREGATE' ifExists? aggregate_with_argtypes ( ',' aggregate_with_argtypes )* drop_behavior_?
     ;
 
 removeoperstmt
-    : 'DROP' 'OPERATOR' operator_with_argtypes_list drop_behavior_?
-    | 'DROP' 'OPERATOR' ifExists operator_with_argtypes_list drop_behavior_?
+    : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* drop_behavior_?
     ;
 
 oper_argtypes
@@ -1564,11 +1435,7 @@ oper_argtypes
     ;
 
 any_operator
-    : ( name '.' )* (Operator | mathop)
-    ;
-
-operator_with_argtypes_list
-    : operator_with_argtypes ( ',' operator_with_argtypes )*
+    : ( id '.' )* (Operator | mathop)
     ;
 
 operator_with_argtypes
@@ -1576,16 +1443,7 @@ operator_with_argtypes
     ;
 
 dostmt
-    : 'DO' dostmt_opt_list
-    ;
-
-dostmt_opt_list
-    : dostmt_opt_item+
-    ;
-
-dostmt_opt_item
-    : string
-    | 'LANGUAGE' nonreservedword_or_sconst
+    : 'DO' ( 'LANGUAGE'? name )+
     ;
 
 createcaststmt
@@ -1595,171 +1453,134 @@ createcaststmt
     ;
 
 cast_context
-    : 'AS' 'IMPLICIT'
-    | 'AS' 'ASSIGNMENT'
-
-    ;
+    : 'AS' ( 'IMPLICIT' |  'ASSIGNMENT' ) ;
 
 dropcaststmt
-    : 'DROP' 'CAST' if_exists_? '(' typename 'AS' typename ')' drop_behavior_?
+    : 'DROP' 'CAST' ifExists? '(' typename 'AS' typename ')' drop_behavior_?
     ;
 
-if_exists_
-    : 'IF' 'EXISTS'
-
-    ;
+//if_exists_
+//    : 'IF' 'EXISTS'
+//
+//    ;
 
 createtransformstmt
-    : 'CREATE' orReplace? 'TRANSFORM' 'FOR' typename 'LANGUAGE' name '(' transform_element_list ')'
+    : 'CREATE' orReplace? 'TRANSFORM' 'FOR' typename 'LANGUAGE' id '(' transform_element_list ')'
     ;
 
 transform_element_list
-    : 'FROM' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes ',' 'TO' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes
-    | 'TO' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes ',' 'FROM' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes
-    | 'FROM' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes
-    | 'TO' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes
+    : 'FROM' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes ( ',' 'TO' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes )?
+    | 'TO' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes ( ',' 'FROM' 'SQL' 'WITH' 'FUNCTION' function_with_argtypes )?
     ;
 
 droptransformstmt
-    : 'DROP' 'TRANSFORM' if_exists_? 'FOR' typename 'LANGUAGE' name drop_behavior_?
+    : 'DROP' 'TRANSFORM' ifExists? 'FOR' typename 'LANGUAGE' id drop_behavior_?
     ;
 
-reindexstmt
-    : 'REINDEX' reindex_option_list? reindex_target_relation ('CONCURRENTLY')? qname
-    | 'REINDEX' reindex_option_list? 'SCHEMA' ('CONCURRENTLY')? name
-    | 'REINDEX' reindex_option_list? reindex_target_all ('CONCURRENTLY')? (name)?
+reindex
+  : 'REINDEX' ( '(' reindexOption (  ',' reindexOption )* ')' )?
+    ( 'INDEX' | 'TABLE' | 'SCHEMA' | 'SYSTEM' | 'DATABASE' )
+    'CONCURRENTLY'? qname?
+  ;
+
+  reindexOption
+    :  'CONCURRENTLY' boolean?
+    |  'TABLESPACE' qname?
+    |  'VERBOSE' boolean?
     ;
 
-reindex_target_relation
-    : 'INDEX'
-    | 'TABLE'
-    ;
+    // TODO add support for 1 and 0
+    boolean
+      : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
 
-reindex_target_all
-    : 'SYSTEM'
-    | 'DATABASE'
-    ;
+//  utility_option_elem
+//    : (name | ANALYZE | 'FORMAT_LA') (boolean_or_string_ | numericonly)?
+//    ;
 
-reindex_option_list
-    : '(' utility_option_elem (  ',' utility_option_elem )* ')'
-    ;
 
-altertblspcstmt
-    : 'ALTER' 'TABLESPACE' name 'SET' reloptions
-    | 'ALTER' 'TABLESPACE' name 'RESET' reloptions
+alterTablespace
+    : 'ALTER' 'TABLESPACE' id ( 'SET' | 'RESET' ) reloptions
+    | 'ALTER' 'TABLESPACE' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'TABLESPACE' id 'RENAME' 'TO' id
     ;
 
 renamestmt
-    : 'ALTER' 'AGGREGATE' aggregate_with_argtypes 'RENAME' 'TO' name
-    | 'ALTER' 'COLLATION' qname 'RENAME' 'TO' name
-    | 'ALTER' 'CONVERSION' qname 'RENAME' 'TO' name
-    | 'ALTER' 'DATABASE' name 'RENAME' 'TO' name
-    | 'ALTER' 'DOMAIN' qname 'RENAME' 'TO' name
-    | 'ALTER' 'DOMAIN' qname 'RENAME' 'CONSTRAINT' name 'TO' name
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' name 'RENAME' 'TO' name
-    | 'ALTER' 'FUNCTION' function_with_argtypes 'RENAME' 'TO' name
+    : 'ALTER' 'AGGREGATE' aggregate_with_argtypes 'RENAME' 'TO' id
+    | 'ALTER' 'COLLATION' qname 'RENAME' 'TO' id
+    | 'ALTER' 'CONVERSION' qname 'RENAME' 'TO' id
+    | 'ALTER' 'DATABASE' id 'RENAME' 'TO' id
+    | 'ALTER' 'DOMAIN' qname 'RENAME' 'TO' id
+    | 'ALTER' 'DOMAIN' qname 'RENAME' 'CONSTRAINT' id 'TO' id
+    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'RENAME' 'TO' id
+    | 'ALTER' 'FUNCTION' function_with_argtypes 'RENAME' 'TO' id
     | 'ALTER' 'GROUP' rolespec 'RENAME' 'TO' rolespec
-    | 'ALTER' ('PROCEDURAL')? 'LANGUAGE' name 'RENAME' 'TO' name
-    | 'ALTER' 'OPERATOR' 'CLASS' qname using 'RENAME' 'TO' name
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname using 'RENAME' 'TO' name
-    | 'ALTER' 'POLICY' name 'ON' qname 'RENAME' 'TO' name
-    | 'ALTER' 'POLICY' ifExists name 'ON' qname 'RENAME' 'TO' name
-    | 'ALTER' 'PROCEDURE' function_with_argtypes 'RENAME' 'TO' name
-    | 'ALTER' 'PUBLICATION' name 'RENAME' 'TO' name
-    | 'ALTER' 'ROUTINE' function_with_argtypes 'RENAME' 'TO' name
-    | 'ALTER' 'SCHEMA' name 'RENAME' 'TO' name
-    | 'ALTER' 'SERVER' name 'RENAME' 'TO' name
-    | 'ALTER' 'SUBSCRIPTION' name 'RENAME' 'TO' name
-    | 'ALTER' 'TABLE' relation_expr 'RENAME' 'TO' name
-    | 'ALTER' 'TABLE' ifExists relation_expr 'RENAME' 'TO' name
-    | 'ALTER' 'SEQUENCE' qname 'RENAME' 'TO' name
-    | 'ALTER' 'SEQUENCE' ifExists qname 'RENAME' 'TO' name
-    | 'ALTER' 'VIEW' qname 'RENAME' 'TO' name
-    | 'ALTER' 'VIEW' ifExists qname 'RENAME' 'TO' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'RENAME' 'TO' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists qname 'RENAME' 'TO' name
-    | 'ALTER' 'INDEX' qname 'RENAME' 'TO' name
-    | 'ALTER' 'INDEX' ifExists qname 'RENAME' 'TO' name
-    | 'ALTER' 'FOREIGN' 'TABLE' relation_expr 'RENAME' 'TO' name
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists relation_expr 'RENAME' 'TO' name
-    | 'ALTER' 'TABLE' relation_expr 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'TABLE' ifExists relation_expr 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'VIEW' qname 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'VIEW' ifExists qname 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists qname 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'TABLE' relation_expr 'RENAME' 'CONSTRAINT' name 'TO' name
-    | 'ALTER' 'TABLE' ifExists relation_expr 'RENAME' 'CONSTRAINT' name 'TO' name
-    | 'ALTER' 'FOREIGN' 'TABLE' relation_expr 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists relation_expr 'RENAME' column_? name 'TO' name
-    | 'ALTER' 'RULE' name 'ON' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TRIGGER' name 'ON' qname 'RENAME' 'TO' name
-    | 'ALTER' 'EVENT' 'TRIGGER' name 'RENAME' 'TO' name
+    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'RENAME' 'TO' id
+    | 'ALTER' 'OPERATOR' 'CLASS' qname 'USING' id 'RENAME' 'TO' id
+    | 'ALTER' 'OPERATOR' 'FAMILY' qname 'USING' id 'RENAME' 'TO' id
+    | 'ALTER' 'POLICY' ifExists? id 'ON' qname 'RENAME' 'TO' id
+    | 'ALTER' 'PROCEDURE' function_with_argtypes 'RENAME' 'TO' id
+    | 'ALTER' 'PUBLICATION' id 'RENAME' 'TO' id
+    | 'ALTER' 'ROUTINE' function_with_argtypes 'RENAME' 'TO' id
+    | 'ALTER' 'SCHEMA' id 'RENAME' 'TO' id
+    | 'ALTER' 'SERVER' id 'RENAME' 'TO' id
+    | 'ALTER' 'SUBSCRIPTION' id 'RENAME' 'TO' id
+    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'TO' id
+    | 'ALTER' 'SEQUENCE' ifExists? qname 'RENAME' 'TO' id
+    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'TO' id
+    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'TO' id
+    | 'ALTER' 'INDEX' ifExists? qname 'RENAME' 'TO' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'RENAME' 'TO' id
+    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'CONSTRAINT' id 'TO' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'RULE' id 'ON' qname 'RENAME' 'TO' id
+    | 'ALTER' 'TRIGGER' id 'ON' qname 'RENAME' 'TO' id
+    | 'ALTER' 'EVENT' 'TRIGGER' id 'RENAME' 'TO' id
     | 'ALTER' 'ROLE' rolespec 'RENAME' 'TO' rolespec
     | 'ALTER' 'USER' rolespec 'RENAME' 'TO' rolespec
-    | 'ALTER' 'TABLESPACE' name 'RENAME' 'TO' name
-    | 'ALTER' 'STATISTICS' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'PARSER' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'TEMPLATE' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TYPE' qname 'RENAME' 'TO' name
-    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' name 'TO' name drop_behavior_?
-    ;
-
-column_
-    : 'COLUMN'
-
-    ;
-
-set_data_
-    : 'SET' 'DATA'
-
+    | 'ALTER' 'STATISTICS' qname 'RENAME' 'TO' id
+    | 'ALTER' textSearchConfig qname 'RENAME' 'TO' id
+    | 'ALTER' 'TYPE' qname 'RENAME' 'TO' id
+    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' id 'TO' id drop_behavior_?
     ;
 
 alterobjectdependsstmt
-    : 'ALTER' 'FUNCTION' function_with_argtypes no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    | 'ALTER' 'PROCEDURE' function_with_argtypes no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    | 'ALTER' 'ROUTINE' function_with_argtypes no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    | 'ALTER' 'TRIGGER' name 'ON' qname no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    | 'ALTER' 'INDEX' qname no_? 'DEPENDS' 'ON' 'EXTENSION' name
-    ;
-
-no_
-    : 'NO'
-
+    : 'ALTER' 'FUNCTION' function_with_argtypes 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+    | 'ALTER' 'PROCEDURE' function_with_argtypes 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+    | 'ALTER' 'ROUTINE' function_with_argtypes 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+    | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+    | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
     ;
 
 alterobjectschemastmt
-    : 'ALTER' 'AGGREGATE' aggregate_with_argtypes 'SET' 'SCHEMA' name
-    | 'ALTER' 'COLLATION' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'CONVERSION' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'DOMAIN' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'EXTENSION' name 'SET' 'SCHEMA' name
-    | 'ALTER' 'FUNCTION' function_with_argtypes 'SET' 'SCHEMA' name
-    | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' name
-    | 'ALTER' 'OPERATOR' 'CLASS' qname using 'SET' 'SCHEMA' name
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname using 'SET' 'SCHEMA' name
-    | 'ALTER' 'PROCEDURE' function_with_argtypes 'SET' 'SCHEMA' name
-    | 'ALTER' 'ROUTINE' function_with_argtypes 'SET' 'SCHEMA' name
-    | 'ALTER' 'TABLE' relation_expr 'SET' 'SCHEMA' name
-    | 'ALTER' 'TABLE' ifExists relation_expr 'SET' 'SCHEMA' name
-    | 'ALTER' 'STATISTICS' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'PARSER' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'TEMPLATE' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'SEQUENCE' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'SEQUENCE' ifExists qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'VIEW' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'VIEW' ifExists qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists qname 'SET' 'SCHEMA' name
-    | 'ALTER' 'FOREIGN' 'TABLE' relation_expr 'SET' 'SCHEMA' name
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists relation_expr 'SET' 'SCHEMA' name
-    | 'ALTER' 'TYPE' qname 'SET' 'SCHEMA' name
+    : 'ALTER' 'AGGREGATE' aggregate_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'COLLATION' qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'CONVERSION' qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'DOMAIN' qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'EXTENSION' id 'SET' 'SCHEMA' id
+
+
+    | 'ALTER' 'FUNCTION' function_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'PROCEDURE' function_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'ROUTINE' function_with_argtypes 'SET' 'SCHEMA' id
+
+     | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname 'USING' id 'SET' 'SCHEMA' id
+    | 'ALTER' 'OPERATOR'  qname 'USING' id 'SET' 'SCHEMA' id
+    | 'ALTER' 'TABLE' ifExists? relation_expr 'SET' 'SCHEMA' id
+    | 'ALTER' 'STATISTICS' qname 'SET' 'SCHEMA' id
+    | 'ALTER' textSearchConfig qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'SEQUENCE' ifExists? qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'TYPE' qname 'SET' 'SCHEMA' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'SET' 'SCHEMA' id
     ;
+
+textSearchConfig : 'TEXT' 'SEARCH' ( 'PARSER' | 'DICTIONARY' | 'TEMPLATE' | 'CONFIGURATION' ) ;
 
 alteroperatorstmt
     : 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' '(' operator_def_list ')'
@@ -1770,8 +1591,8 @@ operator_def_list
     ;
 
 operator_def_elem
-    : colLabel '=' 'NONE'
-    | colLabel '=' operator_def_arg
+    : id '=' 'NONE'
+    | id '=' operator_def_arg
     ;
 
 operator_def_arg
@@ -1790,92 +1611,65 @@ alterownerstmt
     : 'ALTER' 'AGGREGATE' aggregate_with_argtypes 'OWNER' 'TO' rolespec
     | 'ALTER' 'COLLATION' qname 'OWNER' 'TO' rolespec
     | 'ALTER' 'CONVERSION' qname 'OWNER' 'TO' rolespec
-    | 'ALTER' 'DATABASE' name 'OWNER' 'TO' rolespec
+    | 'ALTER' 'DATABASE' id 'OWNER' 'TO' rolespec
     | 'ALTER' 'DOMAIN' qname 'OWNER' 'TO' rolespec
     | 'ALTER' 'FUNCTION' function_with_argtypes 'OWNER' 'TO' rolespec
-    | 'ALTER' ('PROCEDURAL')? 'LANGUAGE' name 'OWNER' 'TO' rolespec
+    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'OWNER' 'TO' rolespec
     | 'ALTER' 'LARGE' 'OBJECT' numericonly 'OWNER' 'TO' rolespec
     | 'ALTER' 'OPERATOR' operator_with_argtypes 'OWNER' 'TO' rolespec
-    | 'ALTER' 'OPERATOR' 'CLASS' qname using 'OWNER' 'TO' rolespec
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname using 'OWNER' 'TO' rolespec
+    | 'ALTER' 'OPERATOR' 'CLASS' qname 'USING' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'OPERATOR' 'FAMILY' qname 'USING' id 'OWNER' 'TO' rolespec
     | 'ALTER' 'PROCEDURE' function_with_argtypes 'OWNER' 'TO' rolespec
     | 'ALTER' 'ROUTINE' function_with_argtypes 'OWNER' 'TO' rolespec
-    | 'ALTER' 'SCHEMA' name 'OWNER' 'TO' rolespec
+    | 'ALTER' 'SCHEMA' id 'OWNER' 'TO' rolespec
     | 'ALTER' 'TYPE' qname 'OWNER' 'TO' rolespec
-    | 'ALTER' 'TABLESPACE' name 'OWNER' 'TO' rolespec
     | 'ALTER' 'STATISTICS' qname 'OWNER' 'TO' rolespec
     | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname 'OWNER' 'TO' rolespec
     | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'OWNER' 'TO' rolespec
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' name 'OWNER' 'TO' rolespec
-    | 'ALTER' 'SERVER' name 'OWNER' 'TO' rolespec
-    | 'ALTER' 'EVENT' 'TRIGGER' name 'OWNER' 'TO' rolespec
-    | 'ALTER' 'PUBLICATION' name 'OWNER' 'TO' rolespec
-    | 'ALTER' 'SUBSCRIPTION' name 'OWNER' 'TO' rolespec
+    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'SERVER' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'EVENT' 'TRIGGER' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'PUBLICATION' id 'OWNER' 'TO' rolespec
+    | 'ALTER' 'SUBSCRIPTION' id 'OWNER' 'TO' rolespec
     ;
 
 createpublicationstmt
-    : 'CREATE' 'PUBLICATION' name publication_for_tables_? definition_?
-    ;
-
-publication_for_tables_
-    : publication_for_tables
-
-    ;
-
-publication_for_tables
-    : 'FOR' 'TABLE' relation_expr_list
-    | 'FOR' 'ALL' 'TABLES'
+    : 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' relation_expr_list | 'FOR' 'ALL' 'TABLES')? definition_?
     ;
 
 alterpublicationstmt
-    : 'ALTER' 'PUBLICATION' name 'SET' definition
-    | 'ALTER' 'PUBLICATION' name 'ADD' 'TABLE' relation_expr_list
-    | 'ALTER' 'PUBLICATION' name 'SET' 'TABLE' relation_expr_list
-    | 'ALTER' 'PUBLICATION' name 'DROP' 'TABLE' relation_expr_list
+    : 'ALTER' 'PUBLICATION' id 'SET' definition
+    | 'ALTER' 'PUBLICATION' id 'ADD' 'TABLE' relation_expr_list
+    | 'ALTER' 'PUBLICATION' id 'SET' 'TABLE' relation_expr_list
+    | 'ALTER' 'PUBLICATION' id 'DROP' 'TABLE' relation_expr_list
     ;
 
 createsubscriptionstmt
-    : 'CREATE' 'SUBSCRIPTION' name 'CONNECTION' string 'PUBLICATION' publication_name_list definition_?
+    : 'CREATE' 'SUBSCRIPTION' id 'CONNECTION' string 'PUBLICATION' publication_name_list definition_?
     ;
 
 publication_name_list
-    : publication_name_item ( ',' publication_name_item )*
-    ;
-
-publication_name_item
-    : colLabel
+    : id ( ',' id )*
     ;
 
 altersubscriptionstmt
-    : 'ALTER' 'SUBSCRIPTION' name 'SET' definition
-    | 'ALTER' 'SUBSCRIPTION' name 'CONNECTION' string
-    | 'ALTER' 'SUBSCRIPTION' name 'REFRESH' 'PUBLICATION' definition_?
-    | 'ALTER' 'SUBSCRIPTION' name 'SET' 'PUBLICATION' publication_name_list definition_?
-    | 'ALTER' 'SUBSCRIPTION' name 'ENABLE'
-    | 'ALTER' 'SUBSCRIPTION' name 'DISABLE'
+    : 'ALTER' 'SUBSCRIPTION' id 'SET' definition
+    | 'ALTER' 'SUBSCRIPTION' id 'CONNECTION' string
+    | 'ALTER' 'SUBSCRIPTION' id 'REFRESH' 'PUBLICATION' definition_?
+    | 'ALTER' 'SUBSCRIPTION' id 'SET' 'PUBLICATION' publication_name_list definition_?
+    | 'ALTER' 'SUBSCRIPTION' id 'ENABLE'
+    | 'ALTER' 'SUBSCRIPTION' id 'DISABLE'
     ;
 
 dropsubscriptionstmt
-    : 'DROP' 'SUBSCRIPTION' name drop_behavior_?
-    | 'DROP' 'SUBSCRIPTION' ifExists name drop_behavior_?
+    : 'DROP' 'SUBSCRIPTION' ifExists? id drop_behavior_?
     ;
 
 rulestmt
-    : 'CREATE' orReplace? 'RULE' name 'AS' 'ON' ('SELECT'
-    | 'UPDATE'
-    | 'DELETE'
-    | 'INSERT') 'TO' qname where? 'DO' ('INSTEAD'
-    | 'ALSO')? ruleactionlist
-    ;
-
-ruleactionlist
-    : 'NOTHING'
-    | ruleactionstmt
-    | '(' ruleactionmulti ')'
-    ;
-
-ruleactionmulti
-    : (ruleactionstmt)? ( SEMI (ruleactionstmt)? )*
+    : 'CREATE' orReplace? 'RULE' id 'AS'
+      'ON' ( 'SELECT' | 'UPDATE' | 'DELETE' | 'INSERT' )
+      'TO' qname where? 'DO' ( 'INSTEAD' | 'ALSO' )?
+      ( 'NOTHING' | ruleactionstmt | '(' ruleactionstmt? ( SEMI ruleactionstmt? )* ')' )
     ;
 
 ruleactionstmt
@@ -1887,30 +1681,20 @@ ruleactionstmt
     ;
 
 notifystmt
-    : 'NOTIFY' name (',' string)?
-    ;
+    : 'NOTIFY' id ( ',' string )? ;
 
 listenstmt
-    : 'LISTEN' name
-    ;
+    : 'LISTEN' id ;
 
 unlistenstmt
-    : 'UNLISTEN' name
-    | 'UNLISTEN' '*'
-    ;
+    : 'UNLISTEN' ( id | '*' ) ;
 
 transactionstmt
-    : 'ABORT' transaction_? transaction_chain_?
-    | 'BEGIN' transaction_? (transaction_mode_list)?
-    | 'START' 'TRANSACTION' (transaction_mode_list)?
-    | 'COMMIT' transaction_? transaction_chain_?
-    | 'END' transaction_? transaction_chain_?
-    | 'ROLLBACK' transaction_? transaction_chain_?
-    | 'SAVEPOINT' name
-    | 'RELEASE' 'SAVEPOINT' name
-    | 'RELEASE' name
-    | 'ROLLBACK' transaction_? 'TO' 'SAVEPOINT' name
-    | 'ROLLBACK' transaction_? 'TO' name
+    : ( 'ABORT' | | 'COMMIT' | 'END' | 'ROLLBACK' ) transaction_? ( 'AND' 'NO'? 'CHAIN' )?
+    | ( 'BEGIN' transaction_? | 'START' 'TRANSACTION' ) ( transaction_mode_item ( ',' transaction_mode_item )* )?
+    | 'RELEASE'? 'SAVEPOINT' id
+    | 'RELEASE' id
+    | 'ROLLBACK' transaction_? 'TO' 'SAVEPOINT'? id
     | 'PREPARE' 'TRANSACTION' string
     | 'COMMIT' 'PREPARED' string
     | 'ROLLBACK' 'PREPARED' string
@@ -1921,26 +1705,12 @@ transaction_
     | 'TRANSACTION'
     ;
 
-transaction_mode_item
-    : 'ISOLATION' 'LEVEL' iso_level
-    | 'READ' 'ONLY'
-    | 'READ' 'WRITE'
-    | 'DEFERRABLE'
-    | 'NOT' 'DEFERRABLE'
-    ;
 
-transaction_mode_list
-    : transaction_mode_item ( ','? transaction_mode_item )*
-    ;
-
-transaction_chain_
-    : 'AND' 'NO'? 'CHAIN'
-    ;
 
 viewstmt
     : 'CREATE' ( 'OR' 'REPLACE' )? opttemp? (
-        'VIEW' qname (name_list_)? reloptions_?
-        | 'RECURSIVE' 'VIEW' qname '(' names ')' reloptions_?
+        'VIEW' qname idsList? reloptions_?
+        | 'RECURSIVE' 'VIEW' qname '(' ids ')' reloptions_?
     ) 'AS' selectstmt ('WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION')?
     ;
 
@@ -1949,7 +1719,7 @@ loadstmt
     ;
 
 createdbstmt
-    : 'CREATE' 'DATABASE' name 'WITH'? createdb_opt_item*
+    : 'CREATE' 'DATABASE' id 'WITH'? createdb_opt_item*
     ;
 
 createdb_opt_item
@@ -1967,15 +1737,15 @@ createdb_opt_name
     ;
 
 alterdatabasestmt
-    : 'ALTER' 'DATABASE' name ( 'WITH'? createdb_opt_item* | 'SET' 'TABLESPACE' name )
+    : 'ALTER' 'DATABASE' id ( 'WITH'? createdb_opt_item* | 'SET' 'TABLESPACE' id )
     ;
 
 alterdatabasesetstmt
-    : 'ALTER' 'DATABASE' name setresetclause
+    : 'ALTER' 'DATABASE' id setresetclause
     ;
 
 dropdbstmt
-    : 'DROP' 'DATABASE' ifExists? name ( 'WITH'? '(' 'FORCE' ( ',' 'FORCE' )* ')' )?
+    : 'DROP' 'DATABASE' ifExists? id ( 'WITH'? '(' 'FORCE' ( ',' 'FORCE' )* ')' )?
     ;
 
 altercollationstmt
@@ -1991,27 +1761,24 @@ createdomainstmt
     ;
 
 alterdomainstmt
-    : 'ALTER' 'DOMAIN' qname (
-        alter_column_default
-        | 'DROP' 'NOT' 'NULL'
-        | 'SET' 'NOT' 'NULL'
-        | 'ADD' tableconstraint
-        | 'DROP' 'CONSTRAINT' ifExists? name drop_behavior_?
-        | 'VALIDATE' 'CONSTRAINT' name
+  : 'ALTER' 'DOMAIN' qname
+    ( alter_column_default
+    | 'DROP' 'NOT' 'NULL'
+    | 'SET' 'NOT' 'NULL'
+    | 'ADD' tableconstraint
+    | 'DROP' 'CONSTRAINT' ifExists? id drop_behavior_?
+    | 'VALIDATE' 'CONSTRAINT' id
     )
-    ;
+  ;
 
 altertsdictionarystmt
     : 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname definition
     ;
 
 altertsconfigurationstmt
-    : 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ADD' 'MAPPING' 'FOR' names 'WITH' qnames
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' 'FOR' names 'WITH' qnames
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' 'REPLACE' qname 'WITH' qname
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' 'FOR' names 'REPLACE' qname 'WITH' qname
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'DROP' 'MAPPING' 'FOR' names
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'DROP' 'MAPPING' ifExists 'FOR' names
+    : 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ADD' 'MAPPING' 'FOR' ids 'WITH' qnames
+    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' ( 'FOR' ids )? ( 'REPLACE' qname )? 'WITH' qnames
+    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'DROP' 'MAPPING' ifExists? 'FOR' ids
     ;
 
 createconversionstmt
@@ -2019,40 +1786,24 @@ createconversionstmt
     ;
 
 clusterstmt
-    : 'CLUSTER' 'VERBOSE'? qname (using)?
+    : 'CLUSTER' 'VERBOSE'? qname ( 'USING' id )?
     | 'CLUSTER' 'VERBOSE'?
-    | 'CLUSTER' 'VERBOSE'? name 'ON' qname
+    | 'CLUSTER' 'VERBOSE'? id 'ON' qname
     ;
 
 vacuumstmt
-    : 'VACUUM' 'FULL'? 'FREEZE'? 'VERBOSE'? analyze_keyword? vacuum_relation_list?
-    | 'VACUUM' '(' vac_analyze_option_list ')' vacuum_relation_list?
+    : 'VACUUM' 'FULL'? 'FREEZE'? 'VERBOSE'? ANALYZE? vacuum_relation_list?
+    | 'VACUUM' '(' optionElems ')' vacuum_relation_list?
     ;
 
 analyzestmt
-    : analyze_keyword 'VERBOSE'? vacuum_relation_list?
-    | analyze_keyword '(' vac_analyze_option_list ')' vacuum_relation_list?
+    : ANALYZE 'VERBOSE'? vacuum_relation_list?
+    | ANALYZE '(' optionElems ')' vacuum_relation_list?
     ;
 
-vac_analyze_option_list
-    : vac_analyze_option_elem ( ',' vac_analyze_option_elem )*
-    ;
-
-analyze_keyword
-    : 'ANALYZE'
-    | 'ANALYSE'
-    ;
-
-utility_option_elem
-    : (nonreservedword | analyze_keyword | 'FORMAT_LA') (boolean_or_string_ | numericonly)?
-    ;
-
-vac_analyze_option_elem
-    : (nonreservedword
-    | analyze_keyword) (boolean_or_string_ | numericonly)? ;
 
 vacuum_relation
-    : qname name_list_?
+    : qname idsList?
     ;
 
 vacuum_relation_list
@@ -2060,10 +1811,8 @@ vacuum_relation_list
     ;
 
 explainstmt
-    : 'EXPLAIN' explainablestmt
-    | 'EXPLAIN' analyze_keyword 'VERBOSE'? explainablestmt
-    | 'EXPLAIN' 'VERBOSE' explainablestmt
-    | 'EXPLAIN' '(' explain_option_elem ( ',' explain_option_elem )* ')' explainablestmt
+    : 'EXPLAIN' ANALYZE? 'VERBOSE'? explainablestmt
+    | 'EXPLAIN' '(' optionElems ')' explainablestmt
     ;
 
 explainablestmt
@@ -2078,12 +1827,16 @@ explainablestmt
     | executestmt
     ;
 
-explain_option_elem
-    : (nonreservedword | analyze_keyword) (boolean_or_string_ | numericonly)?
+optionElems
+    : option_elem ( ',' option_elem )*
+    ;
+
+option_elem
+    : id (boolean_or_string_ | numericonly)?
     ;
 
 preparestmt
-    : 'PREPARE' name ('(' type_list ')')? 'AS' preparablestmt
+    : 'PREPARE' id ( '(' type_list ')' )? 'AS' preparablestmt
     ;
 
 preparablestmt
@@ -2094,23 +1847,25 @@ preparablestmt
     ;
 
 executestmt
-    : 'EXECUTE' name execute_param_clause?
-    | 'CREATE' opttemp? 'TABLE' create_as_target 'AS' 'EXECUTE' name execute_param_clause? with_data_?
-    | 'CREATE' opttemp? 'TABLE' ifNotExists create_as_target 'AS' 'EXECUTE' name execute_param_clause? with_data_?
+    : 'EXECUTE' id execute_param_clause?
+    | 'CREATE' opttemp? 'TABLE' ifNotExists? create_as_target 'AS' 'EXECUTE' id execute_param_clause? with_data_?
     ;
 
 execute_param_clause
     : '(' expr_list ')'
-
     ;
 
 deallocatestmt
-    : 'DEALLOCATE' 'PREPARE'? ( name |  'ALL' )
+    : 'DEALLOCATE' 'PREPARE'? ( id |  'ALL' )
     ;
 
 insertstmt
-    : with_clause? 'INSERT' 'INTO' qname ( 'AS' name )? insert_rest ('ON' 'CONFLICT' ('(' index_params ')' where?
-    | 'ON' 'CONSTRAINT' name)? 'DO' ( 'UPDATE' 'SET' set_clause_list where? | 'NOTHING' ))? returning_clause?
+    : with_clause? 'INSERT' 'INTO' qname ( 'AS' id )? insert_rest
+      ( 'ON' 'CONFLICT'
+        ( '(' index_params ')' where? | 'ON' 'CONSTRAINT' id )?
+        'DO' ( 'UPDATE' 'SET' set_clause_list where? | 'NOTHING' )
+      )?
+      returning_clause?
     ;
 
 insert_rest
@@ -2126,29 +1881,26 @@ returning_clause
 // https://www.postgresql.org/docs/current/sql-merge.html
 mergestmt
     : 'MERGE' 'INTO'? qname alias_clause? 'USING' ( select_with_parens | qname ) alias_clause? 'ON' a_expr
-    ( merge_insert_clause merge_update_clause?
-    | merge_update_clause merge_insert_clause?
-    ) merge_delete_clause?
+      ( merge_insert_clause merge_update_clause?
+      | merge_update_clause merge_insert_clause?
+      )
+      ('WHEN' 'MATCHED' 'THEN'? 'DELETE')?
     ;
 
 merge_insert_clause
-    : 'WHEN' 'NOT' 'MATCHED' ( 'AND' a_expr )? 'THEN'? 'INSERT' ( '(' qnames ')' )? values
-    ;
+  : 'WHEN' 'NOT' 'MATCHED' ( 'AND' a_expr )? 'THEN'? 'INSERT' ( '(' qnames ')' )? values
+  ;
 
 merge_update_clause
-    : 'WHEN' 'MATCHED' ( 'AND' a_expr )? 'THEN'? 'UPDATE' 'SET' set_clause_list
-    ;
-
-merge_delete_clause
-    : 'WHEN' 'MATCHED' 'THEN'? 'DELETE'
-    ;
+  : 'WHEN' 'MATCHED' ( 'AND' a_expr )? 'THEN'? 'UPDATE' 'SET' set_clause_list
+  ;
 
 deletestmt
     : with_clause? 'DELETE' 'FROM' relation_expr_opt_alias ('USING' from_list)? where_or_current_clause? returning_clause?
     ;
 
 lockstmt
-    : 'LOCK' ('TABLE')? relation_expr_list ('IN' lock_type 'MODE')? ('NOWAIT')?
+    : 'LOCK' 'TABLE'? relation_expr_list ('IN' lock_type 'MODE')? 'NOWAIT'?
     ;
 
 lock_type
@@ -2172,11 +1924,7 @@ set_clause
     ;
 
 declarecursorstmt
-    : 'DECLARE' name ( 'NO' 'SCROLL' | 'SCROLL' | 'BINARY' | 'INSENSITIVE' )* 'CURSOR' hold_? 'FOR' selectstmt
-    ;
-
-hold_
-    : ( 'WITH' | 'WITHOUT' ) 'HOLD'
+    : 'DECLARE' id ( 'NO'? 'SCROLL' | 'SCROLL' | 'BINARY' | 'INSENSITIVE' )* 'CURSOR' (( 'WITH' | 'WITHOUT' ) 'HOLD' )? 'FOR' selectstmt
     ;
 
 selectstmt
@@ -2190,14 +1938,8 @@ select_with_parens
     ;
 
 select_no_parens
-    : select_clause orderBy? (
-        for_locking_clause (select_limit)?
-        | select_limit (for_locking_clause)?
-     )?
-    | with_clause select_clause orderBy? (
-        for_locking_clause (select_limit)?
-        | select_limit (for_locking_clause)?
-     )?
+    : with_clause? select_clause orderBy?
+      ( for_locking_clause select_limit? | select_limit for_locking_clause? )?
     ;
 
 select_clause
@@ -2205,20 +1947,14 @@ select_clause
     ;
 
 simple_select_intersect
-    : simple_select_pramary ( 'INTERSECT' all_or_distinct? simple_select_pramary )*
+    : simple_select_primary ( 'INTERSECT' all_or_distinct? simple_select_primary )*
     ;
 
-simple_select_pramary
-    : (
-        'SELECT'
-	(  'ALL'? target_list?
-		into_clause? from? where?
-		group_clause? having_clause? window_clause?
-	| distinct_clause target_list
-		into_clause? from? where?
-		group_clause? having_clause? window_clause?
-        )
-    )
+simple_select_primary
+    :  'SELECT'
+	      ( 'ALL'? target_list? | distinct_clause target_list )
+	      into_clause? from? where? group_clause? having_clause? window_clause?
+
     | values
     | 'TABLE' relation_expr
     | select_with_parens
@@ -2233,7 +1969,7 @@ cte_list
     ;
 
 cte
-    : name name_list_? 'AS' materialized? '(' preparablestmt ')'
+    : id idsList? 'AS' materialized? '(' preparablestmt ')'
     ;
 
 materialized
@@ -2245,8 +1981,8 @@ into_clause
     ;
 
 opttempTableName
-    : ( 'LOCAL' | 'GLOBAL' )? ( 'TEMPORARY' | 'TEMP' ) ('TABLE')? qname
-    | 'UNLOGGED' ('TABLE')? qname
+    : ( 'LOCAL' | 'GLOBAL' )? ( 'TEMPORARY' | 'TEMP' ) 'TABLE'? qname
+    | 'UNLOGGED' 'TABLE'? qname
     | 'TABLE' qname
     | qname
     ;
@@ -2265,7 +2001,7 @@ orderBy
     ;
 
 sortby
-    : a_expr ( 'USING' qual_all_op | sortDir?) nulls_order_?
+    : a_expr ( 'USING' qual_all_op | sortDir?) nullsOrder?
     ;
 
 select_limit
@@ -2368,12 +2104,12 @@ table_ref
     ;
 
 alias_clause
-    : 'AS'? name ( '(' names ')' )?
+    : 'AS'? id ( '(' ids ')' )?
     ;
 
 func_alias_clause
     : alias_clause
-    | ( 'AS' name? | name ) '(' tablefuncelementlist ')'
+    | ( 'AS' id? | id ) '(' tablefuncelementlist ')'
 
     ;
 
@@ -2382,7 +2118,7 @@ join_type
     ;
 
 join_qual
-    : 'USING' '(' names ')'
+    : 'USING' '(' ids ')'
     | 'ON' a_expr
     ;
 
@@ -2396,11 +2132,11 @@ relation_expr_list
     ;
 
 relation_expr_opt_alias
-    : relation_expr ( 'AS'? name )?
+    : relation_expr ( 'AS'? id )?
     ;
 
 tablesample_clause
-    : 'TABLESAMPLE' func_name '(' expr_list ')' ('REPEATABLE' '(' a_expr ')')?
+    : 'TABLESAMPLE' qname '(' expr_list ')' ('REPEATABLE' '(' a_expr ')')?
     ;
 
 func_table
@@ -2421,7 +2157,7 @@ where
     ;
 
 where_or_current_clause
-    : 'WHERE' ( 'CURRENT' 'OF' name | a_expr )
+    : 'WHERE' ( 'CURRENT' 'OF' id | a_expr )
     ;
 
 tablefuncelementlist
@@ -2429,7 +2165,7 @@ tablefuncelementlist
     ;
 
 tablefuncelement
-    : name typename collate_clause_?
+    : id typename collate_clause_?
     ;
 
 xmltable
@@ -2444,7 +2180,7 @@ xmltable_column_list
     ;
 
 xmltable_column_el
-    : name ( typename (xmltable_column_option_el)* | 'FOR' 'ORDINALITY' )
+    : id ( typename (xmltable_column_option_el)* | 'FOR' 'ORDINALITY' )
     ;
 
 xmltable_column_option_el
@@ -2458,7 +2194,7 @@ xml_namespace_list
     ;
 
 xml_namespace_el
-    : b_expr 'AS' colLabel
+    : b_expr 'AS' id
     | 'DEFAULT' b_expr
     ;
 
@@ -2470,30 +2206,25 @@ typename
     ;
 
 simpletypename
-    : generictype
+    : id ( '.' id )* type_modifiers_?
     | numeric
     | bit
     | character
     | constdatetime
-    | 'INTERVAL' ( interval_? | '(' integer ')' )
+    | 'INTERVAL' ( timeUnit? | '(' integer ')' )
     | 'JSON'
     ;
 
 consttypename
     : numeric
-    | constbit
-    | constcharacter
+    | bit
+    | character_c ( '(' integer ')' )?
     | constdatetime
     | 'JSON'
     ;
 
-generictype
-    : type_function_name ( '.' colLabel )* type_modifiers_?
-    ;
-
 type_modifiers_
     : '(' expr_list ')'
-
     ;
 
 numeric
@@ -2502,7 +2233,7 @@ numeric
     | 'SMALLINT'
     | 'BIGINT'
     | 'REAL'
-    | 'FLOAT' float_?
+    | 'FLOAT' ('(' integer ')')?
     | 'DOUBLE' 'PRECISION'
     | 'DECIMAL' type_modifiers_?
     | 'DEC' type_modifiers_?
@@ -2510,35 +2241,11 @@ numeric
     | 'BOOLEAN'
     ;
 
-float_
-    : '(' integer ')'
-    ;
-
-//todo: merge alts
-
 bit
-    : bitwithlength
-    | bitwithoutlength
-    ;
-
-constbit
-    : bitwithlength
-    | bitwithoutlength
-    ;
-
-bitwithlength
-    : 'BIT' 'VARYING'? '(' expr_list ')'
-    ;
-
-bitwithoutlength
-    : 'BIT' 'VARYING'?
+    : 'BIT' 'VARYING'? '(' expr_list ')'?
     ;
 
 character
-    : character_c ( '(' integer ')' )?
-    ;
-
-constcharacter
     : character_c ( '(' integer ')' )?
     ;
 
@@ -2552,20 +2259,20 @@ constdatetime
     : ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )?
     ;
 
-interval_
+timeUnit
     : 'YEAR'
     | 'MONTH'
     | 'DAY'
     | 'HOUR'
     | 'MINUTE'
-    | interval_second
+    | second
     | 'YEAR' 'TO' 'MONTH'
-    | 'DAY' 'TO' ( 'HOUR' | 'MINUTE' | interval_second )
-    | 'HOUR' 'TO' ( 'MINUTE' | interval_second )
-    | 'MINUTE' 'TO' interval_second
+    | 'DAY' 'TO' ( 'HOUR' | 'MINUTE' | second )
+    | 'HOUR' 'TO' ( 'MINUTE' | second )
+    | 'MINUTE' 'TO' second
     ;
 
-interval_second
+second
     : 'SECOND' ( '(' integer ')' )?
     ;
 
@@ -2707,15 +2414,7 @@ a_expr_unary_sign
     ;
 
 a_expr_at_time_zone
-    : a_expr_collate ( 'AT' 'TIME' 'ZONE' a_expr )?
-    ;
-
-a_expr_collate
-    : a_expr_typecast ( 'COLLATE' qname )?
-    ;
-
-a_expr_typecast
-    : c_expr ( '::' typename )*
+    : c_expr ( '::' typename )* ( 'COLLATE' qname )? ( 'AT' 'TIME' 'ZONE' a_expr )?
     ;
 
 b_expr
@@ -2750,19 +2449,15 @@ c_expr
     | '(' a_expr_in_parens = a_expr ')' indirection_el* # c_expr_expr
     | case_expr                                                        # c_expr_case
     | func_expr                                                        # c_expr_expr
-    | select_with_parens (indirection_el)*                                  # c_expr_expr
-    | explicit_row                                                     # c_expr_expr
-    | implicit_row                                                     # c_expr_expr
+    | select_with_parens indirection_el*                                  # c_expr_expr
+    | 'ROW' '(' expr_list? ')'                                                     # c_expr_expr
+    | '(' expr_list ',' a_expr ')'                                                     # c_expr_expr
     | row 'OVERLAPS' row                               # c_expr_expr
     | 'DEFAULT'                                                          # c_expr_expr
     ;
 
-//plsqlvariablename
-//    : 'PLSQLVARIABLENAME'
-//    ;
-
 func_application
-    : func_name
+    : qname
     '(' (
         func_arg_list
         ( ',' 'VARIADIC' func_arg_expr )? orderBy?
@@ -2774,7 +2469,7 @@ func_application
     ;
 
 func_expr
-    : func_application ('WITHIN' 'GROUP' '(' orderBy ')')? ('FILTER' '(' 'WHERE' a_expr ')')? ('OVER' ( window_specification | name ))?
+    : func_application ('WITHIN' 'GROUP' '(' orderBy ')')? ('FILTER' '(' 'WHERE' a_expr ')')? ('OVER' ( window_specification | id ))?
     | func_expr_common_subexpr
     ;
 
@@ -2805,7 +2500,7 @@ func_expr_common_subexpr
     | 'EXTRACT' '(' (extract_arg 'FROM' a_expr)? ')'
     | 'NORMALIZE' '(' a_expr ( ',' unicode_normal_form )? ')'
     | 'OVERLAY' '(' ( overlay_list | func_arg_list? ) ')'
-    | 'POSITION' '(' position_list? ')'
+    | 'POSITION' '(' (b_expr 'IN' b_expr)? ')'
     | 'SUBSTRING' '(' ( substr_list | func_arg_list? ) ')'
     | 'TREAT' '(' a_expr 'AS' typename ')'
     | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? trim_list ')'
@@ -2815,16 +2510,16 @@ func_expr_common_subexpr
     | 'LEAST' '(' expr_list ')'
 
     | 'XMLCONCAT' '(' expr_list ')'
-    | 'XMLELEMENT' '(' 'NAME' colLabel ( ',' ( xml_attributes | expr_list ) )? ')'
+    | 'XMLELEMENT' '(' 'NAME' id ( ',' ( xml_attributes | expr_list ) )? ')'
     | 'XMLEXISTS' '(' c_expr xmlexists_argument ')'
     | 'XMLFOREST' '(' xml_attribute_list ')'
     | 'XMLPARSE' '(' document_or_content a_expr ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
-    | 'XMLPI' '(' 'NAME' colLabel ( ',' a_expr )? ')'
+    | 'XMLPI' '(' 'NAME' id ( ',' a_expr )? ')'
     | 'XMLROOT' '(' 'XML' a_expr ',' 'VERSION' (a_expr |  'NO' 'VALUE') xml_root_standalone_? ')'
     | 'XMLSERIALIZE' '(' document_or_content a_expr 'AS' simpletypename ')'
 
     | 'JSON' '(' json_value_expr json_key_uniqueness_constraint? ')'
-    | 'JSON_ARRAY' '(' ( json_value_expr_list json_object_constructor_null_clause? json_returning_clause? | select_no_parens ('FORMAT_LA' 'JSON' ( 'ENCODING' name )?)? json_returning_clause? | json_returning_clause? ) ')'
+    | 'JSON_ARRAY' '(' ( json_value_expr_list json_object_constructor_null_clause? json_returning_clause? | select_no_parens ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)? json_returning_clause? | json_returning_clause? ) ')'
     | 'JSON_EXISTS' '(' json_value_expr ',' a_expr json_passing_clause? jsonOnError? ')'
     | 'JSON_OBJECT' '(' ( func_arg_list | json_name_and_value_list json_object_constructor_null_clause? json_key_uniqueness_constraint? json_returning_clause? | json_returning_clause? ) ')'
     | 'JSON_QUERY' '(' json_value_expr ',' a_expr json_passing_clause? json_returning_clause? json_wrapper_behavior? json_quotes_clause? jsonOnEmpty? jsonOnError? ')'
@@ -2849,7 +2544,7 @@ xml_attribute_list
     ;
 
 xml_attribute_el
-    : a_expr ( 'AS' colLabel )?
+    : a_expr ( 'AS' id )?
     ;
 
 document_or_content
@@ -2874,11 +2569,11 @@ window_definition_list
     ;
 
 window_definition
-    : name 'AS' window_specification
+    : id 'AS' window_specification
     ;
 
 window_specification
-    : '(' name? partition_clause_? orderBy? frame_clause_? ')'
+    : '(' id? partition_clause_? orderBy? frame_clause_? ')'
     ;
 
 partition_clause_
@@ -2911,14 +2606,6 @@ row
     | '(' expr_list ',' a_expr ')'
     ;
 
-explicit_row
-    : 'ROW' '(' expr_list? ')'
-    ;
-
-implicit_row
-    : '(' expr_list ',' a_expr ')'
-    ;
-
 sub_type
     : 'ANY'
     | 'SOME'
@@ -2938,12 +2625,6 @@ mathop
     | '<='
     | '>='
     | '<>'
-//    | '&'
-//    | '&&'
-//    | '@@'
-//    | '==='
-//    | '===='
-//| '!=='
     ;
 
 qual_op
@@ -3005,7 +2686,7 @@ func_arg_list
 
 func_arg_expr
     : a_expr
-    | type_function_name ( ':=' | '=>' ) a_expr
+    | id ( ':=' | '=>' ) a_expr
     ;
 
 type_list
@@ -3042,11 +2723,6 @@ overlay_list
     : a_expr 'PLACING' a_expr 'FROM' a_expr ( 'FOR' a_expr )?
     ;
 
-position_list
-    : b_expr 'IN' b_expr
-
-    ;
-
 substr_list
     : a_expr 'FROM' a_expr 'FOR' a_expr
     | a_expr 'FOR' a_expr 'FROM' a_expr
@@ -3067,7 +2743,7 @@ in_expr
     ;
 
 case_expr
-    : 'CASE' case_arg? when_clause+ case_default? 'END'
+    : 'CASE' (a_expr)? when_clause+ case_default? 'END'
     ;
 
 when_clause
@@ -3078,27 +2754,19 @@ case_default
     : 'ELSE' a_expr
     ;
 
-case_arg
-    : a_expr
-    ;
-
 indirection_el
-    : '.' ( colLabel | '*' )
+    : '.' ( id | '*' )
     | '[' ( a_expr | a_expr? ':' a_expr? ) ']'
     ;
 
 json_passing_clause
-: 'PASSING' json_arguments ;
-
-json_arguments
-: json_argument | json_arguments ',' json_argument ;
+: 'PASSING' json_argument (',' json_argument)* ;
 
 json_argument
-  : json_value_expr 'AS' colLabel ;
+  : json_value_expr 'AS' id ;
 
 json_wrapper_behavior
-  : 'WITHOUT' 'ARRAY'?	'WRAPPER'
-  | 'WITH' ( 'UNCONDITIONAL' | 'CONDITIONAL' )? 'ARRAY'? 'WRAPPER'
+  : ( 'WITHOUT' | 'WITH' ( 'UNCONDITIONAL' | 'CONDITIONAL' )? ) 'ARRAY'? 'WRAPPER'
   ;
 
 json_behavior
@@ -3118,7 +2786,7 @@ jsonOnError:
 		;
 
 json_value_expr:
-			a_expr ('FORMAT_LA' 'JSON' ( 'ENCODING' name )?)?
+			a_expr ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)?
 		;
 
 json_quotes_clause
@@ -3126,7 +2794,7 @@ json_quotes_clause
 ;
 
 json_returning_clause:
-			'RETURNING' typename ('FORMAT_LA' 'JSON' ( 'ENCODING' name )?)?
+			'RETURNING' typename ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)?
 		;
 
 //json_predicate_type_constraint:
@@ -3182,7 +2850,7 @@ target_list
     ;
 
 target_el
-    : a_expr ( 'AS' colLabel | (identifier | bare_label_keyword) )?
+    : a_expr ( 'AS' id | (identifier | bare_label_keyword) )?
     | '*'
     ;
 
@@ -3195,17 +2863,12 @@ qname
     ;
 
 
-name_list_
-    : '(' names ')'
+idsList
+    : '(' ids ')'
     ;
 
-names
-    : name ( ',' name )*
-    ;
-
-func_name
-    : type_function_name
-    | name indirection_el+
+ids
+    : id ( ',' id )*
     ;
 
 literal
@@ -3214,9 +2877,9 @@ literal
     | string
     | BinaryStringConstant
     | HexadecimalStringConstant
-    | func_name ( string | '(' func_arg_list orderBy? ')' string )
+    | qname ( string | '(' func_arg_list orderBy? ')' string )
     | consttypename string
-    | 'INTERVAL' ( string interval_? | '(' integer ')' string )
+    | 'INTERVAL' ( string timeUnit? | '(' integer ')' string )
     | 'TRUE'
     | 'FALSE'
     | 'NULL'
@@ -3240,41 +2903,23 @@ string_
 signedInteger
   : ('+' | '-')? integer ;
 
-rolespec
-  : nonreservedword
-  | 'CURRENT_USER'
-  | 'SESSION_USER'
-  ;
 
 role_list
   : rolespec ( ',' rolespec )* ;
 
-name
+    rolespec
+      : id
+//      | 'CURRENT_USER'
+//      | 'SESSION_USER'
+      ;
+
+id
   : identifier
   | unreserved_keyword
   | col_name_keyword
+  | type_func_name_keyword
+  | reserved_keyword
   ;
-
-type_function_name
-    : identifier
-    | unreserved_keyword
-    | type_func_name_keyword
-    ;
-
-nonreservedword
-    : identifier
-    | unreserved_keyword
-    | col_name_keyword
-    | type_func_name_keyword
-    ;
-
-colLabel
-    : identifier
-    | unreserved_keyword
-    | col_name_keyword
-    | type_func_name_keyword
-    | reserved_keyword
-    ;
 
 /*
  * Keyword category lists.  Generally, every keyword present in
@@ -3734,7 +3379,7 @@ type_func_name_keyword
     | 'VERBOSE'
     ;
 
-/* Reserved keyword --- these keywords are usable only as a ColLabel.
+/* Reserved keyword --- these keywords are usable only as a name.
  *
  * Keywords appear here if they could not be distinguished from variable,
  * type, or function names in some contexts.  Don't put things here unless
@@ -3742,8 +3387,7 @@ type_func_name_keyword
  */
 reserved_keyword
     : 'ALL'
-    | 'ANALYSE'
-    | 'ANALYZE'
+    | ANALYZE
     | 'AND'
     | 'ANY'
     | 'ARRAY'
@@ -3844,8 +3488,7 @@ bare_label_keyword
     | 'ALSO'
     | 'ALTER'
     | 'ALWAYS'
-    | 'ANALYSE'
-    | 'ANALYZE'
+    | ANALYZE
     | 'AND'
     | 'ANY'
     | 'ASC'
@@ -4292,13 +3935,15 @@ identifier
     | PLSQLVARIABLENAME
     ;
 
-//noise : Operator* ;
+//noise : ANALYZE ;
+noise2 : '(' 'SELECT' . ')' EOF;
+
+
+ANALYZE
+    : 'ANALYZE' | 'ANALYSE' ;
 
 PARAM: '$' ([0-9])+;
 //PARAM: [:$] ([0-9])+;
-
-
-
 // Postgres Lexical Structure Operators 4.1.3
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
 
@@ -4370,10 +4015,9 @@ Numeric:
     | Digits 'E' [+-]? Digits
 ;
 
-
 PLSQLVARIABLENAME: ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
 
-PLSQLIDENTIFIER: ':"' ('\\' . | '""' | ~ ('"' | '\\'))* '"';
+//PLSQLIDENTIFIER: ':"' ('\\' . | '""' | ~ ('"' | '\\'))* '"';
 
 
 LineComment: '--' ~ [\r\n]* -> channel (HIDDEN);

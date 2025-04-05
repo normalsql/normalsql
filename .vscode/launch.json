@@ -2,6 +2,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "antlr-debug",
+            "request": "launch",
+            "name": "Debug Grammar",
+            "input": "${file}",
+            "grammar": "src/normalsql/grammar/PostgreSQL.g4",
+            "startRule": "parse",
+            "visualParseTree": true
+        },
+        // {
+        //     "name": "Debug ANTLR4 grammar",
+        //     "type": "antlr-debug",
+        //     "request": "launch",
+        //     "input": "doc/classicmodels/InsertOops.sql",
+        //     "grammar": "src/normalsql/grammar/NormalSQL.g4",
+        //     "startRule": "parse",
+        //     "printParseTree": true,
+        //     "visualParseTree": true
+        // },
+
+        {
             "type": "java",
             "name": "Current File",
             "request": "launch",
@@ -69,16 +89,6 @@
             "request": "launch",
             "mainClass": "test.H2_SelectOnly_Tests",
             "projectName": "normalsql"
-        },
-        {
-            "name": "Debug ANTLR4 grammar",
-            "type": "antlr-debug",
-            "request": "launch",
-            "input": "doc/classicmodels/InsertOops.sql",
-            "grammar": "src/main/antlr4/normalsql/parse/NormalSQL.g4",
-            "startRule": "script",
-            "printParseTree": true,
-            "visualParseTree": true
         }
     ]
 }
