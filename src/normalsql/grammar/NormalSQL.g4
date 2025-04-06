@@ -430,7 +430,7 @@ select
         | 'KEY'? 'SHARE'
         )
         ( 'OF' qname ( ',' qname )* )?
-        ( 'NOWAIT' | 'WAIT' INTEGER | 'SKIP' 'LOCKED' )?
+        ( 'NOWAIT' | 'WAIT' DECIMAL | 'SKIP' 'LOCKED' )?
       ;
 
     quantifier
@@ -439,7 +439,7 @@ select
       ;
 
     top
-      : 'TOP' ( INTEGER | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
+      : 'TOP' ( DECIMAL | FLOAT | '(' term ')' ) 'PERCENT'? withTies? ;
 
     item
       : term alias?                       # ItemTerm
@@ -637,11 +637,11 @@ predicate
       : 'BINARY' | 'NOCASE' | 'RTRIM' | name ;
 
 literal
-  : INTEGER
+  : DECIMAL
   | FLOAT
-  | BITS
-  | BYTES
-  | OCTALS
+  | BINARY
+  | HEXIDECIMAL
+  | OCTAL
   | datetime
   | PARAMETER
   | VARIABLE
@@ -680,8 +680,8 @@ timeUnit
 type
   : 'ROW' '(' name type ( ',' name type )* ')'
   | 'SETOF' type
-  | type 'ARRAY' ( '[' INTEGER ']' )?
-  | type ( '[' INTEGER? ']' )+
+  | type 'ARRAY' ( '[' DECIMAL ']' )?
+  | type ( '[' DECIMAL? ']' )+
   | scalar
   ;
 
@@ -735,13 +735,13 @@ chars
   ;
 
 length
-    : '(' INTEGER ')' ;
+    : '(' DECIMAL ')' ;
 
 precision
     : '(' signedInteger ( ',' signedInteger )? ')' ;
 
 signedNumber : signedInteger | signedFloat ;
-signedInteger : ( '+' | '-' )? INTEGER ;
+signedInteger : ( '+' | '-' )? DECIMAL ;
 signedFloat : ( '+' | '-' )? FLOAT ;
 
 array
@@ -803,7 +803,7 @@ function
       : 'SEPARATOR' term ;
 
     params
-      : '(' INTEGER? ')' ;
+      : '(' DECIMAL? ')' ;
 
  /*
     // TODO Postgres functions
@@ -1026,10 +1026,10 @@ id :
     | STRING
     | NATIONAL_STRING
     | UNICODE_STRING
-    | BITS
-    | BYTES
-    | OCTALS
-    | INTEGER
+    | BINARY
+    | HEXIDECIMAL
+    | OCTAL
+    | DECIMAL
     | FLOAT
     | PARAMETER
     | VARIABLE
@@ -1070,20 +1070,20 @@ ID : [A-Z_\u007F-\uFFFF] [A-Z_0-9#$@\u007F-\uFFFF]* ;
 // TODO inline uescape?
 UNICODE_ID : 'U&' '"' ( ~( '"' ) | '""' )* '"' ;
 
-BITS
+BINARY
     : '0b' [01]+
     | 'B' '\'' [01]+ '\''
     ;
 
-BYTES
+HEXIDECIMAL
     : '0x' [A-F0-9]+
     | 'X' '\'' ( [A-F0-9] | ' ' | '\'\'' )* '\''
     ;
 
-OCTALS : '0o' [0-7]+ ;
+OCTAL : '0o' [0-7]+ ;
 
 // TODO support underscore (visual grouping) in numbers
-INTEGER
+DECIMAL
     : DIGIT+ 'L'? ;
 
 // matches "0.e1" or ".0e1", but not ".e1"
@@ -1098,7 +1098,7 @@ fragment DIGIT
 
 // TODO separate alts for each style & dialect
 VARIABLE
-  : [:$] ( INTEGER | ID )
+  : [:$] ( DECIMAL | ID )
   | '@' '@'? ID*
   ;
 
