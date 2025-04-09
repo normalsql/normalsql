@@ -167,16 +167,6 @@ createrolestmt
     : 'CREATE' 'ROLE' id 'WITH'? createoptroleelem*
     ;
 
-alteroptroleelem
-    : 'PASSWORD' ( string | 'NULL' )
-    | ( 'ENCRYPTED' | 'UNENCRYPTED' ) 'PASSWORD' string
-    | 'INHERIT'
-    | 'CONNECTION' 'LIMIT' signedDecimal
-    | 'VALID' 'UNTIL' string
-    | 'USER' ids
-    | identifier
-    ;
-
 createoptroleelem
     : alteroptroleelem
     | 'SYSID' integer
@@ -189,9 +179,26 @@ createuserstmt
     : 'CREATE' 'USER' id 'WITH'? createoptroleelem*
     ;
 
+creategroupstmt
+    : 'CREATE' 'GROUP' id 'WITH'? createoptroleelem*
+    ;
+
+
+
 alterrolestmt
     : 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? alteroptroleelem*
     ;
+
+alteroptroleelem
+    : 'PASSWORD' ( string | 'NULL' )
+    | ( 'ENCRYPTED' | 'UNENCRYPTED' ) 'PASSWORD' string
+    | 'INHERIT'
+    | 'CONNECTION' 'LIMIT' signedDecimal
+    | 'VALID' 'UNTIL' string
+    | 'USER' ids
+    | identifier
+    ;
+
 
 alterrolesetstmt
     : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ('IN' 'DATABASE' id)? setresetclause
@@ -199,10 +206,6 @@ alterrolesetstmt
 
 droprolestmt
     : 'DROP' ( 'ROLE' | 'USER' | 'GROUP' ) ifExists? ids
-    ;
-
-creategroupstmt
-    : 'CREATE' 'GROUP' id 'WITH'? createoptroleelem*
     ;
 
 altergroupstmt
@@ -248,20 +251,21 @@ set_rest
 set_rest_more
   : qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
   | id 'FROM' 'CURRENT'
-  | 'TIME' 'ZONE' zone_value
+  | 'TIME' 'ZONE' ( string | identifier | interval | number | 'DEFAULT' | 'LOCAL' )
   | 'CATALOG' string
   | 'SCHEMA' string
   | 'NAMES' (string | 'DEFAULT')?
   | 'ROLE' name
   | 'SESSION' 'AUTHORIZATION' name
-  | 'XML' 'OPTION' document_or_content
+  | 'XML' 'OPTION' root
   | 'TRANSACTION' 'SNAPSHOT' string
   ;
 
+interval
+  : 'INTERVAL' ( string timeUnit? | '(' integer ')' string ) ;
 
 var_list
-    : var_value ( ',' var_value )*
-    ;
+    : var_value ( ',' var_value )* ;
 
 var_value
     : boolean_or_string_
@@ -273,16 +277,6 @@ boolean_or_string_
     | 'FALSE'
     | 'ON'
     | name
-    ;
-
-zone_value
-    : string
-    | identifier
-    | 'INTERVAL' string timeUnit?
-    | 'INTERVAL' '(' integer ')' string
-    | number
-    | 'DEFAULT'
-    | 'LOCAL'
     ;
 
 name
@@ -349,7 +343,7 @@ alter_table_cmd
     | 'DROP' 'COLUMN'? ifExists? id drop_behavior_?
     | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' typename collate? ('USING' term)?
     | 'ALTER' 'COLUMN'? id alter_generic_options
-    | 'ALTER' 'CONSTRAINT' id constraintattributespec*
+    | 'ALTER' 'CONSTRAINT' id timing*
     | 'VALIDATE' 'CONSTRAINT' id
     | 'DROP' 'CONSTRAINT' ifExists? id drop_behavior_?
     | 'SET' 'WITHOUT' 'OIDS'
@@ -383,8 +377,7 @@ drop_behavior_
     ;
 
 collate
-    : 'COLLATE' qname
-    ;
+    : 'COLLATE' qname ;
 
 alter_identity_column_option
     : 'RESTART' ( 'WITH'? number )?
@@ -464,7 +457,7 @@ copy_generic_opt_arg_list
     ;
 
 createTable
-  : 'CREATE' opttemp? 'TABLE' ifNotExists? qname
+  : 'CREATE' scope? 'TABLE' ifNotExists? qname
     ( '(' ( tableelement ( ',' tableelement )* )? ')' inherit?
     | 'PARTITION' typedTableElements partitionboundspec
     | typedTableElements
@@ -474,7 +467,7 @@ createTable
   ;
 
 createTableAs
-    : 'CREATE' opttemp? 'TABLE' ifNotExists? qname columns?
+    : 'CREATE' scope? 'TABLE' ifNotExists? qname columns?
       fixme 'AS' ( select | execute )
       with_data_?
     ;
@@ -498,7 +491,7 @@ execute
     : 'EXECUTE' id ( '(' terms ')' )?
     ;
 
-opttemp
+scope
     : ( 'LOCAL' | 'GLOBAL' )? ( 'TEMPORARY' | 'TEMP' )
     | 'UNLOGGED'
     ;
@@ -639,7 +632,7 @@ refreshmatviewstmt
     ;
 
 createseqstmt
-    : 'CREATE' opttemp? 'SEQUENCE' ifNotExists? qname seqoptelem*
+    : 'CREATE' scope? 'SEQUENCE' ifNotExists? qname seqoptelem*
     ;
 
 alterseqstmt
@@ -806,26 +799,28 @@ createamstmt
     ;
 
 createtrigstmt
-    : 'CREATE' 'TRIGGER' id
-      ('BEFORE' | 'AFTER' | 'INSTEAD' 'OF') triggerevents 'ON' qname
-      ('REFERENCING' triggertransition+ )?
+    : 'CREATE' orReplace? 'CONSTRAINT'? 'TRIGGER' id
+      ('BEFORE' | 'AFTER' | 'INSTEAD' 'OF') (triggeroneevent ( 'OR' triggeroneevent )*)? 'ON' qname
+      ( 'FROM' qname )?
+      timing?
+//      ('REFERENCING' triggertransition+ )?
+      ('REFERENCING' triggertransition )?
       ('FOR' 'EACH'? ('ROW' | 'STATEMENT'))?
       triggerwhen? 'EXECUTE' function_or_procedure qname '(' triggerfuncargs? ')'
 
-    | 'CREATE' 'CONSTRAINT' 'TRIGGER' id
-      'AFTER' triggerevents 'ON' qname
-      ('FROM' qname)? constraintattributespec* 'FOR' 'EACH' 'ROW'
-      triggerwhen? 'EXECUTE' function_or_procedure qname '(' triggerfuncargs? ')'
+//    | 'CREATE'  'TRIGGER' id
+//      'AFTER' triggerevents 'ON' qname
+//        'FOR' 'EACH' 'ROW'
+//      triggerwhen? 'EXECUTE' function_or_procedure qname '(' triggerfuncargs? ')'
     ;
 
-triggerevents
-    : triggeroneevent ( 'OR' triggeroneevent )*
-    ;
+replace
+  : 'OR' 'REPLACE' ;
 
 triggeroneevent
     : 'INSERT'
     | 'DELETE'
-    | 'UPDATE' ('OF' ids)?
+    | 'UPDATE' ( 'OF' ids )?
     | 'TRUNCATE'
     ;
 
@@ -853,7 +848,7 @@ triggerfuncarg
     | id
     ;
 
-constraintattributespec
+timing
     : 'NOT'? 'DEFERRABLE'
     | 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' )?
     | 'NOT' 'VALID'
@@ -876,7 +871,7 @@ altereventtrigstmt
     ;
 
 createassertionstmt
-    : 'CREATE' 'ASSERTION' qname 'CHECK' '(' term ')' constraintattributespec*
+    : 'CREATE' 'ASSERTION' qname 'CHECK' '(' term ')' timing*
     ;
 
 definestmt
@@ -1067,13 +1062,10 @@ fetchstmt
 
       ('FROM' | 'IN')? id ;
 
-grantstmt
-    : 'GRANT' privileges 'ON' privilege_target 'TO' grantee_list grant_grant_option_?
-    ;
 
 revokestmt
-    : 'REVOKE' privileges 'ON' privilege_target 'FROM' grantee_list drop_behavior_?
-    | 'REVOKE' 'GRANT' 'OPTION' 'FOR' privileges 'ON' privilege_target 'FROM' grantee_list drop_behavior_?
+    : 'REVOKE' privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
+    | 'REVOKE' 'GRANT' 'OPTION' 'FOR' privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
     ;
 
 privileges
@@ -1106,24 +1098,14 @@ privilege_target
     | 'SCHEMA' ids
     | 'TABLESPACE' ids
     | 'TYPE' qnames
-    | 'ALL' 'TABLES' 'IN' 'SCHEMA' ids
-    | 'ALL' 'SEQUENCES' 'IN' 'SCHEMA' ids
-    | 'ALL' 'FUNCTIONS' 'IN' 'SCHEMA' ids
-    | 'ALL' 'PROCEDURES' 'IN' 'SCHEMA' ids
-    | 'ALL' 'ROUTINES' 'IN' 'SCHEMA' ids
-    ;
-
-grantee_list
-    : grantee ( ',' grantee )*
+    | 'ALL' ( 'TABLES' | 'SEQUENCES' | 'FUNCTIONS' | 'PROCEDURES' | 'ROUTINES' ) 'IN' 'SCHEMA' ids
     ;
 
 grantee
-    : 'GROUP'? id
-    ;
+    : 'GROUP'? id ;
 
-grant_grant_option_
-    : 'WITH' 'GRANT' 'OPTION'
-    ;
+withGrantOption
+    : 'WITH' 'GRANT' 'OPTION' ;
 
 grantrolestmt
     : 'GRANT' privilege_list 'TO' ids ('WITH' 'ADMIN' 'OPTION')? granted_by_?
@@ -1138,19 +1120,17 @@ granted_by_
     ;
 
 alterdefaultprivilegesstmt
-    : 'ALTER' 'DEFAULT' 'PRIVILEGES' defacloption* defaclaction
+    : 'ALTER' 'DEFAULT' 'PRIVILEGES'
+      ( 'IN' 'SCHEMA' ids | 'FOR' 'ROLE' ids | 'FOR' 'USER' ids )*
+      ( 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
+      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
+      )
     ;
 
-defacloption
-    : 'IN' 'SCHEMA' ids
-    | 'FOR' 'ROLE' ids
-    | 'FOR' 'USER' ids
+grantstmt
+    : 'GRANT' privileges 'ON' privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
     ;
 
-defaclaction
-    : 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee_list grant_grant_option_?
-    | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee_list drop_behavior_?
-    ;
 
 defacl_privilege_target
     : 'TABLES'
@@ -1190,7 +1170,8 @@ createfunctionstmt
     | 'LANGUAGE' name
     | 'TRANSFORM' transform_type_list
     | 'WINDOW'
-    | common_func_opt_item)+
+    | common_func_opt_item
+    )+
   ;
 
 orReplace
@@ -1279,11 +1260,11 @@ table_func_column_list
       ;
 
 alterfunctionstmt
-    : 'ALTER' ( 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ) function_with_argtypes common_func_opt_item+ ('RESTRICT')?
+    : 'ALTER' ( 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ) function_with_argtypes common_func_opt_item+ 'RESTRICT'?
     ;
 
 removefuncstmt
-    : 'DROP' ('FUNCTION' | 'PROCEDURE' | 'ROUTINE') ifExists? function_with_argtypes_list drop_behavior_?
+    : 'DROP' ( 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ) ifExists? function_with_argtypes_list drop_behavior_?
     ;
 
 removeaggrstmt
@@ -1548,7 +1529,7 @@ transaction_
     ;
 
 viewstmt
-    : 'CREATE' ( 'OR' 'REPLACE' )? opttemp? (
+    : 'CREATE' ( 'OR' 'REPLACE' )? scope? (
         'VIEW' qname columns? withDef?
         | 'RECURSIVE' 'VIEW' qname columns withDef?
     ) 'AS' select ('WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION')?
@@ -1957,7 +1938,8 @@ simpletypename
     | bit
     | character
     | timestamp
-    | 'INTERVAL' ( timeUnit? | '(' integer ')' )
+    | interval
+//    | 'INTERVAL' ( timeUnit? | '(' integer ')' )
     | 'JSON'
     ;
 
@@ -2087,8 +2069,10 @@ subterm
     : subterm ( '::' typename )+
     | subterm collate
     | subterm 'AT' 'TIME' 'ZONE' term
-    | ('NOT' | '-' | '+' | qual_op ) subterm // unary left
-    | subterm qual_op subterm?  // normal or unary right
+    // unary left
+    | ('NOT' | '-' | '+' | qual_op ) subterm
+    // subterm or unary right
+    | subterm qual_op subterm?
     | <assoc=right> subterm '^' subterm
     | subterm ( '<<' | '>>' | '&' | '|' ) subterm
     | subterm ( '*' | '/' | '%' ) subterm
@@ -2195,10 +2179,10 @@ func_expr_common_subexpr
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xml_attribute_el ( ',' xml_attribute_el )* ')' | terms ) )? ')'
     | 'XMLEXISTS' '(' atom xmlexists_argument ')'
     | 'XMLFOREST' '(' xml_attribute_el ( ',' xml_attribute_el )* ')'
-    | 'XMLPARSE' '(' document_or_content term ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
+    | 'XMLPARSE' '(' root term ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
     | 'XMLPI' '(' 'NAME' id ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' (term |  'NO' 'VALUE') (',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ))? ')'
-    | 'XMLSERIALIZE' '(' document_or_content term 'AS' simpletypename ')'
+    | 'XMLSERIALIZE' '(' root term 'AS' simpletypename ')'
 
     | 'JSON' '(' json_value_expr json_key_uniqueness_constraint? ')'
     | 'JSON_ARRAY' '(' ( json_value_expr (',' json_value_expr)* json_object_constructor_null_clause? json_returning_clause? | '(' select ')' ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)? json_returning_clause? | json_returning_clause? ) ')'
@@ -2215,10 +2199,8 @@ xml_attribute_el
     : term ( 'AS' id )?
     ;
 
-document_or_content
-    : 'DOCUMENT'
-    | 'CONTENT'
-    ;
+root
+    : 'DOCUMENT' | 'CONTENT' ;
 
 xmlexists_argument
     : 'PASSING' xml_passing_mech? atom xml_passing_mech?
@@ -2237,7 +2219,7 @@ window_definition
     ;
 
 window_specification
-    : '(' id? ('PARTITION' 'BY' terms)? orderBy? frame_clause_? ')'
+    : '(' id? ( 'PARTITION' 'BY' terms )? orderBy? frame_clause_? ')'
     ;
 
 frame_clause_
@@ -2489,7 +2471,8 @@ literal
     | HexadecimalStringConstant
     | qname ( string | '(' func_arg_list orderBy? ')' string )
     | consttypename string
-    | 'INTERVAL' ( string timeUnit? | '(' integer ')' string )
+    | interval
+//    | 'INTERVAL' ( string timeUnit? | '(' integer ')' string )
     | 'TRUE'
     | 'FALSE'
     | 'NULL'
@@ -2515,7 +2498,6 @@ signedDecimal
 
 signedFloat
   : ('+' | '-')? FLOAT ;
-
 
 id
   : identifier
@@ -3548,6 +3530,8 @@ ANALYZE
 
 PARAM: '$' ([0-9])+;
 //PARAM: [:$] ([0-9])+;
+
+
 // Postgres Lexical Structure Operators 4.1.3
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
 
