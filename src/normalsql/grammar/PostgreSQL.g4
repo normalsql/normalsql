@@ -128,7 +128,7 @@ statement
     | grantstmt
     | grantrolestmt
     | importforeignschemastmt
-    | indexstmt
+    | createIndex
     | insert
     | mergestmt
     | listenstmt
@@ -217,7 +217,7 @@ add_drop
 createschemastmt
     : 'CREATE' 'SCHEMA' ifNotExists? ( id? 'AUTHORIZATION' id | id )
       ( createTable
-      | indexstmt
+      | createIndex
       | createseqstmt
       | createtrigstmt
       | grantstmt
@@ -332,9 +332,9 @@ alter_table_cmds
 
 alter_table_cmd
     : 'ADD' tableconstraint
-          | 'ADD' ifNotExists? columnDef
+    | 'ADD' ifNotExists? columnDef
     | 'ADD' 'COLUMN' ifNotExists? columnDef
-    | 'ALTER' 'COLUMN'? id ('SET' 'DEFAULT' term | 'DROP' 'DEFAULT')
+    | 'ALTER' 'COLUMN'? id ('SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
     | 'ALTER' 'COLUMN'? id 'DROP' 'NOT' 'NULL'
     | 'ALTER' 'COLUMN'? id 'SET' 'NOT' 'NULL'
     | 'ALTER' 'COLUMN'? id 'DROP' 'EXPRESSION' ifExists?
@@ -343,11 +343,11 @@ alter_table_cmd
     | 'ALTER' 'COLUMN'? id 'SET' definition
     | 'ALTER' 'COLUMN'? id 'RESET' definition
     | 'ALTER' 'COLUMN'? id 'SET' 'STORAGE' id
-    | 'ALTER' 'COLUMN'? id 'ADD' 'GENERATED' generated_when 'AS' 'IDENTITY' ('(' seqoptelem+ ')')?
+    | 'ALTER' 'COLUMN'? id 'ADD' 'GENERATED' generated_when 'AS' 'IDENTITY' ( '(' seqoptelem+ ')' )?
     | 'ALTER' 'COLUMN'? id alter_identity_column_option+
     | 'ALTER' 'COLUMN'? id 'DROP' 'IDENTITY' ifExists?
     | 'DROP' 'COLUMN'? ifExists? id drop_behavior_?
-    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' typename collate_clause_? ('USING' term)?
+    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' typename collate? ('USING' term)?
     | 'ALTER' 'COLUMN'? id alter_generic_options
     | 'ALTER' 'CONSTRAINT' id constraintattributespec*
     | 'VALIDATE' 'CONSTRAINT' id
@@ -382,7 +382,7 @@ drop_behavior_
     | 'RESTRICT'
     ;
 
-collate_clause_
+collate
     : 'COLLATE' qname
     ;
 
@@ -409,7 +409,7 @@ altercompositetypestmt
 alter_type_cmd
     : 'ADD' 'ATTRIBUTE' tablefuncelement drop_behavior_?
     | 'DROP' 'ATTRIBUTE' ifExists? id drop_behavior_?
-    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' typename collate_clause_? drop_behavior_?
+    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' typename collate? drop_behavior_?
     ;
 
 closeportalstmt
@@ -464,14 +464,14 @@ copy_generic_opt_arg_list
     ;
 
 createTable
-    : 'CREATE' opttemp? 'TABLE' ifNotExists? qname
-      ( '(' ( tableelement ( ',' tableelement )* )? ')' inherit?
-      | 'PARTITION' typedTableElements partitionboundspec
-      | typedTableElements
-      )
-      ( 'PARTITION' 'BY' id '(' part_elem ( ',' part_elem )* ')' )?
-      fixme
-      ;
+  : 'CREATE' opttemp? 'TABLE' ifNotExists? qname
+    ( '(' ( tableelement ( ',' tableelement )* )? ')' inherit?
+    | 'PARTITION' typedTableElements partitionboundspec
+    | typedTableElements
+    )
+    ( 'PARTITION' 'BY' id '(' part_elem ( ',' part_elem )* ')' )?
+    fixme
+  ;
 
 createTableAs
     : 'CREATE' opttemp? 'TABLE' ifNotExists? qname columns?
@@ -503,7 +503,8 @@ opttemp
     | 'UNLOGGED'
     ;
 
-usingID : 'USING' id ;
+usingID
+  : 'USING' id ;
 
 typedTableElements
     : 'OF' qname ( '(' typedtableelement ( ',' typedtableelement )* ')' )?
@@ -540,9 +541,8 @@ columnDef
 
 colconstraint
     : ( 'CONSTRAINT' id )? colconstraintelem
-//    | colconstraintelem
     | ('NOT'? 'DEFERRABLE' | 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))
-    | 'COLLATE' qname
+    | collate
     ;
 
 colconstraintelem
@@ -550,9 +550,9 @@ colconstraintelem
     | 'UNIQUE' withDef? usingIndexTablespaceID?
     | 'PRIMARY' 'KEY' withDef? usingIndexTablespaceID?
     | 'CHECK' '(' term ')' ('NO' 'INHERIT')?
-    | 'DEFAULT' b_expr
+    | 'DEFAULT' term
     | 'GENERATED' generated_when 'AS' ( 'IDENTITY' ('(' seqoptelem+ ')')? | '(' term ')' 'STORED' )
-    | 'REFERENCES' qname columns? key_match? key_delete*
+    | 'REFERENCES' qname columns? refMatchType? refAction*
     ;
 
 generated_when
@@ -562,54 +562,58 @@ generated_when
 
 tableconstraint
     : ( 'CONSTRAINT' id )?
-      ( 'CHECK' '(' term ')' constraintattributespec*
-      | ( 'UNIQUE' | 'PRIMARY' 'KEY' )? columns? c_include_? withDef? (usingIndexTablespaceID | usingIndexID) constraintattributespec*
-      | 'EXCLUDE' usingID? '(' exclusionconstraintelem ( ',' exclusionconstraintelem )* ')' c_include_? withDef? usingIndexTablespaceID? ( 'WHERE' '(' term ')')? constraintattributespec*
-      | 'FOREIGN' 'KEY' columns 'REFERENCES' qname columns? key_match? key_delete* constraintattributespec*
+      ( 'CHECK' '(' term ')' ( 'NO' 'INHERIT' )?
+      | ( 'UNIQUE' ( 'NULLS' 'NOT'? 'DISTINCT' )? | 'PRIMARY' 'KEY' ) columns? indexParams
+      | 'EXCLUDE' usingID? '(' excludeElement ( ',' excludeElement )* ')' indexParams ( 'WHERE' '(' term ')' )?
+      | 'FOREIGN' 'KEY' columns 'REFERENCES' qname columns? refMatchType? refAction*
       )
+      ( 'NOT'? 'DEFERRABLE' )?
+      ( 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' ))?
+      ( 'NOT' 'VALID' )?
     ;
 
-c_include_
-    : 'INCLUDE' columns
-    ;
+indexParams
+  : ( 'INCLUDE' columns )?
+    withDef?
+    // TODO i don't think optional 'TABLESPACE' is correct
+    ( 'USING' 'INDEX' 'TABLESPACE'? id )?
+  ;
 
-key_match
+refMatchType
     : 'MATCH' ( 'FULL' | 'PARTIAL' | 'SIMPLE' )
     ;
 
-exclusionconstraintelem
-    : index_elem 'WITH' ( any_operator | 'OPERATOR' '(' any_operator ')' )
-    ;
-
-key_delete
+refAction
     : 'ON' ( 'DELETE' | 'UPDATE' )
-      ('NO' 'ACTION'
+      ( 'NO' 'ACTION'
       | 'RESTRICT'
       | 'CASCADE'
-      | 'SET' ( 'NULL' | 'DEFAULT' ))
+      | 'SET' ( 'NULL' | 'DEFAULT' ) columns?
+      )
+    ;
+
+excludeElement
+    : ( id | '(' term ')' ) collate? 'WITH' ( qop | 'OPERATOR' '(' qop ')' )
     ;
 
 inherit
-    : 'INHERITS' '(' qnames ')'
-    ;
+    : 'INHERITS' '(' qnames ')' ;
 
 part_elem
-    : id collate_? qname?
-    | func_expr_windowless collate_? qname?
-    | '(' term ')' collate_? qname?
+    : id collate? qname?
+    | func_expr_windowless collate? qname?
+    | '(' term ')' collate? qname?
     ;
 
 tablespaceID
-    : 'TABLESPACE' id
-    ;
+    : 'TABLESPACE' id ;
 
 usingIndexTablespaceID
-    : 'USING' 'INDEX' 'TABLESPACE' id
-    ;
+    : 'USING' 'INDEX' 'TABLESPACE' id ;
 
-usingIndexID
-    : 'USING' 'INDEX' id
-    ;
+//usingIndexID
+//    : 'USING' 'INDEX' id
+//    ;
 
 createstatsstmt
     : 'CREATE' 'STATISTICS' ifNotExists? qname columns? 'ON' terms 'FROM' from_list
@@ -878,7 +882,7 @@ createassertionstmt
 definestmt
     : 'CREATE' orReplace? 'AGGREGATE' aggregate_with_argtypes definition
     | 'CREATE' orReplace? 'AGGREGATE' qname definition
-    | 'CREATE' 'OPERATOR' any_operator definition
+    | 'CREATE' 'OPERATOR' qop definition
     | 'CREATE' 'TYPE' qname definition?
     | 'CREATE' 'TYPE' qname 'AS' '(' (tablefuncelement ( ',' tablefuncelement )*)? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'ENUM' '(' ( string ( ',' string )* )? ')'
@@ -920,7 +924,7 @@ opclass_item_list
     ;
 
 opclass_item
-    : 'OPERATOR' integer any_operator opclass_purpose? 'RECHECK'?
+    : 'OPERATOR' integer qop opclass_purpose? 'RECHECK'?
     | 'OPERATOR' integer operator_with_argtypes opclass_purpose? 'RECHECK'?
     | 'FUNCTION' integer function_with_argtypes
     | 'FUNCTION' integer '(' type_list ')' function_with_argtypes
@@ -1157,8 +1161,8 @@ defacl_privilege_target
     | 'SCHEMAS'
     ;
 
-indexstmt
-    : 'CREATE' 'UNIQUE'? 'INDEX' 'CONCURRENTLY'? (ifNotExists? id)?
+createIndex
+    : 'CREATE' 'UNIQUE'? 'INDEX' 'CONCURRENTLY'? ( ifNotExists? id )?
       'ON' relation_expr usingID? '(' index_params ')'
       ('INCLUDE' '(' index_params ')')? withDef? tablespaceID? where?
     ;
@@ -1169,27 +1173,20 @@ index_params
 
     index_elem
       : ( id | func_expr_windowless | '(' term ')' )
-        collate_? ( qname (definition)? )? sortDir? nullsOrder?
+        collate? ( qname definition? )? sortDir? nullsOrder?
       ;
 
-collate_
-    : 'COLLATE' qname
-    ;
-
 sortDir
-    : 'ASC'
-    | 'DESC'
-    ;
+    : 'ASC' | 'DESC' ;
 
 nullsOrder
-    : 'NULLS' ('FIRST' |  'LAST')
-    ;
+    : 'NULLS' ('FIRST' |  'LAST') ;
 
 createfunctionstmt
   : 'CREATE' orReplace? ( 'FUNCTION' | 'PROCEDURE' ) qname
     '(' ( func_arg_with_default ( ',' func_arg_with_default )* )? ')'
     ( 'RETURNS' ( func_type | 'TABLE' '(' table_func_column_list ')' ) )?
-    ('AS' func_as
+    ( 'AS' func_as
     | 'LANGUAGE' name
     | 'TRANSFORM' transform_type_list
     | 'WINDOW'
@@ -1197,12 +1194,8 @@ createfunctionstmt
   ;
 
 orReplace
-    : 'OR' 'REPLACE'
-    ;
+    : 'OR' 'REPLACE' ;
 
-func_args_list
-    : func_arg ( ',' func_arg )*
-    ;
 
 function_with_argtypes_list
     : function_with_argtypes ( ',' function_with_argtypes )*
@@ -1210,6 +1203,15 @@ function_with_argtypes_list
 
 function_with_argtypes
     : qname ( '(' func_args_list? ')' )?
+    ;
+
+aggregate_with_argtypes
+    : qname '(' ( '*' | (func_args_list? 'ORDER' 'BY' )? func_args_list ) ')'
+    ;
+
+
+func_args_list
+    : func_arg ( ',' func_arg )*
     ;
 
 func_arg_with_default
@@ -1233,9 +1235,6 @@ func_type
     | 'SETOF'? id ( '.' id )+ '%' 'TYPE'
     ;
 
-aggregate_with_argtypes
-    : qname '(' ( '*' | (func_args_list? 'ORDER' 'BY' )? func_args_list ) ')'
-    ;
 
 common_func_opt_item
     : 'CALLED' 'ON' 'NULL' 'INPUT'
@@ -1295,12 +1294,13 @@ removeoperstmt
     : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* drop_behavior_?
     ;
 
-any_operator
-    : ( id '.' )* (Operator | mathop)
+// qualified operator
+qop
+    : ( id '.' )* ( Operator | mathop )
     ;
 
 operator_with_argtypes
-    : any_operator '(' typename ( ',' typename )? ')'
+    : qop '(' typename ( ',' typename )? ')'
     ;
 
 dostmt
@@ -1598,8 +1598,7 @@ createdomainstmt
 
 alterdomainstmt
   : 'ALTER' 'DOMAIN' qname
-    ( ('SET' 'DEFAULT' term
-    | 'DROP' 'DEFAULT')
+    ( ( 'SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
     | 'DROP' 'NOT' 'NULL'
     | 'SET' 'NOT' 'NULL'
     | 'ADD' tableconstraint
@@ -1623,7 +1622,7 @@ createconversionstmt
     ;
 
 clusterstmt
-    : 'CLUSTER' 'VERBOSE'? (qname usingID? | id 'ON' qname)?
+    : 'CLUSTER' 'VERBOSE'? ( qname usingID? | id 'ON' qname )?
     ;
 
 vacuumstmt
@@ -1632,8 +1631,8 @@ vacuumstmt
     ;
 
 analyzestmt
-    : ANALYZE 'VERBOSE'? (vacuum_relation ( ',' vacuum_relation )*)?
-    | ANALYZE '(' optionElems ')' (vacuum_relation ( ',' vacuum_relation )*)?
+    : ANALYZE 'VERBOSE'? ( vacuum_relation ( ',' vacuum_relation )* )?
+    | ANALYZE '(' optionElems ')' ( vacuum_relation ( ',' vacuum_relation )* )?
     ;
 
 
@@ -1897,16 +1896,14 @@ relation_expr
     ;
 
 func_table
-    : func_expr_windowless ('WITH' 'ORDINALITY')?
-    | 'ROWS' 'FROM' '(' rowsfrom_list ')' ('WITH' 'ORDINALITY')?
+    : ( func_expr_windowless
+      | 'ROWS' 'FROM' '(' rowsfrom_item ( ',' rowsfrom_item )* ')'
+      )?
+      ( 'WITH' 'ORDINALITY' )?
     ;
 
 rowsfrom_item
     : func_expr_windowless ('AS' '(' tablefuncelement ( ',' tablefuncelement )* ')')?
-    ;
-
-rowsfrom_list
-    : rowsfrom_item ( ',' rowsfrom_item )*
     ;
 
 where
@@ -1918,16 +1915,15 @@ where_or_current_clause
     ;
 
 tablefuncelement
-    : id typename collate_clause_?
+    : id typename collate?
     ;
 
 xmltable
-    : 'XMLTABLE'
-      '('
+    : 'XMLTABLE' '('
 
       ( 'XMLNAMESPACES' '(' xml_namespace_el ( ',' xml_namespace_el )* ')' ',' )?
 
-      c_expr xmlexists_argument
+      atom xmlexists_argument
       'COLUMNS' xmltable_column_el ( ',' xmltable_column_el )*
 
       ')'
@@ -1944,8 +1940,8 @@ xmltable_column_option_el
     ;
 
 xml_namespace_el
-    : b_expr 'AS' id
-    | 'DEFAULT' b_expr
+    : term 'AS' id
+    | 'DEFAULT' term
     ;
 
 typename
@@ -1960,7 +1956,7 @@ simpletypename
     | numeric
     | bit
     | character
-    | constdatetime
+    | timestamp
     | 'INTERVAL' ( timeUnit? | '(' integer ')' )
     | 'JSON'
     ;
@@ -1969,7 +1965,7 @@ consttypename
     : numeric
     | bit
     | character_c ( '(' integer ')' )?
-    | constdatetime
+    | timestamp
     | 'JSON'
     ;
 
@@ -2005,7 +2001,7 @@ character_c
     | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
     ;
 
-constdatetime
+timestamp
     : ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )?
     ;
 
@@ -2082,129 +2078,65 @@ original version of a_expr, for info
 */
 
 term
-//    : a_expr_lessless // qual_op?
-//    ;
-//
-//a_expr_lessless
-//    : a_expr_or ( ( '<<' | '>>' ) a_expr_or )*
-//    ;
-//
-//a_expr_or
-    : a_expr_and ( 'OR' a_expr_and )*
+  : term 'OR' term
+  | term 'AND' term
+  | subterm
+  ;
+
+subterm
+    : subterm ( '::' typename )+
+    | subterm collate
+    | subterm 'AT' 'TIME' 'ZONE' term
+    | ('NOT' | '-' | '+' | qual_op ) subterm // unary left
+    | subterm qual_op subterm?  // normal or unary right
+    | <assoc=right> subterm '^' subterm
+    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
+    | subterm ( '*' | '/' | '%' ) subterm
+    | subterm ( '+' | '-' ) subterm
+
+    // workaround for ANTLR's left recursion pattern
+    | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm 'ESCAPE' subterm
+    | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm
+
+    |  ( 'ANY' | 'SOME' | 'ALL' ) nested
+    | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
+    | subterm ( 'ISNULL' | 'NOTNULL' )
+    | subterm 'IS' 'NOT'? ('DISTINCT' 'FROM')? subterm
+    | subterm 'IS' 'NOT'? 'OF' '(' type_list ')'
+    | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
+    | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
+    | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
+    | atom
     ;
 
-a_expr_and
-    : a_expr_between ( 'AND' a_expr_between )*
-    ;
+nested
+  : '(' ( select | term ) ')' ;
 
-a_expr_between
-    : a_expr_in ( 'NOT'? 'BETWEEN' 'SYMMETRIC'? a_expr_in 'AND' a_expr_in )?
-    ;
 
-a_expr_in
-    : a_expr_unary_not ( 'NOT'? 'IN' in_expr )?
-    ;
+//likeable :  (Operator | mathop)
+//    | 'OPERATOR' '(' qop ')'
+//    | 'LIKE'
+//    | 'NOT' 'LIKE'
+//    | 'ILIKE'
+//    | 'NOT' 'ILIKE' ;
 
-a_expr_unary_not
-    : 'NOT'? a_expr_isnull
-    ;
-
-a_expr_isnull
-    : a_expr_is_not ( 'ISNULL' | 'NOTNULL' )?
-    ;
-
-a_expr_is_not
-    : a_expr_compare (
-        'IS' 'NOT'? (
-            'NULL'
-            | 'TRUE'
-            | 'FALSE'
-            | 'UNKNOWN'
-            | 'DISTINCT' 'FROM' term
-            | 'OF' '(' type_list ')'
-            | 'DOCUMENT'
-            | unicode_normal_form? 'NORMALIZED'
-        )
-     )?
-    ;
-
-a_expr_compare
-    : a_expr_like (
-        ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) a_expr_like
-        | subquery_Op ('ANY' | 'SOME' | 'ALL') ( '(' select ')' | '(' term ')')
-      )?
-    ;
-
-a_expr_like
-    : a_expr_qual_op ( 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) a_expr_qual_op ('ESCAPE' term)? )?
-    ;
-
-a_expr_qual_op
-    : a_expr_unary_qualop ( qual_op a_expr_unary_qualop )*
-    ;
-
-a_expr_unary_qualop
-    : qual_op? a_expr_add
-    | a_expr_add qual_op
-    ;
-
-a_expr_add
-    : a_expr_mul ( ( '-' | '+' ) a_expr_mul )*
-    ;
-
-a_expr_mul
-    : a_expr_caret ( ( '*' | '/' | '%' ) a_expr_caret )*
-    ;
-
-a_expr_caret
-    : a_expr_unary_sign ( '^' a_expr_unary_sign )?
-    ;
-
-a_expr_unary_sign
-    : ( '-' | '+' )? a_expr_at_time_zone
-    ;
-
-a_expr_at_time_zone
-    : c_expr ( '::' typename )* ( 'COLLATE' qname )? ( 'AT' 'TIME' 'ZONE' term )?
-    ;
-
-b_expr
-    : c_expr
-    | b_expr '::' typename
-    //right	unary plus, unary minus
-    | ( '+' | '-' ) b_expr
-    //^	left	exponentiation
-    | b_expr '^' b_expr
-    //* / %	left	multiplication, division, modulo
-    | b_expr ( '*' | '/' | '%' ) b_expr
-    //+ -	left	addition, subtraction
-    | b_expr ( '+' | '-' ) b_expr
-    //( any other operator)	left	all other native and user-defined operators
-    | b_expr qual_op b_expr
-    //< > = <= >= <>	 	comparison operators
-    | b_expr ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) b_expr
-    | qual_op b_expr
-    | b_expr qual_op
-    //S 'ISNULL' 'NOTNULL'	 	'IS' TRUE, 'IS' FALSE, 'IS' NULL, 'IS' 'DISTINCT' FROM, etc
-    | b_expr 'IS' 'NOT'? ( 'DISTINCT' 'FROM' b_expr | 'OF' '(' type_list ')' | 'DOCUMENT' )
-    ;
-
-c_expr
-    : 'EXISTS' '(' select ')'                                        # c_expr_exists
-    | 'ARRAY' ( '(' select ')' | array_expr )                          # c_expr_expr
-    | PARAM indirection_el*                                            # c_expr_expr
-    | 'GROUPING' '(' terms ')'                        # c_expr_expr
-    | 'UNIQUE' '(' select ')'                                 # c_expr_expr
-    | qname                                                        # c_expr_expr
-    | literal                                                       # c_expr_expr
-    | '(' a_expr_in_parens = term ')' indirection_el* # c_expr_expr
-    | case_expr                                                        # c_expr_case
-    | func_expr                                                        # c_expr_expr
-    | '(' select ')' indirection_el*                                  # c_expr_expr
-    | 'ROW' '(' terms? ')'                                                     # c_expr_expr
-    | '(' terms ',' term ')'                                                     # c_expr_expr
-    | row 'OVERLAPS' row                               # c_expr_expr
-    | 'DEFAULT'                                                          # c_expr_expr
+atom
+    : 'EXISTS' '(' select ')'
+    | 'ARRAY' ( '(' select ')' | array_expr )
+//    | ('ANY' | 'SOME' | 'ALL') ( '(' select | term ')' )
+    | PARAM indirection_el*
+    | 'GROUPING' '(' terms ')'
+    | 'UNIQUE' '(' select ')'
+    | qname
+    | literal
+    | '(' term ')' indirection_el*
+    | 'CASE' term? when+ case_default? 'END'
+    | func_expr
+    | '(' select ')' indirection_el*
+    | 'ROW' '(' terms? ')'
+    | '(' terms ',' term ')'
+    | row 'OVERLAPS' row
+    | 'DEFAULT'
     ;
 
 func_application
@@ -2214,12 +2146,13 @@ func_application
       | allDistinct func_arg_list orderBy?
       | '*'
       )?
-    ')'
+      ')'
     ;
 
 func_expr
-    : func_application ('WITHIN' 'GROUP' '(' orderBy ')')? ('FILTER' '(' 'WHERE' term ')')? ('OVER' ( window_specification | id ))?
-    | func_expr_common_subexpr
+    : func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )?
+      ( 'FILTER' '(' 'WHERE' term ')' )? ('OVER' ( window_specification | id ))?
+      | func_expr_common_subexpr
     ;
 
 func_expr_windowless
@@ -2249,7 +2182,7 @@ func_expr_common_subexpr
     | 'EXTRACT' '(' (extract_arg 'FROM' term)? ')'
     | 'NORMALIZE' '(' term ( ',' unicode_normal_form )? ')'
     | 'OVERLAY' '(' ( overlay_list | func_arg_list? ) ')'
-    | 'POSITION' '(' (b_expr 'IN' b_expr)? ')'
+    | 'POSITION' '(' (term 'IN' term)? ')'
     | 'SUBSTRING' '(' ( substr_list | func_arg_list? ) ')'
     | 'TREAT' '(' term 'AS' typename ')'
     | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
@@ -2260,7 +2193,7 @@ func_expr_common_subexpr
 
     | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xml_attribute_el ( ',' xml_attribute_el )* ')' | terms ) )? ')'
-    | 'XMLEXISTS' '(' c_expr xmlexists_argument ')'
+    | 'XMLEXISTS' '(' atom xmlexists_argument ')'
     | 'XMLFOREST' '(' xml_attribute_el ( ',' xml_attribute_el )* ')'
     | 'XMLPARSE' '(' document_or_content term ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
     | 'XMLPI' '(' 'NAME' id ( ',' term )? ')'
@@ -2288,7 +2221,7 @@ document_or_content
     ;
 
 xmlexists_argument
-    : 'PASSING' xml_passing_mech? c_expr xml_passing_mech?
+    : 'PASSING' xml_passing_mech? atom xml_passing_mech?
     ;
 
 xml_passing_mech
@@ -2324,20 +2257,24 @@ row
     | '(' terms ',' term ')'
     ;
 
+// Include all implicitly defined operator tokens here
 mathop
-    : '+'
-    | '-'
-    | '*'
-    | '/'
-    | '%'
-    | '^'
-    | '<'
-    | '>'
-    | '='
-    | '<='
-    | '>='
-    | '<>'
-    ;
+  : '+'
+  | '-'
+  | '*'
+  | '/'
+  | '&'
+  | '%'
+  | '^'
+  | '<'
+  | '>'
+  | '='
+  | '<='
+  | '>='
+  | '<>'
+  ;
+
+//mathish : qop* EOF ;
 
 qual_op
     : Operator
@@ -2371,21 +2308,12 @@ qual_op
 //    | '-|-'
 //    | '==='
 
-    | 'OPERATOR' '(' any_operator ')'
+    | 'OPERATOR' '(' qop ')'
     ;
 
 qual_all_op
     : (Operator | mathop)
-    | 'OPERATOR' '(' any_operator ')'
-    ;
-
-subquery_Op
-    : (Operator | mathop)
-    | 'OPERATOR' '(' any_operator ')'
-    | 'LIKE'
-    | 'NOT' 'LIKE'
-    | 'ILIKE'
-    | 'NOT' 'ILIKE'
+    | 'OPERATOR' '(' qop ')'
     ;
 
 terms
@@ -2438,15 +2366,6 @@ substr_list
     | term 'FROM' term
     | term 'FOR' term
     | term 'SIMILAR' term 'ESCAPE' term
-    ;
-
-in_expr
-    : '(' select ')'
-    | '(' terms ')'
-    ;
-
-case_expr
-    : 'CASE' term? when+ case_default? 'END'
     ;
 
 when
@@ -2510,7 +2429,7 @@ json_key_uniqueness_constraint:
 		;
 
 json_name_and_value:
-			c_expr 'VALUE' json_value_expr
+			atom 'VALUE' json_value_expr
 			|
 			term ':' json_value_expr
 		;
@@ -3637,8 +3556,7 @@ PARAM: '$' ([0-9])+;
 // FIXME disallow '+' ending (per rules)
 Operator
 //  ( '+' | [-/<>=~!@#%^&|`?] | '*' )* ( [-/<>=~!@#%^&|`?] | '*' )
-  : (  [<>=~!@#%^&|`?] | '*' )+
-  | '<->'
+  : '<->'
   | '@-@'
   | '@+@'
   | '!=-'
@@ -3650,6 +3568,7 @@ Operator
   | '!+!'
   | '?' '|' '|'
   | '?' '-' '|'
+  | (  [<>=~!@#%^&|`?] | '*' )+
   ;
 
 Identifier
