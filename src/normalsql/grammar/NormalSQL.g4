@@ -377,7 +377,7 @@ select
       | '(' tables ')' tableAlias?
       ;
 
-        // TODO add 'LATERAL'
+        // TODO add 'LATERAL'?
         join
           : 'NATURAL'?
             ( 'LEFT' ( 'SEMI' | 'ANTI' | 'OUTER' )?

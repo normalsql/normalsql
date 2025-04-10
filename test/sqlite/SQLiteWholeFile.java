@@ -174,7 +174,7 @@ SQLiteWholeFile
 				{
 					error();
 //					fails.add( "\nerror" );
-					fails.add( msg );
+					fails.add( "" + line + ":" + charPositionInLine + "  " + msg );
 					fails.add( sql );
 					fails.add( sourceFile.toString() );
 //					fails.add( sql );
