@@ -233,15 +233,11 @@ variablesetstmt
     ;
 
 set_rest
-    : ( 'SESSION' 'CHARACTERISTICS' 'AS' )? 'TRANSACTION' transaction_mode_list
+    : ( 'SESSION' 'CHARACTERISTICS' 'AS' )? 'TRANSACTION' transactionMode ( ','? transactionMode )*
     | set_rest_more
     ;
 
- transaction_mode_list
-     : transaction_mode_item ( ','? transaction_mode_item )*
-     ;
-
- transaction_mode_item
+ transactionMode
      : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
      | 'READ' ( 'ONLY' |  'WRITE' )
      | 'NOT'? 'DEFERRABLE'
@@ -312,13 +308,13 @@ discardstmt
     ;
 
 altertablestmt
-    : 'ALTER' 'TABLE' ifExists? relation_expr ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec | 'DETACH' 'PARTITION' qname ) )
+    : 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec | 'DETACH' 'PARTITION' qname ) )
     | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
     | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' ids )? 'SET' 'TABLESPACE' id 'NOWAIT'?
     | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
     | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname alter_table_cmds
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr alter_table_cmds
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants alter_table_cmds
     ;
 
 alter_table_cmds
@@ -367,7 +363,7 @@ alter_table_cmd
     | 'SET' 'TABLESPACE' id
     | 'SET' definition
     | 'RESET' definition
-    | 'REPLICA' 'IDENTITY' ('NOTHING' | 'FULL' | 'DEFAULT' | 'USING' 'INDEX' id)
+    | 'REPLICA' 'IDENTITY' ( 'NOTHING' | 'FULL' | 'DEFAULT' | 'USING' 'INDEX' id )
     | ( 'DISABLE' | 'ENABLE' | 'NO'? 'FORCE' ) 'ROW' 'LEVEL' 'SECURITY'
     | genericOptions
     ;
@@ -741,7 +737,7 @@ alterforeignserverstmt
     ;
 
 importforeignschemastmt
-    : 'IMPORT' 'FOREIGN' 'SCHEMA' id  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' relation_expr ( ',' relation_expr )* ')' )?
+    : 'IMPORT' 'FOREIGN' 'SCHEMA' id  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' descendants ( ',' descendants )* ')' )?
       'FROM' 'SERVER' id 'INTO' id genericOptions?
     ;
 
@@ -788,13 +784,13 @@ createTrigger
     ( 'FROM' qname )?
     timing*
     ( 'REFERENCING' triggertransition+ )?
-    ( 'FOR' 'EACH'? ('ROW' | 'STATEMENT') )?
+    ( 'FOR' 'EACH'? ( 'ROW' | 'STATEMENT' ) )?
     ( 'WHEN' '(' term ')' )?
     executeFunction
   ;
 
 executeFunction
-  : 'EXECUTE' ('FUNCTION' | 'PROCEDURE')? qname '(' terms? ')' ;
+  : 'EXECUTE' ( 'FUNCTION' | 'PROCEDURE' )? qname '(' terms? ')' ;
 
 event
     : 'INSERT'
@@ -804,7 +800,7 @@ event
     ;
 
 triggertransition
-    : ('NEW' | 'OLD') ('TABLE' | 'ROW') alias
+    : ( 'NEW' | 'OLD' ) ( 'TABLE' | 'ROW' ) alias
     ;
 
 timing
@@ -962,7 +958,7 @@ object_type_name_on_any_name
     ;
 
 truncatestmt
-    : 'TRUNCATE' 'TABLE'? relation_expr ( ',' relation_expr )* (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? drop_behavior_?
+    : 'TRUNCATE' 'TABLE'? descendants ( ',' descendants )* (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? drop_behavior_?
     ;
 
 commentstmt
@@ -1098,7 +1094,7 @@ defacl_privilege_target
 
 createIndex
     : 'CREATE' 'UNIQUE'? 'INDEX' 'CONCURRENTLY'? ( ifNotExists? id )?
-      'ON' relation_expr usingID? '(' index_params ')'
+      'ON' descendants usingID? '(' index_params ')'
       ('INCLUDE' '(' index_params ')')? withDef? tablespaceID? where?
     ;
 
@@ -1121,7 +1117,7 @@ createfunctionstmt
   : 'CREATE' orReplace? ( 'FUNCTION' | 'PROCEDURE' ) qname
     '(' ( func_arg_with_default ( ',' func_arg_with_default )* )? ')'
     ( 'RETURNS' ( func_type | 'TABLE' '(' table_func_column_list ')' ) )?
-    ( 'AS' func_as
+    ( 'AS' string ( ',' string )?
     | 'LANGUAGE' name
     | 'TRANSFORM' transform_type_list
     | 'WINDOW'
@@ -1131,7 +1127,6 @@ createfunctionstmt
 
 orReplace
     : 'OR' 'REPLACE' ;
-
 
 function_with_argtypes_list
     : function_with_argtypes ( ',' function_with_argtypes )*
@@ -1188,13 +1183,6 @@ common_func_opt_item
     | 'SET' set_rest_more
     | variableresetstmt
     | 'PARALLEL' id
-    ;
-
-func_as
-    :
-    /* |AS 'definition'*/ def = string
-    /*| 'AS' 'obj_file', 'link_symbol'*/
-    | string ',' string
     ;
 
 transform_type_list
@@ -1309,17 +1297,17 @@ renamestmt
     | 'ALTER' 'SCHEMA' id 'RENAME' 'TO' id
     | 'ALTER' 'SERVER' id 'RENAME' 'TO' id
     | 'ALTER' 'SUBSCRIPTION' id 'RENAME' 'TO' id
-    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'TO' id
+    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
     | 'ALTER' 'SEQUENCE' ifExists? qname 'RENAME' 'TO' id
     | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'TO' id
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'TO' id
     | 'ALTER' 'INDEX' ifExists? qname 'RENAME' 'TO' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'RENAME' 'TO' id
-    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
+    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
     | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
-    | 'ALTER' 'TABLE' ifExists? relation_expr 'RENAME' 'CONSTRAINT' id 'TO' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'RENAME' 'COLUMN'? id 'TO' id
+    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'CONSTRAINT' id 'TO' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
     | 'ALTER' 'RULE' id 'ON' qname 'RENAME' 'TO' id
     | 'ALTER' 'TRIGGER' id 'ON' qname 'RENAME' 'TO' id
     | 'ALTER' 'EVENT' 'TRIGGER' id 'RENAME' 'TO' id
@@ -1355,14 +1343,14 @@ alterobjectschemastmt
      | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR'  qname usingID 'SET' 'SCHEMA' id
-    | 'ALTER' 'TABLE' ifExists? relation_expr 'SET' 'SCHEMA' id
+    | 'ALTER' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
     | 'ALTER' 'STATISTICS' qname 'SET' 'SCHEMA' id
     | 'ALTER' textSearchConfig qname 'SET' 'SCHEMA' id
     | 'ALTER' 'SEQUENCE' ifExists? qname 'SET' 'SCHEMA' id
     | 'ALTER' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
     | 'ALTER' 'TYPE' qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? relation_expr 'SET' 'SCHEMA' id
+    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
     ;
 
 textSearchConfig : 'TEXT' 'SEARCH' ( 'PARSER' | 'DICTIONARY' | 'TEMPLATE' | 'CONFIGURATION' ) ;
@@ -1418,12 +1406,12 @@ alterownerstmt
     ;
 
 createpublicationstmt
-    : 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' relation_expr ( ',' relation_expr )* | 'FOR' 'ALL' 'TABLES')? withDef?
+    : 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' descendants ( ',' descendants )* | 'FOR' 'ALL' 'TABLES')? withDef?
     ;
 
 alterpublicationstmt
     : 'ALTER' 'PUBLICATION' id 'SET' definition
-    | 'ALTER' 'PUBLICATION' id ( 'ADD' | 'SET' | 'DROP' ) 'TABLE' relation_expr ( ',' relation_expr )*
+    | 'ALTER' 'PUBLICATION' id ( 'ADD' | 'SET' | 'DROP' ) 'TABLE' descendants ( ',' descendants )*
     ;
 
 createsubscriptionstmt
@@ -1469,7 +1457,7 @@ unlistenstmt
 
 transactionstmt
     : ( 'ABORT' | | 'COMMIT' | 'END' | 'ROLLBACK' ) transaction_? ( 'AND' 'NO'? 'CHAIN' )?
-    | ( 'BEGIN' transaction_? | 'START' 'TRANSACTION' ) ( transaction_mode_item ( ',' transaction_mode_item )* )?
+    | ( 'BEGIN' transaction_? | 'START' 'TRANSACTION' ) ( transactionMode ( ',' transactionMode )* )?
     | 'RELEASE'? 'SAVEPOINT' id
     | 'RELEASE' id
     | 'ROLLBACK' transaction_? 'TO' 'SAVEPOINT'? id
@@ -1647,11 +1635,11 @@ merge_update_clause
   ;
 
 delete
-    : with? 'DELETE' 'FROM' relation_expr alias? ('USING' tables ( ',' tables )*)? where_or_current_clause? returning?
+    : with? 'DELETE' 'FROM' descendants alias? ('USING' tables ( ',' tables )*)? whereCurrent? returning?
     ;
 
 lockstmt
-    : 'LOCK' 'TABLE'? relation_expr ( ',' relation_expr )* ('IN' lock_type 'MODE')? 'NOWAIT'?
+    : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ('IN' lock_type 'MODE')? 'NOWAIT'?
     ;
 
 lock_type
@@ -1662,7 +1650,7 @@ lock_type
     ;
 
 update
-    : with? 'UPDATE' relation_expr alias? 'SET' set_clause_list from? where_or_current_clause? returning?
+    : with? 'UPDATE' descendants alias? 'SET' set_clause_list from? whereCurrent? returning?
     ;
 
 set_clause_list
@@ -1714,7 +1702,7 @@ simpleCore
      from? where? groupBy? having? window?
 
   | values
-  | 'TABLE' relation_expr
+  | 'TABLE' descendants
   | '(' select ')'
   ;
 
@@ -1777,46 +1765,52 @@ tables
   : tables joinType? 'JOIN' tables ( 'USING' columns | 'ON' term )
   | tables 'NATURAL' joinType? 'JOIN' tables
   | tables 'CROSS' 'JOIN' tables
-  | 'LATERAL'? func_expr_windowless aliasColumnDefs?
-  | 'LATERAL'? 'ROWS' 'FROM' '(' rowsfrom_item ')'  aliasColumnDefs?
+  | 'LATERAL'? tableFunc
   | 'LATERAL'? '(' select ')' aliasColumns?
-  | 'LATERAL'? func_expr_windowless ( 'WITH' 'ORDINALITY' )? aliasColumns?
-  | 'LATERAL'? 'ROWS' 'FROM' '(' rowsfrom_item ( ',' rowsfrom_item )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
+  | 'LATERAL'? noob ( 'WITH' 'ORDINALITY' )? aliasColumns?
+//  | 'LATERAL'? func_expr_windowless ( 'WITH' 'ORDINALITY' )? aliasColumns?
+  | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
   | 'LATERAL'? xmltable aliasColumns?
   | '(' tables ')' aliasColumns?
-  | relation_expr aliasColumns? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
+  | descendants aliasColumns? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
   ;
 
-aliasColumnDefs
-  :  ( 'AS' | 'AS'? id ) '(' id typename ( ',' id typename )* ')' ;
+joinType
+  : 'INNER'
+  | ( 'FULL' | 'LEFT' | 'RIGHT'  ) 'OUTER'?
+  ;
+
+noob
+  : qname '(' ( ( allDistinct? bozo ( ',' bozo )*  | '*' ) orderBy? )? ')'
+  | func_expr_common_subexpr
+  ;
+
+bozo
+  : ( id ( ':=' | '=>' ) )? term
+  | 'VARIADIC' 'ARRAY'  array
+  ;
+
+// TODO review func_expr_windowless
+tableFunc
+//  : func_expr_windowless ( ( 'AS' | 'AS'? id ) '(' id typename ( ',' id typename )* ')' )? ;
+  : noob ( ( 'AS' | 'AS'? id ) '(' id typename ( ',' id typename )* ')' )? ;
 
 aliasColumns
-    : 'AS'? id ( columns )? ;
+  : 'AS'? id ( columns )? ;
+
+descendants
+  : qname '*'?
+  | 'ONLY' qname
+  ;
 
 alias
-    : 'AS'? id ;
-
-joinType
-    : 'INNER'
-    | ( 'FULL' | 'LEFT' | 'RIGHT'  ) 'OUTER'?
-    ;
-
-relation_expr
-    : qname '*'?
-    | 'ONLY' ( qname | '(' qname ')' )
-    ;
-
-rowsfrom_item
-    : func_expr_windowless ('AS' '(' tablefuncelement ( ',' tablefuncelement )* ')')?
-    ;
+  : 'AS'? id ;
 
 where
-    : 'WHERE' term
-    ;
+    : 'WHERE' term ;
 
-where_or_current_clause
-    : 'WHERE' ( 'CURRENT' 'OF' id | term )
-    ;
+whereCurrent
+    : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
 
 tablefuncelement
     : id typename collate?
@@ -1834,13 +1828,10 @@ xmltable
     ;
 
 xmltable_column_el
-    : id ( typename (xmltable_column_option_el)* | 'FOR' 'ORDINALITY' )
-    ;
-
-xmltable_column_option_el
-    : 'DEFAULT' term
-    | identifier term
-    | 'NOT'? 'NULL'
+    : id
+      ( typename ( 'DEFAULT' term | identifier term | 'NOT'? 'NULL' )*
+      | 'FOR' 'ORDINALITY'
+      )
     ;
 
 xml_namespace_el
@@ -1850,32 +1841,30 @@ xml_namespace_el
 
 typename
     : 'SETOF'? simpletypename
-      (  ( '[' integer? ']' )*
-      | 'ARRAY' ( '[' integer ']' )?
+      (  ( '[' DECIMAL? ']' )*
+      | 'ARRAY' ( '[' DECIMAL ']' )?
       )
     ;
 
 simpletypename
-    : id ( '.' id )* type_modifiers_?
+    : id ( '.' id )* precision?
     | numeric
     | bit
     | character
     | timestamp
     | interval
-//    | 'INTERVAL' ( timeUnit? | '(' integer ')' )
     | 'JSON'
     ;
 
-consttypename
-    : numeric
-    | bit
-    | character_c ( '(' integer ')' )?
-    | timestamp
-    | 'JSON'
-    ;
+//    : numeric
+//    | bit
+//    | character
+//    | timestamp
+//    | 'JSON'
+//    ;
 
-type_modifiers_
-    : '(' terms ')'
+precision
+    : '(' ( DECIMAL | simpletypename ) ( ',' ( signedDecimal | simpletypename ) )? ')'
     ;
 
 numeric
@@ -1884,26 +1873,27 @@ numeric
     | 'SMALLINT'
     | 'BIGINT'
     | 'REAL'
-    | 'FLOAT' ('(' integer ')')?
+    | 'FLOAT' scale?
     | 'DOUBLE' 'PRECISION'
-    | 'DECIMAL' type_modifiers_?
-    | 'DEC' type_modifiers_?
-    | 'NUMERIC' type_modifiers_?
+    | 'DECIMAL' precision?
+    | 'DEC' precision?
+    | 'NUMERIC' precision?
     | 'BOOLEAN'
     ;
 
+scale
+  : '(' integer ')' ;
+
 bit
-    : 'BIT' 'VARYING'? '(' terms ')'?
-    ;
+  : 'BIT' 'VARYING'? scale? ;
 
 character
-    : character_c ( '(' integer ')' )?
-    ;
+    : ( ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
+      | 'VARCHAR'
+      | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+      )
 
-character_c
-    : ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
-    | 'VARCHAR'
-    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+      scale?
     ;
 
 timestamp
@@ -1924,7 +1914,7 @@ timeUnit
     ;
 
 second
-    : 'SECOND' ( '(' integer ')' )?
+    : 'SECOND' scale?
     ;
 
 //precendence accroding to Table 4.2. Operator Precedence ( highest to lowest)
@@ -2029,8 +2019,7 @@ nested
 
 atom
     : 'EXISTS' '(' select ')'
-    | 'ARRAY' ( '(' select ')' | array_expr )
-//    | ('ANY' | 'SOME' | 'ALL') ( '(' select | term ')' )
+    | 'ARRAY' ( '(' select ')' | array )
     | PARAM indirection_el*
     | 'GROUPING' '(' terms ')'
     | 'UNIQUE' '(' select ')'
@@ -2038,10 +2027,10 @@ atom
     | literal
     | '(' term ')' indirection_el*
     | 'CASE' term? when+ case_default? 'END'
-    | func_expr
+    | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
+    | func_expr_common_subexpr
     | '(' select ')' indirection_el*
-    | 'ROW' '(' terms? ')'
-    | '(' terms ',' term ')'
+    | row
     | row 'OVERLAPS' row
     | 'DEFAULT'
     ;
@@ -2053,13 +2042,12 @@ func_application
       | allDistinct func_arg_list orderBy?
       | '*'
       )?
+//      ( func_arg_list ( ',' 'VARIADIC' func_arg_expr )? orderBy?
+//      | 'VARIADIC' func_arg_expr orderBy?
+//      | allDistinct func_arg_list orderBy?
+//      | '*'
+//      )?
       ')'
-    ;
-
-func_expr
-    : func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )?
-      ( 'FILTER' '(' 'WHERE' term ')' )? ('OVER' ( window_specification | id ))?
-      | func_expr_common_subexpr
     ;
 
 func_expr_windowless
@@ -2069,7 +2057,6 @@ func_expr_windowless
 
 func_expr_common_subexpr
     : 'COLLATION' 'FOR' '(' term ')'
-
     | 'CURRENT_DATE'
     | 'CURRENT_TIME' ( '(' integer ')' )?
     | 'CURRENT_TIMESTAMP' ( '(' integer ')' )?
@@ -2238,8 +2225,8 @@ type_list
     : typename ( ',' typename )*
     ;
 
-array_expr
-    : '[' ( terms | array_expr ( ',' array_expr )* )? ']'
+array
+    : '[' ( terms | array ( ',' array )* )? ']'
     ;
 
 // TODO cull this
@@ -2298,7 +2285,7 @@ json_wrapper_behavior
 
 json_behavior
   : 'DEFAULT' term
-  | ('ERROR'
+  | ( 'ERROR'
     | 'NULL'
     | 'TRUE'
     | 'FALSE'
@@ -2393,9 +2380,8 @@ literal
     | BinaryStringConstant
     | HexadecimalStringConstant
     | qname ( string | '(' func_arg_list orderBy? ')' string )
-    | consttypename string
+    | timestamp string
     | interval
-//    | 'INTERVAL' ( string timeUnit? | '(' integer ')' string )
     | 'TRUE'
     | 'FALSE'
     | 'NULL'
@@ -2409,15 +2395,16 @@ integer
     ;
 
 string
-  : string_ ( 'UESCAPE' string_ )? ;
+//  : string_ ( 'UESCAPE' string_ )? ;
 
-string_
+//string_
   : StringConstant
-  | UnicodeEscapeStringConstant
+  | UnicodeEscapeStringConstant ( 'UESCAPE' StringConstant )?
   ;
 
 signedDecimal
-  : ('+' | '-')? integer ;
+//  : ('+' | '-')? integer ;
+  : ('+' | '-')? DECIMAL ;
 
 signedFloat
   : ('+' | '-')? FLOAT ;
@@ -3438,7 +3425,8 @@ bare_label_keyword
     ;
 
 identifier
-    : Identifier ( 'UESCAPE' string_ )?
+//    : Identifier ( 'UESCAPE' string_ )?
+    : Identifier ( 'UESCAPE' StringConstant )?
     | QuotedIdentifier
     | UnicodeQuotedIdentifier
     | PLSQLVARIABLENAME
