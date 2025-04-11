@@ -155,7 +155,6 @@ statement
     | vacuumstmt
     | variableresetstmt
     | variablesetstmt
-//    | variableshowstmt
     | viewstmt
     ;
 
@@ -194,7 +193,6 @@ alteroptroleelem
     | 'USER' ids
     | identifier
     ;
-
 
 alterrolesetstmt
     : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ('IN' 'DATABASE' id)? setresetclause
@@ -273,8 +271,7 @@ name
 
 variableresetstmt
   : ( 'RESET' | 'SHOW' )
-//    ( qname
-    ( id
+    ( qname
     | 'ALL'
     | 'TIME' 'ZONE'
     | 'TRANSACTION' 'ISOLATION' 'LEVEL'
@@ -286,11 +283,6 @@ setresetclause
     : 'SET' set_rest
     | variableresetstmt
     ;
-
-//variableshowstmt
-//    : 'SHOW'
-//       ( id | 'TIME' 'ZONE' | 'TRANSACTION' 'ISOLATION' 'LEVEL' | 'SESSION' 'AUTHORIZATION' | 'ALL' )
-//    ;
 
 constraintssetstmt
     : 'SET' 'CONSTRAINTS' ( 'ALL' | qnames ) ( 'DEFERRED' | 'IMMEDIATE' )
@@ -331,7 +323,7 @@ alter_table_cmd
     | 'ALTER' 'COLUMN'? id alter_identity_column_option+
     | 'ALTER' 'COLUMN'? id 'DROP' 'IDENTITY' ifExists?
     | 'DROP' 'COLUMN'? ifExists? id drop_behavior_?
-    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' typename collate? ('USING' term)?
+    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' type collate? ('USING' term)?
     | 'ALTER' 'COLUMN'? id genericOptions
     | 'ALTER' 'CONSTRAINT' id timing*
     | 'VALIDATE' 'CONSTRAINT' id
@@ -392,7 +384,7 @@ altercompositetypestmt
 alter_type_cmd
     : 'ADD' 'ATTRIBUTE' tablefuncelement drop_behavior_?
     | 'DROP' 'ATTRIBUTE' ifExists? id drop_behavior_?
-    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' typename collate? drop_behavior_?
+    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' type collate? drop_behavior_?
     ;
 
 closeportalstmt
@@ -518,7 +510,7 @@ tableelement
 
 
 columnDef
-    : id typename genericOptions? colconstraint*
+    : id type genericOptions? colconstraint*
     ;
 
 colconstraint
@@ -678,16 +670,16 @@ alterextensioncontentsstmt
     : 'ALTER' 'EXTENSION' id addDrop object_type_name id
     | 'ALTER' 'EXTENSION' id addDrop object_type_any_name qname
     | 'ALTER' 'EXTENSION' id addDrop 'AGGREGATE' aggSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'CAST' '(' typename 'AS' typename ')'
-    | 'ALTER' 'EXTENSION' id addDrop 'DOMAIN' typename
+    | 'ALTER' 'EXTENSION' id addDrop 'CAST' '(' type 'AS' type ')'
+    | 'ALTER' 'EXTENSION' id addDrop 'DOMAIN' type
     | 'ALTER' 'EXTENSION' id addDrop 'FUNCTION' funcSignature
     | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' operator_with_argtypes
     | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'CLASS' qname usingID
     | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'FAMILY' qname usingID
     | 'ALTER' 'EXTENSION' id addDrop 'PROCEDURE' funcSignature
     | 'ALTER' 'EXTENSION' id addDrop 'ROUTINE' funcSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'TRANSFORM' 'FOR' typename 'LANGUAGE' id
-    | 'ALTER' 'EXTENSION' id addDrop 'TYPE' typename
+    | 'ALTER' 'EXTENSION' id addDrop 'TRANSFORM' 'FOR' type 'LANGUAGE' id
+    | 'ALTER' 'EXTENSION' id addDrop 'TYPE' type
     ;
 
 createfdwstmt
@@ -837,7 +829,7 @@ def_elem
     ;
 
 def_arg
-    : typename
+    : type
     | reserved_keyword
     | qual_all_op
     | number
@@ -877,13 +869,13 @@ opclass_item
     : 'OPERATOR' integer operator opclass_purpose? 'RECHECK'?
     | 'OPERATOR' integer operator_with_argtypes opclass_purpose? 'RECHECK'?
     | 'FUNCTION' integer funcSignature
-    | 'FUNCTION' integer '(' type_list ')' funcSignature
-    | 'STORAGE' typename
+    | 'FUNCTION' integer '(' type ( ',' type )* ')' funcSignature
+    | 'STORAGE' type
     ;
 
 
 opclass_drop
-    : ('OPERATOR' | 'FUNCTION') integer '(' type_list ')'
+    : ('OPERATOR' | 'FUNCTION') integer '(' type ( ',' type )* ')'
     ;
 
 dropOperator
@@ -902,7 +894,7 @@ dropstmt
     : 'DROP' object_type_any_name ifExists? qnames drop_behavior_?
     | 'DROP' object_type_name_on_any_name ifExists? id 'ON' qname drop_behavior_?
     | 'DROP' drop_type_name ifExists? ids drop_behavior_?
-    | 'DROP' ( 'TYPE' | 'DOMAIN' ) ifExists? typename ( ',' typename )* drop_behavior_?
+    | 'DROP' ( 'TYPE' | 'DOMAIN' ) ifExists? type ( ',' type )* drop_behavior_?
     | 'DROP' 'INDEX' 'CONCURRENTLY' ifExists? qnames drop_behavior_?
     ;
 
@@ -953,17 +945,17 @@ commentstmt
     ( object_type_any_name qname
     | 'COLUMN' qname
     | object_type_name id
-    | 'TYPE' typename
-    | 'DOMAIN' typename
+    | 'TYPE' type
+    | 'DOMAIN' type
     | 'AGGREGATE' aggSignature
     | routine funcSignature
     | 'OPERATOR' operator_with_argtypes
     | 'CONSTRAINT' id 'ON' 'DOMAIN'? qname?
     | object_type_name_on_any_name id 'ON' qname
-   | 'TRANSFORM' 'FOR' typename 'LANGUAGE' id
+   | 'TRANSFORM' 'FOR' type 'LANGUAGE' id
     | 'OPERATOR' ('CLASS' | 'FAMILY' ) qname usingID
     | 'LARGE' 'OBJECT' number
-    | 'CAST' '(' typename 'AS' typename ')'
+    | 'CAST' '(' type 'AS' type ')'
     )
     'IS' ( string | 'NULL' )
   ;
@@ -973,8 +965,8 @@ seclabelstmt
       ( object_type_any_name qname
       | 'COLUMN' qname
       | object_type_name id
-      | 'TYPE' typename
-      | 'DOMAIN' typename
+      | 'TYPE' type
+      | 'DOMAIN' type
       | 'AGGREGATE' aggSignature
       | 'FUNCTION' funcSignature
       | 'LARGE' 'OBJECT' number
@@ -1102,11 +1094,9 @@ nullsOrder
 
 createfunctionstmt
   : 'CREATE' orReplace? ( 'FUNCTION' | 'PROCEDURE' ) qname
-    '(' ( param ( ',' param )* )? ')'
-//    '(' ( func_arg_with_default ( ',' func_arg_with_default )* )? ')'
+    '(' ( paramDef ( ',' paramDef )* )? ')'
 
-    ( 'RETURNS' ( typename | 'TABLE' '(' id typename ( ',' id typename )* ')' ) )?
-//    ( 'RETURNS' ( func_type | 'TABLE' '(' table_func_column_list ')' ) )?
+    ( 'RETURNS' ( type | 'TABLE' '(' id type ( ',' id type )* ')' ) )?
     ( 'AS' string ( ',' string )?
     | 'LANGUAGE' name
     | 'TRANSFORM' forType ( ',' forType )*
@@ -1118,12 +1108,11 @@ createfunctionstmt
 orReplace
   : 'OR' 'REPLACE' ;
 
-param
-  : id? argmode? id? typename (( 'DEFAULT' | '=' ) term )? ;
+paramDef
+  : id? argmode? id? type (( 'DEFAULT' | '=' ) term )? ;
 
 funcSignature
-    : qname ( '(' triplets? ')' )?
-    ;
+    : qname ( '(' triplets? ')' )? ;
 
 aggSignature
   : qname '(' ( '*' | ( triplets? 'ORDER' 'BY' )? triplets ) ')' ;
@@ -1132,7 +1121,7 @@ triplets
   : triplet ( ',' triplet )* ;
 
 triplet
-  : ( argmode id? | id argmode? )? typename ;
+  : ( argmode id? | id argmode? )? type ;
 
 argmode
   : 'IN' 'OUT'?
@@ -1160,7 +1149,7 @@ funcOptions
   ;
 
 forType
-  : 'FOR' 'TYPE' typename ;
+  : 'FOR' 'TYPE' type ;
 
 withDef
     : 'WITH' definition ;
@@ -1182,13 +1171,12 @@ removeoperstmt
     : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* drop_behavior_?
     ;
 
-// qualified operator
 operator
     : ( id '.' )* ( Operator | mathop )
     ;
 
 operator_with_argtypes
-    : operator '(' typename ( ',' typename )? ')'
+    : operator '(' type ( ',' type )? ')'
     ;
 
 dostmt
@@ -1196,17 +1184,17 @@ dostmt
     ;
 
 createcaststmt
-    : 'CREATE' 'CAST' '(' typename 'AS' typename ')'
+    : 'CREATE' 'CAST' '(' type 'AS' type ')'
       ('WITH' 'FUNCTION' funcSignature | 'WITHOUT' 'FUNCTION' | 'WITH' 'INOUT')
       ('AS' ( 'IMPLICIT' |  'ASSIGNMENT' ))?
     ;
 
 dropcaststmt
-    : 'DROP' 'CAST' ifExists? '(' typename 'AS' typename ')' drop_behavior_?
+    : 'DROP' 'CAST' ifExists? '(' type 'AS' type ')' drop_behavior_?
     ;
 
 createtransformstmt
-    : 'CREATE' orReplace? 'TRANSFORM' 'FOR' typename 'LANGUAGE' id '(' transform_element_list ')'
+    : 'CREATE' orReplace? 'TRANSFORM' 'FOR' type 'LANGUAGE' id '(' transform_element_list ')'
     ;
 
 transform_element_list
@@ -1215,7 +1203,7 @@ transform_element_list
     ;
 
 droptransformstmt
-    : 'DROP' 'TRANSFORM' ifExists? 'FOR' typename 'LANGUAGE' id drop_behavior_?
+    : 'DROP' 'TRANSFORM' ifExists? 'FOR' type 'LANGUAGE' id drop_behavior_?
     ;
 
 reindex
@@ -1324,15 +1312,8 @@ alteroperatorstmt
     ;
 
 operator_def_elem
-    : id '=' operator_def_arg
-    ;
-
-operator_def_arg
-    : typename
-    | reserved_keyword
-    | qual_all_op
-    | number
-    | string
+    : id '='
+      ( type | reserved_keyword | qual_all_op | number | string )
     ;
 
 altertypestmt
@@ -1481,7 +1462,7 @@ altersystemstmt
     ;
 
 createdomainstmt
-    : 'CREATE' 'DOMAIN' qname 'AS'? typename colconstraint*
+    : 'CREATE' 'DOMAIN' qname 'AS'? type colconstraint*
     ;
 
 alterdomainstmt
@@ -1554,7 +1535,7 @@ option_elem
     ;
 
 preparestmt
-    : 'PREPARE' id ( '(' type_list ')' )? 'AS'
+    : 'PREPARE' id ( '(' type ( ',' type )* ')' )? 'AS'
       (select | insert | update | delete)
     ;
 
@@ -1599,7 +1580,7 @@ merge_update_clause
   ;
 
 delete
-    : with? 'DELETE' 'FROM' descendants alias? ('USING' tables ( ',' tables )*)? whereCurrent? returning?
+    : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning?
     ;
 
 lockstmt
@@ -1730,7 +1711,6 @@ tables
   | 'LATERAL'? tableFunc
   | 'LATERAL'? '(' select ')' aliasColumns?
   | 'LATERAL'? noob ( 'WITH' 'ORDINALITY' )? aliasColumns?
-//  | 'LATERAL'? func_expr_windowless ( 'WITH' 'ORDINALITY' )? aliasColumns?
   | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
   | 'LATERAL'? xmltable aliasColumns?
   | '(' tables ')' aliasColumns?
@@ -1758,14 +1738,14 @@ noob
   ;
 
 bozo
-  : ( id ( ':=' | '=>' ) )? term
+  : ( id ( ':='  ) )? term
+//  : ( id ( ':=' | '=>' ) )? term
   | 'VARIADIC' 'ARRAY'  array
   ;
 
 // TODO review func_expr_windowless
 tableFunc
-//  : func_expr_windowless ( ( 'AS' | 'AS'? id ) '(' id typename ( ',' id typename )* ')' )? ;
-  : noob ( ( 'AS' | 'AS'? id ) '(' id typename ( ',' id typename )* ')' )? ;
+  : noob ( ( 'AS' | 'AS'? id ) '(' id type ( ',' id type )* ')' )? ;
 
 aliasColumns
   : 'AS'? id ( columns )? ;
@@ -1785,33 +1765,29 @@ whereCurrent
     : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
 
 tablefuncelement
-    : id typename collate?
+    : id type collate?
     ;
 
 xmltable
-    : 'XMLTABLE' '('
+  : 'XMLTABLE' '('
+    ( 'XMLNAMESPACES' '(' xmlNamespace ( ',' xmlNamespace )* ')' ',' )?
+     xmlPassings
+    'COLUMNS' xmlColumn ( ',' xmlColumn )* ')'
+  ;
 
-      ( 'XMLNAMESPACES' '(' xml_namespace_el ( ',' xml_namespace_el )* ')' ',' )?
-
-      atom xmlexists_argument
-      'COLUMNS' xmltable_column_el ( ',' xmltable_column_el )*
-
-      ')'
-    ;
-
-xmltable_column_el
-    : id
-      ( typename ( 'DEFAULT' term | identifier term | 'NOT'? 'NULL' )*
-      | 'FOR' 'ORDINALITY'
-      )
-    ;
-
-xml_namespace_el
+xmlNamespace
     : term 'AS' id
     | 'DEFAULT' term
     ;
 
-typename
+xmlColumn
+    : id
+      ( type ( 'DEFAULT' term | identifier term | 'NOT'? 'NULL' )*
+      | 'FOR' 'ORDINALITY'
+      )
+    ;
+
+type
     : 'SETOF'? simpletypename
       (  ( '[' DECIMAL? ']' )*
       | 'ARRAY' ( '[' DECIMAL ']' )?
@@ -1828,13 +1804,6 @@ simpletypename
     | interval
     | 'JSON'
     ;
-
-//    : numeric
-//    | bit
-//    | character
-//    | timestamp
-//    | 'JSON'
-//    ;
 
 precision
     : '(' ( DECIMAL | simpletypename ) ( ',' ( signedDecimal | simpletypename ) )? ')'
@@ -1951,7 +1920,7 @@ term
   ;
 
 subterm
-    : subterm ( '::' typename )+
+    : subterm ( '::' type )+
     | subterm collate
     | subterm 'AT' 'TIME' 'ZONE' term
     // unary left
@@ -1971,7 +1940,7 @@ subterm
     | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
     | subterm ( 'ISNULL' | 'NOTNULL' )
     | subterm 'IS' 'NOT'? ('DISTINCT' 'FROM')? subterm
-    | subterm 'IS' 'NOT'? 'OF' '(' type_list ')'
+    | subterm 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
     | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
     | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
     | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
@@ -1992,7 +1961,7 @@ atom
     | '%TYPE'
     | '%ROWTYPE'
     | '(' term ')' indirection_el*
-    | 'CASE' term? when+ case_default? 'END'
+    | 'CASE' term? when+ ( 'ELSE' term )? 'END'
     | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
     | func_expr_common_subexpr
     | '(' select ')' indirection_el*
@@ -2010,10 +1979,10 @@ func_expr_windowless
 func_expr_common_subexpr
     : 'COLLATION' 'FOR' '(' term ')'
     | 'CURRENT_DATE'
-    | 'CURRENT_TIME' ( '(' integer ')' )?
-    | 'CURRENT_TIMESTAMP' ( '(' integer ')' )?
-    | 'LOCALTIME' ( '(' integer ')' )?
-    | 'LOCALTIMESTAMP' ( '(' integer ')' )?
+//    | 'CURRENT_TIME' ( '(' integer ')' )?
+//    | 'CURRENT_TIMESTAMP' ( '(' integer ')' )?
+//    | 'LOCALTIME' ( '(' integer ')' )?
+//    | 'LOCALTIMESTAMP' ( '(' integer ')' )?
 
     | 'CURRENT_ROLE'
     | 'CURRENT_USER'
@@ -2024,52 +1993,47 @@ func_expr_common_subexpr
     | 'CURRENT_CATALOG'
     | 'CURRENT_SCHEMA'
 
-    | 'CAST' '(' term 'AS' typename ')'
+    | 'CAST' '(' term 'AS' type ')'
     | 'EXTRACT' '(' (extract_arg 'FROM' term)? ')'
     | 'NORMALIZE' '(' term ( ',' unicode_normal_form )? ')'
     | 'OVERLAY' '(' ( overlay_list | func_arg_list? ) ')'
     | 'POSITION' '(' (term 'IN' term)? ')'
     | 'SUBSTRING' '(' ( substr_list | func_arg_list? ) ')'
-    | 'TREAT' '(' term 'AS' typename ')'
+    | 'TREAT' '(' term 'AS' type ')'
     | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
-    | 'NULLIF' '(' term ',' term ')'
-    | 'COALESCE' '(' terms ')'
-    | 'GREATEST' '(' terms ')'
-    | 'LEAST' '(' terms ')'
-
-    | 'XMLCONCAT' '(' terms ')'
-    | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xml_attribute_el ( ',' xml_attribute_el )* ')' | terms ) )? ')'
-    | 'XMLEXISTS' '(' atom xmlexists_argument ')'
-    | 'XMLFOREST' '(' xml_attribute_el ( ',' xml_attribute_el )* ')'
+//    | 'NULLIF' '(' term ',' term ')'
+//    | 'COALESCE' '(' terms ')'
+//    | 'GREATEST' '(' terms ')'
+//    | 'LEAST' '(' terms ')'
+//
+//    | 'XMLCONCAT' '(' terms ')'
+    | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')' | terms ) )? ')'
+    | 'XMLEXISTS' '(' xmlPassings ')'
+    | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
     | 'XMLPARSE' '(' root term ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
     | 'XMLPI' '(' 'NAME' id ( ',' term )? ')'
-    | 'XMLROOT' '(' 'XML' term ',' 'VERSION' (term |  'NO' 'VALUE') (',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ))? ')'
+    | 'XMLROOT' '(' 'XML' term ',' 'VERSION' (term |  'NO' 'VALUE') ( ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) )? ')'
     | 'XMLSERIALIZE' '(' root term 'AS' simpletypename ')'
 
-    | 'JSON' '(' json_value_expr json_key_uniqueness_constraint? ')'
-    | 'JSON_ARRAY' '(' ( json_value_expr (',' json_value_expr)* json_object_constructor_null_clause? json_returning_clause? | '(' select ')' ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)? json_returning_clause? | json_returning_clause? ) ')'
-    | 'JSON_EXISTS' '(' json_value_expr ',' term json_passing_clause? jsonOnError? ')'
-    | 'JSON_OBJECT' '(' ( func_arg_list | json_name_and_value (',' json_name_and_value)* json_object_constructor_null_clause? json_key_uniqueness_constraint? json_returning_clause? | json_returning_clause? ) ')'
-    | 'JSON_QUERY' '(' json_value_expr ',' term json_passing_clause? json_returning_clause? json_wrapper_behavior? ( 'KEEP' | 'OMIT' ) 'QUOTES' ( 'ON' 'SCALAR' 'STRING' )?? jsonOnEmpty? jsonOnError? ')'
-    | 'JSON_SCALAR' '(' term ')'
-    | 'JSON_SERIALIZE' '(' json_value_expr json_returning_clause? ')'
-    | 'JSON_VALUE' '(' json_value_expr ',' term json_passing_clause? json_returning_clause? jsonOnEmpty? jsonOnError? ')'
+    | 'JSON' '(' jsonValue json_key_uniqueness_constraint? ')'
+    | 'JSON_ARRAY' '(' ( jsonValue (',' jsonValue)* json_object_constructor_null_clause? jsonReturning? | '(' select ')' jsonFormat? jsonReturning? | jsonReturning? ) ')'
+    | 'JSON_EXISTS' '(' jsonValue ',' term jsonPassing? jsonOnError? ')'
+    | 'JSON_OBJECT' '(' ( func_arg_list | jsonPair (',' jsonPair)* json_object_constructor_null_clause? json_key_uniqueness_constraint? jsonReturning? | jsonReturning? ) ')'
+    | 'JSON_QUERY' '(' jsonValue ',' term jsonPassing? jsonReturning? json_wrapper_behavior? ( 'KEEP' | 'OMIT' ) 'QUOTES' ( 'ON' 'SCALAR' 'STRING' )?? jsonOnEmpty? jsonOnError? ')'
+//    | 'JSON_SCALAR' '(' term ')'
+    | 'JSON_SERIALIZE' '(' jsonValue jsonReturning? ')'
+    | 'JSON_VALUE' '(' jsonValue ',' term jsonPassing? jsonReturning? jsonOnEmpty? jsonOnError? ')'
     | 'MERGE_ACTION' '(' ')'
     ;
 
-xml_attribute_el
-    : term ( 'AS' id )?
-    ;
+xmlAttrib
+  : term ( 'AS' id )? ;
 
 root
-    : 'DOCUMENT' | 'CONTENT' ;
+  : 'DOCUMENT' | 'CONTENT' ;
 
-xmlexists_argument
-    : 'PASSING' xml_passing_mech? atom xml_passing_mech?
-    ;
-
-xml_passing_mech
-    : 'BY' ( 'REF' | 'VALUE' )
+xmlPassings
+    : term 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ) )? term ( 'BY' ( 'REF' | 'VALUE' ) )?
     ;
 
 window
@@ -2117,8 +2081,6 @@ mathop
   | '>='
   | '<>'
   ;
-
-//mathish : qop* EOF ;
 
 qual_op
     : Operator
@@ -2169,17 +2131,11 @@ func_arg_list
     ;
 
 func_arg_expr
-    : term
-    | id ( ':=' | '=>' ) term
-    ;
-
-type_list
-    : typename ( ',' typename )*
+    :  ( id ( ':=' | '=>' ) )? term
     ;
 
 array
-    : '[' ( terms | array ( ',' array )* )? ']'
-    ;
+    : '[' ( terms | array ( ',' array )* )? ']' ;
 
 // TODO cull this
 extract_arg
@@ -2201,8 +2157,7 @@ unicode_normal_form
     ;
 
 overlay_list
-    : term 'PLACING' term 'FROM' term ( 'FOR' term )?
-    ;
+    : term 'PLACING' term 'FROM' term ( 'FOR' term )? ;
 
 substr_list
     : term 'FROM' term 'FOR' term
@@ -2213,29 +2168,34 @@ substr_list
     ;
 
 when
-    : 'WHEN' term 'THEN' term
-    ;
-
-case_default
-    : 'ELSE' term
-    ;
+    : 'WHEN' term 'THEN' term ;
 
 indirection_el
     : '.' ( id | '*' )
     | '[' ( term | term? ':' term? ) ']'
     ;
 
-json_passing_clause
-: 'PASSING' json_argument (',' json_argument)* ;
+jsonPassing
+  : 'PASSING' jsonValueAlias ( ',' jsonValueAlias )* ;
 
-json_argument
-  : json_value_expr 'AS' id ;
+jsonValueAlias
+  : jsonValue 'AS' id ;
+
+jsonReturning
+  : 'RETURNING' type jsonFormat? ;
+
 
 json_wrapper_behavior
   : ( 'WITHOUT' | 'WITH' ( 'UNCONDITIONAL' | 'CONDITIONAL' )? ) 'ARRAY'? 'WRAPPER'
   ;
 
-json_behavior
+jsonOnEmpty 
+  : jsonBehavior 'ON' 'EMPTY' ;
+
+jsonOnError
+  : jsonBehavior 'ON' 'ERROR' ;
+
+jsonBehavior
   : 'DEFAULT' term
   | ( 'ERROR'
     | 'NULL'
@@ -2246,37 +2206,19 @@ json_behavior
     )
   ;
 
-jsonOnEmpty : json_behavior 'ON' 'EMPTY' ;
+jsonValue
+  : term jsonFormat? ;
 
-jsonOnError:
-			json_behavior 'ON' 'ERROR'
-		;
-
-json_value_expr:
-			term ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)?
-		;
-
-json_returning_clause:
-			'RETURNING' typename ('FORMAT_LA' 'JSON' ( 'ENCODING' id )?)?
-		;
-
-//json_predicate_type_constraint:
-//			'JSON'
-//			| 'JSON' 'VALUE'
-//			| 'JSON' 'ARRAY'
-//			| 'JSON' 'OBJECT'
-//			| 'JSON' 'SCALAR'
-//		;
+jsonFormat : 'FORMAT_LA' 'JSON' ( 'ENCODING' id )? ;
 
 json_key_uniqueness_constraint:
 			('WITH' | 'WITHOUT') 'UNIQUE' 'KEYS'?
 		;
 
-json_name_and_value:
-			atom 'VALUE' json_value_expr
-			|
-			term ':' json_value_expr
-		;
+jsonPair
+  : atom 'VALUE' jsonValue
+  | term ':' jsonValue
+  ;
 
 json_object_constructor_null_clause
   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
@@ -2347,15 +2289,11 @@ integer
     ;
 
 string
-//  : string_ ( 'UESCAPE' string_ )? ;
-
-//string_
   : StringConstant
   | UnicodeEscapeStringConstant ( 'UESCAPE' StringConstant )?
   ;
 
 signedDecimal
-//  : ('+' | '-')? integer ;
   : ('+' | '-')? DECIMAL ;
 
 signedFloat
@@ -3377,16 +3315,11 @@ bare_label_keyword
     ;
 
 identifier
-//    : Identifier ( 'UESCAPE' string_ )?
     : Identifier ( 'UESCAPE' StringConstant )?
     | QuotedIdentifier
     | UnicodeQuotedIdentifier
     | PLSQLVARIABLENAME
     ;
-
-//noise : ANALYZE ;
-noise2 : '(' 'SELECT' . ')' EOF;
-
 
 ANALYZE
     : 'ANALYZE' | 'ANALYSE' ;
