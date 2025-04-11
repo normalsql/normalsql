@@ -68,7 +68,7 @@ statement
 
     pragma : 'PRAGMA' qname ( '=' pragmaValue | '(' pragmaValue ')' )? ;
 
-        pragmaValue : literal | signedNumber | name ;
+        pragmaValue : literal | number | name ;
 
 explain
   : 'EXPLAIN' 'ANALYZE'? 'VERBOSE'? ( '(' option ( ',' option )* ')' )?
@@ -740,7 +740,7 @@ length
 precision
     : '(' signedInteger ( ',' signedInteger )? ')' ;
 
-signedNumber : signedInteger | signedFloat ;
+number : signedInteger | signedFloat ;
 signedInteger : ( '+' | '-' )? DECIMAL ;
 signedFloat : ( '+' | '-' )? FLOAT ;
 
