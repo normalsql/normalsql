@@ -227,15 +227,9 @@ set_rest
     | set_rest_more
     ;
 
- transactionMode
-     : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
-     | 'READ' ( 'ONLY' |  'WRITE' )
-     | 'NOT'? 'DEFERRABLE'
-     ;
-
 
 set_rest_more
-  : qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
+  : qname ( 'TO' | '=' ) ( 'DEFAULT' | value ( ',' value )* )
   | id 'FROM' 'CURRENT'
   | 'TIME' 'ZONE' ( string | identifier | interval | number | 'DEFAULT' | 'LOCAL' )
   | 'CATALOG' string
@@ -247,24 +241,18 @@ set_rest_more
   | 'TRANSACTION' 'SNAPSHOT' string
   ;
 
+transactionMode
+     : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
+     | 'READ' ( 'ONLY' |  'WRITE' )
+     | 'NOT'? 'DEFERRABLE'
+     ;
+
 interval
   : 'INTERVAL' ( string? timeUnit | '(' integer ')' string? )?
   ;
 
-var_list
-    : var_value ( ',' var_value )* ;
-
-var_value
-    : boolean_or_string_
-    | number
-    ;
-
-boolean_or_string_
-    : 'TRUE'
-    | 'FALSE'
-    | 'ON'
-    | name
-    ;
+value
+    : id | number | string ;
 
 name
   : id | string ;
@@ -292,13 +280,18 @@ discardstmt
     : 'DISCARD' ( 'ALL' | 'TEMP' | 'TEMPORARY' | 'PLANS' | 'SEQUENCES' )
     ;
 
+altereventtrigstmt
+    : 'ALTER' 'EVENT' 'TRIGGER' id
+      ( 'ENABLE' ( 'REPLICA' |  'ALWAYS' )? | 'DISABLE' )
+    ;
+
 altertablestmt
     : 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec | 'DETACH' 'PARTITION' qname ) )
     | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
-    | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' ids )? 'SET' 'TABLESPACE' id 'NOWAIT'?
     | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
     | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
     | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname alter_table_cmds
+    | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' ids )? 'SET' 'TABLESPACE' id 'NOWAIT'?
     | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants alter_table_cmds
     ;
 
@@ -335,10 +328,7 @@ alter_table_cmd
     | 'SET' 'UNLOGGED'
     | ( 'DISABLE' | 'ENABLE' ) ( 'ALWAYS' | 'REPLICA' )? 'TRIGGER' id
     | ( 'DISABLE' | 'ENABLE' ) 'TRIGGER' ( 'ALL' | 'USER' )
-
-    | 'ENABLE' 'RULE' id
-    | 'ENABLE' 'ALWAYS' 'RULE' id
-    | 'ENABLE' 'REPLICA' 'RULE' id
+    | 'ENABLE' ( 'ALWAYS' | 'REPLICA' )? 'RULE' id
     | 'DISABLE' 'RULE' id
     | 'INHERIT' qname
     | 'NO' 'INHERIT' qname
@@ -426,7 +416,7 @@ copy_opt_item
 
 copy_generic_opt_elem
     : id
-      ( boolean_or_string_
+      ( name
       | number
       | '*'
       | '(' copy_generic_opt_arg_list ')'
@@ -434,7 +424,7 @@ copy_generic_opt_elem
     ;
 
 copy_generic_opt_arg_list
-    : boolean_or_string_ ( ',' boolean_or_string_ )*
+    : name ( ',' name )*
     ;
 
 createTable
@@ -797,11 +787,6 @@ createeventtrigstmt
 
 event_trigger_when_item
     : id 'IN' '(' string ( ',' string )* ')'
-    ;
-
-altereventtrigstmt
-    : 'ALTER' 'EVENT' 'TRIGGER' id
-      ( 'ENABLE' ( 'REPLICA' |  'ALWAYS' )? | 'DISABLE' )
     ;
 
 createassertionstmt
@@ -1438,7 +1423,7 @@ createdb_opt_item
     | 'LOCATION'
     | 'OWNER'
     | 'TABLESPACE'
-    | 'TEMPLATE') '='? ( signedDecimal | boolean_or_string_ | 'DEFAULT' )
+    | 'TEMPLATE') '='? ( signedDecimal | name | 'DEFAULT' )
     ;
 
 alterdatabasestmt
@@ -1458,7 +1443,7 @@ altercollationstmt
     ;
 
 altersystemstmt
-    : 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) qname ( 'TO' | '=' ) ( var_list | 'DEFAULT' )
+    : 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) qname ( 'TO' | '=' ) ( 'DEFAULT' | value ( ',' value )* )
     ;
 
 createdomainstmt
@@ -1531,7 +1516,7 @@ optionElems
     ;
 
 option_elem
-    : id (boolean_or_string_ | number)?
+    : id (name | number)?
     ;
 
 preparestmt
@@ -1559,7 +1544,8 @@ insert
     ;
 
 returning
-    : 'RETURNING' target_list
+//    : 'RETURNING' target_list
+    : 'RETURNING' ( item ( ',' item )* )?
     ;
 
 // https://www.postgresql.org/docs/current/sql-merge.html
@@ -1631,7 +1617,7 @@ select
 
 
 selectCombo
-    : simpleCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? simpleCore )*
+    : selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )*
     ;
 
 // TODO will this workaround left-recurse?
@@ -1640,9 +1626,11 @@ selectCombo
 //    | simpleCore
 //    ;
 
-simpleCore
+selectCore
   : 'SELECT'
-     quantifier? target_list?
+     quantifier?
+//      target_list?
+     ( item ( ',' item )* ','? )?
      ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
      from? where? groupBy? having? window?
 
@@ -1748,7 +1736,7 @@ tableFunc
   : noob ( ( 'AS' | 'AS'? id ) '(' id type ( ',' id type )* ')' )? ;
 
 aliasColumns
-  : 'AS'? id ( columns )? ;
+  : 'AS'? id columns? ;
 
 descendants
   : qname '*'?
@@ -1756,7 +1744,7 @@ descendants
   ;
 
 alias
-  : 'AS'? id ;
+  : 'AS'? name ;
 
 where
     : 'WHERE' term ;
@@ -1796,12 +1784,12 @@ type
 
 simpletypename
     : id ( '.' id )* precision?
-    | id ( '.' id )* '%TYPE'?
+    | id ( '.' id )* ( '%TYPE' | '%ROWTYPE' )?
     | numeric
     | bit
     | character
     | timestamp
-    | interval
+    | interval // TODO should this be just 'INTERVAL'?
     | 'JSON'
     ;
 
@@ -1944,30 +1932,38 @@ subterm
     | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
     | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
     | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
-    | atom
+    | 'EXISTS' '(' select ')'
+          | 'ARRAY' ( '(' select ')' | array )
+          | 'GROUPING' '(' terms ')'
+                | 'UNIQUE' '(' select ')'
+                | '(' term ')' indirection_el*
+                      | 'CASE' term? when+ ( 'ELSE' term )? 'END'
+                      | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
+                      | func_expr_common_subexpr
+                      | '(' select ')' indirection_el*
+                      | row
+                      | row 'OVERLAPS' row
+                      | atom
     ;
 
 nested
   : '(' ( select | term ) ')' ;
 
 atom
-    : 'EXISTS' '(' select ')'
-    | 'ARRAY' ( '(' select ')' | array )
-    | PARAM indirection_el*
-    | 'GROUPING' '(' terms ')'
-    | 'UNIQUE' '(' select ')'
+    : PARAM indirection_el*
     | qname
-    | literal
-    | '%TYPE'
-    | '%ROWTYPE'
-    | '(' term ')' indirection_el*
-    | 'CASE' term? when+ ( 'ELSE' term )? 'END'
-    | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
-    | func_expr_common_subexpr
-    | '(' select ')' indirection_el*
-    | row
-    | row 'OVERLAPS' row
-    | 'DEFAULT'
+    | integer
+    | FLOAT
+    | string
+    | BinaryStringConstant
+    | HexadecimalStringConstant
+    | qname ( string | '(' func_arg_list orderBy? ')' string )
+    | timestamp string
+    | interval
+//    | 'TRUE'
+//    | 'FALSE'
+//    | 'NULL'
+//    | 'DEFAULT'
     ;
 
 
@@ -2242,21 +2238,23 @@ json_object_constructor_null_clause
 //			'ORDER' 'BY' sortby ( ',' sortby  )*
 //		;
 
-target_list
-    : target_el ( ',' target_el )*
-    ;
 
-target_el
-    : term ( 'AS' id | identifier | keyword )?
-    | '*'
-    ;
+    item
+      : term alias?
+      | (( qname2 '.' )? '*' )
+      ;
 
 qnames
     : qname ( ',' qname )*
     ;
 
 qname
+//    : name ( '.' name )*
     : name indirection_el*
+    ;
+
+qname2
+    : name ( '.' name )*
     ;
 
 columns
@@ -2265,20 +2263,6 @@ columns
 
 ids
     : id ( ',' id )*
-    ;
-
-literal
-    : integer
-    | FLOAT
-    | string
-    | BinaryStringConstant
-    | HexadecimalStringConstant
-    | qname ( string | '(' func_arg_list orderBy? ')' string )
-    | timestamp string
-    | interval
-    | 'TRUE'
-    | 'FALSE'
-    | 'NULL'
     ;
 
 integer
