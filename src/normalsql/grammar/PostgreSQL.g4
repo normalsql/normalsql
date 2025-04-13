@@ -191,7 +191,7 @@ alteroptroleelem
     | 'CONNECTION' 'LIMIT' signedDecimal
     | 'VALID' 'UNTIL' string
     | 'USER' ids
-    | identifier
+    | id
     ;
 
 alterrolesetstmt
@@ -231,7 +231,7 @@ set_rest
 set_rest_more
   : qname ( 'TO' | '=' ) ( 'DEFAULT' | value ( ',' value )* )
   | id 'FROM' 'CURRENT'
-  | 'TIME' 'ZONE' ( string | identifier | interval | number | 'DEFAULT' | 'LOCAL' )
+  | 'TIME' 'ZONE' ( string | id | interval | number | 'DEFAULT' | 'LOCAL' )
   | 'CATALOG' string
   | 'SCHEMA' string
   | 'NAMES' (string | 'DEFAULT')?
@@ -247,6 +247,7 @@ transactionMode
      | 'NOT'? 'DEFERRABLE'
      ;
 
+// Can be either a literal or a typecast (?)
 interval
   : 'INTERVAL' ( string? timeUnit | '(' integer ')' string? )?
   ;
@@ -286,7 +287,7 @@ altereventtrigstmt
     ;
 
 altertablestmt
-    : 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname partitionboundspec | 'DETACH' 'PARTITION' qname ) )
+    : 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname forValues | 'DETACH' 'PARTITION' qname ) )
     | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
     | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
     | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
@@ -301,8 +302,8 @@ alter_table_cmds
 
 alter_table_cmd
     : 'ADD' tableconstraint
-    | 'ADD' ifNotExists? columnDef
-    | 'ADD' 'COLUMN' ifNotExists? columnDef
+//    | 'ADD' ifNotExists? columnDef
+    | 'ADD' 'COLUMN'? ifNotExists? columnDef
     | 'ALTER' 'COLUMN'? id ('SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
     | 'ALTER' 'COLUMN'? id 'DROP' 'NOT' 'NULL'
     | 'ALTER' 'COLUMN'? id 'SET' 'NOT' 'NULL'
@@ -354,17 +355,6 @@ collate
 alter_identity_column_option
     : 'RESTART' ( 'WITH'? number )?
     | 'SET' ( seqoptelem | 'GENERATED' generated_when )
-    ;
-
-partitionboundspec
-    : 'FOR' 'VALUES' 'WITH' '(' hash_partbound_elem ( ',' hash_partbound_elem )* ')'
-    | 'FOR' 'VALUES' 'IN' '(' terms ')'
-    | 'FOR' 'VALUES' 'FROM' '(' terms ')' 'TO' '(' terms ')'
-    | 'DEFAULT'
-    ;
-
-hash_partbound_elem
-    : id integer
     ;
 
 altercompositetypestmt
@@ -419,19 +409,15 @@ copy_generic_opt_elem
       ( name
       | number
       | '*'
-      | '(' copy_generic_opt_arg_list ')'
+      | '(' name ( ',' name )* ')'
       )?
-    ;
-
-copy_generic_opt_arg_list
-    : name ( ',' name )*
     ;
 
 createTable
   : 'CREATE' scope? 'TABLE' ifNotExists? qname
-    ( '(' ( tableelement ( ',' tableelement )* )? ')' inherit?
-    | 'PARTITION' typedTableElements partitionboundspec
-    | typedTableElements
+    ( '(' ( column ( ',' column )* )? ')' inherit?
+    | 'PARTITION' 'OF' parentTable forValues
+    | 'OF' parentTable
     )
     ( 'PARTITION' 'BY' id '(' part_elem ( ',' part_elem )* ')' )?
     fixme
@@ -443,6 +429,7 @@ createTableAs
       withData?
     ;
 
+   // TODO better name
    fixme
      : usingID?
        ( withDef | 'WITHOUT' 'OIDS' )?
@@ -452,11 +439,18 @@ createTableAs
 
 createForeignTable
     : 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname
-      ( '(' ( tableelement ( ',' tableelement )* )? ')' inherit?
-      | 'PARTITION' typedTableElements partitionboundspec
+      ( '(' ( column ( ',' column )* )? ')' inherit?
+      | 'PARTITION' 'OF' parentTable forValues
       )
       'SERVER' id genericOptions?
     ;
+
+forValues
+  : 'FOR' 'VALUES' 'WITH' '(' 'modulus' number ','  'remainder' number ')'
+  | 'FOR' 'VALUES' 'IN' '(' terms ')'
+  | 'FOR' 'VALUES' 'FROM' '(' terms ')' 'TO' '(' terms ')'
+  | 'DEFAULT'
+  ;
 
 executePrepared
     : 'EXECUTE' name ( '(' terms ')' )?
@@ -470,17 +464,11 @@ scope
 usingID
   : 'USING' id ;
 
-typedTableElements
-    : 'OF' qname ( '(' typedtableelement ( ',' typedtableelement )* ')' )?
+parentTable
+    : qname ( '(' column ( ',' column )* ')' )?
     ;
 
-    typedtableelement
-        : id ( 'WITH' 'OPTIONS' )? colconstraint*
-        | tableconstraint
-        ;
-
-
-tableelement
+column
   : tableconstraint
   | 'LIKE' qname
     ( ( 'INCLUDING' | 'EXCLUDING' )
@@ -493,14 +481,13 @@ tableelement
       | 'STATISTICS'
       | 'STORAGE'
       | 'ALL'
-    )
+      )
     )*
   | columnDef
   ;
 
-
 columnDef
-    : id type genericOptions? colconstraint*
+    : id type? genericOptions? colconstraint*
     ;
 
 colconstraint
@@ -586,7 +573,6 @@ createstatsstmt
 alterstatsstmt
     : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal
     ;
-
 
 withData
     : 'WITH' 'NO'? 'DATA' ;
@@ -693,7 +679,9 @@ handler
     ;
 
 genericOptions
-    : 'OPTIONS' '(' optionAction ( ',' optionAction )* ')' ;
+    : 'OPTIONS' '(' optionAction ( ',' optionAction )* ')'
+    | 'WITH' 'OPTIONS'?
+    ;
 
 optionAction
     : ( 'SET' | 'ADD' | 'DROP' )? id string? ;
@@ -723,7 +711,7 @@ alterusermappingstmt
     ;
 
 createpolicystmt
-    : 'CREATE' 'POLICY' id 'ON' qname ('AS' identifier)? rowsecuritydefaultforcmd? ('TO' ids)? rowsecurityoptionalexpr?
+    : 'CREATE' 'POLICY' id 'ON' qname ('AS' id)? rowsecuritydefaultforcmd? ('TO' ids)? rowsecurityoptionalexpr?
         rowsecurityoptionalwithcheck?
     ;
 
@@ -937,7 +925,7 @@ commentstmt
     | 'OPERATOR' operator_with_argtypes
     | 'CONSTRAINT' id 'ON' 'DOMAIN'? qname?
     | object_type_name_on_any_name id 'ON' qname
-   | 'TRANSFORM' 'FOR' type 'LANGUAGE' id
+    | 'TRANSFORM' 'FOR' type 'LANGUAGE' id
     | 'OPERATOR' ('CLASS' | 'FAMILY' ) qname usingID
     | 'LARGE' 'OBJECT' number
     | 'CAST' '(' type 'AS' type ')'
@@ -1277,7 +1265,7 @@ alterobjectschemastmt
     | 'ALTER' 'PROCEDURE' funcSignature 'SET' 'SCHEMA' id
     | 'ALTER' 'ROUTINE' funcSignature 'SET' 'SCHEMA' id
 
-     | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR'  qname usingID 'SET' 'SCHEMA' id
     | 'ALTER' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
@@ -1417,7 +1405,7 @@ createdbstmt
     ;
 
 createdb_opt_item
-    : (identifier
+    : (id
     | 'CONNECTION' 'LIMIT'
     | 'ENCODING'
     | 'LOCATION'
@@ -1544,9 +1532,7 @@ insert
     ;
 
 returning
-//    : 'RETURNING' target_list
-    : 'RETURNING' ( item ( ',' item )* )?
-    ;
+  : 'RETURNING' ( item ( ',' item )* )? ;
 
 // https://www.postgresql.org/docs/current/sql-merge.html
 mergestmt
@@ -1629,7 +1615,6 @@ selectCombo
 selectCore
   : 'SELECT'
      quantifier?
-//      target_list?
      ( item ( ',' item )* ','? )?
      ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
      from? where? groupBy? having? window?
@@ -1639,6 +1624,8 @@ selectCore
   | '(' select ')'
   ;
 
+    item
+      : term alias? | '*' ;
 
 with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
@@ -1665,7 +1652,6 @@ sortby
     : term ( 'USING' qual_all_op | sortDir? ) nullsOrder?
     ;
 
-
 rowRows
     : 'ROW' | 'ROWS' ;
 
@@ -1684,13 +1670,13 @@ groupByItem
     ;
 
 having
-    : 'HAVING' term ;
+  : 'HAVING' term ;
 
 values
-    : 'VALUES' '(' terms ')' ( ',' '(' terms ')' )* ;
+  : 'VALUES' '(' terms ')' ( ',' '(' terms ')' )* ;
 
 from
-    : 'FROM' tables ( ',' tables )* ;
+  : 'FROM' tables ( ',' tables )* ;
 
 tables
   : tables joinType? 'JOIN' tables ( 'USING' columns | 'ON' term )
@@ -1711,23 +1697,24 @@ joinType
   ;
 
 func_application
-    : qname '('
-      ( func_arg_list ( ',' 'VARIADIC' func_arg_expr )? orderBy?
-      | 'VARIADIC' func_arg_expr orderBy?
-      | allDistinct func_arg_list orderBy?
-      | '*'
-      )?
-      ')'
-    ;
+  : qname '('
+    ( func_arg_list ( ',' 'VARIADIC' func_arg_expr )? orderBy?
+    | 'VARIADIC' func_arg_expr orderBy?
+    | allDistinct func_arg_list orderBy?
+    | '*'
+    )?
+    ')'
+  ;
 
+// TODO better name
 noob
   : qname '(' ( ( allDistinct? bozo ( ',' bozo )*  | '*' ) orderBy? )? ')'
   | func_expr_common_subexpr
   ;
 
+// TODO better name
 bozo
   : ( id ( ':='  ) )? term
-//  : ( id ( ':=' | '=>' ) )? term
   | 'VARIADIC' 'ARRAY'  array
   ;
 
@@ -1747,10 +1734,10 @@ alias
   : 'AS'? name ;
 
 where
-    : 'WHERE' term ;
+  : 'WHERE' term ;
 
 whereCurrent
-    : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
+  : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
 
 tablefuncelement
     : id type collate?
@@ -1764,71 +1751,64 @@ xmltable
   ;
 
 xmlNamespace
-    : term 'AS' id
-    | 'DEFAULT' term
-    ;
+  : term 'AS' id
+  | 'DEFAULT' term
+  ;
 
 xmlColumn
-    : id
-      ( type ( 'DEFAULT' term | identifier term | 'NOT'? 'NULL' )*
-      | 'FOR' 'ORDINALITY'
-      )
-    ;
+  : id
+    ( type ( 'DEFAULT' term | id term | 'NOT'? 'NULL' )*
+    | 'FOR' 'ORDINALITY'
+    )
+  ;
 
 type
-    : 'SETOF'? simpletypename
-      (  ( '[' DECIMAL? ']' )*
-      | 'ARRAY' ( '[' DECIMAL ']' )?
-      )
-    ;
+  : 'SETOF'? simpletypename
+    (  ( '[' DECIMAL? ']' )*
+    | 'ARRAY' ( '[' DECIMAL ']' )?
+    )
+  ;
 
 simpletypename
-    : id ( '.' id )* precision?
-    | id ( '.' id )* ( '%TYPE' | '%ROWTYPE' )?
-    | numeric
-    | bit
-    | character
-    | timestamp
-    | interval // TODO should this be just 'INTERVAL'?
-    | 'JSON'
-    ;
+  : id ( '.' id )* precision?
+  | id ( '.' id )* ( '%TYPE' | '%ROWTYPE' )?
+  | numeric
+  | 'BIT' 'VARYING'? scale?
+  | character
+  | ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )?
+  | interval
+  | 'JSON'
+  ;
 
 precision
-    : '(' ( DECIMAL | simpletypename ) ( ',' ( signedDecimal | simpletypename ) )? ')'
-    ;
+  : '(' ( DECIMAL | simpletypename ) ( ',' ( signedDecimal | simpletypename ) )? ')'
+  ;
 
 numeric
-    : 'INT'
-    | 'INTEGER'
-    | 'SMALLINT'
-    | 'BIGINT'
-    | 'REAL'
-    | 'FLOAT' scale?
-    | 'DOUBLE' 'PRECISION'
-    | 'DECIMAL' precision?
-    | 'DEC' precision?
-    | 'NUMERIC' precision?
-    | 'BOOLEAN'
-    ;
+  : 'INT'
+  | 'INTEGER'
+  | 'SMALLINT'
+  | 'BIGINT'
+  | 'REAL'
+  | 'FLOAT' scale?
+  | 'DOUBLE' 'PRECISION'
+  | 'DECIMAL' precision?
+  | 'DEC' precision?
+  | 'NUMERIC' precision?
+  | 'BOOLEAN'
+  ;
 
 scale
   : '(' integer ')' ;
 
-bit
-  : 'BIT' 'VARYING'? scale? ;
-
 character
-    : ( ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
-      | 'VARCHAR'
-      | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
-      )
+  : ( ( 'CHARACTER' | 'CHAR' | 'NCHAR' ) 'VARYING'?
+    | 'VARCHAR'
+    | 'NATIONAL' ( 'CHARACTER' | 'CHAR' ) 'VARYING'?
+    )
 
-      scale?
-    ;
-
-timestamp
-    : ( 'TIMESTAMP' | 'TIME' ) ( '(' integer ')' )? (( 'WITH' | 'WITHOUT' ) 'TIME' 'ZONE' )?
-    ;
+    scale?
+  ;
 
 timeUnit
     : 'YEAR'
@@ -1901,6 +1881,9 @@ original version of a_expr, for info
 ;
 */
 
+terms
+  : term ( ',' term )* ;
+
 term
   : term 'OR' term
   | term 'AND' term
@@ -1908,64 +1891,54 @@ term
   ;
 
 subterm
-    : subterm ( '::' type )+
-    | subterm collate
-    | subterm 'AT' 'TIME' 'ZONE' term
-    // unary left
-    | ('NOT' | '-' | '+' | qual_op ) subterm
-    // subterm or unary right
-    | subterm qual_op subterm?
-    | <assoc=right> subterm '^' subterm
-    | subterm ( '<<' | '>>' | '&' | '|' ) subterm
-    | subterm ( '*' | '/' | '%' ) subterm
-    | subterm ( '+' | '-' ) subterm
+  : subterm ( '::' type )+
+  | subterm collate
+  | subterm 'AT' 'TIME' 'ZONE' term
+  // unary left
+  | ('NOT' | '-' | '+' | qual_op ) subterm
+  // subterm or unary right
+  | subterm qual_op subterm?
+  | <assoc=right> subterm '^' subterm
+  | subterm ( '<<' | '>>' | '&' | '|' ) subterm
+  | subterm ( '*' | '/' | '%' ) subterm
+  | subterm ( '+' | '-' ) subterm
 
-    // workaround for ANTLR's left recursion pattern
-    | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm 'ESCAPE' subterm
-    | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm
+  // workaround for ANTLR's left recursion pattern recogniizer not seeing this
+  | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm 'ESCAPE' subterm
+  | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm
 
-    |  ( 'ANY' | 'SOME' | 'ALL' ) nested
-    | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
-    | subterm ( 'ISNULL' | 'NOTNULL' )
-    | subterm 'IS' 'NOT'? ('DISTINCT' 'FROM')? subterm
-    | subterm 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
-    | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
-    | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
-    | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
-    | 'EXISTS' '(' select ')'
-          | 'ARRAY' ( '(' select ')' | array )
-          | 'GROUPING' '(' terms ')'
-                | 'UNIQUE' '(' select ')'
-                | '(' term ')' indirection_el*
-                      | 'CASE' term? when+ ( 'ELSE' term )? 'END'
-                      | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
-                      | func_expr_common_subexpr
-                      | '(' select ')' indirection_el*
-                      | row
-                      | row 'OVERLAPS' row
-                      | atom
-    ;
-
-nested
-  : '(' ( select | term ) ')' ;
+  | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
+  | subterm ( 'ISNULL' | 'NOTNULL' )
+  | subterm 'IS' 'NOT'? ('DISTINCT' 'FROM')? subterm
+  | subterm 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
+  | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
+  | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
+  | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
+  | 'CASE' term? when+ ( 'ELSE' term )? 'END'
+  | func_application ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
+  | func_expr_common_subexpr
+  | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index*
+  // TODO do these "nestings" also need index suffix?
+  | 'EXISTS' '(' select ')'
+  | 'ARRAY' ( '(' select ')' | array )
+  | 'GROUPING' '(' terms ')'
+  | 'UNIQUE' '(' select ')'
+  | row
+  | row 'OVERLAPS' row
+  | atom
+  ;
 
 atom
-    : PARAM indirection_el*
-    | qname
-    | integer
-    | FLOAT
-    | string
-    | BinaryStringConstant
-    | HexadecimalStringConstant
-    | qname ( string | '(' func_arg_list orderBy? ')' string )
-    | timestamp string
-    | interval
-//    | 'TRUE'
-//    | 'FALSE'
-//    | 'NULL'
-//    | 'DEFAULT'
-    ;
-
+  : PARAM index*
+  | integer
+  | FLOAT
+  | string
+  | BinaryStringConstant
+  | HexadecimalStringConstant
+  | interval
+  | type string
+  | qname
+  ;
 
 func_expr_windowless
     : func_application
@@ -2118,10 +2091,6 @@ qual_all_op
     | 'OPERATOR' '(' operator ')'
     ;
 
-terms
-    : term ( ',' term )*
-    ;
-
 func_arg_list
     : func_arg_expr ( ',' func_arg_expr )*
     ;
@@ -2135,7 +2104,7 @@ array
 
 // TODO cull this
 extract_arg
-    : identifier
+    : id
     | 'YEAR'
     | 'MONTH'
     | 'DAY'
@@ -2164,12 +2133,12 @@ substr_list
     ;
 
 when
-    : 'WHEN' term 'THEN' term ;
+  : 'WHEN' term 'THEN' term ;
 
-indirection_el
-    : '.' ( id | '*' )
-    | '[' ( term | term? ':' term? ) ']'
-    ;
+index // TODO better name. deref? chain? back to indirection?
+  : '.' ( id | '*' )
+  | '[' ( term | term? ':' term? ) ']'
+  ;
 
 jsonPassing
   : 'PASSING' jsonValueAlias ( ',' jsonValueAlias )* ;
@@ -2219,58 +2188,24 @@ jsonPair
 json_object_constructor_null_clause
   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
-//json_aggregate_func:
-//			'JSON_OBJECTAGG' '('
-//				json_name_and_value
-//				json_object_constructor_null_clause?
-//				json_key_uniqueness_constraint?
-//				json_returning_clause
-//			')'
-//			| 'JSON_ARRAYAGG' '('
-//				json_value_expr
-//				json_array_aggregate_order_by_clause?
-//				json_object_constructor_null_clause?
-//				json_returning_clause
-//			')'
-//		;
-
-//json_array_aggregate_order_by_clause:
-//			'ORDER' 'BY' sortby ( ',' sortby  )*
-//		;
-
-
-    item
-      : term alias?
-      | (( qname2 '.' )? '*' )
-      ;
-
 qnames
-    : qname ( ',' qname )*
-    ;
+  : qname ( ',' qname )* ;
 
 qname
-//    : name ( '.' name )*
-    : name indirection_el*
-    ;
-
-qname2
-    : name ( '.' name )*
-    ;
+  : name index* ;
 
 columns
-    : '(' id ( ',' id )* ')'
-    ;
+  : '(' id ( ',' id )* ')' ;
 
 ids
-    : id ( ',' id )*
-    ;
+  : id ( ',' id )* ;
 
 integer
-    : DECIMAL
-    | BINARY
-    | OCTAL
-    | HEXIDECIMAL
-    ;
+  : DECIMAL
+  | BINARY
+  | OCTAL
+  | HEXIDECIMAL
+  ;
 
 string
   : StringConstant
@@ -2284,7 +2219,10 @@ signedFloat
   : ('+' | '-')? FLOAT ;
 
 id
-  : identifier
+  : Identifier ( 'UESCAPE' StringConstant )?
+  | QuotedIdentifier
+  | UnicodeQuotedIdentifier
+  | PLSQLVARIABLENAME
   | keyword
   ;
 
@@ -2783,19 +2721,11 @@ keyword
   | 'ZONE'
   ;
 
-identifier
-    : Identifier ( 'UESCAPE' StringConstant )?
-    | QuotedIdentifier
-    | UnicodeQuotedIdentifier
-    | PLSQLVARIABLENAME
-    ;
-
 ANALYZE
-    : 'ANALYZE' | 'ANALYSE' ;
+  : 'ANALYZE' | 'ANALYSE' ;
 
-PARAM: '$' ([0-9])+;
-//PARAM: [:$] ([0-9])+;
-
+PARAM
+  : '$' [0-9]+ ;
 
 // Postgres Lexical Structure Operators 4.1.3
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
@@ -2821,13 +2751,13 @@ Operator
   ;
 
 Identifier
-  : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
+  : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
 
 QuotedIdentifier
-  : '"' ('""' | ~ [\u0000"])* '"';
+  : '"' ('""' | ~ [\u0000"])* '"' ;
 
 UnicodeQuotedIdentifier
-  : 'U' '&' QuotedIdentifier;
+  : 'U' '&' QuotedIdentifier ;
 
 StringConstant
   : '\'' ('\'\'' | ~ '\'')* '\''
@@ -2847,9 +2777,11 @@ fragment ESCAPE_SEQUENCE
   : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
   ;
 
-BinaryStringConstant: 'B' '\'' [01]* '\'';
+BinaryStringConstant
+  : 'B' '\'' [01]* '\'' ;
 
-HexadecimalStringConstant: 'X' '\'' [0-9A-F]* '\'';
+HexadecimalStringConstant
+  : 'X' '\'' [0-9A-F]* '\'' ;
 
 DECIMAL
   : DIGITS ;
@@ -2857,9 +2789,11 @@ DECIMAL
 BINARY
   : '0b' [01]+ ;
 
-OCTAL: '0o' [0-7]+ ;
+OCTAL
+  : '0o' [0-7]+ ;
 
-HEXIDECIMAL: '0x' [A-F0-9]+;
+HEXIDECIMAL
+  : '0x' [A-F0-9]+ ;
 
 FLOAT
   :
@@ -2871,10 +2805,8 @@ FLOAT
     | DIGITS 'E' [+-]? DIGITS
 ;
 
-PLSQLVARIABLENAME: ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*;
-
-//PLSQLIDENTIFIER: ':"' ('\\' . | '""' | ~ ('"' | '\\'))* '"';
-
+PLSQLVARIABLENAME
+  : ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
 
 LineComment
   : '--' ~ [\r\n]* -> channel (HIDDEN) ;
@@ -2889,15 +2821,16 @@ META
   : '\\' ~[;]? ~[\r\n\\]* -> type( SEMI ) ;
 
 Whitespace
-  : [ \t]+ -> channel (HIDDEN) ;
+  : [ \t]+ -> channel( HIDDEN ) ;
 
 Newline
-  : ('\r' '\n'? | '\n') -> channel (HIDDEN) ;
+  : ('\r' '\n'? | '\n') -> channel( HIDDEN ) ;
 
 UNKNOWN
   : . ;
 
-fragment DIGITS: [0-9]+;
+fragment DIGITS
+  : [0-9]+ ;
 
 fragment TAG
   : '$' ( [A-Z_\u007F-\uFFFF] [A-Z_0-9\u007F-\uFFFF]* )? '$' ;
