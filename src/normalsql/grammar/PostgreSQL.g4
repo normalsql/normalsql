@@ -573,7 +573,7 @@ alterseqstmt
   : 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+ ;
 
 seqoptelem
-    : 'AS' simpletypename
+    : 'AS' scalarType
     | 'CACHE' number
     | 'CYCLE'
     | 'INCREMENT' 'BY'? number
@@ -1717,13 +1717,13 @@ xmlColumn
   ;
 
 type
-  : 'SETOF'? simpletypename
+  : 'SETOF'? scalarType
     (  ( '[' DECIMAL? ']' )*
     | 'ARRAY' ( '[' DECIMAL ']' )?
     )
   ;
 
-simpletypename
+scalarType
   : id ( '.' id )* precision?
   | id ( '.' id )* ( '%TYPE' | '%ROWTYPE' )?
   | numeric
@@ -1738,7 +1738,7 @@ withers
   : 'WITH' | 'WITHOUT' ;
 
 precision
-  : '(' ( DECIMAL | simpletypename ) ( ',' ( signedDecimal | simpletypename ) )? ')'
+  : '(' ( DECIMAL | scalarType ) ( ',' ( signedDecimal | scalarType ) )? ')'
   ;
 
 numeric
@@ -1783,11 +1783,6 @@ timeUnit
 second
   : 'SECOND' scale? ;
 
-//precendence accroding to Table 4.2. Operator Precedence ( highest to lowest)
-
-
-
-//https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
 
 terms
   : term ( ',' term )* ;
@@ -1798,8 +1793,11 @@ term
   | subterm
   ;
 
+
 // TODO will these instances of OPERATOR need to be qualitified?
 subterm
+  // Precdence of operators per
+  // https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
   : subterm ( '::' type )+
   | atom
   // unary left
@@ -1850,6 +1848,7 @@ atom
 
 function
     : genericFunction
+    // Functions which differ from generic form
     | 'COLLATION' 'FOR' '(' term ')'
     | 'CAST' '(' term 'AS' type ')'
     | 'EXTRACT' '(' ( name 'FROM' term )? ')'
@@ -1865,7 +1864,7 @@ function
     | 'XMLPARSE' '(' root term ('PRESERVE' | 'STRIP') 'WHITESPACE'? ')'
     | 'XMLPI' '(' 'NAME' id ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' (term |  'NO' 'VALUE') ( ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) )? ')'
-    | 'XMLSERIALIZE' '(' root term 'AS' simpletypename ')'
+    | 'XMLSERIALIZE' '(' root term 'AS' scalarType ')'
     | 'JSON' '(' jsonValue jsonUniqueKeys? ')'
     | 'JSON_ARRAY' '(' ( jsonValue (',' jsonValue)* jsonOnNull? jsonReturning? | '(' select ')' jsonFormat? jsonReturning? | jsonReturning? ) ')'
     | 'JSON_EXISTS' '(' jsonValue ',' term jsonPassing? jsonOnError? ')'
@@ -1910,37 +1909,6 @@ row
   | '(' terms ',' term ')'
   ;
 
-/*
-    | '||'
-    | '->'
-    | '->>'
-    | '#-'
-    | '#>'
-    | '#>>'
-    | '!='
-    | '~'
-    | '@'
-    | '@@'
-    | '@>'
-    | '<@'
-    | '|/'
-    | '||/'
-    | '*<'
-    | '*<='
-    | '*<>'
-    | '*>='
-    | '*>'
-    | '*='
-    | '&'
-    | '&&'
-    | '&<'
-    | '&>'
-    | '?'
-    | '!!'
-    | '|'
-    | '-|-'
-    | '==='
-*/
 
 args
   : arg ( ',' arg )* ;
@@ -2052,10 +2020,11 @@ id
   : Identifier ( 'UESCAPE' StringConstant )?
   | QuotedIdentifier
   | UnicodeQuotedIdentifier
-  | PLSQLVARIABLENAME
+  | VARIABLE
   | keyword
   ;
 
+// TODO comment out reserved keywords
 keyword
   : 'ABORT'
   | 'ABSENT'
@@ -2074,7 +2043,7 @@ keyword
   | 'AND'
   | 'ANY'
   | 'ARRAY'
-//  | 'AS'
+//  | 'AS' reserved word
   | 'ASC'
   | 'ASENSITIVE'
   | 'ASSERTION'
@@ -2432,7 +2401,7 @@ keyword
   | 'SEARCH'
   | 'SECOND'
   | 'SECURITY'
-  | 'SELECT'
+//  | 'SELECT'
   | 'SEQUENCE'
   | 'SEQUENCES'
   | 'SERIALIZABLE'
@@ -2555,7 +2524,7 @@ ANALYZE
   : 'ANALYZE' | 'ANALYSE' ;
 
 PARAM
-  : '$' [0-9]+ ;
+  : '$' DIGITS ;
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-OPERATORS
 
@@ -2578,6 +2547,40 @@ OPERATOR
   | '?' '-' '|'
   | (  [<>=~!@#%^&|`?] | '*' )+
   ;
+
+
+// TODO include these known operators? or let OPERATOR (or operator) find them?
+/*
+    | '||'
+    | '->'
+    | '->>'
+    | '#-'
+    | '#>'
+    | '#>>'
+    | '!='
+    | '~'
+    | '@'
+    | '@@'
+    | '@>'
+    | '<@'
+    | '|/'
+    | '||/'
+    | '*<'
+    | '*<='
+    | '*<>'
+    | '*>='
+    | '*>'
+    | '*='
+    | '&'
+    | '&&'
+    | '&<'
+    | '&>'
+    | '?'
+    | '!!'
+    | '|'
+    | '-|-'
+    | '==='
+*/
 
 Identifier
   : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
@@ -2624,16 +2627,10 @@ HEXIDECIMAL
   : '0x' [A-F0-9]+ ;
 
 FLOAT
-  :
-    DIGITS '.' DIGITS?
-    (
-        'E' [+-]? DIGITS
-    )?
-    | '.' DIGITS ('E' [+-]? DIGITS)?
-    | DIGITS 'E' [+-]? DIGITS
+  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS ) ( 'E' [-+]? DIGITS )?
 ;
 
-PLSQLVARIABLENAME
+VARIABLE
   : ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
 
 LineComment
@@ -2648,11 +2645,10 @@ SEMI
 META
   : '\\' ~[;]? ~[\r\n\\]* -> type( SEMI ) ;
 
-Whitespace
-  : [ \t]+ -> channel( HIDDEN ) ;
-
-Newline
-  : ('\r' '\n'? | '\n') -> channel( HIDDEN ) ;
+// \u000B line (vertical) tab
+// \u000C form feed
+WHITESPACE
+  : [ \b\t\r\n\u000B\u000C]+ -> channel ( HIDDEN ) ;
 
 UNKNOWN
   : . ;
