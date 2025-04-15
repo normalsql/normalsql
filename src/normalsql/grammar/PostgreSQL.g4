@@ -113,7 +113,6 @@ statement
     | dostmt
     | dropcaststmt
     | dropOperator
-//    | dropopfamilystmt
     | dropownedstmt
     | dropstmt
     | dropsubscriptionstmt
@@ -159,12 +158,10 @@ statement
     ;
 
 callstmt
-    : 'CALL' genericFunction
-    ;
+    : 'CALL' genericFunction ;
 
 createrolestmt
-    : 'CREATE' 'ROLE' id 'WITH'? createoptroleelem*
-    ;
+    : 'CREATE' 'ROLE' id 'WITH'? createoptroleelem* ;
 
 createoptroleelem
     : alteroptroleelem
@@ -302,7 +299,6 @@ alter_table_cmds
 
 alter_table_cmd
     : 'ADD' tableconstraint
-//    | 'ADD' ifNotExists? columnDef
     | 'ADD' 'COLUMN'? ifNotExists? columnDef
     | 'ALTER' 'COLUMN'? id ('SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
     | 'ALTER' 'COLUMN'? id 'DROP' 'NOT' 'NULL'
@@ -344,7 +340,8 @@ alter_table_cmd
     | genericOptions
     ;
 
-noInherit : 'NO' 'INHERIT' ;
+noInherit
+  : 'NO' 'INHERIT' ;
 
 drop_behavior_
   : 'CASCADE'
@@ -352,7 +349,7 @@ drop_behavior_
   ;
 
 collate
-    : 'COLLATE' qname ;
+  : 'COLLATE' qname ;
 
 alter_identity_column_option
     : 'RESTART' ( 'WITH'? number )?
@@ -360,8 +357,7 @@ alter_identity_column_option
     ;
 
 altercompositetypestmt
-    : 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )*
-    ;
+    : 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )* ;
 
 alter_type_cmd
     : 'ADD' 'ATTRIBUTE' tablefuncelement drop_behavior_?
@@ -374,16 +370,10 @@ closeportalstmt
 
 copystmt
     : 'COPY' 'BINARY'? qname columns?
-      ('FROM' | 'TO') 'PROGRAM'? copy_file_name ('USING'? 'DELIMITERS' string)? 'WITH'? copy_options where?
+      ( 'FROM' | 'TO' ) 'PROGRAM'? name ( 'USING'? 'DELIMITERS' string )? 'WITH'? copy_options where?
 
     | 'COPY' '(' (select | insert | update | delete) ')'
-      'TO' 'PROGRAM'? copy_file_name 'WITH'? copy_options
-    ;
-
-copy_file_name
-    : string
-    | 'STDIN'
-    | 'STDOUT'
+      'TO' 'PROGRAM'? name 'WITH'? copy_options
     ;
 
 copy_options
@@ -467,8 +457,7 @@ usingID
   : 'USING' id ;
 
 parentTable
-    : qname ( '(' column ( ',' column )* ')' )?
-    ;
+  : qname ( '(' column ( ',' column )* ')' )? ;
 
 column
   : tableconstraint
@@ -512,27 +501,26 @@ generatedWhen
     : 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) ;
 
 tableconstraint
-    : ( 'CONSTRAINT' id )?
-      ( 'CHECK' '(' term ')' noInherit?
-      | ( 'UNIQUE' ( 'NULLS' 'NOT'? 'DISTINCT' )? | 'PRIMARY' 'KEY' ) columns? indexParams
-      | 'EXCLUDE' usingID? '(' excludeElement ( ',' excludeElement )* ')' indexParams ( 'WHERE' '(' term ')' )?
-      | 'FOREIGN' 'KEY' columns 'REFERENCES' qname columns? refMatchType? refAction*
-      )
-      ( 'NOT'? 'DEFERRABLE' )?
-      ( 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' ))?
-      ( 'NOT' 'VALID' )?
-    ;
+  : ( 'CONSTRAINT' id )?
+    ( 'CHECK' '(' term ')' noInherit?
+    | ( 'UNIQUE' ( 'NULLS' 'NOT'? 'DISTINCT' )? | 'PRIMARY' 'KEY' ) columns? indexParams
+    | 'EXCLUDE' usingID? '(' excludeElement ( ',' excludeElement )* ')' indexParams ( 'WHERE' '(' term ')' )?
+    | 'FOREIGN' 'KEY' columns 'REFERENCES' qname columns? refMatchType? refAction*
+    )
+    ( 'NOT'? 'DEFERRABLE' )?
+    ( 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' ))?
+    ( 'NOT' 'VALID' )?
+  ;
 
 indexParams
   : ( 'INCLUDE' columns )?
     withDef?
-    // TODO i don't think optional 'TABLESPACE' is correct
+    // TODO is optional 'TABLESPACE' is correct?
     ( 'USING' 'INDEX' 'TABLESPACE'? id )?
   ;
 
 refMatchType
-    : 'MATCH' ( 'FULL' | 'PARTIAL' | 'SIMPLE' )
-    ;
+  : 'MATCH' ( 'FULL' | 'PARTIAL' | 'SIMPLE' ) ;
 
 refAction
     : 'ON' ( 'DELETE' | 'UPDATE' )
@@ -544,8 +532,7 @@ refAction
     ;
 
 excludeElement
-    : ( id | '(' term ')' ) collate? 'WITH' operator
-    ;
+  : ( id | '(' term ')' ) collate? 'WITH' operator ;
 
 inherit
   : 'INHERITS' '(' qnames ')' ;
@@ -562,17 +549,11 @@ tablespaceID
 usingIndexTablespaceID
   : 'USING' 'INDEX' 'TABLESPACE' id ;
 
-//usingIndexID
-//    : 'USING' 'INDEX' id
-//    ;
-
 createstatsstmt
-    : 'CREATE' 'STATISTICS' ifNotExists? qname columns? 'ON' terms from
-    ;
+  : 'CREATE' 'STATISTICS' ifNotExists? qname columns? 'ON' terms from ;
 
 alterstatsstmt
-    : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal
-    ;
+  : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal ;
 
 withData
     : 'WITH' 'NO'? 'DATA' ;
@@ -583,16 +564,13 @@ creatematviewstmt
     ;
 
 refreshmatviewstmt
-    : 'REFRESH' 'MATERIALIZED' 'VIEW' 'CONCURRENTLY'? qname withData?
-    ;
+  : 'REFRESH' 'MATERIALIZED' 'VIEW' 'CONCURRENTLY'? qname withData? ;
 
 createseqstmt
-    : 'CREATE' scope? 'SEQUENCE' ifNotExists? qname seqoptelem*
-    ;
+  : 'CREATE' scope? 'SEQUENCE' ifNotExists? qname seqoptelem* ;
 
 alterseqstmt
-    : 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+
-    ;
+  : 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+ ;
 
 seqoptelem
     : 'AS' simpletypename
@@ -620,8 +598,7 @@ createplangstmt
     ;
 
 createtablespacestmt
-    : 'CREATE' 'TABLESPACE' id ('OWNER' id)? 'LOCATION' string withDef?
-    ;
+  : 'CREATE' 'TABLESPACE' id ( 'OWNER' id )? 'LOCATION' string withDef? ;
 
 droptablespacestmt
     : 'DROP' 'TABLESPACE' ifExists? id
@@ -636,8 +613,11 @@ createextensionstmt
       )*
     ;
 
-ifExists : 'IF' 'EXISTS'  ;
-ifNotExists : 'IF' 'NOT' 'EXISTS'  ;
+ifExists
+  : 'IF' 'EXISTS' ;
+
+ifNotExists
+  : 'IF' 'NOT' 'EXISTS' ;
 
 alterextensionstmt
   : 'ALTER' 'EXTENSION' id 'UPDATE' ( 'TO' name )* ;
@@ -659,17 +639,16 @@ alterextensioncontentsstmt
     ;
 
 createfdwstmt
-    : 'CREATE' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ )?
-    ;
-
+  : 'CREATE' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ )? ;
 
 alterfdwstmt
-    : 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ )
-    ;
+  : 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ ) ;
 
 createforeignserverstmt
-    : 'CREATE' 'SERVER' ifNotExists? id ( 'TYPE' string )? foreign_server_version? 'FOREIGN' 'DATA' 'WRAPPER' id genericOptions?
-    ;
+  : 'CREATE' 'SERVER' ifNotExists? id ( 'TYPE' string )? version? 'FOREIGN' 'DATA' 'WRAPPER' id genericOptions? ;
+
+alterforeignserverstmt
+  : 'ALTER' 'SERVER' id ( genericOptions | version genericOptions? ) ;
 
 handler
     : 'HANDLER' qname
@@ -684,14 +663,10 @@ genericOptions
     ;
 
 optionAction
-    : ( 'SET' | 'ADD' | 'DROP' )? id string? ;
+  : ( 'SET' | 'ADD' | 'DROP' )? id string? ;
 
-foreign_server_version
-    : 'VERSION' ( string | 'NULL' ) ;
-
-alterforeignserverstmt
-    : 'ALTER' 'SERVER' id ( genericOptions | foreign_server_version genericOptions? )
-    ;
+version
+  : 'VERSION' ( string | 'NULL' ) ;
 
 importforeignschemastmt
     : 'IMPORT' 'FOREIGN' 'SCHEMA' id  (( 'LIMIT' 'TO' | 'EXCEPT' )? '(' descendants ( ',' descendants )* ')' )?
@@ -1191,14 +1166,14 @@ reindex
   ;
 
   reindexOption
-    :  'CONCURRENTLY' boolean?
-    |  'TABLESPACE' qname?
-    |  'VERBOSE' boolean?
+    : 'CONCURRENTLY' boolean?
+    | 'TABLESPACE' qname?
+    | 'VERBOSE' boolean?
     ;
 
-    // TODO add support for 1 and 0
-    boolean
-      : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
+// TODO add support for 1 and 0?
+boolean
+  : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
 
 
 alterTablespace
@@ -1250,13 +1225,13 @@ renamestmt
     ;
 
 alterobjectdependsstmt
-    : 'ALTER' 'FUNCTION' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'PROCEDURE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'ROUTINE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    ;
+  : 'ALTER' 'FUNCTION' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'PROCEDURE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'ROUTINE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  ;
 
 alterobjectschemastmt
     : 'ALTER' 'AGGREGATE' aggSignature 'SET' 'SCHEMA' id
@@ -1810,58 +1785,9 @@ second
 
 //precendence accroding to Table 4.2. Operator Precedence ( highest to lowest)
 
-//https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
 
-/*
-original version of a_expr, for info
- a_expr: c_expr
-        //::	left	PostgreSQL-style typecast
-       | a_expr '::' typename -- 1
-       | a_expr 'COLLATE' any_name -- 2
-       | a_expr 'AT' 'TIME' 'ZONE' a_expr-- 3
-       //right	unary plus, unary minus
-       | ( '+'| '-') a_expr -- 4
-        //left	exponentiation
-       | a_expr '^' a_expr -- 5
-        //left	multiplication, division, modulo
-       | a_expr ( '*' | '/' | '%') a_expr -- 6
-        //left	addition, subtraction
-       | a_expr ( '+' | '-') a_expr -- 7
-        //left	all other native and user-defined operators
-       | a_expr qual_op a_expr -- 8
-       | qual_op a_expr -- 9
-        //range containment, set membership, string matching 'BETWEEN' 'IN' 'LIKE' 'ILIKE' 'SIMILAR'
-       | a_expr 'NOT'? ( LIKE|ILIKE|SIMILAR TO|( 'BETWEEN' 'SYMMETRIC'?)) a_expr opt_escape -- 10
-        //< > = <= >= <>	 	comparison operators
-       | a_expr ( '<' | '>' | '=' | '<=' | '>=' | '<>') a_expr -- 11
-       //IS 'ISNULL' 'NOTNULL'	 	'IS' TRUE, 'IS' FALSE, 'IS' NULL, 'IS' 'DISTINCT' FROM, etc
-       | a_expr 'IS' 'NOT'?
-            (
-                'NULL'
-                |TRUE_P
-                |FALSE_P
-                |UNKNOWN
-                |DISTINCT 'FROM' a_expr
-                |OF '(' type_list ')'
-                |DOCUMENT_P
-                |unicode_normal_form? 'NORMALIZED'
-            ) -- 12
-       | a_expr ( ISNULL|NOTNULL) -- 13
-       | row 'OVERLAPS' row -- 14
-       //NOT	right	logical negation
-       | 'NOT' a_expr -- 15
-        //AND	left	logical conjunction
-       | a_expr 'AND' a_expr -- 16
-        //OR	left	logical disjunction
-       | a_expr 'OR' a_expr -- 17
-       | a_expr ( '<<'|'>>') a_expr -- 18
-       | a_expr qual_op -- 19
-       | a_expr 'NOT'? 'IN' in_expr -- 20
-       | a_expr subquery_Op sub_type ( select_with_parens|'(' a_expr ')') -- 21
-       | 'UNIQUE' select_with_parens -- 22
-       | 'DEFAULT' -- 23
-;
-*/
+
+//https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
 
 terms
   : term ( ',' term )* ;
@@ -1875,44 +1801,45 @@ term
 // TODO will these instances of OPERATOR need to be qualitified?
 subterm
   : subterm ( '::' type )+
-  | subterm collate
-  | subterm 'AT' 'TIME' 'ZONE' term
+  | atom
   // unary left
   | ('NOT' | '-' | '+' | OPERATOR ) subterm
-  // unary right
-  | <assoc=right> subterm OPERATOR
+  | subterm collate
+  | subterm 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term
   | <assoc=right> subterm '^' subterm
-  | subterm ( '<<' | '>>' | '&' | '|' ) subterm
   | subterm ( '*' | '/' | '%' ) subterm
   | subterm ( '+' | '-' ) subterm
   | subterm OPERATOR subterm?
-
+  | subterm ( '<<' | '>>' | '&' | '|' ) subterm
+  | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
+  | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
   // workaround for ANTLR's left recursion pattern recogniizer not seeing this
   | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm 'ESCAPE' subterm
   | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm
-
   | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
   | subterm ( 'ISNULL' | 'NOTNULL' )
-  | subterm 'IS' 'NOT'? ('DISTINCT' 'FROM')? subterm
+
+  | subterm 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? subterm
+  | subterm 'IS' 'NOT'? normalForm? 'NORMALIZED'
   | subterm 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
-  | subterm 'IS' 'NOT'? unicode_normal_form? 'NORMALIZED'
-  | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
-  | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
+
+  // best guess for precedence for following...
+  | row
+  | row 'OVERLAPS' row
+  // unary right
+  | <assoc=right> subterm OPERATOR
   | 'CASE' term? when+ ( 'ELSE' term )? 'END'
-  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ('OVER' ( window_specification | id ))?
-  | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index*
-  // TODO do these "nestings" also need index suffix?
+  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?
+  // TODO do these other nestings also need index suffix?
   | 'EXISTS' '(' select ')'
   | 'ARRAY' ( '(' select ')' | array )
   | 'GROUPING' '(' terms ')'
   | 'UNIQUE' '(' select ')'
-  | row
-  | row 'OVERLAPS' row
-  | atom
+  | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index*
   ;
 
 atom
-  : PARAM index*
+  : PARAM
   | integer
   | FLOAT
   | string
@@ -1924,37 +1851,14 @@ atom
 function
     : genericFunction
     | 'COLLATION' 'FOR' '(' term ')'
-
-//    | 'CURRENT_DATE'
-////    | 'CURRENT_TIME' ( '(' integer ')' )?
-////    | 'CURRENT_TIMESTAMP' ( '(' integer ')' )?
-////    | 'LOCALTIME' ( '(' integer ')' )?
-////    | 'LOCALTIMESTAMP' ( '(' integer ')' )?
-//
-//    | 'CURRENT_ROLE'
-//    | 'CURRENT_USER'
-//    | 'SESSION_USER'
-//    | 'SYSTEM_USER'
-//    | 'USER'
-//
-//    | 'CURRENT_CATALOG'
-//    | 'CURRENT_SCHEMA'
-
     | 'CAST' '(' term 'AS' type ')'
-//    | 'EXTRACT' '(' (extract_arg 'FROM' term)? ')'
     | 'EXTRACT' '(' ( name 'FROM' term )? ')'
-    | 'NORMALIZE' '(' term ( ',' unicode_normal_form )? ')'
-    | 'OVERLAY' '(' ( overlay_list | args? ) ')'
+    | 'NORMALIZE' '(' term ( ',' normalForm )? ')'
+    | 'OVERLAY' '(' ( term 'PLACING' term 'FROM' term ( 'FOR' term )? | args? ) ')'
     | 'POSITION' '(' ( term 'IN' term )? ')'
     | 'SUBSTRING' '(' ( substr_list | args? ) ')'
     | 'TREAT' '(' term 'AS' type ')'
     | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
-//    | 'NULLIF' '(' term ',' term ')'
-//    | 'COALESCE' '(' terms ')'
-//    | 'GREATEST' '(' terms ')'
-//    | 'LEAST' '(' terms ')'
-//
-//    | 'XMLCONCAT' '(' terms ')'
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')' | terms ) )? ')'
     | 'XMLEXISTS' '(' xmlPassings ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
@@ -1962,16 +1866,13 @@ function
     | 'XMLPI' '(' 'NAME' id ( ',' term )? ')'
     | 'XMLROOT' '(' 'XML' term ',' 'VERSION' (term |  'NO' 'VALUE') ( ',' 'STANDALONE' ( 'YES' | 'NO' 'VALUE'? ) )? ')'
     | 'XMLSERIALIZE' '(' root term 'AS' simpletypename ')'
-
-    | 'JSON' '(' jsonValue json_key_uniqueness_constraint? ')'
-    | 'JSON_ARRAY' '(' ( jsonValue (',' jsonValue)* json_object_constructor_null_clause? jsonReturning? | '(' select ')' jsonFormat? jsonReturning? | jsonReturning? ) ')'
+    | 'JSON' '(' jsonValue jsonUniqueKeys? ')'
+    | 'JSON_ARRAY' '(' ( jsonValue (',' jsonValue)* jsonOnNull? jsonReturning? | '(' select ')' jsonFormat? jsonReturning? | jsonReturning? ) ')'
     | 'JSON_EXISTS' '(' jsonValue ',' term jsonPassing? jsonOnError? ')'
-    | 'JSON_OBJECT' '(' ( args | jsonPair (',' jsonPair)* json_object_constructor_null_clause? json_key_uniqueness_constraint? jsonReturning? | jsonReturning? ) ')'
+    | 'JSON_OBJECT' '(' ( args | jsonPair (',' jsonPair)* jsonOnNull? jsonUniqueKeys? jsonReturning? | jsonReturning? ) ')'
     | 'JSON_QUERY' '(' jsonValue ',' term jsonPassing? jsonReturning? json_wrapper_behavior? ( 'KEEP' | 'OMIT' ) 'QUOTES' ( 'ON' 'SCALAR' 'STRING' )?? jsonOnEmpty? jsonOnError? ')'
-//    | 'JSON_SCALAR' '(' term ')'
     | 'JSON_SERIALIZE' '(' jsonValue jsonReturning? ')'
     | 'JSON_VALUE' '(' jsonValue ',' term jsonPassing? jsonReturning? jsonOnEmpty? jsonOnError? ')'
-//    | 'MERGE_ACTION' '(' ')'
     ;
 
 xmlAttrib
@@ -1981,35 +1882,33 @@ root
   : 'DOCUMENT' | 'CONTENT' ;
 
 xmlPassings
-    : term 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ) )? term ( 'BY' ( 'REF' | 'VALUE' ) )?
-    ;
+  : term 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ) )? term ( 'BY' ( 'REF' | 'VALUE' ) )? ;
 
 window
-    : 'WINDOW' window_definition ( ',' window_definition )* ;
+  : 'WINDOW' window_definition ( ',' window_definition )* ;
 
 window_definition
-    : id 'AS' window_specification ;
+  : id 'AS' window_specification ;
 
 window_specification
-    : '(' id? ( 'PARTITION' 'BY' terms )? orderBy? frame_clause_? ')' ;
+  : '(' id? ( 'PARTITION' 'BY' terms )? orderBy? frame_clause_? ')' ;
 
 frame_clause_
-    : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-      ( frame_bound | 'BETWEEN' frame_bound 'AND' frame_bound )
-      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ))?
-    ;
+  : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+    ( frame_bound | 'BETWEEN' frame_bound 'AND' frame_bound )
+    ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ))?
+  ;
 
 frame_bound
-    : 'UNBOUNDED' ( 'PRECEDING' | 'FOLLOWING' )
-    | 'CURRENT' 'ROW'
-    | term ( 'PRECEDING' | 'FOLLOWING' )
-    ;
+  : 'UNBOUNDED' ( 'PRECEDING' | 'FOLLOWING' )
+  | 'CURRENT' 'ROW'
+  | term ( 'PRECEDING' | 'FOLLOWING' )
+  ;
 
 row
   : 'ROW' '(' terms? ')'
   | '(' terms ',' term ')'
   ;
-
 
 /*
     | '||'
@@ -2050,17 +1949,10 @@ arg
   :  ( id ( ':=' | '=>' ) )? term ;
 
 array
-    : '[' ( terms | array ( ',' array )* )? ']' ;
+  : '[' ( terms | array ( ',' array )* )? ']' ;
 
-unicode_normal_form
-    : 'NFC'
-    | 'NFD'
-    | 'NFKC'
-    | 'NFKD'
-    ;
-
-overlay_list
-    : term 'PLACING' term 'FROM' term ( 'FOR' term )? ;
+normalForm
+  : 'NFC' | 'NFD' | 'NFKC' | 'NFKD' ;
 
 substr_list
     : term 'FROM' term 'FOR' term
@@ -2087,10 +1979,8 @@ jsonValueAlias
 jsonReturning
   : 'RETURNING' type jsonFormat? ;
 
-
 json_wrapper_behavior
-  : ( 'WITHOUT' | 'WITH' ( 'UNCONDITIONAL' | 'CONDITIONAL' )? ) 'ARRAY'? 'WRAPPER'
-  ;
+  : ( 'WITHOUT' | 'WITH' ( 'UNCONDITIONAL' | 'CONDITIONAL' )? ) 'ARRAY'? 'WRAPPER' ;
 
 jsonOnEmpty 
   : jsonBehavior 'ON' 'EMPTY' ;
@@ -2112,9 +2002,10 @@ jsonBehavior
 jsonValue
   : term jsonFormat? ;
 
-jsonFormat : 'FORMAT_LA' 'JSON' ( 'ENCODING' id )? ;
+jsonFormat
+  : 'FORMAT_LA' 'JSON' ( 'ENCODING' id )? ;
 
-json_key_uniqueness_constraint
+jsonUniqueKeys
   : withers 'UNIQUE' 'KEYS'? ;
 
 jsonPair
@@ -2122,7 +2013,7 @@ jsonPair
   | term ':' jsonValue
   ;
 
-json_object_constructor_null_clause
+jsonOnNull
   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
 qnames
