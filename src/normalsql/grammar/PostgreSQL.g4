@@ -252,6 +252,9 @@ interval
 value
     : id | number | string ;
 
+names
+  : name ( ',' name )* ;
+
 name
   : id | string ;
 
@@ -312,12 +315,12 @@ alter_table_cmd
     | 'ALTER' 'COLUMN'? id 'ADD' generatedWhen 'AS' 'IDENTITY' ( '(' seqoptelem+ ')' )?
     | 'ALTER' 'COLUMN'? id alter_identity_column_option+
     | 'ALTER' 'COLUMN'? id 'DROP' 'IDENTITY' ifExists?
-    | 'DROP' 'COLUMN'? ifExists? id drop_behavior_?
+    | 'DROP' 'COLUMN'? ifExists? id cascade?
     | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' type collate? ('USING' term)?
     | 'ALTER' 'COLUMN'? id genericOptions
     | 'ALTER' 'CONSTRAINT' id timing*
     | 'VALIDATE' 'CONSTRAINT' id
-    | 'DROP' 'CONSTRAINT' ifExists? id drop_behavior_?
+    | 'DROP' 'CONSTRAINT' ifExists? id cascade?
     | 'SET' 'WITHOUT' 'OIDS'
     | 'CLUSTER' 'ON' id
     | 'SET' 'WITHOUT' 'CLUSTER'
@@ -343,67 +346,74 @@ alter_table_cmd
 noInherit
   : 'NO' 'INHERIT' ;
 
-drop_behavior_
-  : 'CASCADE'
-  | 'RESTRICT'
-  ;
+cascade
+  : 'CASCADE' | 'RESTRICT' ;
 
 collate
   : 'COLLATE' qname ;
 
 alter_identity_column_option
-    : 'RESTART' ( 'WITH'? number )?
-    | 'SET' ( seqoptelem | generatedWhen )
-    ;
+  : 'RESTART' ( 'WITH'? number )?
+  | 'SET' ( seqoptelem | generatedWhen )
+  ;
 
 altercompositetypestmt
     : 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )* ;
 
 alter_type_cmd
-    : 'ADD' 'ATTRIBUTE' tablefuncelement drop_behavior_?
-    | 'DROP' 'ATTRIBUTE' ifExists? id drop_behavior_?
-    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' type collate? drop_behavior_?
+    : 'ADD' 'ATTRIBUTE' tablefuncelement cascade?
+    | 'DROP' 'ATTRIBUTE' ifExists? id cascade?
+    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' type collate? cascade?
     ;
 
 closeportalstmt
   : 'CLOSE' ( id | 'ALL' ) ;
 
 copystmt
-    : 'COPY' 'BINARY'? qname columns?
-      ( 'FROM' | 'TO' ) 'PROGRAM'? name ( 'USING'? 'DELIMITERS' string )? 'WITH'? copy_options where?
+    : 'COPY' tableRef 'FROM' 'PROGRAM'? name copyWithOptions? where?
+    | 'COPY' ( tableRef | '(' query ')' ) 'TO' 'PROGRAM'? name copyWithOptions?
 
-    | 'COPY' '(' (select | insert | update | delete) ')'
-      'TO' 'PROGRAM'? name 'WITH'? copy_options
+    // PostgreSQL before 9.0
+    | 'COPY' ( tableRef | '(' query ')' )
+      ( 'FROM' | 'TO' ) 'PROGRAM'? name
+      ( 'WITH'? 'BINARY'?
+        ( 'DELIMITER' 'AS'? string )?
+        ( 'NULL' 'AS'? string )?
+        ( 'CSV' 'HEADER'?
+          ( 'QUOTE' 'AS'? string )?
+          ( 'ESCAPE' 'AS'? string )?
+          ( 'FORCE' 'NOT'? 'NULL' names )? // FROM
+          ( 'FORCE' 'QUOTE' ( '*' | names ) )? // TO
+        )?
+      )
+
+    // PostgreSQL before 7.3
+    | 'COPY' 'BINARY'? qname
+      ( 'FROM' | 'TO' ) name ( 'USING'? 'DELIMITERS' string )? ( 'WITH' 'NULL' 'AS' string )?
     ;
 
-copy_options
-    : copy_opt_item*
-    | '(' copy_generic_opt_elem ( ',' copy_generic_opt_elem )* ')'
-    ;
+query
+  : select | insert | update | delete ;
 
-copy_opt_item
-    : 'BINARY'
-    | 'FREEZE'
-    | 'DELIMITER' 'AS'? string
-    | 'NULL' 'AS'? string
-    | 'CSV'
-    | 'HEADER'
-    | 'QUOTE' 'AS'? string
-    | 'ESCAPE' 'AS'? string
-    | 'FORCE' 'QUOTE' ids
-    | 'FORCE' 'QUOTE' '*'
-    | 'FORCE' 'NOT'? 'NULL' ids
-    | 'ENCODING' string
-    ;
+copyWithOptions
+  : 'WITH'? '(' copyOptions ( ',' copyOptions )* ')' ;
 
-copy_generic_opt_elem
-    : id
-      ( name
-      | number
-      | '*'
-      | '(' name ( ',' name )* ')'
-      )?
-    ;
+copyOptions
+  : 'FORMAT' name
+  | 'FREEZE' boolean
+  | 'DELIMITER' string
+  | 'NULL' string
+  | 'DEFAULT' string
+  | 'HEADER' ( boolean | 'MATCH' )
+  | 'QUOTE' string
+  | 'ESCAPE' string
+  | 'FORCE_QUOTE' ( '*' | columns )
+  | 'FORCE_NOT_NULL' ( '*' | columns )
+  | 'FORCE_NULL' ( '*' | columns )
+  | 'ON_ERROR' id
+  | 'ENCODING' string
+  | 'LOG_VERBOSITY' id
+  ;
 
 createTable
   : 'CREATE' scope? 'TABLE' ifNotExists? qname
@@ -416,7 +426,7 @@ createTable
   ;
 
 createTableAs
-    : 'CREATE' scope? 'TABLE' ifNotExists? qname columns?
+    : 'CREATE' scope? 'TABLE' ifNotExists? tableRef
       fixme 'AS' ( select | executePrepared )
       withData?
     ;
@@ -494,7 +504,7 @@ colconstraintelem
     | 'CHECK' '(' term ')' noInherit?
     | 'DEFAULT' term
     | generatedWhen 'AS' ( 'IDENTITY' ('(' seqoptelem+ ')')? | '(' term ')' 'STORED' )
-    | 'REFERENCES' qname columns? refMatchType? refAction*
+    | 'REFERENCES' tableRef refMatchType? refAction*
     ;
 
 generatedWhen
@@ -505,7 +515,7 @@ tableconstraint
     ( 'CHECK' '(' term ')' noInherit?
     | ( 'UNIQUE' ( 'NULLS' 'NOT'? 'DISTINCT' )? | 'PRIMARY' 'KEY' ) columns? indexParams
     | 'EXCLUDE' usingID? '(' excludeElement ( ',' excludeElement )* ')' indexParams ( 'WHERE' '(' term ')' )?
-    | 'FOREIGN' 'KEY' columns 'REFERENCES' qname columns? refMatchType? refAction*
+    | 'FOREIGN' 'KEY' columns 'REFERENCES' tableRef refMatchType? refAction*
     )
     ( 'NOT'? 'DEFERRABLE' )?
     ( 'INITIALLY' ( 'IMMEDIATE' | 'DEFERRED' ))?
@@ -550,7 +560,7 @@ usingIndexTablespaceID
   : 'USING' 'INDEX' 'TABLESPACE' id ;
 
 createstatsstmt
-  : 'CREATE' 'STATISTICS' ifNotExists? qname columns? 'ON' terms from ;
+  : 'CREATE' 'STATISTICS' ifNotExists? tableRef 'ON' terms from ;
 
 alterstatsstmt
   : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal ;
@@ -559,7 +569,7 @@ withData
     : 'WITH' 'NO'? 'DATA' ;
 
 creatematviewstmt
-    : 'CREATE' 'UNLOGGED'? 'MATERIALIZED' 'VIEW' ifNotExists? qname columns?
+    : 'CREATE' 'UNLOGGED'? 'MATERIALIZED' 'VIEW' ifNotExists? tableRef
       usingID? withDef? tablespaceID? 'AS' select withData?
     ;
 
@@ -827,11 +837,11 @@ opclass_drop
     ;
 
 dropOperator
-    : 'DROP' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) ifExists? qname usingID drop_behavior_?
+    : 'DROP' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) ifExists? qname usingID cascade?
     ;
 
 dropownedstmt
-    : 'DROP' 'OWNED' 'BY' ids drop_behavior_?
+    : 'DROP' 'OWNED' 'BY' ids cascade?
     ;
 
 reassignownedstmt
@@ -839,11 +849,11 @@ reassignownedstmt
     ;
 
 dropstmt
-    : 'DROP' object_type_any_name ifExists? qnames drop_behavior_?
-    | 'DROP' object_type_name_on_any_name ifExists? id 'ON' qname drop_behavior_?
-    | 'DROP' drop_type_name ifExists? ids drop_behavior_?
-    | 'DROP' ( 'TYPE' | 'DOMAIN' ) ifExists? type ( ',' type )* drop_behavior_?
-    | 'DROP' 'INDEX' 'CONCURRENTLY' ifExists? qnames drop_behavior_?
+    : 'DROP' object_type_any_name ifExists? qnames cascade?
+    | 'DROP' object_type_name_on_any_name ifExists? id 'ON' qname cascade?
+    | 'DROP' drop_type_name ifExists? ids cascade?
+    | 'DROP' ( 'TYPE' | 'DOMAIN' ) ifExists? type ( ',' type )* cascade?
+    | 'DROP' 'INDEX' 'CONCURRENTLY' ifExists? qnames cascade?
     ;
 
 object_type_any_name
@@ -885,7 +895,7 @@ object_type_name_on_any_name
     ;
 
 truncatestmt
-    : 'TRUNCATE' 'TABLE'? descendants ( ',' descendants )* (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? drop_behavior_?
+    : 'TRUNCATE' 'TABLE'? descendants ( ',' descendants )* (( 'CONTINUE' | 'RESTART' ) 'IDENTITY' )? cascade?
     ;
 
 commentstmt
@@ -924,8 +934,6 @@ seclabelstmt
       'IS' (string | 'NULL')
     ;
 
-
-
 fetchstmt
     : ( 'FETCH' | 'MOVE' )
 
@@ -935,30 +943,22 @@ fetchstmt
       | 'LAST'
       | ( 'ABSOLUTE' | 'RELATIVE' )? signedDecimal
       | 'ALL'
-      | ( 'FORWARD' | 'BACKWARD' ) (signedDecimal | 'ALL' )?
+      | ( 'FORWARD' | 'BACKWARD' ) ( signedDecimal | 'ALL' )?
       )?
 
-      ('FROM' | 'IN')? id ;
+      ( 'FROM' | 'IN' )? id ;
 
 
 revokestmt
-    : 'REVOKE' privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
-    | 'REVOKE' 'GRANT' 'OPTION' 'FOR' privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
-    ;
+  : 'REVOKE' ( 'GRANT' 'OPTION' 'FOR' )? privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* cascade? ;
 
 privileges
-    : privilege_list
-    | 'ALL'
-    | 'ALL' 'PRIVILEGES'? ( columns )?
-    ;
-
-privilege_list
-    : privilege ( ',' privilege )*
-    ;
+  : privilege ( ',' privilege )*
+  | 'ALL' 'PRIVILEGES'? ( columns )?
+  ;
 
 privilege
-    : ( 'SELECT' | 'REFERENCES' | 'CREATE' | id ) columns?
-    ;
+  : ( 'SELECT' | 'REFERENCES' | 'CREATE' | id ) columns? ;
 
 privilege_target
     : qnames
@@ -980,28 +980,26 @@ privilege_target
     ;
 
 grantee
-    : 'GROUP'? id ;
+  : 'GROUP'? id ;
 
 withGrantOption
-    : 'WITH' 'GRANT' 'OPTION' ;
+  : 'WITH' 'GRANT' 'OPTION' ;
 
 grantrolestmt
-    : 'GRANT' privilege_list 'TO' ids ('WITH' 'ADMIN' 'OPTION')? granted_by_?
-    ;
+  : 'GRANT' privilege ( ',' privilege )* 'TO' ids ( 'WITH' 'ADMIN' 'OPTION' )? grantedBy? ;
 
 revokerolestmt
-    : 'REVOKE' ('ADMIN' 'OPTION' 'FOR')? privilege_list 'FROM' ids granted_by_? drop_behavior_?
+    : 'REVOKE' ('ADMIN' 'OPTION' 'FOR')? privilege ( ',' privilege )* 'FROM' ids grantedBy? cascade?
     ;
 
-granted_by_
-    : 'GRANTED' 'BY' id
-    ;
+grantedBy
+  : 'GRANTED' 'BY' id ;
 
 alterdefaultprivilegesstmt
     : 'ALTER' 'DEFAULT' 'PRIVILEGES'
       ( 'IN' 'SCHEMA' ids | 'FOR' 'ROLE' ids | 'FOR' 'USER' ids )*
       ( 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
-      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* drop_behavior_?
+      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* cascade?
       )
     ;
 
@@ -1022,7 +1020,7 @@ defacl_privilege_target
 createIndex
     : 'CREATE' 'UNIQUE'? 'INDEX' 'CONCURRENTLY'? ( ifNotExists? id )?
       'ON' descendants usingID? '(' index_params ')'
-      ('INCLUDE' '(' index_params ')')? withDef? tablespaceID? where?
+      ( 'INCLUDE' '(' index_params ')' )? withDef? tablespaceID? where?
     ;
 
 index_params
@@ -1100,23 +1098,23 @@ forType
   : 'FOR' 'TYPE' type ;
 
 withDef
-    : 'WITH' definition ;
+  : 'WITH' definition ;
 
 alterfunctionstmt
-    : 'ALTER' routine funcSignature funcOptions+ 'RESTRICT'? ;
+  : 'ALTER' routine funcSignature funcOptions+ 'RESTRICT'? ;
 
-routine : 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ;
+routine
+  : 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ;
 
 removefuncstmt
-    : 'DROP' routine ifExists? funcSignature ( ',' funcSignature )* drop_behavior_?
-    ;
+  : 'DROP' routine ifExists? funcSignature ( ',' funcSignature )* cascade? ;
 
 removeaggrstmt
-    : 'DROP' 'AGGREGATE' ifExists? aggSignature ( ',' aggSignature )* drop_behavior_?
+    : 'DROP' 'AGGREGATE' ifExists? aggSignature ( ',' aggSignature )* cascade?
     ;
 
 removeoperstmt
-    : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* drop_behavior_?
+    : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* cascade?
     ;
 
 // qualitified operator
@@ -1143,7 +1141,7 @@ createcaststmt
     ;
 
 dropcaststmt
-    : 'DROP' 'CAST' ifExists? '(' type 'AS' type ')' drop_behavior_?
+    : 'DROP' 'CAST' ifExists? '(' type 'AS' type ')' cascade?
     ;
 
 createtransformstmt
@@ -1156,7 +1154,7 @@ transform_element_list
     ;
 
 droptransformstmt
-    : 'DROP' 'TRANSFORM' ifExists? 'FOR' type 'LANGUAGE' id drop_behavior_?
+    : 'DROP' 'TRANSFORM' ifExists? 'FOR' type 'LANGUAGE' id cascade?
     ;
 
 reindex
@@ -1221,7 +1219,7 @@ renamestmt
     | 'ALTER' 'STATISTICS' qname 'RENAME' 'TO' id
     | 'ALTER' textSearchConfig qname 'RENAME' 'TO' id
     | 'ALTER' 'TYPE' qname 'RENAME' 'TO' id
-    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' id 'TO' id drop_behavior_?
+    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' id 'TO' id cascade?
     ;
 
 alterobjectdependsstmt
@@ -1326,7 +1324,7 @@ altersubscriptionstmt
     ;
 
 dropsubscriptionstmt
-    : 'DROP' 'SUBSCRIPTION' ifExists? id drop_behavior_?
+    : 'DROP' 'SUBSCRIPTION' ifExists? id cascade?
     ;
 
 rulestmt
@@ -1371,7 +1369,7 @@ transaction_
 
 viewstmt
     : 'CREATE' ( 'OR' 'REPLACE' )? scope? (
-        'VIEW' qname columns? withDef?
+        'VIEW' tableRef withDef?
         | 'RECURSIVE' 'VIEW' qname columns withDef?
     ) 'AS' select ('WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION')?
     ;
@@ -1424,7 +1422,7 @@ alterdomainstmt
     | 'DROP' 'NOT' 'NULL'
     | 'SET' 'NOT' 'NULL'
     | 'ADD' tableconstraint
-    | 'DROP' 'CONSTRAINT' ifExists? id drop_behavior_?
+    | 'DROP' 'CONSTRAINT' ifExists? id cascade?
     | 'VALIDATE' 'CONSTRAINT' id
     )
   ;
@@ -1448,19 +1446,18 @@ clusterstmt
     ;
 
 vacuumstmt
-    : 'VACUUM' 'FULL'? 'FREEZE'? 'VERBOSE'? ANALYZE? (vacuum_relation ( ',' vacuum_relation )* )?
-    | 'VACUUM' '(' optionElems ')' ( vacuum_relation ( ',' vacuum_relation )*)?
+    : 'VACUUM' 'FULL'? 'FREEZE'? 'VERBOSE'? ANALYZE? (tableRef ( ',' tableRef )* )?
+    | 'VACUUM' '(' optionElems ')' ( tableRef ( ',' tableRef )*)?
     ;
 
 analyzestmt
-    : ANALYZE 'VERBOSE'? ( vacuum_relation ( ',' vacuum_relation )* )?
-    | ANALYZE '(' optionElems ')' ( vacuum_relation ( ',' vacuum_relation )* )?
+    : ANALYZE 'VERBOSE'? ( tableRef ( ',' tableRef )* )?
+    | ANALYZE '(' optionElems ')' ( tableRef ( ',' tableRef )* )?
     ;
 
 
-vacuum_relation
-    : qname columns?
-    ;
+tableRef
+  : qname columns? ;
 
 explainstmt
     : 'EXPLAIN' ANALYZE? 'VERBOSE'? explainablestmt
@@ -1488,9 +1485,7 @@ option_elem
     ;
 
 preparestmt
-    : 'PREPARE' id ( '(' type ( ',' type )* ')' )? 'AS'
-      (select | insert | update | delete)
-    ;
+  : 'PREPARE' id ( '(' type ( ',' type )* ')' )? 'AS' query ;
 
 
 deallocatestmt
@@ -1603,7 +1598,7 @@ with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
 
 cte
-  : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' ( select | insert | update | delete ) ')' ;
+  : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' query ')' ;
 
 allDistinct
   : 'ALL' | 'DISTINCT' ;
