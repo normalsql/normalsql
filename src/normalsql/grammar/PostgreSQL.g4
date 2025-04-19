@@ -25,9 +25,22 @@ options {
   caseInsensitive=true;
 }
 
-/*
-warning(154): PostgreSQL.g4:28:0: rule parse contains an optional block with at least one alternative that can match an empty string
-*/
+@parser::members
+{
+boolean notBETWEEN( ParserRuleContext ctx )
+{
+  if( ctx.children == null ) return true;
+  for( var c : ctx.children )
+  {
+    if( c.getText().equalsIgnoreCase( "BETWEEN" ) )
+    {
+      return false;
+     }
+  }
+  return true;
+};
+}
+
 parse
   : statement? ( SEMI statement? )* EOF
   ;
@@ -238,10 +251,10 @@ set_rest_more
   ;
 
 transactionMode
-     : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
-     | 'READ' ( 'ONLY' |  'WRITE' )
-     | 'NOT'? 'DEFERRABLE'
-     ;
+  : 'ISOLATION' 'LEVEL' ( 'READ' ( 'UNCOMMITTED' | 'COMMITTED' ) | 'REPEATABLE' 'READ' | 'SERIALIZABLE' )
+  | 'READ' ( 'ONLY' |  'WRITE' )
+  | 'NOT'? 'DEFERRABLE'
+  ;
 
 interval
   : 'INTERVAL' ( string? timeUnit | '(' integer ')' string? )? ;
@@ -313,7 +326,7 @@ alter_table_cmd
     | 'ALTER' 'COLUMN'? id alter_identity_column_option+
     | 'ALTER' 'COLUMN'? id 'DROP' 'IDENTITY' ifExists?
     | 'DROP' 'COLUMN'? ifExists? id cascade?
-    | 'ALTER' 'COLUMN'? id ('SET' 'DATA')? 'TYPE' type collate? ('USING' term)?
+    | 'ALTER' 'COLUMN'? id ( 'SET' 'DATA' )? 'TYPE' type collate? ( 'USING' term )?
     | 'ALTER' 'COLUMN'? id genericOptions
     | 'ALTER' 'CONSTRAINT' id timing*
     | 'VALIDATE' 'CONSTRAINT' id
@@ -358,36 +371,36 @@ altercompositetypestmt
     : 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )* ;
 
 alter_type_cmd
-    : 'ADD' 'ATTRIBUTE' tablefuncelement cascade?
-    | 'DROP' 'ATTRIBUTE' ifExists? id cascade?
-    | 'ALTER' 'ATTRIBUTE' id ('SET' 'DATA')? 'TYPE' type collate? cascade?
-    ;
+  : 'ADD' 'ATTRIBUTE' tablefuncelement cascade?
+  | 'DROP' 'ATTRIBUTE' ifExists? id cascade?
+  | 'ALTER' 'ATTRIBUTE' id ( 'SET' 'DATA' )? 'TYPE' type collate? cascade?
+  ;
 
 closeportalstmt
   : 'CLOSE' ( id | 'ALL' ) ;
 
 copystmt
-    : 'COPY' tableRef 'FROM' 'PROGRAM'? name copyWithOptions? where?
-    | 'COPY' ( tableRef | '(' query ')' ) 'TO' 'PROGRAM'? name copyWithOptions?
+  : 'COPY' tableRef 'FROM' 'PROGRAM'? name copyWithOptions? where?
+  | 'COPY' ( tableRef | '(' query ')' ) 'TO' 'PROGRAM'? name copyWithOptions?
 
-    // PostgreSQL before 9.0
-    | 'COPY' ( tableRef | '(' query ')' )
-      ( 'FROM' | 'TO' ) 'PROGRAM'? name
-      ( 'WITH'? 'BINARY'?
-        ( 'DELIMITER' 'AS'? string )?
-        ( 'NULL' 'AS'? string )?
-        ( 'CSV' 'HEADER'?
-          ( 'QUOTE' 'AS'? string )?
-          ( 'ESCAPE' 'AS'? string )?
-          ( 'FORCE' 'NOT'? 'NULL' names )? // FROM
-          ( 'FORCE' 'QUOTE' ( '*' | names ) )? // TO
-        )?
-      )
+  // PostgreSQL before 9.0
+  | 'COPY' ( tableRef | '(' query ')' )
+    ( 'FROM' | 'TO' ) 'PROGRAM'? name
+    ( 'WITH'? 'BINARY'?
+      ( 'DELIMITER' 'AS'? string )?
+      ( 'NULL' 'AS'? string )?
+      ( 'CSV' 'HEADER'?
+        ( 'QUOTE' 'AS'? string )?
+        ( 'ESCAPE' 'AS'? string )?
+        ( 'FORCE' 'NOT'? 'NULL' names )? // FROM
+        ( 'FORCE' 'QUOTE' ( '*' | names ) )? // TO
+      )?
+    )
 
-    // PostgreSQL before 7.3
-    | 'COPY' 'BINARY'? qname
-      ( 'FROM' | 'TO' ) name ( 'USING'? 'DELIMITERS' string )? ( 'WITH' 'NULL' 'AS' string )?
-    ;
+  // PostgreSQL before 7.3
+  | 'COPY' 'BINARY'? qname
+    ( 'FROM' | 'TO' ) name ( 'USING'? 'DELIMITERS' string )? ( 'WITH' 'NULL' 'AS' string )?
+  ;
 
 query
   : select | insert | update | delete ;
@@ -437,12 +450,12 @@ createTableAs
      ;
 
 createForeignTable
-    : 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname
-      ( '(' ( column ( ',' column )* )? ')' inherit?
-      | 'PARTITION' 'OF' parentTable forValues
-      )
-      'SERVER' id genericOptions?
-    ;
+  : 'CREATE' 'FOREIGN' 'TABLE' ifNotExists? qname
+    ( '(' ( column ( ',' column )* )? ')' inherit?
+    | 'PARTITION' 'OF' parentTable forValues
+    )
+    'SERVER' id genericOptions?
+  ;
 
 forValues
   : 'FOR' 'VALUES' 'WITH' '(' 'modulus' number ','  'remainder' number ')'
@@ -452,8 +465,7 @@ forValues
   ;
 
 executePrepared
-    : 'EXECUTE' name ( '(' terms ')' )?
-    ;
+  : 'EXECUTE' name ( '(' terms ')' )? ;
 
 scope
     : ( 'LOCAL' | 'GLOBAL' )? ( 'TEMPORARY' | 'TEMP' )
@@ -485,8 +497,7 @@ column
   ;
 
 columnDef
-    : id type? genericOptions? colconstraint*
-    ;
+  : id type? genericOptions? colconstraint* ;
 
 colconstraint
     : ( 'CONSTRAINT' id )? colconstraintelem
@@ -505,7 +516,7 @@ colconstraintelem
     ;
 
 generatedWhen
-    : 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) ;
+  : 'GENERATED' ( 'ALWAYS' | 'BY' 'DEFAULT' ) ;
 
 tableconstraint
   : ( 'CONSTRAINT' id )?
@@ -530,13 +541,13 @@ refMatchType
   : 'MATCH' ( 'FULL' | 'PARTIAL' | 'SIMPLE' ) ;
 
 refAction
-    : 'ON' ( 'DELETE' | 'UPDATE' )
-      ( 'NO' 'ACTION'
-      | 'RESTRICT'
-      | 'CASCADE'
-      | 'SET' ( 'NULL' | 'DEFAULT' ) columns?
-      )
-    ;
+  : 'ON' ( 'DELETE' | 'UPDATE' )
+    ( 'NO' 'ACTION'
+    | 'RESTRICT'
+    | 'CASCADE'
+    | 'SET' ( 'NULL' | 'DEFAULT' ) columns?
+    )
+  ;
 
 excludeElement
   : ( id | '(' term ')' ) collate? 'WITH' operator ;
@@ -563,12 +574,12 @@ alterstatsstmt
   : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal ;
 
 withData
-    : 'WITH' 'NO'? 'DATA' ;
+  : 'WITH' 'NO'? 'DATA' ;
 
 creatematviewstmt
-    : 'CREATE' 'UNLOGGED'? 'MATERIALIZED' 'VIEW' ifNotExists? tableRef
-      usingID? withDef? tablespaceID? 'AS' select withData?
-    ;
+  : 'CREATE' 'UNLOGGED'? 'MATERIALIZED' 'VIEW' ifNotExists? tableRef
+    usingID? withDef? tablespaceID? 'AS' select withData?
+  ;
 
 refreshmatviewstmt
   : 'REFRESH' 'MATERIALIZED' 'VIEW' 'CONCURRENTLY'? qname withData? ;
@@ -594,9 +605,7 @@ seqoptelem
     ;
 
 number
-    : signedFloat
-    | signedDecimal
-    ;
+  : signedFloat | signedDecimal ;
 
 createplangstmt
     : 'CREATE' orReplace? 'TRUSTED'? 'PROCEDURAL'? 'LANGUAGE' id
@@ -608,17 +617,16 @@ createtablespacestmt
   : 'CREATE' 'TABLESPACE' id ( 'OWNER' id )? 'LOCATION' string withDef? ;
 
 droptablespacestmt
-    : 'DROP' 'TABLESPACE' ifExists? id
-    ;
+  : 'DROP' 'TABLESPACE' ifExists? id ;
 
 createextensionstmt
-    : 'CREATE' 'EXTENSION' ifNotExists? id 'WITH'?
-      ( 'SCHEMA' id
-      | 'VERSION' name
-      | 'FROM' name
-      | 'CASCADE'
-      )*
-    ;
+  : 'CREATE' 'EXTENSION' ifNotExists? id 'WITH'?
+    ( 'SCHEMA' id
+    | 'VERSION' name
+    | 'FROM' name
+    | 'CASCADE'
+    )*
+  ;
 
 ifExists
   : 'IF' 'EXISTS' ;
@@ -658,16 +666,16 @@ alterforeignserverstmt
   : 'ALTER' 'SERVER' id ( genericOptions | version genericOptions? ) ;
 
 handler
-    : 'HANDLER' qname
-    | 'NO' 'HANDLER'
-    | 'VALIDATOR' qname
-    | 'NO' 'VALIDATOR'
-    ;
+  : 'HANDLER' qname
+  | 'NO' 'HANDLER'
+  | 'VALIDATOR' qname
+  | 'NO' 'VALIDATOR'
+  ;
 
 genericOptions
-    : 'OPTIONS' '(' optionAction ( ',' optionAction )* ')'
-    | 'WITH' 'OPTIONS'?
-    ;
+  : 'OPTIONS' '(' optionAction ( ',' optionAction )* ')'
+  | 'WITH' 'OPTIONS'?
+  ;
 
 optionAction
   : ( 'SET' | 'ADD' | 'DROP' )? id string? ;
@@ -732,11 +740,11 @@ executeFunction
   : 'EXECUTE' ( 'FUNCTION' | 'PROCEDURE' )? qname '(' terms? ')' ;
 
 event
-    : 'INSERT'
-    | 'DELETE'
-    | 'UPDATE' ( 'OF' ids )?
-    | 'TRUNCATE'
-    ;
+  : 'DELETE'
+  | 'INSERT'
+  | 'UPDATE' ( 'OF' ids )?
+  | 'TRUNCATE'
+  ;
 
 triggertransition
     : ( 'NEW' | 'OLD' ) ( 'TABLE' | 'ROW' ) alias
@@ -1519,8 +1527,7 @@ merge_update_clause
   ;
 
 delete
-    : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning?
-    ;
+  : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning? ;
 
 lockstmt
     : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ('IN' lock_type 'MODE')? 'NOWAIT'?
@@ -1557,7 +1564,7 @@ select
       : 'LIMIT' term ;
 
     fetch
-      : 'FETCH' firstNext term? rowRows ( 'ONLY' | 'WITH' 'TIES' ) ;
+      : 'FETCH' firstNext (term)? rowRows ( 'ONLY' | 'WITH' 'TIES' ) ;
 
     offset
       : 'OFFSET' term rowRows? ;
@@ -1565,14 +1572,13 @@ select
     locking
       : 'FOR' ( ( 'NO' 'KEY' )? 'UPDATE' | 'KEY'? 'SHARE' ) ( 'OF' qnames )? ( 'NOWAIT' | 'SKIP' 'LOCKED' )? ;
 
-selectCombo
-    : selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )* ;
-
 // TODO will this workaround left-recurse?
 //selectCombo
 //    : selectCombo ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? ) selectCombo
-//    | simpleCore
+//    | selectCore
 //    ;
+selectCombo
+    : selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )* ;
 
 selectCore
   : 'SELECT' quantifier? ( item ( ',' item )* ','? )?
@@ -1770,50 +1776,42 @@ timeUnit
 second
   : 'SECOND' scale? ;
 
-
 terms
   : term ( ',' term )* ;
 
+// https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
 term
-  : term 'OR' term
-  | term 'AND' term
-  | subterm
-  ;
-
-
-// TODO will these instances of OPERATOR need to be qualitified?
-subterm
-  // Precdence of operators per
-  // https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
-  : subterm ( '::' type )+
+  : term ( '::' type )+
   | atom
   // unary left
-  | ('NOT' | '-' | '+' | OPERATOR ) subterm
-  | subterm collate
-  | subterm 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term
-  | <assoc=right> subterm '^' subterm
-  | subterm ( '*' | '/' | '%' ) subterm
-  | subterm ( '+' | '-' ) subterm
-  | subterm OPERATOR subterm?
-  | subterm ( '<<' | '>>' | '&' | '|' ) subterm
-  | subterm 'NOT'? 'BETWEEN' 'SYMMETRIC'? subterm 'AND' subterm
-  | subterm 'NOT'? 'IN' '(' ( select |  terms ) ')'
-  // workaround for ANTLR's left recursion pattern recogniizer not seeing this
-  | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm 'ESCAPE' subterm
-  | subterm 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) subterm
-  | subterm ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) subterm
-  | subterm ( 'ISNULL' | 'NOTNULL' )
+  // TODO instances of OPERATOR need to be qualitified?
+  | ('NOT' | '-' | '+' | OPERATOR ) term
+  | term collate
+  | term 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term
+  | <assoc=right> term '^' term
+  | term ( '*' | '/' | '%' ) term
+  | term ( '+' | '-' ) term
+  // TODO instances of OPERATOR need to be qualitified?
+  | term OPERATOR term?
+  | term ( '<<' | '>>' | '&' | '|' ) term
+  | term 'NOT'? 'BETWEEN' 'SYMMETRIC'? term 'AND' term
+  | term 'NOT'? 'IN' '(' ( select |  terms ) ')'
+  // workaround for ANTLR's left recursion pattern recognizer not seeing this
+  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term 'ESCAPE' term
+  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term
+  | term ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) term
+  | term ( 'ISNULL' | 'NOTNULL' )
 
-  | subterm 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? subterm
-  | subterm 'IS' 'NOT'? normalForm? 'NORMALIZED'
-  | subterm 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
+  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term
+  | term 'IS' 'NOT'? normalForm? 'NORMALIZED'
+  | term 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
 
   // best guess for precedence for following...
   | row
   | row 'OVERLAPS' row
   // unary right
-  | <assoc=right> subterm OPERATOR
-  | 'CASE' term? when+ ( 'ELSE' term )? 'END'
+  | <assoc=right> term OPERATOR
+  | 'CASE' (term)? when+ ( 'ELSE' term )? 'END'
   | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?
   // TODO do these other nestings also need index suffix?
   | 'EXISTS' '(' select ')'
@@ -1821,6 +1819,10 @@ subterm
   | 'GROUPING' '(' terms ')'
   | 'UNIQUE' '(' select ')'
   | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index*
+  | term 'BETWEEN' term 'AND' term
+  // workaround to ensure BETWEEN beats AND, building correct parse tree
+  | term { notBETWEEN( $ctx ) }? 'AND' term
+  | term 'OR' term
   ;
 
 atom
@@ -1844,7 +1846,7 @@ function
     | 'POSITION' '(' ( term 'IN' term )? ')'
     | 'SUBSTRING' '(' ( substr_list | args? ) ')'
     | 'TREAT' '(' term 'AS' type ')'
-    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
+    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( (term)? 'FROM' )? terms ')'
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')' | terms ) )? ')'
     | 'XMLEXISTS' '(' xmlPassings ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
@@ -1896,7 +1898,6 @@ row
   | '(' terms ',' term ')'
   ;
 
-
 args
   : arg ( ',' arg )* ;
 
@@ -1922,7 +1923,7 @@ when
 
 index // TODO better name. deref? chain? back to indirection?
   : '.' ( id | '*' )
-  | '[' ( term | term? ':' term? ) ']'
+  | '[' ( term | (term)? ':' (term)? ) ']'
   ;
 
 jsonPassing
@@ -2014,7 +2015,7 @@ id
 boolean
   : 'TRUE' | 'FALSE' ;
 
-// TODO comment out reserved keywords
+// TODO disable (comment out) reserved keywords
 keyword
   : 'ABORT'
   | 'ABSENT'
@@ -2576,7 +2577,7 @@ Identifier
   : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
 
 QuotedIdentifier
-  : '"' ('""' | ~ [\u0000"])* '"' ;
+  : '"' ( '""' | ~ [\u0000"] )* '"' ;
 
 UnicodeQuotedIdentifier
   : 'U' '&' QuotedIdentifier ;
@@ -2593,7 +2594,7 @@ UnicodeEscapeStringConstant
   | 'E' '\'' ( '\'\'' | ESCAPE_SEQUENCE | ~( '\'' | '\\' ) )* '\''
   ;
 
-// FIXME add octal, hex, unicode sequences
+// TODO add octal, hex, unicode sequences
 fragment ESCAPE_SEQUENCE
   : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
   ;
@@ -2617,8 +2618,7 @@ HEXIDECIMAL
   : '0x' [A-F0-9]+ ;
 
 FLOAT
-  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS ) ( 'E' [-+]? DIGITS )?
-;
+  : ( DIGITS ( '.' DIGITS? )? | '.' DIGITS ) ( 'E' [-+]? DIGITS )? ;
 
 VARIABLE
   : ':' [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
