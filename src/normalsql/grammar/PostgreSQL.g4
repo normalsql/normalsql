@@ -182,8 +182,7 @@ alterrolestmt
     ;
 
 alteroptroleelem
-    : 'PASSWORD' ( string | 'NULL' )
-    | ( 'ENCRYPTED' | 'UNENCRYPTED' ) 'PASSWORD' string
+    : ( 'ENCRYPTED' | 'UNENCRYPTED' )? 'PASSWORD' string
     | 'INHERIT'
     | 'CONNECTION' 'LIMIT' signedDecimal
     | 'VALID' 'UNTIL' string
@@ -192,7 +191,7 @@ alteroptroleelem
     ;
 
 alterrolesetstmt
-    : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ('IN' 'DATABASE' id)? setresetclause
+    : 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ( 'IN' 'DATABASE' id )? setresetclause
     ;
 
 droprolestmt
@@ -244,13 +243,11 @@ transactionMode
      | 'NOT'? 'DEFERRABLE'
      ;
 
-// Can be either a literal or a typecast (?)
 interval
-  : 'INTERVAL' ( string? timeUnit | '(' integer ')' string? )?
-  ;
+  : 'INTERVAL' ( string? timeUnit | '(' integer ')' string? )? ;
 
 value
-    : id | number | string ;
+  : id | number | string ;
 
 names
   : name ( ',' name )* ;
@@ -635,15 +632,15 @@ alterextensionstmt
 alterextensioncontentsstmt
     : 'ALTER' 'EXTENSION' id addDrop object_type_name id
     | 'ALTER' 'EXTENSION' id addDrop object_type_any_name qname
-    | 'ALTER' 'EXTENSION' id addDrop 'AGGREGATE' aggSignature
+    | 'ALTER' 'EXTENSION' id addDrop 'AGGREGATE' aggregateSignature
     | 'ALTER' 'EXTENSION' id addDrop 'CAST' '(' type 'AS' type ')'
     | 'ALTER' 'EXTENSION' id addDrop 'DOMAIN' type
-    | 'ALTER' 'EXTENSION' id addDrop 'FUNCTION' funcSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' operator_with_argtypes
+    | 'ALTER' 'EXTENSION' id addDrop 'FUNCTION' functionSignature
+    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' operatorSignature
     | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'CLASS' qname usingID
     | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'FAMILY' qname usingID
-    | 'ALTER' 'EXTENSION' id addDrop 'PROCEDURE' funcSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'ROUTINE' funcSignature
+    | 'ALTER' 'EXTENSION' id addDrop 'PROCEDURE' functionSignature
+    | 'ALTER' 'EXTENSION' id addDrop 'ROUTINE' functionSignature
     | 'ALTER' 'EXTENSION' id addDrop 'TRANSFORM' 'FOR' type 'LANGUAGE' id
     | 'ALTER' 'EXTENSION' id addDrop 'TYPE' type
     ;
@@ -766,7 +763,7 @@ createassertionstmt
     : 'CREATE' 'ASSERTION' qname 'CHECK' '(' term ')' timing* ;
 
 definestmt
-    : 'CREATE' orReplace? 'AGGREGATE' aggSignature definition
+    : 'CREATE' orReplace? 'AGGREGATE' aggregateSignature definition
     | 'CREATE' orReplace? 'AGGREGATE' qname definition
     | 'CREATE' 'OPERATOR' operator definition
     | 'CREATE' 'TYPE' qname definition?
@@ -825,9 +822,9 @@ opclass_item_list
 
 opclass_item
     : 'OPERATOR' integer operator opclass_purpose? 'RECHECK'?
-    | 'OPERATOR' integer operator_with_argtypes opclass_purpose? 'RECHECK'?
-    | 'FUNCTION' integer funcSignature
-    | 'FUNCTION' integer '(' type ( ',' type )* ')' funcSignature
+    | 'OPERATOR' integer operatorSignature opclass_purpose? 'RECHECK'?
+    | 'FUNCTION' integer functionSignature
+    | 'FUNCTION' integer '(' type ( ',' type )* ')' functionSignature
     | 'STORAGE' type
     ;
 
@@ -905,9 +902,9 @@ commentstmt
     | object_type_name id
     | 'TYPE' type
     | 'DOMAIN' type
-    | 'AGGREGATE' aggSignature
-    | routine funcSignature
-    | 'OPERATOR' operator_with_argtypes
+    | 'AGGREGATE' aggregateSignature
+    | routine functionSignature
+    | 'OPERATOR' operatorSignature
     | 'CONSTRAINT' id 'ON' 'DOMAIN'? qname?
     | object_type_name_on_any_name id 'ON' qname
     | 'TRANSFORM' 'FOR' type 'LANGUAGE' id
@@ -925,11 +922,11 @@ seclabelstmt
       | object_type_name id
       | 'TYPE' type
       | 'DOMAIN' type
-      | 'AGGREGATE' aggSignature
-      | 'FUNCTION' funcSignature
+      | 'AGGREGATE' aggregateSignature
+      | 'FUNCTION' functionSignature
       | 'LARGE' 'OBJECT' number
-      | 'PROCEDURE' funcSignature
-      | 'ROUTINE' funcSignature
+      | 'PROCEDURE' functionSignature
+      | 'ROUTINE' functionSignature
       )
       'IS' (string | 'NULL')
     ;
@@ -966,9 +963,9 @@ privilege_target
     | 'SEQUENCE' qnames
     | 'FOREIGN' 'DATA' 'WRAPPER' ids
     | 'FOREIGN' 'SERVER' ids
-    | 'FUNCTION' funcSignature ( ',' funcSignature )*
-    | 'PROCEDURE' funcSignature ( ',' funcSignature )*
-    | 'ROUTINE' funcSignature ( ',' funcSignature )*
+    | 'FUNCTION' functionSignature ( ',' functionSignature )*
+    | 'PROCEDURE' functionSignature ( ',' functionSignature )*
+    | 'ROUTINE' functionSignature ( ',' functionSignature )*
     | 'DATABASE' ids
     | 'DOMAIN' qnames
     | 'LANGUAGE' ids
@@ -1055,21 +1052,22 @@ orReplace
   : 'OR' 'REPLACE' ;
 
 paramDef
-  : id? argmode? id? type (( 'DEFAULT' | '=' ) term )? ;
+  : id? argMode? id? type (( 'DEFAULT' | '=' ) term )? ;
 
-funcSignature
-    : qname ( '(' triplets? ')' )? ;
+// TODO create a smaller arg just for functions?
+functionSignature
+    : qname ( '(' aggregateArgs? ')' )? ;
 
-aggSignature
-  : qname '(' ( '*' | ( triplets? 'ORDER' 'BY' )? triplets ) ')' ;
+aggregateSignature
+  : qname '(' ( '*' | ( aggregateArgs? 'ORDER' 'BY' )? aggregateArgs ) ')' ;
 
-triplets
-  : triplet ( ',' triplet )* ;
+aggregateArgs
+  : aggregateArg ( ',' aggregateArg )* ;
 
-triplet
-  : ( argmode id? | id argmode? )? type ;
+aggregateArg
+  : ( argMode id? | id argMode? )? type ;
 
-argmode
+argMode
   : 'IN' 'OUT'?
   | 'OUT'
   | 'INOUT'
@@ -1101,20 +1099,20 @@ withDef
   : 'WITH' definition ;
 
 alterfunctionstmt
-  : 'ALTER' routine funcSignature funcOptions+ 'RESTRICT'? ;
+  : 'ALTER' routine functionSignature funcOptions+ 'RESTRICT'? ;
 
 routine
   : 'FUNCTION' | 'PROCEDURE' | 'ROUTINE' ;
 
 removefuncstmt
-  : 'DROP' routine ifExists? funcSignature ( ',' funcSignature )* cascade? ;
+  : 'DROP' routine ifExists? functionSignature ( ',' functionSignature )* cascade? ;
 
 removeaggrstmt
-    : 'DROP' 'AGGREGATE' ifExists? aggSignature ( ',' aggSignature )* cascade?
+    : 'DROP' 'AGGREGATE' ifExists? aggregateSignature ( ',' aggregateSignature )* cascade?
     ;
 
 removeoperstmt
-    : 'DROP' 'OPERATOR' ifExists? operator_with_argtypes ( ',' operator_with_argtypes )* cascade?
+    : 'DROP' 'OPERATOR' ifExists? operatorSignature ( ',' operatorSignature )* cascade?
     ;
 
 // qualitified operator
@@ -1124,11 +1122,11 @@ operator
       // Include all implicitly defined operator tokens (in this grammar) here
       | '+' | '-' | '*' | '/' | '&' | '%' | '^' | '<' | '>' | '=' | '<=' | '>=' | '<>'
       )
+    | 'OPERATOR' '(' operator ')'
     ;
 
-operator_with_argtypes
-    : operator '(' type ( ',' type )? ')'
-    ;
+operatorSignature
+    : operator '(' type ( ',' type )? ')' ;
 
 dostmt
     : 'DO' ( 'LANGUAGE'? name )+
@@ -1136,8 +1134,8 @@ dostmt
 
 createcaststmt
     : 'CREATE' 'CAST' '(' type 'AS' type ')'
-      ('WITH' 'FUNCTION' funcSignature | 'WITHOUT' 'FUNCTION' | 'WITH' 'INOUT')
-      ('AS' ( 'IMPLICIT' |  'ASSIGNMENT' ))?
+      ( 'WITH' 'FUNCTION' functionSignature | 'WITHOUT' 'FUNCTION' | 'WITH' 'INOUT' )
+      ( 'AS' ( 'IMPLICIT' |  'ASSIGNMENT' ))?
     ;
 
 dropcaststmt
@@ -1149,8 +1147,8 @@ createtransformstmt
     ;
 
 transform_element_list
-    : 'FROM' 'SQL' 'WITH' 'FUNCTION' funcSignature ( ',' 'TO' 'SQL' 'WITH' 'FUNCTION' funcSignature )?
-    | 'TO' 'SQL' 'WITH' 'FUNCTION' funcSignature ( ',' 'FROM' 'SQL' 'WITH' 'FUNCTION' funcSignature )?
+    : 'FROM' 'SQL' 'WITH' 'FUNCTION' functionSignature ( ',' 'TO' 'SQL' 'WITH' 'FUNCTION' functionSignature )?
+    | 'TO' 'SQL' 'WITH' 'FUNCTION' functionSignature ( ',' 'FROM' 'SQL' 'WITH' 'FUNCTION' functionSignature )?
     ;
 
 droptransformstmt
@@ -1169,11 +1167,6 @@ reindex
     | 'VERBOSE' boolean?
     ;
 
-// TODO add support for 1 and 0?
-boolean
-  : 'TRUE' | 'FALSE' | 'ON' | 'OFF' ;
-
-
 alterTablespace
     : 'ALTER' 'TABLESPACE' id ( 'SET' | 'RESET' ) definition
     | 'ALTER' 'TABLESPACE' id 'OWNER' 'TO' id
@@ -1181,22 +1174,21 @@ alterTablespace
     ;
 
 renamestmt
-    : 'ALTER' 'AGGREGATE' aggSignature 'RENAME' 'TO' id
+    : 'ALTER' 'AGGREGATE' aggregateSignature 'RENAME' 'TO' id
     | 'ALTER' 'COLLATION' qname 'RENAME' 'TO' id
     | 'ALTER' 'CONVERSION' qname 'RENAME' 'TO' id
     | 'ALTER' 'DATABASE' id 'RENAME' 'TO' id
-    | 'ALTER' 'DOMAIN' qname 'RENAME' 'TO' id
-    | 'ALTER' 'DOMAIN' qname 'RENAME' 'CONSTRAINT' id 'TO' id
+    | 'ALTER' 'DOMAIN' qname 'RENAME' ( 'CONSTRAINT' id )? 'TO' id
     | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'RENAME' 'TO' id
-    | 'ALTER' 'FUNCTION' funcSignature 'RENAME' 'TO' id
+    | 'ALTER' 'FUNCTION' functionSignature 'RENAME' 'TO' id
     | 'ALTER' 'GROUP' id 'RENAME' 'TO' id
     | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'RENAME' 'TO' id
     | 'ALTER' 'OPERATOR' 'CLASS' qname usingID 'RENAME' 'TO' id
     | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID 'RENAME' 'TO' id
     | 'ALTER' 'POLICY' ifExists? id 'ON' qname 'RENAME' 'TO' id
-    | 'ALTER' 'PROCEDURE' funcSignature 'RENAME' 'TO' id
+    | 'ALTER' 'PROCEDURE' functionSignature 'RENAME' 'TO' id
     | 'ALTER' 'PUBLICATION' id 'RENAME' 'TO' id
-    | 'ALTER' 'ROUTINE' funcSignature 'RENAME' 'TO' id
+    | 'ALTER' 'ROUTINE' functionSignature 'RENAME' 'TO' id
     | 'ALTER' 'SCHEMA' id 'RENAME' 'TO' id
     | 'ALTER' 'SERVER' id 'RENAME' 'TO' id
     | 'ALTER' 'SUBSCRIPTION' id 'RENAME' 'TO' id
@@ -1223,27 +1215,27 @@ renamestmt
     ;
 
 alterobjectdependsstmt
-  : 'ALTER' 'FUNCTION' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-  | 'ALTER' 'PROCEDURE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-  | 'ALTER' 'ROUTINE' funcSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  : 'ALTER' 'FUNCTION' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'PROCEDURE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+  | 'ALTER' 'ROUTINE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
   | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
   | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
   | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
   ;
 
 alterobjectschemastmt
-    : 'ALTER' 'AGGREGATE' aggSignature 'SET' 'SCHEMA' id
+    : 'ALTER' 'AGGREGATE' aggregateSignature 'SET' 'SCHEMA' id
     | 'ALTER' 'COLLATION' qname 'SET' 'SCHEMA' id
     | 'ALTER' 'CONVERSION' qname 'SET' 'SCHEMA' id
     | 'ALTER' 'DOMAIN' qname 'SET' 'SCHEMA' id
     | 'ALTER' 'EXTENSION' id 'SET' 'SCHEMA' id
 
 
-    | 'ALTER' 'FUNCTION' funcSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'PROCEDURE' funcSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'ROUTINE' funcSignature 'SET' 'SCHEMA' id
+    | 'ALTER' 'FUNCTION' functionSignature 'SET' 'SCHEMA' id
+    | 'ALTER' 'PROCEDURE' functionSignature 'SET' 'SCHEMA' id
+    | 'ALTER' 'ROUTINE' functionSignature 'SET' 'SCHEMA' id
 
-    | 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' 'SCHEMA' id
+    | 'ALTER' 'OPERATOR' operatorSignature 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID 'SET' 'SCHEMA' id
     | 'ALTER' 'OPERATOR'  qname usingID 'SET' 'SCHEMA' id
     | 'ALTER' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
@@ -1259,7 +1251,7 @@ alterobjectschemastmt
 textSearchConfig : 'TEXT' 'SEARCH' ( 'PARSER' | 'DICTIONARY' | 'TEMPLATE' | 'CONFIGURATION' ) ;
 
 alteroperatorstmt
-    : 'ALTER' 'OPERATOR' operator_with_argtypes 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
+    : 'ALTER' 'OPERATOR' operatorSignature 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
     ;
 
 operator_def_elem
@@ -1272,13 +1264,13 @@ altertypestmt
     ;
 
 alterownerstmt
-    : 'ALTER' 'AGGREGATE' aggSignature 'OWNER' 'TO' id
+    : 'ALTER' 'AGGREGATE' aggregateSignature 'OWNER' 'TO' id
 
-    | 'ALTER' 'FUNCTION' funcSignature 'OWNER' 'TO' id
-    | 'ALTER' 'PROCEDURE' funcSignature 'OWNER' 'TO' id
-    | 'ALTER' 'ROUTINE' funcSignature 'OWNER' 'TO' id
+    | 'ALTER' 'FUNCTION' functionSignature 'OWNER' 'TO' id
+    | 'ALTER' 'PROCEDURE' functionSignature 'OWNER' 'TO' id
+    | 'ALTER' 'ROUTINE' functionSignature 'OWNER' 'TO' id
 
-    | 'ALTER' 'OPERATOR' operator_with_argtypes 'OWNER' 'TO' id
+    | 'ALTER' 'OPERATOR' operatorSignature 'OWNER' 'TO' id
 
     | 'ALTER' 'COLLATION' qname 'OWNER' 'TO' id
     | 'ALTER' 'CONVERSION' qname 'OWNER' 'TO' id
@@ -1352,7 +1344,7 @@ unlistenstmt
     : 'UNLISTEN' ( id | '*' ) ;
 
 transactionstmt
-    : ( 'ABORT' | | 'COMMIT' | 'END' | 'ROLLBACK' ) transaction_? ( 'AND' 'NO'? 'CHAIN' )?
+    : ( 'ABORT' | 'COMMIT' | 'END' | 'ROLLBACK' ) transaction_? ( 'AND' 'NO'? 'CHAIN' )?
     | ( 'BEGIN' transaction_? | 'START' 'TRANSACTION' ) ( transactionMode ( ',' transactionMode )* )?
     | 'RELEASE'? 'SAVEPOINT' id
     | 'RELEASE' id
@@ -2018,6 +2010,9 @@ id
   | VARIABLE
   | keyword
   ;
+
+boolean
+  : 'TRUE' | 'FALSE' ;
 
 // TODO comment out reserved keywords
 keyword
