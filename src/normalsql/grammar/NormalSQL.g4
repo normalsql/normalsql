@@ -4,6 +4,20 @@
 /*
  NormalSQL.g4, SQL DML grammar for ANTLR 4.x
 
+ Update 2025-04-19:
+
+  This grammar will eventually be deprecated.
+
+  The initial strategy of having an
+  pluripotent grammar support multiple dialects suffered a complexity catastrophe.
+  The second strategy of a heirarchy of grammars, where each dialect would extend
+  a common base gramar, didn't fly.
+
+  The current strategy is to have a distinct grammar for each dialect. These grammars
+  will be like NormalSQL, adopting the rule names, idioms, and so forth, so
+  they all generate the same parse tree (given the same input).
+
+
  Style:
 
  Child rules are indented when its (mostly) only used by a parent rule.

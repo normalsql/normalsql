@@ -1,3 +1,29 @@
+// Copyright 2010-2025 Jason Osgood
+// SPDX-License-Identifier: Apache-2.0
+
+/*
+ PostgreSQL.g4
+
+ Synthesis of Oleksii Kovalov' (et al) PostgreSQL grammar
+ ( https://github.com/antlr/grammars-v4/tree/master/sql/postgresql ) and
+ NormalSQL's grammar.
+
+ Given the same input, goal is for each dialect's grammar to emit the
+ same parse tree. This enables NormalSQL to be dialect agnostic. We'll see.
+
+ I copied Kovalov's grammar, incrementally changing it, fixing any
+ regressions I introduced. Over time, it became more like NormalSQL.g4.
+ Rule names, idioms, style, and so forth.
+
+ Kovalov's work was invaluable. I learned quite a bit about PostgreSQL
+ and it's grammar. Like meta commands, unary right operators (?!),
+ and much more.
+
+ I don't yet know if Apache-2.0 and MIT licenses are compatible or
+ whatever. I'll change NormalSQL's license(s) as needed.
+
+*/
+
 /*
 PostgreSQL grammar.
 The MIT License (MIT).
@@ -1564,7 +1590,7 @@ select
       : 'LIMIT' term ;
 
     fetch
-      : 'FETCH' firstNext (term)? rowRows ( 'ONLY' | 'WITH' 'TIES' ) ;
+      : 'FETCH' firstNext term? rowRows ( 'ONLY' | 'WITH' 'TIES' ) ;
 
     offset
       : 'OFFSET' term rowRows? ;

@@ -2,16 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- SQLite.g4
+  SQLite.g4
 
- Synthesis of Bart Keirs' (et al) sqlite-parser and my NormalSQL grammar.
+  Synthesis of Bart Keirs' (et al) sqlite-parser
+  ( https://github.com/antlr/grammars-v4/tree/master/sql/sqlite ) and
+  NormalSQL's grammar.
 
- Goal is to have grammars for misc dialects to all emit similiarly structured parse
- trees.
+  Given the same input, goal is for each dialect's grammar to emit the
+  same parse tree. This enables NormalSQL to be dialect agnostic. We'll see.
 
- We'll see.
+  I copied Keirs's grammar, incrementally changing it, fixing any
+  regressions I introduced. Over time, it became more like NormalSQL.g4.
+  Rule names, idioms, style, and so forth.
 
- TODO: Does not correctly handle precedent for BETWEEN vs AND.
+  Keirs' work was a huge help. I picked the smallest SQL grammar to validate
+  my strategy (of distinct grammars per dialect instead of an pluripotent grammar
+  covering multiple dialects). It was fun learning SQLite specific differences;
+  I corrected things I misunderstood about both SQL and SQLite. Woot.
+
+  I don't yet know if Apache-2.0 and MIT licenses are compatible or
+  whatever. I'll change NormalSQL's license(s) as needed. I have no opinions or
+  preferences; NormalSQL uses APL 2.0 because it seems to be the default for FOSS.
+
+  TODO: Does not correctly handle precedent for BETWEEN vs AND.
 
 */
 
