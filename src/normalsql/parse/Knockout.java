@@ -1,4 +1,4 @@
-// Copyright 2010-2024 Jason Osgood
+// Copyright 2010-2025 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
 package normalsql.parse;
@@ -12,9 +12,12 @@ import normalsql.grammar.NormalSQLParser.SubtermContext;
 /**
  * A Knockout references a parse tree containing literals to be considered
  * for replacement by a placeholder question mark '?' by the code generator.
+ * ("Knockout" is prepress term for removing ink to make something else
+ * visible underneath. I'm open to name suggestions; other than "parameter",
+ * which is already used throughout. Maybe "cut-out", "hole", "cantalope"...)
  *
- * Subclasses will have any additional context needed for code generating
- * their corresponding accessors.
+ * Subclasses have any additional context needed to code generate
+ * corresponding accessors.
  *
  * @author Jason Osgood
  *
