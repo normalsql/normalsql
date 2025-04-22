@@ -1,14 +1,14 @@
 // Copyright 2010-2024 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql.parse;
+package normalsql.postgresql;
 
-import normalsql.grammar.NormalSQLParser.*;
+import normalsql.grammar.PostgreSQLParser.*;
 
 public class
 	BETWEEN
 extends
-	Knockout<SubtermBETWEENContext, BETWEEN.Pattern>
+	Knockout<TermBETWEENContext, BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
@@ -30,16 +30,16 @@ extends
 //		LiteralLiteralLiteral  // '5 BETWEEN 0 AND 10'
 	}
 
-	public SubtermContext test;
-	public SubtermContext low;
-	public SubtermContext high;
+	public TermContext test;
+	public TermContext low;
+	public TermContext high;
 
-	public BETWEEN( SubtermBETWEENContext context )
+	public BETWEEN( TermBETWEENContext context )
 	{
 		super( context );
-		test = context.subterm( 0 );
-		low = context.subterm( 1 );
-		high = context.subterm( 2 );
+		test = context.term( 0 );
+		low = context.term( 1 );
+		high = context.term( 2 );
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
 }

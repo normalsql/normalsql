@@ -1527,7 +1527,7 @@ insert
 
       ( 'ON' 'CONFLICT'
         ( '(' index_params ')' where? | 'ON' 'CONSTRAINT' id )?
-        'DO' ( 'UPDATE' 'SET' set_clause_list where? | 'NOTHING' )
+        'DO' ( 'UPDATE' 'SET' setter ( ',' setter )* where? | 'NOTHING' )
       )?
       returning?
     ;
@@ -1549,7 +1549,7 @@ merge_insert_clause
   ;
 
 merge_update_clause
-  : 'WHEN' 'MATCHED' ( 'AND' term )? 'THEN'? 'UPDATE' 'SET' set_clause_list
+  : 'WHEN' 'MATCHED' ( 'AND' term )? 'THEN'? 'UPDATE' 'SET' setter ( ',' setter )*
   ;
 
 delete
@@ -1567,14 +1567,12 @@ lock_type
     ;
 
 update
-    : with? 'UPDATE' descendants alias? 'SET' set_clause_list from? whereCurrent? returning?
+    : with? 'UPDATE' descendants alias?
+      'SET' setter ( ',' setter )*
+      from? whereCurrent? returning?
     ;
 
-set_clause_list
-    : set_clause ( ',' set_clause )*
-    ;
-
-set_clause
+setter
     : qname '=' term
     | '(' qnames ')' '=' term
     ;
@@ -1807,63 +1805,64 @@ terms
 
 // https://www.postgresql.org/docs/12/sql-syntax-lexical.html#SQL-PRECEDENCE
 term
-  : term ( '::' type )+
-  | atom
+  : term ( '::' type )+ #TermIgnore
+  | literal #TermLiteral
+  | qname  #TermColumn
   // unary left
   // TODO instances of OPERATOR need to be qualitified?
-  | ('NOT' | '-' | '+' | OPERATOR ) term
-  | term collate
-  | term 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term
-  | <assoc=right> term '^' term
-  | term ( '*' | '/' | '%' ) term
-  | term ( '+' | '-' ) term
+  | ('NOT' | '-' | '+' | OPERATOR ) term #TermIgnore
+  | term collate #TermIgnore
+  | term 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term #TermIgnore
+  | <assoc=right> term '^' term #TermIgnore
+  | term ( '*' | '/' | '%' ) term #TermIgnore
+  | term ( '+' | '-' ) term #TermIgnore
   // TODO instances of OPERATOR need to be qualitified?
-  | term OPERATOR term?
-  | term ( '<<' | '>>' | '&' | '|' ) term
-  | term 'NOT'? 'BETWEEN' 'SYMMETRIC'? term 'AND' term
-  | term 'NOT'? 'IN' '(' ( select |  terms ) ')'
+  | term OPERATOR term? #TermIgnore
+  | term ( '<<' | '>>' | '&' | '|' ) term #TermIgnore
+  | term 'NOT'? 'BETWEEN' 'SYMMETRIC'? term 'AND' term #TermBETWEEN
+  | term 'NOT'? 'IN' '(' ( select |  terms ) ')' #TermIN
   // workaround for ANTLR's left recursion pattern recognizer not seeing this
-  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term 'ESCAPE' term
-  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term
-  | term ( '<' | '>' | '=' | '<=' | '>=' | '<>' ) term
-  | term ( 'ISNULL' | 'NOTNULL' )
+  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term 'ESCAPE' term #TermLIKE
+  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term #TermLIKE
+  | term compare=( '<' | '>' | '=' | '<=' | '>=' | '<>' ) term #TermCompare
+  | term ( 'ISNULL' | 'NOTNULL' ) #TermIgnore
 
-  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term
-  | term 'IS' 'NOT'? normalForm? 'NORMALIZED'
-  | term 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')'
+  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
+  | term 'IS' 'NOT'? normalForm? 'NORMALIZED' #TermIgnore
+  | term 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')' #TermIgnore
 
   // best guess for precedence for following...
-  | row
-  | row 'OVERLAPS' row
+  | row #TermIgnore
+  | row 'OVERLAPS' row #TermIgnore
   // unary right
-  | <assoc=right> term OPERATOR
-  | 'CASE' (term)? when+ ( 'ELSE' term )? 'END'
-  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?
+  | <assoc=right> term OPERATOR #TermIgnore
+  | 'CASE' (term)? when+ ( 'ELSE' term )? 'END' #TermIgnore
+  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?  #TermIgnore
   // TODO do these other nestings also need index suffix?
-  | 'EXISTS' '(' select ')'
-  | 'ARRAY' ( '(' select ')' | array )
-  | 'GROUPING' '(' terms ')'
-  | 'UNIQUE' '(' select ')'
-  | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index*
-  | term 'BETWEEN' term 'AND' term
+  | 'EXISTS' '(' select ')' #TermIgnore
+  | 'ARRAY' ( '(' select ')' | array ) #TermIgnore
+  | 'GROUPING' '(' terms ')' #TermIgnore
+  | 'UNIQUE' '(' select ')' #TermIgnore
+  | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index* #TermIgnore
+//  | term 'BETWEEN' term 'AND' term #TermBETWEEN
   // workaround to ensure BETWEEN beats AND, building correct parse tree
-  | term { notBETWEEN( $ctx ) }? 'AND' term
-  | term 'OR' term
+  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
+  | term 'OR' term #TermIgnore
   ;
 
-atom
+literal
   : PARAM
   | integer
   | FLOAT
   | string
   | interval
+  // TODO move this to be a type cast somewhere else?
   | type string
-  | qname
   ;
 
 function
     : genericFunction
-    // Functions which differ from generic form
+    // Chaotic mutant function signatures go here
     | 'COLLATION' 'FOR' '(' term ')'
     | 'CAST' '(' term 'AS' type ')'
     | 'EXTRACT' '(' ( name 'FROM' term )? ')'
@@ -1991,13 +1990,14 @@ jsonUniqueKeys
   : withers 'UNIQUE' 'KEYS'? ;
 
 jsonPair
-  : atom 'VALUE' jsonValue
+  : literal 'VALUE' jsonValue
   | term ':' jsonValue
   ;
 
 jsonOnNull
   : ( 'NULL' | 'ABSENT' ) 'ON' 'NULL' ;
 
+// TODO refactor qnames, ids, columns, etc
 qnames
   : qname ( ',' qname )* ;
 
