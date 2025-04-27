@@ -16,7 +16,6 @@
 package normalsql.postgresql;
 
 import normalsql.grammar.PostgreSQLParser.*;
-import normalsql.grammar.PostgreSQLParser.ParseContext;
 import normalsql.grammar.PostgreSQLParser.SelectContext;
 import normalsql.grammar.PostgreSQLParser.DeleteContext;
 import normalsql.grammar.PostgreSQLParser.InsertContext;
@@ -45,7 +44,7 @@ public class
     }
 
 
-    public void banana( ParseTree parent )
+    public void climb( ParseTree parent )
     {
         Statement top = stack.peek();
         for( int nth = 0; nth < parent.getChildCount(); nth++ )
@@ -59,7 +58,6 @@ public class
 
             boolean isStatement = switch( child )
             {
-                case ParseContext ignore -> true;
                 case SelectContext ignore -> true;
                 case InsertContext ignore -> true;
                 case UpdateContext ignore -> true;
@@ -72,7 +70,7 @@ public class
                 Statement statement = new Statement();
                 top.add( statement );
                 stack.push( statement );
-                banana( child );
+                climb( child );
                 stack.pop();
             }
             else
@@ -95,7 +93,7 @@ public class
                     knockouts.add( k );
                 }
 
-                banana( child );
+                climb( child );
             }
         }
     }
