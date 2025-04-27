@@ -1,13 +1,12 @@
-// Copyright 2010-2024 Jason Osgood
+// Copyright 2010-2025 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql;
+package normalsql.postgresql;
 
 import normalsql.grammar.PostgreSQLParser;
 import normalsql.grammar.PostgreSQLLexer;
 import normalsql.grammar.PostgreSQLParser.TermColumnContext;
 import normalsql.grammar.PostgreSQLParser.TermContext;
-import normalsql.postgresql.*;
 import normalsql.template.JavaHelper;
 import normalsql.template.ResultSetColumn;
 import org.antlr.v4.runtime.CharStreams;
@@ -92,27 +91,26 @@ public class
 		 var lexer = new PostgreSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
 		var parser = new PostgreSQLParser( tokens );
-		var trunk  = parser.parse();
+		 var trunk = parser.parse();
 
 		Monkey monkey = new Monkey();
-		monkey.banana( trunk );
-//		monkey.climb( trunk );
+		monkey.climb( trunk );
 
-		var ffs = monkey.trunk;
+		unitOfWork.root = monkey.trunk;
 		if( unitOfWork.root == null || unitOfWork.root.isEmpty() )
 		{
 			WARN.log( "file contains no statements: " + unitOfWork.sourceFile ) ;
 			return;
 		}
 
-//		for( var knockout : langur.knockouts )
-//		{
-//			// TODO this doesn't work yet because bugs in knockouts
-//			if( !knockout.isMatched() )
-//			{
-//				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
-//			}
-//
+		for( var knockout : monkey.knockouts )
+		{
+			// TODO this doesn't work yet because bugs in knockouts
+			if( !knockout.isMatched() )
+			{
+				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
+			}
+
 //			switch( knockout )
 //			{
 //				case BETWEEN b ->
@@ -195,7 +193,7 @@ public class
 //
 //				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
 //			}
-//		}
+		}
 
 		/*
 		  Transform original SQL source code into a prepared statement,

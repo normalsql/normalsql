@@ -1,7 +1,9 @@
 // Copyright 2010-2025 Jason Osgood
 // SPDX-License-Identifier: Apache-2.0
 
-package normalsql;
+package normalsql.postgresql;
+
+import normalsql.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +48,8 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 public class
 	ToolP
 {
-	public static LogShim INFO  = new ConsoleLog( "info", System.out );
-	public static LogShim WARN  = new ConsoleLog( "warn", System.out );
+	public static LogShim INFO = new ConsoleLog( "info", System.out );
+	public static LogShim WARN = new ConsoleLog( "warn", System.out );
 	public static LogShim DEBUG = new ConsoleLog( "debug", System.out );
 	public static LogShim ERROR = new ConsoleLog( "error", System.err );
 

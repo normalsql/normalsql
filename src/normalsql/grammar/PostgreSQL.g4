@@ -67,7 +67,7 @@ boolean notBETWEEN( ParserRuleContext ctx )
 };
 }
 
-parse
+statements
   : statement? ( SEMI statement? )* EOF
   ;
 
