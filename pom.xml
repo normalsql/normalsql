@@ -136,6 +136,19 @@
         <testSourceDirectory>test</testSourceDirectory>
         <outputDirectory>target/classes</outputDirectory>
         <testOutputDirectory>target/test-classes</testOutputDirectory>
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <excludes><exclude>**/*.java</exclude></excludes>
+<!--                <includes>-->
+<!--                    <include>**/*.vm</include>-->
+<!--                </includes>-->
+            </resource>
+            <!-- optionally include default src/main/resources -->
+<!--            <resource>-->
+<!--                <directory>src/main/resources</directory>-->
+<!--            </resource>-->
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

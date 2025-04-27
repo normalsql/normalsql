@@ -5,15 +5,22 @@ package normalsql;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import static java.nio.file.FileVisitResult.*;
-
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
+
 /*
+	TODO: Delete me. Clone of Tool just drive crawler strategy POC.
+
 	TODO:
 
 		parse all found files
@@ -33,12 +40,12 @@ import java.util.List;
 			https://franckpachot.medium.com/you-should-set-ocsid-clientid-e00cb81ed7e2
 
 			configurable
-			or maybe default to appname, if possible
+			or maybe default to app name, if possible
 
  */
-	
+
 public class
-	Tool
+	ToolP
 {
 	public static LogShim INFO  = new ConsoleLog( "info", System.out );
 	public static LogShim WARN  = new ConsoleLog( "warn", System.out );
@@ -58,7 +65,6 @@ public class
 		config.url = cli.getOption( "url", "j", "JDBC url", "" );
 		config.url = "jdbc:h2:tcp://localhost/~/Projects/normalsql/doc/classicmodels/classicmodels";
 		config.username = cli.getOption( "username", "u", "login username", "" );
-		config.username = "sa";
 		config.password = cli.getOption( "password", "p", "password", "" );
 		config.source = cli.getOption( "source", "s", "source directory", "" );
 		config.target = cli.getOption( "target", "t", "target directory", config.source );
@@ -75,7 +81,7 @@ public class
 		{
 			try
 			{
-				var tool  = new Tool( config );
+				var tool  = new ToolP( config );
 				tool.generate( config );
 				// OK
 				status = 0;
@@ -93,7 +99,7 @@ public class
 
 	Config config;
 
-	public Tool( Config c ) throws Exception
+	public ToolP( Config c ) throws Exception
 	{
 		config = c;
 		config.cwd = new File( System.getProperty( "user.dir" )).toPath();
@@ -123,7 +129,8 @@ public class
 	{
 		try
 		(
-			var conn = DriverManager.getConnection( config.url, config.username, config.password )
+//			var conn = DriverManager.getConnection( config.url, config.username, config.password )
+			Connection conn = null
 		)
 		{
 			var files = walkFileTree( config.cwd, config.sourcePath, config.extension );
@@ -132,7 +139,7 @@ public class
 
 			if( count > 0 )
 			{
-				var worker = new Worker( conn );
+				var worker = new WorkerP( conn );
 
 				for( var file : files )
 				{
