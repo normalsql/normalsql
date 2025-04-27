@@ -59,12 +59,15 @@ public abstract class Knockout<T extends ParserRuleContext, E extends Enum<E>>
 	 */
 	public static <E extends Enum<E>> E valueOf( Class<E> patterns, TermContext... contexts )
 	{
-		StringBuilder name = new StringBuilder();
-		for( TermContext c : contexts )
+		var name = new StringBuilder();
+		for( var c : contexts )
 		{
-			String simple = c.getClass().getSimpleName();
-			simple = simple.replaceFirst( "^Subterm", "" ).replaceFirst( "Context$", "" );
-			name.append(simple);
+			var simple = c.getClass().getSimpleName()
+				// TODO remove Subterm after refactoring NormalSQL.g4
+				.replaceFirst( "^Subterm", "" )
+				.replaceFirst( "^Term", "" )
+				.replaceFirst( "Context$", "" );
+			name.append( simple );
 		}
 
 		E[] boo = patterns.getEnumConstants();
