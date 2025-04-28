@@ -269,7 +269,7 @@ set_rest_more
   | 'TIME' 'ZONE' ( string | id | interval | number | 'DEFAULT' | 'LOCAL' )
   | 'CATALOG' string
   | 'SCHEMA' string
-  | 'NAMES' (string | 'DEFAULT')?
+  | 'NAMES' ( string | 'DEFAULT' )?
   | 'ROLE' name
   | 'SESSION' 'AUTHORIZATION' name
   | 'XML' 'OPTION' root
@@ -579,7 +579,7 @@ excludeElement
   : ( id | '(' term ')' ) collate? 'WITH' operator ;
 
 inherit
-  : 'INHERITS' '(' qnames ')' ;
+  : 'INHERITS' columns ;
 
 part_elem
     : id collate? qname?
@@ -635,7 +635,7 @@ number
 
 createplangstmt
     : 'CREATE' orReplace? 'TRUSTED'? 'PROCEDURAL'? 'LANGUAGE' id
-      ( 'HANDLER' qname ('INLINE' qname)? ('VALIDATOR' qname
+      ( 'HANDLER' qname ( 'INLINE' qname )? ('VALIDATOR' qname
     | 'NO' 'VALIDATOR')? )?
     ;
 
@@ -727,12 +727,12 @@ alterusermappingstmt
     ;
 
 createpolicystmt
-    : 'CREATE' 'POLICY' id 'ON' qname ('AS' id)? rowsecuritydefaultforcmd? ('TO' ids)? rowsecurityoptionalexpr?
+    : 'CREATE' 'POLICY' id 'ON' qname ( 'AS' id )? rowsecuritydefaultforcmd? ( 'TO' ids )? rowsecurityoptionalexpr?
         rowsecurityoptionalwithcheck?
     ;
 
 alterpolicystmt
-    : 'ALTER' 'POLICY' id 'ON' qname ('TO' ids)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
+    : 'ALTER' 'POLICY' id 'ON' qname ( 'TO' ids )? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
     ;
 
 rowsecurityoptionalexpr
@@ -801,7 +801,7 @@ definestmt
     | 'CREATE' orReplace? 'AGGREGATE' qname definition
     | 'CREATE' 'OPERATOR' operator definition
     | 'CREATE' 'TYPE' qname definition?
-    | 'CREATE' 'TYPE' qname 'AS' '(' (tablefuncelement ( ',' tablefuncelement )*)? ')'
+    | 'CREATE' 'TYPE' qname 'AS' '(' (tablefuncelement ( ',' tablefuncelement )* )? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'ENUM' '(' ( string ( ',' string )* )? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'RANGE' definition
     | 'CREATE' textSearchConfig qname definition
@@ -833,7 +833,7 @@ alterenumstmt
     ;
 
 createopclassstmt
-    : 'CREATE' 'OPERATOR' 'CLASS' qname 'DEFAULT'? forType usingID ('FAMILY' qname)?
+    : 'CREATE' 'OPERATOR' 'CLASS' qname 'DEFAULT'? forType usingID ( 'FAMILY' qname )?
       'AS' opclass_item_list
     ;
 
@@ -950,7 +950,7 @@ commentstmt
   ;
 
 seclabelstmt
-    : 'SECURITY' 'LABEL' ('FOR' name)? 'ON'
+    : 'SECURITY' 'LABEL' ( 'FOR' name )? 'ON'
       ( object_type_any_name qname
       | 'COLUMN' qname
       | object_type_name id
@@ -985,7 +985,7 @@ revokestmt
 
 privileges
   : privilege ( ',' privilege )*
-  | 'ALL' 'PRIVILEGES'? ( columns )?
+  | 'ALL' 'PRIVILEGES'? columns?
   ;
 
 privilege
@@ -1020,7 +1020,7 @@ grantrolestmt
   : 'GRANT' privilege ( ',' privilege )* 'TO' ids ( 'WITH' 'ADMIN' 'OPTION' )? grantedBy? ;
 
 revokerolestmt
-    : 'REVOKE' ('ADMIN' 'OPTION' 'FOR')? privilege ( ',' privilege )* 'FROM' ids grantedBy? cascade?
+    : 'REVOKE' ( 'ADMIN' 'OPTION' 'FOR' )? privilege ( ',' privilege )* 'FROM' ids grantedBy? cascade?
     ;
 
 grantedBy
@@ -1030,7 +1030,7 @@ alterdefaultprivilegesstmt
     : 'ALTER' 'DEFAULT' 'PRIVILEGES'
       ( 'IN' 'SCHEMA' ids | 'FOR' 'ROLE' ids | 'FOR' 'USER' ids )*
       ( 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
-      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* cascade?
+      | 'REVOKE' ( 'GRANT' 'OPTION' 'FOR' )? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* cascade?
       )
     ;
 
@@ -1328,7 +1328,7 @@ alterownerstmt
     ;
 
 createpublicationstmt
-    : 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' descendants ( ',' descendants )* | 'FOR' 'ALL' 'TABLES')? withDef?
+    : 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' descendants ( ',' descendants )* | 'FOR' 'ALL' 'TABLES' )? withDef?
     ;
 
 alterpublicationstmt
@@ -1397,7 +1397,7 @@ viewstmt
     : 'CREATE' ( 'OR' 'REPLACE' )? scope? (
         'VIEW' tableRef withDef?
         | 'RECURSIVE' 'VIEW' qname columns withDef?
-    ) 'AS' select ('WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION')?
+    ) 'AS' select ('WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION' )?
     ;
 
 loadstmt
@@ -1473,7 +1473,7 @@ clusterstmt
 
 vacuumstmt
     : 'VACUUM' 'FULL'? 'FREEZE'? 'VERBOSE'? ANALYZE? (tableRef ( ',' tableRef )* )?
-    | 'VACUUM' '(' optionElems ')' ( tableRef ( ',' tableRef )*)?
+    | 'VACUUM' '(' optionElems ')' ( tableRef ( ',' tableRef )* )?
     ;
 
 analyzestmt
@@ -1507,7 +1507,7 @@ optionElems
     ;
 
 option_elem
-    : id (name | number)?
+    : id ( name | number )?
     ;
 
 preparestmt
@@ -1521,7 +1521,7 @@ deallocatestmt
 insert
     : with? 'INSERT' 'INTO' qname ( 'AS' id )?
 
-      ( ( '(' qnames ')' )? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
+      ( columns? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
       | 'DEFAULT' 'VALUES'
       )
 
@@ -1541,11 +1541,11 @@ mergestmt
       ( merge_insert_clause merge_update_clause?
       | merge_update_clause merge_insert_clause?
       )
-      ('WHEN' 'MATCHED' 'THEN'? 'DELETE')?
+      ( 'WHEN' 'MATCHED' 'THEN'? 'DELETE' )?
     ;
 
 merge_insert_clause
-  : 'WHEN' 'NOT' 'MATCHED' ( 'AND' term )? 'THEN'? 'INSERT' ( '(' qnames ')' )? values
+  : 'WHEN' 'NOT' 'MATCHED' ( 'AND' term )? 'THEN'? 'INSERT' columns? values
   ;
 
 merge_update_clause
@@ -1556,7 +1556,7 @@ delete
   : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning? ;
 
 lockstmt
-    : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ('IN' lock_type 'MODE')? 'NOWAIT'?
+    : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ( 'IN' lock_type 'MODE' )? 'NOWAIT'?
     ;
 
 lock_type
@@ -1574,7 +1574,8 @@ update
 
 setter
     : qname '=' term
-    | '(' qnames ')' '=' term
+    // TODO maybe inline columns
+    | columns '=' term
     ;
 
 declarecursorstmt
@@ -1827,12 +1828,12 @@ term
   | term 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')' #TermIgnore
 
   // best guess for precedence for following...
-  | row #TermIgnore
-  | row 'OVERLAPS' row #TermIgnore
+  | row #TermRow
+  | row 'OVERLAPS' row #TermOverlaps
   // unary right
   | <assoc=right> term OPERATOR #TermIgnore
-  | 'CASE' (term)? when+ ( 'ELSE' term )? 'END' #TermIgnore
-  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?  #TermIgnore
+  | 'CASE' term? when+ ( 'ELSE' term )? 'END' #TermIgnore
+  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ) )?  #TermIgnore
   // TODO do these other nestings also need index suffix?
   | 'EXISTS' '(' select ')' #TermIgnore
   | 'ARRAY' ( '(' select ')' | array ) #TermIgnore
@@ -1866,7 +1867,7 @@ function
     | 'POSITION' '(' ( term 'IN' term )? ')'
     | 'SUBSTRING' '(' ( substr_list | args? ) ')'
     | 'TREAT' '(' term 'AS' type ')'
-    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( (term)? 'FROM' )? terms ')'
+    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')' | terms ) )? ')'
     | 'XMLEXISTS' '(' xmlPassings ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
@@ -1878,7 +1879,7 @@ function
     | 'JSON_ARRAY' '(' ( jsonValue (',' jsonValue)* jsonOnNull? jsonReturning? | '(' select ')' jsonFormat? jsonReturning? | jsonReturning? ) ')'
     | 'JSON_EXISTS' '(' jsonValue ',' term jsonPassing? jsonOnError? ')'
     | 'JSON_OBJECT' '(' ( args | jsonPair (',' jsonPair)* jsonOnNull? jsonUniqueKeys? jsonReturning? | jsonReturning? ) ')'
-    | 'JSON_QUERY' '(' jsonValue ',' term jsonPassing? jsonReturning? json_wrapper_behavior? ( 'KEEP' | 'OMIT' ) 'QUOTES' ( 'ON' 'SCALAR' 'STRING' )?? jsonOnEmpty? jsonOnError? ')'
+    | 'JSON_QUERY' '(' jsonValue ',' term jsonPassing? jsonReturning? json_wrapper_behavior? ( 'KEEP' | 'OMIT' ) 'QUOTES' ( 'ON' 'SCALAR' 'STRING' )? jsonOnEmpty? jsonOnError? ')'
     | 'JSON_SERIALIZE' '(' jsonValue jsonReturning? ')'
     | 'JSON_VALUE' '(' jsonValue ',' term jsonPassing? jsonReturning? jsonOnEmpty? jsonOnError? ')'
     ;
@@ -1914,8 +1915,8 @@ frame_bound
   ;
 
 row
-  : 'ROW' '(' terms? ')'
-  | '(' terms ',' term ')'
+  : 'ROW' '(' ( term ( ',' term )* )? ')'
+  | '(' term ( ',' term )+ ')'
   ;
 
 args
@@ -1943,7 +1944,7 @@ when
 
 index // TODO better name. deref? chain? back to indirection?
   : '.' ( id | '*' )
-  | '[' ( term | (term)? ':' (term)? ) ']'
+  | '[' ( term | term? ':' term? ) ']'
   ;
 
 jsonPassing
@@ -2000,7 +2001,7 @@ qname
   : name index* ;
 
 columns
-  : '(' id ( ',' id )* ')' ;
+  : '(' name ( ',' name )* ')' ;
 
 ids
   : id ( ',' id )* ;
@@ -2020,10 +2021,10 @@ string
   ;
 
 signedDecimal
-  : ('+' | '-')? DECIMAL ;
+  : ( '+' | '-' )? DECIMAL ;
 
 signedFloat
-  : ('+' | '-')? FLOAT ;
+  : ( '+' | '-' )? FLOAT ;
 
 id
   : Identifier ( 'UESCAPE' StringConstant )?
