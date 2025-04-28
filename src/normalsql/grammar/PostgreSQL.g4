@@ -1582,7 +1582,10 @@ declarecursorstmt
     ;
 
 select
-  : with? selectCombo orderBy? ( limit | fetch | offset | locking )* ;
+  : with?
+    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )*
+    orderBy?
+    ( limit | fetch | offset | locking )* ;
 
     limit
       : 'LIMIT' term ;
@@ -1595,14 +1598,6 @@ select
 
     locking
       : 'FOR' ( ( 'NO' 'KEY' )? 'UPDATE' | 'KEY'? 'SHARE' ) ( 'OF' qnames )? ( 'NOWAIT' | 'SKIP' 'LOCKED' )? ;
-
-// TODO will this workaround left-recurse?
-//selectCombo
-//    : selectCombo ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? ) selectCombo
-//    | selectCore
-//    ;
-selectCombo
-    : selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )* ;
 
 selectCore
   : 'SELECT' quantifier? ( item ( ',' item )* ','? )?
