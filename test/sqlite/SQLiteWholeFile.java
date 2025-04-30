@@ -175,7 +175,7 @@ SQLiteWholeFile
 					error();
 //					fails.add( "\nerror" );
 					fails.add( "" + line + ":" + charPositionInLine + "  " + msg );
-					fails.add( sql );
+//					fails.add( sql );
 					fails.add( sourceFile.toString() );
 //					fails.add( sql );
 					last = sql;
@@ -228,6 +228,6 @@ SQLiteWholeFile
 		} );
 
 		parser.setProfile( true );
-		var result = parser.parse();
+		var result = parser.statements();
 	}
 }

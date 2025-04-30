@@ -17,7 +17,7 @@ import java.util.Stack;
 public class
 	KnockoutVisitor
 extends
-		NormalSQLBaseVisitor<Void>
+	NormalSQLBaseVisitor<Void>
 {
 	public Parser parser;
 	public CommonTokenStream tokens;
@@ -78,7 +78,7 @@ extends
 	{
 		// TODO: Could or should these be inlined into visitSelect?
 		var item = new Item();
-		item.context  = context;
+//		item.context  = context;
 		item.verbatim = tokens.getText( context );
 
 		String qname = tokens.getText( context.term() );

@@ -16,15 +16,14 @@
 package normalsql.postgresql;
 
 import normalsql.grammar.PostgreSQLParser.*;
-import normalsql.grammar.PostgreSQLParser.SelectContext;
-import normalsql.grammar.PostgreSQLParser.DeleteContext;
-import normalsql.grammar.PostgreSQLParser.InsertContext;
-import normalsql.grammar.PostgreSQLParser.UpdateContext;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.Stack;
+
+import static normalsql.Glorp.getLocalName;
 
 /**
  * Monkey's climb trees. Torturing this metaphor, "trunk" (not "root") is the starting node.
@@ -37,12 +36,13 @@ public class
     public Statement        trunk = new Statement();
     public Stack<Statement> stack = new Stack<>();
     public ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
+    public CommonTokenStream tokens;
 
-    public Monkey()
+    public Monkey( CommonTokenStream tokens )
     {
+        this.tokens = tokens;
         stack.add( trunk );
     }
-
 
     public void climb( ParseTree parent )
     {
@@ -56,22 +56,39 @@ public class
                 continue;
             }
 
-            boolean isStatement = switch( child )
+            Statement isStatement = switch( child )
             {
-                case SelectContext ignore -> true;
-                case InsertContext ignore -> true;
-                case UpdateContext ignore -> true;
-                case DeleteContext ignore -> true;
-                default -> false;
+                case SelectContext ignore -> new Select();
+                case InsertContext insert -> climb( insert );
+                case UpdateContext ignore -> new Update();
+                case DeleteContext ignore -> new Delete();
+                default -> null;
             };
 
-            if( isStatement )
+            if( isStatement != null)
             {
-                Statement statement = new Statement();
-                top.add( statement );
-                stack.push( statement );
+                top.add( isStatement );
+                stack.push( isStatement );
                 climb( child );
                 stack.pop();
+                continue;
+            }
+
+            if( parent instanceof ItemContext context )
+            {
+                // TODO: Could or should these be inlined into visitSelect?
+                var item = new Item();
+                item.context  = context;
+                item.verbatim = tokens.getText( context );
+
+                String qname = tokens.getText( context.term() );
+                item.localName = getLocalName( qname );
+
+                if( context.alias() != null )
+                {
+                    item.alias = tokens.getText( context.alias() );
+                }
+                top.items.add( item );
             }
             else
             {
@@ -85,16 +102,62 @@ public class
                     default -> null;
                 };
 
-                // TODO to aid debugging, add all potential knockouts, filter matches later
-                if( k != null )
-//                if( k != null && k.isMatched() )
+//                // TODO to aid debugging, add all potential knockouts, filter matches later
+//                if( k != null )
+                if( k != null && k.isMatched() )
                 {
                     top.knockouts.add( k );
                     knockouts.add( k );
                 }
 
-                climb( child );
+            }
+            climb( child );
+        }
+    }
+
+    public Insert climb( InsertContext context )
+    {
+        Insert insert = null;
+
+        // Drill down to first row
+        var termList = context.select().selectCore(0).values().terms();
+        var subterm = termList.getFirst().term();
+
+        if( subterm instanceof TermRowContext termRow )
+        {
+            var found = new ArrayList<TermLiteralContext>();
+            var maybes = termRow.row().term();
+            for( TermContext term : maybes )
+            {
+                if( term instanceof TermLiteralContext sc )
+                {
+                    found.add( sc );
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if( found.size() == maybes.size() )
+            {
+                insert = new Insert();
+                insert.table = context.qname();
+
+                if( context.columns() != null )
+                {
+                    insert.columns = context.columns().qname();
+                }
+
+                Row row = new Row( context, insert );
+                row.literals = found;
+
+                insert.knockouts.add( row );
+                knockouts.add( row );
             }
         }
+
+        return insert;
+
     }
 }

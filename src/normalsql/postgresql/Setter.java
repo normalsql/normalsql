@@ -18,14 +18,13 @@ extends
 		Literal
 	}
 
-//	public QnameContext qname;
+	public QnameContext qname;
 	public TermContext literal;
 
 	public Setter( SetterContext context )
 	{
 		super( context );
-//		// TODO update after 'qnames' rule is refactored
-//		qname = context.qname();
+		qname = context.qname();
 		literal = context.term();
 		pattern = valueOf( Pattern.class, literal );
 	}

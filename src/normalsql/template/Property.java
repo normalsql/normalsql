@@ -4,6 +4,7 @@
 package normalsql.template;
 
 import normalsql.grammar.NormalSQLParser.LiteralContext;
+import normalsql.grammar.PostgreSQLParser;
 
 /**
  * Property (aka JavaBean) represents a class instance variable and its accessors
@@ -20,9 +21,11 @@ public abstract class
 	 * Also used by templates to populate JavaDocs.
 	 */
 	public String original;
+	public PostgreSQLParser.LiteralContext context2;
 
 	public LiteralContext context() { return context; }
 	public void context( LiteralContext context ) { this.context = context; }
+	public void context( PostgreSQLParser.LiteralContext context ) { this.context2 = context; }
 
 	public int nth() { return nth; }
 	public void nth( int nth ) { this.nth = nth; }

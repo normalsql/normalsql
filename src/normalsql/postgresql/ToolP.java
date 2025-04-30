@@ -13,8 +13,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
@@ -66,6 +69,7 @@ public class
 		config.url = cli.getOption( "url", "j", "JDBC url", "" );
 		config.url = "jdbc:h2:tcp://localhost/~/Projects/normalsql/doc/classicmodels/classicmodels";
 		config.username = cli.getOption( "username", "u", "login username", "" );
+		config.username = "sa";
 		config.password = cli.getOption( "password", "p", "password", "" );
 		config.source = cli.getOption( "source", "s", "source directory", "" );
 		config.target = cli.getOption( "target", "t", "target directory", config.source );
@@ -130,33 +134,33 @@ public class
 	{
 		try
 		(
-//			var conn = DriverManager.getConnection( config.url, config.username, config.password )
-			Connection conn = null
+			var conn = DriverManager.getConnection( config.url, config.username, config.password )
 		)
 		{
 			var files = walkFileTree( config.cwd, config.sourcePath, config.extension );
-			var count = files.size();
-			INFO.log( "files found %d\n".formatted( count ));
+			INFO.log( "files found %d\n".formatted( files.size() ));
 
-			if( count > 0 )
+			// Playing with streams/lambdas. Meh.
+			var works = files.stream().map( f -> new UnitOfWork( f, config )).toList();
+
+			if( !works.isEmpty() )
 			{
 				var worker = new WorkerP( conn );
 
-				for( var file : files )
+				for( var unitOfWork : works )
 				{
-					UnitOfWork unitOfWork = resolvePaths( file, config );
 					worker.process( unitOfWork );
 				}
 			}
 		}
 	}
 
-
 	public List<Path> walkFileTree( Path cwd, Path sourcePath, String extension )
 		throws Exception
 	{
 		var paths = new ArrayList<Path>();
-		Files.walkFileTree( sourcePath,
+		Files.walkFileTree(
+			sourcePath,
 			new SimpleFileVisitor<>()
 			{
 				@Override
@@ -166,11 +170,11 @@ public class
 					// Skip "hidden" dotfiles
 					if( name.startsWith( "." ))
 					{
-						DEBUG.log(  "skipping hidden file: " + name );
+						DEBUG.log( "skipping hidden file: " + name );
 					}
 					else if( !name.toLowerCase().endsWith( extension ))
 					{
-						DEBUG.log(  "skipping unknown filetype: " + name );
+						DEBUG.log( "skipping unknown filetype: " + name );
 					}
 					else
 					{
@@ -207,34 +211,34 @@ public class
 	 * @param config
 	 * @return unit of work, representing a single SQL source file
 	 */
-	public static UnitOfWork resolvePaths( Path path, Config config )
-		throws IOException
-    {
-		var work = new UnitOfWork( path );
-		work.sourceDir = work.sourceFile.toAbsolutePath().getParent();
-
-		// Duplicate directory structure for output
-		var packagePath = config.sourcePath.relativize( work.sourceDir );
-		work.targetDir = config.targetPath.resolve( packagePath );
-		if( Files.notExists( work.targetDir ))
-		{
-			Files.createDirectories( work.targetDir );
-		}
-
-		// infers package name from directory structure, following javac's convention
-		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
-
-		var clazz = Glorp.getClassSimpleName( work.sourceFile );
-		work.statementClassName = clazz;
-
-		// TODO custom suffix for ResultSet
-		work.resultSetClassName = work.statementClassName + "ResultSet";
-
-		// TODO why isn't targetFile for ResultSet class also here?
-		work.targetFile = work.targetDir.resolve( clazz + ".java" );
-
-		return work;
-	}
+//	public static UnitOfWork resolvePaths( Path path, Config config )
+//		throws IOException
+//    {
+//		var work = new UnitOfWork( path );
+//		work.sourceDir = work.sourceFile.toAbsolutePath().getParent();
+//
+//		// Duplicate directory structure for output
+//		var packagePath = config.sourcePath.relativize( work.sourceDir );
+//		work.targetDir = config.targetPath.resolve( packagePath );
+//		if( Files.notExists( work.targetDir ))
+//		{
+//			Files.createDirectories( work.targetDir );
+//		}
+//
+//		// infers package name from directory structure, following javac's convention
+//		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
+//
+//		var clazz = Glorp.getClassSimpleName( work.sourceFile );
+//		work.statementClassName = clazz;
+//
+//		// TODO custom suffix for ResultSet
+//		work.resultSetClassName = work.statementClassName + "ResultSet";
+//
+//		// TODO why isn't targetFile for ResultSet class also here?
+//		work.targetFile = work.targetDir.resolve( clazz + ".java" );
+//
+//		return work;
+//	}
 
 
 

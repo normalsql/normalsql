@@ -3,9 +3,7 @@
 
 package normalsql.postgresql;
 
-import normalsql.grammar.NormalSQLParser.NameContext;
-import normalsql.grammar.NormalSQLParser.QnameContext;
-//import normalsql.parse.NormalSQLParser.LiteralContext;
+import normalsql.grammar.PostgreSQLParser.QnameContext;
 
 import java.util.List;
 
@@ -15,5 +13,5 @@ extends
 	Statement
 {
 	public QnameContext table;
-	public List<NameContext> columns;
+	public List<QnameContext> columns;
 }

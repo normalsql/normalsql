@@ -3,7 +3,7 @@
 
 package normalsql.parse;
 
-import normalsql.grammar.NormalSQLParser.ItemContext;
+import normalsql.grammar.PostgreSQLParser.ItemContext;
 
 
 // TODO maybe rename to SelectItem. To help me better keep items and columns straight in my head.
