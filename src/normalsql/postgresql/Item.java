@@ -3,7 +3,8 @@
 
 package normalsql.postgresql;
 
-import normalsql.grammar.NormalSQLParser.ItemContext;
+import normalsql.grammar.PostgreSQLParser.ItemContext;
+//import org.antlr.v4.runtime.ParserRuleContext;
 
 
 // TODO maybe rename to SelectItem. To help me better keep items and columns straight in my head.
@@ -17,8 +18,9 @@ import normalsql.grammar.NormalSQLParser.ItemContext;
 
 public class Item
 {
+//	public ParserRuleContext context;
 	public ItemContext context;
-	public String      localName;
+	public String            localName;
 	public String      alias;
 	/**
 	 * Actual source code of original SELECT item. Not called "source" to disambiguate.

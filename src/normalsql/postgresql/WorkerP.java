@@ -3,11 +3,13 @@
 
 package normalsql.postgresql;
 
+import normalsql.Glorp;
 import normalsql.grammar.PostgreSQLParser;
 import normalsql.grammar.PostgreSQLLexer;
 import normalsql.grammar.PostgreSQLParser.TermColumnContext;
 import normalsql.grammar.PostgreSQLParser.TermContext;
 import normalsql.template.JavaHelper;
+import normalsql.template.PreparedStatementParameter;
 import normalsql.template.ResultSetColumn;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -18,6 +20,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.apache.velocity.tools.generic.EscapeTool;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,6 +35,8 @@ import java.util.List;
 
 import static java.sql.ParameterMetaData.parameterNoNulls;
 import static java.sql.ResultSetMetaData.columnNoNulls;
+import static normalsql.Glorp.getJavaClassName;
+import static normalsql.Glorp.inferGeneratedKeyType;
 import static normalsql.Tool.*;
 
 public class
@@ -87,14 +92,14 @@ public class
 
 		// TODO attempt running statement before parsing
 
-		 var chars = CharStreams.fromString( unitOfWork.originalSQL );
-		 var lexer = new PostgreSQLLexer( chars );
-		var tokens = new CommonTokenStream( lexer );
-		var parser = new PostgreSQLParser( tokens );
-		 var trunk = parser.parse();
+		      var chars = CharStreams.fromString( unitOfWork.originalSQL );
+		      var lexer = new PostgreSQLLexer( chars );
+		     var tokens = new CommonTokenStream( lexer );
+		     var parser = new PostgreSQLParser( tokens );
+		 var statements = parser.statements();
 
-		Monkey monkey = new Monkey();
-		monkey.climb( trunk );
+		Monkey monkey = new Monkey( tokens );
+		monkey.climb( statements );
 
 		unitOfWork.root = monkey.trunk;
 		if( unitOfWork.root == null || unitOfWork.root.isEmpty() )
@@ -111,88 +116,88 @@ public class
 				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
 			}
 
-//			switch( knockout )
-//			{
-//				case BETWEEN b ->
-//				{
-//					switch( b.pattern )
-//					{
-//						case ColumnLiteralLiteral ->
-//						{
-//							var name = getColumnQname( b.test );
-//
-//							var low = new PreparedStatementParameter( b.low );
-//							_helper.signatures( low, name, "low" );
-//							unitOfWork.params.add( low );
-//
-//							var high = new PreparedStatementParameter( b.high );
-//							_helper.signatures( high, name, "high" );
-//							unitOfWork.params.add( high );
-//						}
-//
-//						case LiteralColumnColumn ->
-//						{
-//							var columnLow = getColumnQname( b.low );
-//							var columnHigh = getColumnQname( b.high );
-//							var test = new PreparedStatementParameter( b.test );
-//							_helper.signatures( test, "between", columnLow, "and", columnHigh );
-//							unitOfWork.params.add( test );
-//						}
-//					}
-//				}
-//				case Comparison c ->
-//				{
-//					var column = getColumnQname( c.column );
-//
-//					var param = new PreparedStatementParameter( c.literal );
-//					// TODO add operator to method signature
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//				case IN in ->
-//				{
-//					var column = getColumnQname( in.column );
-//					for( int nth = 0; nth < in.literals.size(); nth++ )
-//					{
-//						var l = in.literals.get( nth );
-//						var temp = column + "_" + ( nth + 1 );
-//						var param = new PreparedStatementParameter( l );
-//						_helper.signatures( param, temp );
-//						unitOfWork.params.add( param );
-//					}
-//				}
-//				case LIKE like ->
-//				{
-//					var column = getColumnQname( like.column );
-//					var param = new PreparedStatementParameter( like.literal );
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//				case Setter setter ->
-//				{
-//					var temp = setter.qname.getText();
-//					var column = _helper.trimQuotes( temp );
-//					var param = new PreparedStatementParameter( setter.literal );
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//
-//				// TODO ANY predicate
-//
-//				case Row row ->
-//				{
-//					for( int nth = 0; nth < row.literals.size(); nth++ )
-//					{
-//						var l = row.literals.get( nth );
-//						var col = row.insert.columns.get( nth ).getText();
-//						var param = new PreparedStatementParameter( l );
-//						_helper.signatures( param, col );
-//						unitOfWork.params.add( param );
-//					}
-//				}
-//
-//				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
-//			}
+			switch( knockout )
+			{
+				case BETWEEN b ->
+				{
+					switch( b.pattern )
+					{
+						case ColumnLiteralLiteral ->
+						{
+							var name = getColumnQname( b.test );
+
+							var low = new PreparedStatementParameter( b.low );
+							_helper.signatures( low, name, "low" );
+							unitOfWork.params.add( low );
+
+							var high = new PreparedStatementParameter( b.high );
+							_helper.signatures( high, name, "high" );
+							unitOfWork.params.add( high );
+						}
+
+						case LiteralColumnColumn ->
+						{
+							var columnLow = getColumnQname( b.low );
+							var columnHigh = getColumnQname( b.high );
+							var test = new PreparedStatementParameter( b.test );
+							_helper.signatures( test, "between", columnLow, "and", columnHigh );
+							unitOfWork.params.add( test );
+						}
+					}
+				}
+				case Comparison c ->
+				{
+					var column = getColumnQname( c.column );
+
+					var param = new PreparedStatementParameter( c.literal );
+					// TODO add operator to method signature
+					_helper.signatures( param, column );
+					unitOfWork.params.add( param );
+				}
+				case IN in ->
+				{
+					var column = getColumnQname( in.column );
+					for( int nth = 0; nth < in.literals.size(); nth++ )
+					{
+						var l = in.literals.get( nth );
+						var temp = column + "_" + ( nth + 1 );
+						var param = new PreparedStatementParameter( l );
+						_helper.signatures( param, temp );
+						unitOfWork.params.add( param );
+					}
+				}
+				case LIKE like ->
+				{
+					var column = getColumnQname( like.column );
+					var param = new PreparedStatementParameter( like.literal );
+					_helper.signatures( param, column );
+					unitOfWork.params.add( param );
+				}
+				case Setter setter ->
+				{
+					var temp = setter.qname.getText();
+					var column = _helper.trimQuotes( temp );
+					var param = new PreparedStatementParameter( setter.literal );
+					_helper.signatures( param, column );
+					unitOfWork.params.add( param );
+				}
+
+				// TODO ANY predicate
+
+				case Row row ->
+				{
+					for( int nth = 0; nth < row.literals.size(); nth++ )
+					{
+						var l = row.literals.get( nth );
+						var col = row.insert.columns.get( nth ).getText();
+						var param = new PreparedStatementParameter( l );
+						_helper.signatures( param, col );
+						unitOfWork.params.add( param );
+					}
+				}
+
+				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
+			}
 		}
 
 		/*
@@ -201,9 +206,10 @@ public class
  		 */
 		for( var param : unitOfWork.params )
 		{
-			setStartTokenText( param.context(), "?" );
+			setStartTokenText( param.context2, "?" );
 		}
 		unitOfWork.preparedSQL = tokens.getText();
+//		if( true ) return;
 		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
 
 		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
@@ -247,7 +253,7 @@ public class
 		for( var param : unitOfWork.params )
 		{
 			var text = _helper.toPrintfConverter( param.sqlType() );
-			setStartTokenText( param.context(), text );
+			setStartTokenText( param.context2, text );
 		}
 		unitOfWork.printfSQL = tokens.getText();
 
@@ -282,32 +288,32 @@ public class
 
 
 		var statement = unitOfWork.root.getFirst();
-//		switch( statement )
-//		{
-//			case Select ignored ->
-//			{
-//                // TODO foreach statement this, to support unions, multiple statements, and such
-//                //				work.resultSetProperties = matchItemsToColumns( work.trunk.get(0).items, work.columns );
-//				matchItemsToColumns( statement.items, unitOfWork.columns );
-//			}
-//			case Insert insert ->
-//			{
-//				var table = insert.table.getText();
-//				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
-//				unitOfWork.keyClassName = getJavaClassName( sqlType );
-//			}
-//			case Delete ignored ->
-//			{
-//				// TODO may have to attach Params to Table & Columns
-//			}
-//	        default ->
-//			{
-//			}
-//    	}
+		switch( statement )
+		{
+			case Select ignored ->
+			{
+                // TODO foreach statement this, to support unions, multiple statements, and such
+                //				work.resultSetProperties = matchItemsToColumns( work.trunk.get(0).items, work.columns );
+				matchItemsToColumns( statement.items, unitOfWork.columns );
+			}
+			case Insert insert ->
+			{
+				var table = insert.table.getText();
+				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
+				unitOfWork.keyClassName = getJavaClassName( sqlType );
+			}
+			case Delete ignored ->
+			{
+				// TODO may have to attach Params to Table & Columns
+			}
+	        default ->
+			{
+			}
+    	}
 
 		INFO.log( "processed: " + unitOfWork.sourceFile );
 
-//		merge( unitOfWork );
+		merge( unitOfWork );
 
 //		JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
 //		int compilationResult = javac.run(null, null, null, work.targetFile.toString());
@@ -404,33 +410,33 @@ public class
 
 	public void merge( UnitOfWork unitOfWork ) throws IOException
 	{
-//		// Prime Velocity context for next task
-//		var contextChildMap = Glorp.toMap( unitOfWork );
-//		contextChildMap.put( "esc", new EscapeTool() );
-//		contextChildMap.put( "now", _now );
-//		var vc = new VelocityContext( contextChildMap );
-//
-//		var statement = unitOfWork.root.getFirst();
-//		switch( statement )
-//		{
-//			case Select ignored ->
-//			{
-//				generate( _selectTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
-//				generate( _resultSetTemplate, vc, unitOfWork.targetDir, unitOfWork.resultSetClassName );
-//			}
-//
-//			case Insert ignored ->
-//				generate( _insertTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
-//
-//			case Delete ignored ->
-//				generate( _deleteTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
-//
-//			case Update ignored ->
-//				generate( _updateTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
-//
-//	        default ->
-//				WARN.log( "skipped unrecognized: " + statement.getClass() );
-//    	}
+		// Prime Velocity context for next task
+		var contextChildMap = Glorp.toMap( unitOfWork );
+		contextChildMap.put( "esc", new EscapeTool() );
+		contextChildMap.put( "now", _now );
+		var vc = new VelocityContext( contextChildMap );
+
+		var statement = unitOfWork.root.getFirst();
+		switch( statement )
+		{
+			case Select ignored ->
+			{
+				generate( _selectTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
+				generate( _resultSetTemplate, vc, unitOfWork.targetDir, unitOfWork.resultSetClassName );
+			}
+
+			case Insert ignored ->
+				generate( _insertTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
+
+			case Delete ignored ->
+				generate( _deleteTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
+
+			case Update ignored ->
+				generate( _updateTemplate, vc, unitOfWork.targetDir, unitOfWork.statementClassName );
+
+	        default ->
+				WARN.log( "skipped unrecognized: " + statement.getClass() );
+    	}
 	}
 
 	/**

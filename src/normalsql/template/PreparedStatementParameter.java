@@ -5,6 +5,7 @@ package normalsql.template;
 
 import normalsql.grammar.NormalSQLParser.SubtermContext;
 import normalsql.grammar.NormalSQLParser.SubtermLiteralContext;
+import normalsql.grammar.PostgreSQLParser;
 
 /**
  * POJO representing a PreparedStatement Parameter's metadata
@@ -17,6 +18,12 @@ extends
 	public PreparedStatementParameter( SubtermContext context )
 	{
 		context( ((SubtermLiteralContext) context).literal() );
+		original( context.getText() );
+	}
+
+	public PreparedStatementParameter( PostgreSQLParser.TermContext context )
+	{
+		context( ((PostgreSQLParser.TermLiteralContext) context).literal() );
 		original( context.getText() );
 	}
 
