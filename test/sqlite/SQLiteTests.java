@@ -30,8 +30,10 @@ public class SQLiteTests {
         for( Path f : files )
         {
             var lines = Files.readAllLines( f );
+            int nth = 0;
             for( var sql : lines )
             {
+                nth++;
                 if( sql.startsWith( "--" )) continue;
 //                if( !sql.startsWith( "ALTER" )) continue;
 //                if( !sql.startsWith( "ANALYZE" )) continue;
