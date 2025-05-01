@@ -46,8 +46,8 @@ select (  select 1 )
 		}
 	}
 
-	SQLiteParser parser = null;
-	 ParseContext script = null;
+	SQLiteParser      parser     = null;
+	StatementsContext statements = null;
 
 	public  boolean parse( Path p, String sql )
 	{
@@ -102,7 +102,7 @@ select (  select 1 )
 		} );
 
 //		script = parser.script();
-		script = parser.parse();
+		statements = parser.statements();
 		if( errors.isEmpty() ) return true;
 
 //		var visitor = new KnockoutVisitor();
@@ -125,13 +125,13 @@ select (  select 1 )
 			System.out.println( lines[i] );
 		}
 
-		System.out.println( toStringTree( script ) );
+		System.out.println( toStringTree( statements ) );
 		return false;
 	}
 
 	public  String toStringTree( )
 	{
-		return toStringTree( script );
+		return toStringTree( statements );
 	}
 
 

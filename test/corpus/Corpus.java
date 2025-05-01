@@ -225,6 +225,6 @@ Corpus
 		} );
 
 		parser.setProfile( true );
-		var result = parser.parse();
+		var result = parser.statements();
 	}
 }
