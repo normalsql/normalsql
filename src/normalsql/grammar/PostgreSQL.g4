@@ -1605,8 +1605,8 @@ selectCore
     ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
     from? where? groupBy? having? window?
   | values
-  | 'TABLE' descendants
   | '(' select ')'
+  | 'TABLE' descendants
   ;
 
     item
@@ -1631,33 +1631,33 @@ sortby
   : term ( 'USING' operator | sortDir? ) nullsOrder? ;
 
 rowRows
-    : 'ROW' | 'ROWS' ;
+  : 'ROW' | 'ROWS' ;
 
 firstNext
-    : 'FIRST' | 'NEXT' ;
+  : 'FIRST' | 'NEXT' ;
 
 groupBy
-    : 'GROUP' 'BY' groupByItem ( ',' groupByItem )* ;
+  : 'GROUP' 'BY' groupByItem ( ',' groupByItem )* ;
 
 groupByItem
-    : '(' ')'
-    | 'CUBE' '(' terms ')'
-    | 'ROLLUP' '(' terms ')'
-    | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
-    | term
-    ;
+  : '(' ')'
+  | 'CUBE' '(' terms ')'
+  | 'ROLLUP' '(' terms ')'
+  | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
+  | term
+  ;
 
 having
   : 'HAVING' term ;
 
 values
-  : 'VALUES' '(' terms ')' ( ',' '(' terms ')' )* ;
+  : 'VALUES' terms ;
 
 from
   : 'FROM' tables ( ',' tables )* ;
 
 tables
-  : tables joinType? 'JOIN' tables ( 'USING' columns | 'ON' term )
+  : tables joinType? 'JOIN' tables ( 'ON' term | 'USING' columns )
   | tables 'NATURAL' joinType? 'JOIN' tables
   | tables 'CROSS' 'JOIN' tables
   | 'LATERAL'? tableFunc
@@ -1671,7 +1671,7 @@ tables
 
 joinType
   : 'INNER'
-  | ( 'FULL' | 'LEFT' | 'RIGHT'  ) 'OUTER'?
+  | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
   ;
 
 genericFunction
@@ -1806,7 +1806,7 @@ term
   | qname  #TermColumn
   // unary left
   // TODO instances of OPERATOR need to be qualitified?
-  | ('NOT' | '-' | '+' | OPERATOR ) term #TermIgnore
+  | ( '-' | '+' | OPERATOR ) term #TermIgnore
   | term collate #TermIgnore
   | term 'AT' ( 'TIME' 'ZONE' | 'LOCAL' ) term #TermIgnore
   | <assoc=right> term '^' term #TermIgnore
@@ -1817,13 +1817,12 @@ term
   | term ( '<<' | '>>' | '&' | '|' ) term #TermIgnore
   | term 'NOT'? 'BETWEEN' 'SYMMETRIC'? term 'AND' term #TermBETWEEN
   | term 'NOT'? 'IN' '(' ( select |  terms ) ')' #TermIN
-  // workaround for ANTLR's left recursion pattern recognizer not seeing this
-  | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term 'ESCAPE' term #TermLIKE
   | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term #TermLIKE
+  | term 'ESCAPE' term #TermIgnore
   | term compare=( '<' | '>' | '=' | '<=' | '>=' | '<>' ) term #TermCompare
-  | term ( 'ISNULL' | 'NOTNULL' ) #TermIgnore
 
   | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
+  | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) #TermIgnore
   | term 'IS' 'NOT'? normalForm? 'NORMALIZED' #TermIgnore
   | term 'IS' 'NOT'? 'OF' '(' type ( ',' type )* ')' #TermIgnore
 
@@ -1832,7 +1831,7 @@ term
   | row 'OVERLAPS' row #TermOverlaps
   // unary right
   | <assoc=right> term OPERATOR #TermIgnore
-  | 'CASE' (term)? when+ ( 'ELSE' term )? 'END' #TermIgnore
+  | 'CASE' term? when+ ( 'ELSE' term )? 'END' #TermIgnore
   | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?  #TermIgnore
   // TODO do these other nestings also need index suffix?
   | 'EXISTS' '(' select ')' #TermIgnore
@@ -1840,7 +1839,7 @@ term
   | 'GROUPING' '(' terms ')' #TermIgnore
   | 'UNIQUE' '(' select ')' #TermIgnore
   | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index* #TermIgnore
-//  | term 'BETWEEN' term 'AND' term #TermBETWEEN
+  | 'NOT' term #TermIgnore
   // workaround to ensure BETWEEN beats AND, building correct parse tree
   | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
   | term 'OR' term #TermIgnore
@@ -1867,7 +1866,7 @@ function
     | 'POSITION' '(' ( term 'IN' term )? ')'
     | 'SUBSTRING' '(' ( substr_list | args? ) ')'
     | 'TREAT' '(' term 'AS' type ')'
-    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( (term)? 'FROM' )? terms ')'
+    | 'TRIM' '(' ( 'BOTH' | 'LEADING' | 'TRAILING' )? ( term? 'FROM' )? terms ')'
     | 'XMLELEMENT' '(' 'NAME' id ( ',' ( 'XMLATTRIBUTES' '(' xmlAttrib ( ',' xmlAttrib )* ')' | terms ) )? ')'
     | 'XMLEXISTS' '(' xmlPassings ')'
     | 'XMLFOREST' '(' xmlAttrib ( ',' xmlAttrib )* ')'
@@ -1944,7 +1943,7 @@ when
 
 index // TODO better name. deref? chain? back to indirection?
   : '.' ( id | '*' )
-  | '[' ( term | (term)? ':' (term)? ) ']'
+  | '[' ( term | term? ':' term? ) ']'
   ;
 
 jsonPassing
@@ -2015,10 +2014,10 @@ integer
   ;
 
 string
-  : StringConstant
-  | UnicodeEscapeStringConstant ( 'UESCAPE' StringConstant )?
-  | BinaryStringConstant
-  | HexadecimalStringConstant
+  : STRING
+  | UnicodeEscapeStringConstant ( 'UESCAPE' STRING )?
+  | BITS
+  | BLOB
   ;
 
 signedDecimal
@@ -2028,9 +2027,7 @@ signedFloat
   : ('+' | '-')? FLOAT ;
 
 id
-  : Identifier ( 'UESCAPE' StringConstant )?
-  | QuotedIdentifier
-  | UnicodeQuotedIdentifier
+  : ID ( 'UESCAPE' STRING )?
   | VARIABLE
   | keyword
   ;
@@ -2596,18 +2593,14 @@ OPERATOR
     | '==='
 */
 
-Identifier
-  : [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]* ;
+ID
+  : ( 'U' '&' )? '"' ( '""' | ~ [\u0000"] )* '"'
+  | [A-Z_\u007F-\uFFFF] [A-Z_$0-9\u007F-\uFFFF]*
+  ;
 
-QuotedIdentifier
-  : '"' ( '""' | ~ [\u0000"] )* '"' ;
-
-UnicodeQuotedIdentifier
-  : 'U' '&' QuotedIdentifier ;
-
-StringConstant
+STRING
   : '\'' ('\'\'' | ~ '\'')* '\''
-  // TODO nested dollar quoted strings
+  // TODO separate lexer rules for nested dollar quoted strings
   | TAG .*? TAG
   ;
 
@@ -2622,10 +2615,10 @@ fragment ESCAPE_SEQUENCE
   : '\\' ('\\' | '\'' | 't' | 'n' | 'r' | 'b' | 'f' )
   ;
 
-BinaryStringConstant
+BITS
   : 'B' '\'' [01]* '\'' ;
 
-HexadecimalStringConstant
+BLOB
   : 'X' '\'' [0-9A-F]* '\'' ;
 
 DECIMAL
