@@ -1584,7 +1584,7 @@ declarecursorstmt
 
 select
   : with?
-    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) allDistinct? selectCore )*
+    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
     orderBy?
     ( limit | fetch | offset | locking )* ;
 
@@ -1601,7 +1601,7 @@ select
       : 'FOR' ( ( 'NO' 'KEY' )? 'UPDATE' | 'KEY'? 'SHARE' ) ( 'OF' qnames )? ( 'NOWAIT' | 'SKIP' 'LOCKED' )? ;
 
 selectCore
-  : 'SELECT' quantifier? ( item ( ',' item )* ','? )?
+  : 'SELECT' unique? ( item ( ',' item )* ','? )?
     ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
     from? where? groupBy? having? window?
   | values
@@ -1618,10 +1618,10 @@ with
 cte
   : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' query ')' ;
 
-allDistinct
+unique2
   : 'ALL' | 'DISTINCT' ;
 
-quantifier
+unique
   : 'ALL' | 'DISTINCT' ( 'ON' '(' terms ')' )? ;
 
 orderBy
@@ -1678,7 +1678,7 @@ genericFunction
   : qname '('
     ( ( args ( ',' 'VARIADIC' arg )?
       | 'VARIADIC' arg
-      | allDistinct args
+      | unique2 args
       ) orderBy?
     | '*'
     )?
