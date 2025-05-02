@@ -268,7 +268,7 @@ term
   ;
 
 function
-  : name '(' ( ( 'DISTINCT'? terms orderBy? ) | '*'  )? ')'
+  : name '(' ( ( unique? terms orderBy? ) | '*'  )? ')'
   | 'CAST' '(' term 'AS' type ')'
   ;
 
@@ -328,7 +328,7 @@ select
   ;
 
 selectCore
-  : 'SELECT' ( 'DISTINCT' | 'ALL' )? ( item ( ',' item )* ','? )?
+  : 'SELECT' unique? ( item ( ',' item )* ','? )?
     from?
     where?
     // TODO decide between inlined or separate rules for GROUP BY and WINDOW
@@ -337,6 +337,10 @@ selectCore
   | values
   | '(' select ')'
   ;
+
+// TODO Alternate names might be 'keep', 'retain', 'dedupe'...? Feedback needed.
+unique
+  : 'ALL' | 'DISTINCT' ;
 
 window
   : name 'AS' windowDef ;
