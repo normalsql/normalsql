@@ -24,8 +24,6 @@
   whatever. I'll change NormalSQL's license(s) as needed. I have no opinions or
   preferences; NormalSQL uses APL 2.0 because it seems to be the default for FOSS.
 
-  TODO: Does not correctly handle precedent for BETWEEN vs AND.
-
 */
 
 /*
@@ -62,7 +60,23 @@ options {
   caseInsensitive = true;
 }
 
-parse
+@parser::members
+{
+boolean notBETWEEN( ParserRuleContext ctx )
+{
+  if( ctx.children == null ) return true;
+  for( var c : ctx.children )
+  {
+    if( c.getText().equalsIgnoreCase( "BETWEEN" ) )
+    {
+      return false;
+     }
+  }
+  return true;
+};
+}
+
+statements
   : statement? ( ';' statement? )* EOF ;
 
 statement
@@ -199,13 +213,13 @@ table_constraint
   ;
 
 foreign_key
-    : 'REFERENCES' name columns?
-      ( 'ON' ( 'DELETE' | 'UPDATE' )
-        ( 'SET' ( 'NULL' | 'DEFAULT' ) | 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION' )
-        | 'MATCH' name
-      )*
-      ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
-;
+  : 'REFERENCES' name columns?
+    ( 'ON' ( 'DELETE' | 'UPDATE' )
+      ( 'SET' ( 'NULL' | 'DEFAULT' ) | 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION' )
+      | 'MATCH' name
+    )*
+    ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
+  ;
 
 onConflict
   : 'ON' 'CONFLICT' action ;
@@ -224,30 +238,38 @@ terms
 
 term
   : literal
-  | PARAM
   | qname
-  | ( '-' | '+' | '~' | 'NOT' ) term
-  | term '||' term
+
+  | ( '~' | '+' | '-' ) term
+  | term 'COLLATE' name
+  | term ( '||' | '->' | '->>' ) term
   | term ( '*' | '/' | '%' ) term
   | term ( '+' | '-' ) term
-  | term ( '<<' | '>>' | '&' | '|' ) term
-  | term ( '<' | '<=' | '>' | '>=' ) term
-  | term ( '=' | '==' | '!=' | '<>' | 'IS' 'NOT'? | 'IS' 'NOT'? 'DISTINCT' 'FROM' | 'IN' | 'LIKE' | 'GLOB' | 'MATCH' | 'REGEXP' ) term
-  | term 'AND' term
-  | term 'OR' term
-  | name '(' ( ( 'DISTINCT'? terms orderBy? ) | '*'  )? ')' filter? over?
-  | '(' terms ')'
-  | 'CAST' '(' term 'AS' type ')'
-  | term 'COLLATE' name
-  | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term ( 'ESCAPE' term )?
+  | term ( '&' | '|' | '<<' | '>>' ) term
+  | term 'ESCAPE' term
+  | term ( '<' | '>' | '<=' | '>=' ) term
+  | term ( '=' | '==' | '!=' | '<>' ) term
+
+  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term
   | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-  | term 'IS' 'NOT'? term
-  | term 'NOT'? 'BETWEEN' term 'AND' term
+  | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term
   | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? )
-  | ( 'NOT'? 'EXISTS' )? '(' select ')'
+  | term 'NOT'? 'BETWEEN' term 'AND' term
+
   | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'
-  | select
+  | function filter? over?
   | raise
+  | 'EXISTS'? '(' select ')'
+  | '(' term ')'
+  | 'NOT' term
+  // workaround to ensure BETWEEN beats AND, building correct parse tree
+  | term { notBETWEEN( $ctx ) }? 'AND' term // #TermIgnore
+  | term 'OR' term // #TermIgnore
+  ;
+
+function
+  : name '(' ( ( 'DISTINCT'? terms orderBy? ) | '*'  )? ')'
+  | 'CAST' '(' term 'AS' type ')'
   ;
 
 raise
@@ -303,13 +325,13 @@ select
   : with?
     selectCore (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
     orderBy? limit?
-//  | '(' select ')'
   ;
 
 selectCore
-  : 'SELECT' ( 'DISTINCT' | 'ALL' )? items
-    ( 'FROM' tables )?
+  : 'SELECT' ( 'DISTINCT' | 'ALL' )? ( item ( ',' item )* ','? )?
+    from?
     where?
+    // TODO decide between inlined or separate rules for GROUP BY and WINDOW
     ( 'GROUP' 'BY' terms ( 'HAVING' term )? )?
     ( 'WINDOW' window ( ',' window )* )?
   | values
@@ -324,48 +346,34 @@ items
 
 item
   : '*'
-  | qname '.' '*'
+//  | qname '.' '*'
   | term alias?
   ;
 
-tables
-  // this weird rule forces correct precedence and arrangement of JOINs
-  : tables ',' tables2  joinConstraint?
-  | tables2
-  ;
+from
+  : 'FROM' tables ( ',' tables )* ;
 
-tables2
-  : tables2 joinOp tables2 joinConstraint?
+tables
+  : tables joinType? 'JOIN' tables ( 'ON' term | 'USING' columns ) indexedBy?
+  | tables 'NATURAL' joinType? 'JOIN' tables
+  | tables 'CROSS' 'JOIN' tables
+  | qname tableAlias? indexedBy?
   | '(' select  ')' tableAlias?
   | '(' tables ')' tableAlias?
-  | values tableAlias?
-  | qname tableAlias?
   ;
 
-joinOp
-  : 'NATURAL'?
-    ( ( 'LEFT' | 'RIGHT' | 'FULL' ) 'OUTER'? | 'INNER' | 'CROSS' )?
-    'JOIN'
+joinType
+  : 'INNER'
+  | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
   ;
-
-//tables
-//  : tables join tables ( 'ON' term | 'USING' columns )? indexedBy?
-//  | qname tableAlias?
-//  | '(' select  ')' tableAlias?
-//  | '(' tables ')' tableAlias?
-//  | values tableAlias?
-//  ;
 
 tableAlias
   : alias columns? ;
 
-joinConstraint
-  : 'ON' term | 'USING' columns ;
-
 update
   : with? 'UPDATE' ( 'OR' action )? indexedBy
     setter
-    ( 'FROM' tables  )?
+    from?
     where? returning?
   ;
 
@@ -373,10 +381,8 @@ where
   : 'WHERE' term ;
 
 indexedBy
-  : qname alias?
-    ( 'INDEXED' 'BY' name
-    | 'NOT' 'INDEXED'
-    )?
+  : 'INDEXED' 'BY' name
+  | 'NOT' 'INDEXED'
   ;
 
 vacuum
@@ -427,12 +433,11 @@ columns
 name
   : ID | string | unreservedKeyword ;
 
-string
-  : STRING+ ;
-
+// TODO regenerate this list of keywords (then commenting out reserved)
 unreservedKeyword
   : 'ABORT'
   | 'AFTER'
+  | 'ALL'
   | 'ALWAYS'
   | 'ANALYZE'
   | 'ATTACH'
@@ -460,6 +465,7 @@ unreservedKeyword
   | 'MATERIALIZED'
   | 'NOTHING'
   | 'NOTNULL'
+  | 'NULL'
   | 'NULLS'
   | 'OFFSET'
   | 'OTHERS'
@@ -493,16 +499,14 @@ unreservedKeyword
   ;
 
 literal
-  : NUMBER
+  : PARAM
+  | NUMBER
   | string
   | BLOB
-  | 'NULL'
-  | 'TRUE'
-  | 'FALSE'
-  | 'CURRENT_TIME'
-  | 'CURRENT_DATE'
-  | 'CURRENT_TIMESTAMP'
   ;
+
+string
+  : STRING+ ;
 
 ID
   : '"' ( ~'"' | '""' )* '"'
