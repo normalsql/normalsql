@@ -119,43 +119,43 @@ public class
     {
         Insert insert = null;
 
-        // Drill down to first row
-        var termList = context.select().selectCore(0).values().terms();
-        var subterm = termList.getFirst().term();
-
-        if( subterm instanceof TermRowContext termRow )
-        {
-            var found = new ArrayList<TermLiteralContext>();
-            var maybes = termRow.row().term();
-            for( TermContext term : maybes )
-            {
-                if( term instanceof TermLiteralContext sc )
-                {
-                    found.add( sc );
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            if( found.size() == maybes.size() )
-            {
-                insert = new Insert();
-                insert.table = context.qname();
-
-                if( context.columns() != null )
-                {
-                    insert.columns = context.columns().qname();
-                }
-
-                Row row = new Row( context, insert );
-                row.literals = found;
-
-                insert.knockouts.add( row );
-                knockouts.add( row );
-            }
-        }
+//        // Drill down to first row
+//        var termList = context.select().selectCore(0).values().terms();
+//        var subterm = termList.getFirst().term();
+//
+//        if( subterm instanceof TermRowContext termRow )
+//        {
+//            var found = new ArrayList<TermLiteralContext>();
+//            var maybes = termRow.row().term();
+//            for( TermContext term : maybes )
+//            {
+//                if( term instanceof TermLiteralContext sc )
+//                {
+//                    found.add( sc );
+//                }
+//                else
+//                {
+//                    break;
+//                }
+//            }
+//
+//            if( found.size() == maybes.size() )
+//            {
+//                insert = new Insert();
+//                insert.table = context.qname();
+//
+//                if( context.columns() != null )
+//                {
+//                    insert.columns = context.columns().qname();
+//                }
+//
+//                Row row = new Row( context, insert );
+//                row.literals = found;
+//
+//                insert.knockouts.add( row );
+//                knockouts.add( row );
+//            }
+//        }
 
         return insert;
 

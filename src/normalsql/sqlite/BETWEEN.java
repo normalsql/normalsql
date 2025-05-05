@@ -31,16 +31,22 @@ extends
 	}
 
 	public ParseTree test;
+	public String testX;
 	public ParseTree low;
+	public String lowX;
 	public ParseTree high;
+	public String highX;
 
 	public BETWEEN( GlobbingRuleContext context )
 	{
 		super( context );
 		var term = context.find( "term" );
 		test = term.get( 0 );
+		testX = high.getText();
 		low = term.get( 1 );
+		lowX = high.getText();
 		high = term.get( 2 );
+		highX = high.getText();
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
 }

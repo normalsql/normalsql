@@ -112,11 +112,11 @@ MonkeyL
                 {
                     KnockoutL<?> k = switch( name )
                     {
-                        case "TermBETWEEN" -> new BETWEEN( child );
-                        case "TermCompare" -> new Comparison( child );
-                        case "TermIN"  -> new IN( child );
-                        case "TermLIKE"  -> new LIKE( child );
-                        case "Setter"  -> new Setter( child );
+                        case "TermBETWEENContext" -> new BETWEEN( child );
+                        case "TermCompareContext" -> new Comparison( child );
+                        case "TermINContext"  -> new IN( child );
+                        case "TermLIKEContext"  -> new LIKE( child );
+                        case "SetterContext"  -> new Setter( child );
                         default -> null;
                     };
 
