@@ -1557,26 +1557,25 @@ delete
   : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning? ;
 
 lockstmt
-    : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ('IN' lock_type 'MODE')? 'NOWAIT'?
-    ;
+  : 'LOCK' 'TABLE'? descendants ( ',' descendants )* ( 'IN' lockType 'MODE' )? 'NOWAIT'?
+  ;
 
-lock_type
-    : 'ACCESS' ( 'SHARE' | 'EXCLUSIVE' )
-    | 'ROW' ( 'SHARE' | 'EXCLUSIVE' )
-    | 'SHARE' ( 'UPDATE' 'EXCLUSIVE' | 'ROW' 'EXCLUSIVE' )?
-    | 'EXCLUSIVE'
-    ;
+lockType
+  : ( 'ACCESS' | 'ROW' ) ( 'SHARE' | 'EXCLUSIVE' )
+  | 'SHARE' ( ( 'UPDATE' | 'ROW' ) 'EXCLUSIVE' )?
+  | 'EXCLUSIVE'
+  ;
 
 update
-    : with? 'UPDATE' descendants alias?
-      'SET' setter ( ',' setter )*
-      from? whereCurrent? returning?
-    ;
+  : with? 'UPDATE' descendants alias?
+    'SET' setter ( ',' setter )*
+    from? whereCurrent? returning?
+  ;
 
 setter
-    : qname '=' term
-    | '(' qnames ')' '=' term
-    ;
+  : qname '=' term
+  | '(' qnames ')' '=' term
+  ;
 
 declarecursorstmt
     : 'DECLARE' id ( 'NO'? 'SCROLL' | 'SCROLL' | 'BINARY' | 'INSENSITIVE' )* 'CURSOR' ( withers 'HOLD' )? 'FOR' select
@@ -1813,13 +1812,14 @@ term
   | term ( '*' | '/' | '%' ) term #TermIgnore
   | term ( '+' | '-' ) term #TermIgnore
   // TODO instances of OPERATOR need to be qualitified?
-  | term OPERATOR term? #TermIgnore
+  | term OPERATOR term?  #TermCompare
   | term ( '<<' | '>>' | '&' | '|' ) term #TermIgnore
   | term 'NOT'? 'BETWEEN' 'SYMMETRIC'? term 'AND' term #TermBETWEEN
   | term 'NOT'? 'IN' '(' ( select |  terms ) ')' #TermIN
   | term 'NOT'? ( 'LIKE' | 'ILIKE' | 'SIMILAR' 'TO' ) term #TermLIKE
   | term 'ESCAPE' term #TermIgnore
-  | term compare=( '<' | '>' | '=' | '<=' | '>=' | '<>' ) term #TermCompare
+  | term ( '<' | '>' | '<=' | '>=' ) term #TermCompare
+  | term ( '=' | '==' | '!=' | '<>' ) term #TermCompare
 
   | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
   | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) #TermIgnore
@@ -2556,7 +2556,7 @@ OPERATOR
   | '!+!'
   | '?' '|' '|'
   | '?' '-' '|'
-  | (  [<>=~!@#%^&|`?] | '*' )+
+  | ( [<>=~!@#%^&|`?] | '*' )+
   ;
 
 
