@@ -59,7 +59,7 @@ extends
 	public Comparison( TermCompareContext context )
 	{
 		super( context );
-		op = operatorMap.get( context.compare.getText() );
+//		op = operatorMap.get( context.compare.getText() );
 		TermContext left = context.term( 0 );
 		TermContext right = context.term( 1 );
 		pattern = valueOf( Pattern.class, left, right );

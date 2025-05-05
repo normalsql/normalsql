@@ -5,6 +5,8 @@ package normalsql.template;
 
 import normalsql.grammar.NormalSQLParser.LiteralContext;
 import normalsql.grammar.PostgreSQLParser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * Property (aka JavaBean) represents a class instance variable and its accessors
@@ -22,10 +24,12 @@ public abstract class
 	 */
 	public String original;
 	public PostgreSQLParser.LiteralContext context2;
+	public ParseTree                       context3;
 
 	public LiteralContext context() { return context; }
 	public void context( LiteralContext context ) { this.context = context; }
 	public void context( PostgreSQLParser.LiteralContext context ) { this.context2 = context; }
+	public void context( ParseTree context ) { this.context3 = context; }
 
 	public int nth() { return nth; }
 	public void nth( int nth ) { this.nth = nth; }

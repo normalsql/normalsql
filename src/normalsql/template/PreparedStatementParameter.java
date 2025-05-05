@@ -6,6 +6,8 @@ package normalsql.template;
 import normalsql.grammar.NormalSQLParser.SubtermContext;
 import normalsql.grammar.NormalSQLParser.SubtermLiteralContext;
 import normalsql.grammar.PostgreSQLParser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * POJO representing a PreparedStatement Parameter's metadata
@@ -25,6 +27,17 @@ extends
 	{
 		context( ((PostgreSQLParser.TermLiteralContext) context).literal() );
 		original( context.getText() );
+	}
+
+	public PreparedStatementParameter( ParseTree context, String original )
+	{
+		context( context );
+		original( original );
+	}
+
+	public PreparedStatementParameter( ParseTree context )
+	{
+		context( context );
 	}
 
 //	public boolean isSigned;

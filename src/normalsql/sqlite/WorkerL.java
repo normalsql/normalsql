@@ -110,212 +110,215 @@ WorkerL
 			return;
 		}
 
-//		for( var knockout : monkey.knockouts )
-//		{
-//			// TODO this doesn't work yet because bugs in knockouts
-//			if( !knockout.isMatched() )
-//			{
-//				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
-//			}
-//
-//			switch( knockout )
-//			{
-//				case BETWEEN b ->
-//				{
-//					switch( b.pattern )
-//					{
-//						case ColumnLiteralLiteral ->
-//						{
+		for( var knockout : monkey.knockouts )
+		{
+			// TODO this doesn't work yet because bugs in knockouts
+			if( !knockout.isMatched() )
+			{
+				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
+			}
+
+			switch( knockout )
+			{
+				case BETWEEN b ->
+				{
+					switch( b.pattern )
+					{
+						case ColumnLiteralLiteral ->
+						{
 //							var name = getColumnQname( b.test );
-//
-//							var low = new PreparedStatementParameter( b.low );
-//							_helper.signatures( low, name, "low" );
-//							unitOfWork.params.add( low );
-//
-//							var high = new PreparedStatementParameter( b.high );
-//							_helper.signatures( high, name, "high" );
-//							unitOfWork.params.add( high );
-//						}
-//
-//						case LiteralColumnColumn ->
-//						{
+							var name = b.testX;
+
+							var low = new PreparedStatementParameter( b.low, name );
+							_helper.signatures( low, name, "low" );
+							unitOfWork.params.add( low );
+
+							var high = new PreparedStatementParameter( b.high, name );
+							_helper.signatures( high, name, "high" );
+							unitOfWork.params.add( high );
+						}
+
+						case LiteralColumnColumn ->
+						{
 //							var columnLow = getColumnQname( b.low );
 //							var columnHigh = getColumnQname( b.high );
-//							var test = new PreparedStatementParameter( b.test );
-//							_helper.signatures( test, "between", columnLow, "and", columnHigh );
-//							unitOfWork.params.add( test );
-//						}
-//					}
-//				}
-//				case Comparison c ->
-//				{
+							var test = new PreparedStatementParameter( b.test, b.testX );
+							_helper.signatures( test, "between", b.lowX, "and", b.highX );
+							unitOfWork.params.add( test );
+						}
+					}
+				}
+				case Comparison c ->
+				{
 //					var column = getColumnQname( c.column );
-//
-//					var param = new PreparedStatementParameter( c.literal );
-//					// TODO add operator to method signature
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//				case IN in ->
-//				{
+
+					var param = new PreparedStatementParameter( c.literal, c.literal.getText() );
+					// TODO add operator to method signature
+					_helper.signatures( param, c.column.getText() );
+					unitOfWork.params.add( param );
+				}
+				case IN in ->
+				{
 //					var column = getColumnQname( in.column );
-//					for( int nth = 0; nth < in.literals.size(); nth++ )
-//					{
-//						var l = in.literals.get( nth );
-//						var temp = column + "_" + ( nth + 1 );
-//						var param = new PreparedStatementParameter( l );
-//						_helper.signatures( param, temp );
-//						unitOfWork.params.add( param );
-//					}
-//				}
-//				case LIKE like ->
-//				{
+					var column = in.column.getText();
+					for( int nth = 0; nth < in.literals.size(); nth++ )
+					{
+						var l = in.literals.get( nth );
+						var temp = column + "_" + ( nth + 1 );
+						var param = new PreparedStatementParameter( l );
+						_helper.signatures( param, temp );
+						unitOfWork.params.add( param );
+					}
+				}
+				case LIKE like ->
+				{
 //					var column = getColumnQname( like.column );
-//					var param = new PreparedStatementParameter( like.literal );
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//				case Setter setter ->
-//				{
-//					var temp = setter.qname.getText();
-//					var column = _helper.trimQuotes( temp );
-//					var param = new PreparedStatementParameter( setter.literal );
-//					_helper.signatures( param, column );
-//					unitOfWork.params.add( param );
-//				}
-//
-//				// TODO ANY predicate
-//
-//				case Row row ->
-//				{
-//					for( int nth = 0; nth < row.literals.size(); nth++ )
-//					{
-//						var l = row.literals.get( nth );
-//						var col = row.insert.columns.get( nth ).getText();
-//						var param = new PreparedStatementParameter( l );
-//						_helper.signatures( param, col );
-//						unitOfWork.params.add( param );
-//					}
-//				}
-//
-//				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
-//			}
-//		}
-//
-//		/*
-//		  Transform original SQL source code into a prepared statement,
-//		  by replacing literals with SQL "?" placeholders.
-// 		 */
-//		for( var param : unitOfWork.params )
-//		{
-//			setStartTokenText( param.context2, "?" );
-//		}
-//		unitOfWork.preparedSQL = tokens.getText();
-////		if( true ) return;
-//		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
-//
-//		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
-//		// Copy parameter meta data
-//		var pmd = ps.getParameterMetaData();
-////		var ugh = ps.getMetaData();
-////		var dink = ps.getResultSetType();
-//		if( pmd != null )
-//		{
-//			// SQL arrays are 1-based
-//			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
-//			{
-//				var param = unitOfWork.params.get( nth - 1 );
-//				param.nth( nth );
-//				param.sqlType( pmd.getParameterType( nth ));
-//				param.sqlTypeName( pmd.getParameterTypeName( nth ));
-//				param.isNullable( pmd.isNullable( nth ));
-////				param.isSigned( pmd.isSigned( nth ));
-////				param.scaled( pmd.getScale( nth ));
-////				param.precision( pmd.getPrecision( nth ));
-////				param.mode( pmd.getParameterMode( nth ));
-//				param.className( pmd.getParameterClassName( nth ));
-//				if( param.isNullable() == parameterNoNulls )
-//				{
-//					var name = toScalarClassName( param.className() );
-//					param.className( name );
-//				}
-//
-//				// TODO but this stays here, cuz template related. or moves to merge?
-//				var trimmed = _helper.trimQuotes( param.original() );
-//				param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
-//			}
-//		}
-//
-//		/* Transform original SQL source code into a printf template.
-//		  eg Replacing integer "100" with "%d".
-//
-//		  Generated printf templates are useful for debugging and logging.
-//
-//		 */
-//		for( var param : unitOfWork.params )
-//		{
-//			var text = _helper.toPrintfConverter( param.sqlType() );
-//			setStartTokenText( param.context2, text );
-//		}
-//		unitOfWork.printfSQL = tokens.getText();
-//
-//
-//		// TODO move to ResultSetColumn, cuz I can't keep all these details straight in my head
-//		// Copy column meta data
-//		var md = ps.getMetaData();
-//		if( md != null )
-//		{
-//			// TODO: dedupe resultset columns. or maybe add suffix to dupes.
-//			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
-//			{
-//				var column = new ResultSetColumn();
-//				column.nth( nth );
-//				column.catalog = md.getCatalogName( nth );
-//				column.schema = md.getSchemaName( nth );
-//				column.table = md.getTableName( nth );
-//				column.name( md.getColumnName( nth ));
-//				column.label( md.getColumnLabel( nth ));
-//				column.sqlType( md.getColumnType( nth ));
-//				column.sqlTypeName( md.getColumnTypeName( nth ));
-//				column.isNullable( md.isNullable( nth ));
-//				column.className( md.getColumnClassName( nth ));
-//				if( column.isNullable() == columnNoNulls )
-//				{
-//					var name = toScalarClassName( column.className() );
-//					column.className( name );
-//				}
-//				unitOfWork.columns.add( column );
-//			}
-//		}
-//
-//
-//		var statement = unitOfWork.root.getFirst();
-//		switch( statement )
-//		{
-//			case Select ignored ->
-//			{
-//                // TODO foreach statement this, to support unions, multiple statements, and such
-//                //				work.resultSetProperties = matchItemsToColumns( work.trunk.get(0).items, work.columns );
-//				matchItemsToColumns( statement.items, unitOfWork.columns );
-//			}
-//			case Insert insert ->
-//			{
-//				var table = insert.table.getText();
-//				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
-//				unitOfWork.keyClassName = getJavaClassName( sqlType );
-//			}
-//			case Delete ignored ->
-//			{
-//				// TODO may have to attach Params to Table & Columns
-//			}
-//	        default ->
-//			{
-//			}
-//    	}
-//
-//		INFO.log( "processed: " + unitOfWork.sourceFile );
-//
-//		merge( unitOfWork );
+					var column = like.column.getText();
+					var param = new PreparedStatementParameter( like.literal );
+					_helper.signatures( param, column );
+					unitOfWork.params.add( param );
+				}
+				case Setter setter ->
+				{
+					var temp = setter.qname.getText();
+					var column = _helper.trimQuotes( temp );
+					var param = new PreparedStatementParameter( setter.literal );
+					_helper.signatures( param, column );
+					unitOfWork.params.add( param );
+				}
+
+				// TODO ANY predicate
+
+				case Row row ->
+				{
+					for( int nth = 0; nth < row.literals.size(); nth++ )
+					{
+						var l = row.literals.get( nth );
+						var col = row.insert.columns.get( nth ).getText();
+						var param = new PreparedStatementParameter( l );
+						_helper.signatures( param, col );
+						unitOfWork.params.add( param );
+					}
+				}
+
+				default -> throw new IllegalStateException( "Unexpected value: " + knockout );
+			}
+		}
+
+		/*
+		  Transform original SQL source code into a prepared statement,
+		  by replacing literals with SQL "?" placeholders.
+ 		 */
+		for( var param : unitOfWork.params )
+		{
+			setStartTokenText( (ParserRuleContext) param.context3, "?" );
+		}
+		unitOfWork.preparedSQL = tokens.getText();
+//		if( true ) return;
+		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
+
+		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
+		// Copy parameter meta data
+		var pmd = ps.getParameterMetaData();
+//		var ugh = ps.getMetaData();
+//		var dink = ps.getResultSetType();
+		if( pmd != null )
+		{
+			// SQL arrays are 1-based
+			for( int nth = 1; nth <= pmd.getParameterCount(); nth++ )
+			{
+				var param = unitOfWork.params.get( nth - 1 );
+				param.nth( nth );
+				param.sqlType( pmd.getParameterType( nth ));
+				param.sqlTypeName( pmd.getParameterTypeName( nth ));
+				param.isNullable( pmd.isNullable( nth ));
+//				param.isSigned( pmd.isSigned( nth ));
+//				param.scaled( pmd.getScale( nth ));
+//				param.precision( pmd.getPrecision( nth ));
+//				param.mode( pmd.getParameterMode( nth ));
+				param.className( pmd.getParameterClassName( nth ));
+				if( param.isNullable() == parameterNoNulls )
+				{
+					var name = toScalarClassName( param.className() );
+					param.className( name );
+				}
+
+				// TODO but this stays here, cuz template related. or moves to merge?
+				var trimmed = _helper.trimQuotes( param.original() );
+				param.translated( _helper.convertToCode( param.sqlType(), trimmed ));
+			}
+		}
+
+		/* Transform original SQL source code into a printf template.
+		  eg Replacing integer "100" with "%d".
+
+		  Generated printf templates are useful for debugging and logging.
+
+		 */
+		for( var param : unitOfWork.params )
+		{
+			var text = _helper.toPrintfConverter( param.sqlType() );
+			setStartTokenText( (ParserRuleContext) param.context3, text );
+		}
+		unitOfWork.printfSQL = tokens.getText();
+
+
+		// TODO move to ResultSetColumn, cuz I can't keep all these details straight in my head
+		// Copy column meta data
+		var md = ps.getMetaData();
+		if( md != null )
+		{
+			// TODO: dedupe resultset columns. or maybe add suffix to dupes.
+			for( int nth = 1; nth <= md.getColumnCount(); nth++ )
+			{
+				var column = new ResultSetColumn();
+				column.nth( nth );
+				column.catalog = md.getCatalogName( nth );
+				column.schema = md.getSchemaName( nth );
+				column.table = md.getTableName( nth );
+				column.name( md.getColumnName( nth ));
+				column.label( md.getColumnLabel( nth ));
+				column.sqlType( md.getColumnType( nth ));
+				column.sqlTypeName( md.getColumnTypeName( nth ));
+				column.isNullable( md.isNullable( nth ));
+				column.className( md.getColumnClassName( nth ));
+				if( column.isNullable() == columnNoNulls )
+				{
+					var name = toScalarClassName( column.className() );
+					column.className( name );
+				}
+				unitOfWork.columns.add( column );
+			}
+		}
+
+
+		var statement = unitOfWork.root.getFirst();
+		switch( statement )
+		{
+			case Select ignored ->
+			{
+                // TODO foreach statement this, to support unions, multiple statements, and such
+                //				work.resultSetProperties = matchItemsToColumns( work.trunk.get(0).items, work.columns );
+				matchItemsToColumns( statement.items, unitOfWork.columns );
+			}
+			case Insert insert ->
+			{
+				var table = insert.table.getText();
+				var sqlType = inferGeneratedKeyType( null, null, table, _conn );
+				unitOfWork.keyClassName = getJavaClassName( sqlType );
+			}
+			case Delete ignored ->
+			{
+				// TODO may have to attach Params to Table & Columns
+			}
+	        default ->
+			{
+			}
+    	}
+
+		INFO.log( "processed: " + unitOfWork.sourceFile );
+
+		merge( unitOfWork );
 
 
 

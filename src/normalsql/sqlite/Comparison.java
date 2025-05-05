@@ -63,9 +63,9 @@ extends
 	{
 		super( context );
 //		op = operatorMap.get( context.compare.getText() );
-		var terms = context.find( "term" );
-		ParseTree left = terms.get( 0 );
-		ParseTree right = terms.get( 1 );
+		ParseTree left = context.getChild( 0 );
+		ParseTree operator = context.getChild( 1 );
+		ParseTree right = context.getChild( 2 );
 		pattern = valueOf( Pattern.class, left, right );
 
 		if( !isMatched() ) return;
