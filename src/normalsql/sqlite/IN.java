@@ -13,40 +13,39 @@ import java.util.List;
 public class
     IN
 extends
-        Knockout<TermINContext, IN.Pattern>
+    KnockoutL<IN.Pattern>
 {
     public enum Pattern
     {
         Literals
     }
 
-    public TermColumnContext column;
-    public List<TermLiteralContext> literals = new ArrayList<>();
+    public GlobbingRuleContext column;
+    public List<GlobbingRuleContext> literals = new ArrayList<>();
 
-    public IN( TermINContext context )
+    public IN( GlobbingRuleContext context )
     {
         super( context );
 
-        if( context.term() instanceof TermColumnContext col )
+        var column = context.findFirst( "term" );
+        if( column.getRuleName().equals( "column" ) )
         {
-            column = col;
+            this.column = column;
         }
 
-        if( context.terms() != null && context.terms().term() != null )
+        var terms = context.find( "terms/term" );
+        for( var term : terms )
         {
-            for( var term : context.terms().term() )
+            if( term.getRuleName().equals( "literal" ) )
             {
-                if( term instanceof TermLiteralContext literal )
-                {
-                    literals.add( literal );
-                }
+                literals.add( term );
             }
+        }
 
-            // Verify all the terms are literals
-            if( context.terms().term().size() == literals.size() )
-            {
-                pattern = Pattern.Literals;
-            }
+        // Verify all the terms are literals
+        if( terms.size() == literals.size() )
+        {
+            pattern = Pattern.Literals;
         }
     }
 }

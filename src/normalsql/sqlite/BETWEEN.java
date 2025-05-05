@@ -3,13 +3,12 @@
 
 package normalsql.sqlite;
 
-import normalsql.grammar.PostgreSQLParser.TermBETWEENContext;
-import normalsql.grammar.PostgreSQLParser.TermContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 public class
 	BETWEEN
 extends
-        Knockout<TermBETWEENContext, BETWEEN.Pattern>
+	KnockoutL<BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
@@ -31,16 +30,17 @@ extends
 //		LiteralLiteralLiteral  // '5 BETWEEN 0 AND 10'
 	}
 
-	public TermContext test;
-	public TermContext low;
-	public TermContext high;
+	public ParseTree test;
+	public ParseTree low;
+	public ParseTree high;
 
-	public BETWEEN( TermBETWEENContext context )
+	public BETWEEN( GlobbingRuleContext context )
 	{
 		super( context );
-		test = context.term( 0 );
-		low = context.term( 1 );
-		high = context.term( 2 );
+		var term = context.find( "term" );
+		test = term.get( 0 );
+		low = term.get( 1 );
+		high = term.get( 2 );
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
 }

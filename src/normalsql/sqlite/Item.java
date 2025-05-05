@@ -4,6 +4,7 @@
 package normalsql.sqlite;
 
 import normalsql.grammar.PostgreSQLParser.ItemContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 //import org.antlr.v4.runtime.ParserRuleContext;
 
 
@@ -19,8 +20,9 @@ import normalsql.grammar.PostgreSQLParser.ItemContext;
 public class Item
 {
 //	public ParserRuleContext context;
-	public ItemContext context;
-	public String            localName;
+	public ParseTree context;
+//	public ItemContext context;
+	public String    localName;
 	public String      alias;
 	/**
 	 * Actual source code of original SELECT item. Not called "source" to disambiguate.

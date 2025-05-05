@@ -13,5 +13,5 @@ extends
 	// TODO handle duplicate item names, eg replace List with LinkedHashMap, add suffixes to names
 	public ArrayList<Item>          items     = new ArrayList<>();
 //	public ArrayList<Source> sources = new ArrayList<>();
-	public ArrayList<Knockout<?,?>> knockouts = new ArrayList<>();
+	public ArrayList<KnockoutL<?>> knockouts = new ArrayList<>();
 }

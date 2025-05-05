@@ -5,6 +5,7 @@ package normalsql.sqlite;
 
 import normalsql.grammar.PostgreSQLParser.TermContext;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 // TODO Create subclasses for subterm and predicate rules. Specialize valueOf method accordingly.
 
@@ -21,19 +22,18 @@ import org.antlr.v4.runtime.ParserRuleContext;
  *
  * @author Jason Osgood
  *
- * @param <T> concrete context for a rule
  * @param <E> specific enum for this context's matching patterns
  */
 
-public abstract class Knockout<T extends GlobbingRuleContext, E extends Enum<E>>
+public abstract class KnockoutL<E extends Enum<E>>
 {
-	public T context;
-	public ParserRuleContext parent;
+	public GlobbingRuleContext context;
+//	public GlobbingRuleContext parent;
 
-	public Knockout( T context )
+	public KnockoutL( GlobbingRuleContext context )
 	{
 		this.context = context;
-		parent = (ParserRuleContext) context.parent;
+//		parent = (GlobbingRuleContext) context.parent;
 	}
 
 	public E pattern;
@@ -57,7 +57,7 @@ public abstract class Knockout<T extends GlobbingRuleContext, E extends Enum<E>>
 	 *
 	 * @return the enum constant that matches the name built from the context array, or null if none matches.
 	 */
-	public static <E extends Enum<E>> E valueOf( Class<E> patterns, TermContext... contexts )
+	public static <E extends Enum<E>> E valueOf( Class<E> patterns, ParseTree... contexts )
 	{
 		var name = new StringBuilder();
 		for( var c : contexts )
