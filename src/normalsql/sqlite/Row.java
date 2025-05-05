@@ -9,7 +9,7 @@ import java.util.List;
 public class
     Row
 extends
-        Knockout<InsertContext, Row.Pattern>
+    KnockoutL<Row.Pattern>
 {
     public enum Pattern
     {
@@ -17,12 +17,18 @@ extends
     }
 
     public Insert                   insert;
-    public List<TermLiteralContext> literals = new ArrayList<>();
+    public List<GlobbingRuleContext> literals = new ArrayList<>();
 
-    public Row( InsertContext context, Insert insert )
+//    public Row( GlobbingRuleContext context, Insert insert )
+//    {
+//        super( context );
+//        this.insert = insert;
+//        pattern = Pattern.Literals;
+//    }
+    public Row( GlobbingRuleContext context )
     {
         super( context );
-        this.insert = insert;
+//        this.insert = insert;
         pattern = Pattern.Literals;
     }
 }

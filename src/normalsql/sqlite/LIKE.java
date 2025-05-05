@@ -5,6 +5,7 @@ package normalsql.sqlite;
 
 import normalsql.grammar.PostgreSQLParser.TermContext;
 import normalsql.grammar.PostgreSQLParser.TermLIKEContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /*
 	Represents LIKE, ILIKE, REGEXP, etc. expressions
@@ -12,21 +13,24 @@ import normalsql.grammar.PostgreSQLParser.TermLIKEContext;
 public class
 	LIKE
 extends
-        Knockout<TermLIKEContext, LIKE.Pattern>
+	KnockoutL<LIKE.Pattern>
 {
 	public enum Pattern
 	{
+		// TODO change this to ColumnLiteral
 		Literal
 	}
 
-	public TermContext column;
-	public TermContext literal;
+	public ParseTree column;
+	public ParseTree literal;
 
-	public LIKE( TermLIKEContext context )
+	public LIKE( GlobbingRuleContext context )
 	{
 		super( context );
-		column = context.term( 0 );
-		literal = context.term( 1 );
+		var terms = context.find( "term" );
+		column  = terms.get( 0 );
+		literal = terms.get( 1 );
+
 		pattern = valueOf( Pattern.class, literal );
 	}
 }

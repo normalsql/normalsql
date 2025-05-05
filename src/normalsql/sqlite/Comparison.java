@@ -5,6 +5,7 @@ package normalsql.sqlite;
 
 import normalsql.grammar.PostgreSQLParser.TermCompareContext;
 import normalsql.grammar.PostgreSQLParser.TermContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Map;
 
@@ -14,7 +15,7 @@ import static java.util.Map.ofEntries;
 public class
 	Comparison
 extends
-        Knockout<TermCompareContext, Comparison.Pattern>
+        KnockoutL<Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -54,16 +55,17 @@ extends
 		entry( "!~*", "MATCH" )
 	);
 
-	public String op;
-	public TermContext literal;
-	public TermContext column;
+	public String    op;
+	public ParseTree literal;
+	public ParseTree column;
 
-	public Comparison( TermCompareContext context )
+	public Comparison( GlobbingRuleContext context )
 	{
 		super( context );
-		op = operatorMap.get( context.compare.getText() );
-		TermContext left = context.term( 0 );
-		TermContext right = context.term( 1 );
+//		op = operatorMap.get( context.compare.getText() );
+		var terms = context.find( "term" );
+		ParseTree left = terms.get( 0 );
+		ParseTree right = terms.get( 1 );
 		pattern = valueOf( Pattern.class, left, right );
 
 		if( !isMatched() ) return;

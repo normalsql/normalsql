@@ -58,6 +58,7 @@ grammar SQLite;
 
 options {
   caseInsensitive = true;
+  contextSuperClass = normalsql.sqlite.GlobbingRuleContext;
 }
 
 @parser::members
@@ -157,7 +158,7 @@ createVirtualTable
   ;
 
 delete
-  : with? 'DELETE' 'FROM' indexedBy where? returning? ;
+  : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
 
 detach
   : 'DETACH' 'DATABASE'? name ;
@@ -237,34 +238,34 @@ terms
   : term ( ',' term )* ;
 
 term
-  : literal
-  | qname
+  : literal #TermLiteral
+  | qname  #TermColumn
 
-  | ( '~' | '+' | '-' ) term
-  | term 'COLLATE' name
-  | term ( '||' | '->' | '->>' ) term
-  | term ( '*' | '/' | '%' ) term
-  | term ( '+' | '-' ) term
-  | term ( '&' | '|' | '<<' | '>>' ) term
-  | term 'ESCAPE' term
-  | term ( '<' | '>' | '<=' | '>=' ) term
-  | term ( '=' | '==' | '!=' | '<>' ) term
+  | ( '~' | '+' | '-' ) term #TermIgnore
+  | term 'COLLATE' qname #TermIgnore
+  | term ( '||' | '->' | '->>' ) term #TermIgnore
+  | term ( '*' | '/' | '%' ) term #TermIgnore
+  | term ( '+' | '-' ) term #TermIgnore
+  | term ( '&' | '|' | '<<' | '>>' ) term #TermIgnore
+  | term 'ESCAPE' term #TermIgnore
+  | term ( '<' | '>' | '<=' | '>=' ) term #TermCompare
+  | term ( '=' | '==' | '!=' | '<>' ) term #TermCompare
 
-  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term
-  | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' )
-  | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term
-  | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? )
-  | term 'NOT'? 'BETWEEN' term 'AND' term
+  | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
+  | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) #TermIgnore
+  | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term #TermLIKE
+  | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? ) #TermIN
+  | term 'NOT'? 'BETWEEN' term 'AND' term #TermBETWEEN
 
-  | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END'
-  | function filter? over?
-  | raise
-  | 'EXISTS'? '(' select ')'
-  | '(' term ')'
-  | 'NOT' term
+  | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' #TermIgnore
+  | function filter? over? #TermIgnore
+  | raise #TermIgnore
+  | 'EXISTS'? '(' select ')' #TermIgnore
+  | row #TermIgnore
+  | 'NOT' term #TermIgnore
   // workaround to ensure BETWEEN beats AND, building correct parse tree
-  | term { notBETWEEN( $ctx ) }? 'AND' term // #TermIgnore
-  | term 'OR' term // #TermIgnore
+  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
+  | term 'OR' term #TermIgnore
   ;
 
 function
@@ -277,6 +278,9 @@ raise
 
 values
   : 'VALUES' terms ;
+
+row
+  : '(' term ( ',' term )* ')' ;
 
 insert
   : with?
@@ -544,5 +548,5 @@ BLOCK_COMMENT
 WHITESPACE
   : [ \u000B\t\r\n] -> channel(HIDDEN) ;
 
-fragment DIGITS    : [0-9]+;
-fragment HEX_DIGIT : [0-9A-F];
+fragment DIGITS    : [0-9_]+;
+fragment HEX_DIGIT : [0-9A-F_];

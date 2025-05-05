@@ -3,7 +3,8 @@
 
 package normalsql.sqlite;
 
-import normalsql.grammar.PostgreSQLParser.QnameContext;
+
+import normalsql.grammar.SQLiteParser.QnameContext;
 
 import java.util.List;
 
@@ -13,5 +14,6 @@ extends
         Statement
 {
 	public QnameContext table;
-	public List<QnameContext> columns;
+//	public List<QnameContext>        columns;
+	public List<GlobbingRuleContext>        columns;
 }

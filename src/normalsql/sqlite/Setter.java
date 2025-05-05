@@ -6,6 +6,7 @@ package normalsql.sqlite;
 import normalsql.grammar.PostgreSQLParser.QnameContext;
 import normalsql.grammar.PostgreSQLParser.SetterContext;
 import normalsql.grammar.PostgreSQLParser.TermContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
 	Represents an UPDATE's SET.
@@ -13,21 +14,21 @@ import normalsql.grammar.PostgreSQLParser.TermContext;
 public class
 	Setter
 extends
-        Knockout<SetterContext, Setter.Pattern>
+        KnockoutL<Setter.Pattern>
 {
 	public enum Pattern
 	{
 		Literal
 	}
 
-	public QnameContext qname;
-	public TermContext literal;
+	public ParseTree qname;
+	public ParseTree literal;
 
-	public Setter( SetterContext context )
+	public Setter( GlobbingRuleContext context )
 	{
 		super( context );
-		qname = context.qname();
-		literal = context.term();
+		qname = context.findFirst( "qname" );
+		literal = context.findFirst( "literal" );
 		pattern = valueOf( Pattern.class, literal );
 	}
 }
