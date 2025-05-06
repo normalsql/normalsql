@@ -58,7 +58,7 @@ grammar SQLite;
 
 options {
   caseInsensitive = true;
-  contextSuperClass = normalsql.sqlite.GlobbingRuleContext;
+  contextSuperClass = normalsql.knockout.GlobbingRuleContext;
 }
 
 @parser::members

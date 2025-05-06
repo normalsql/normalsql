@@ -3,16 +3,14 @@
 
 package normalsql;
 
-import static java.sql.ParameterMetaData.parameterNoNulls;
-import static java.sql.ResultSetMetaData.columnNoNulls;
-import static normalsql.Tool.*;
-import normalsql.template.ResultSetColumn;
-import normalsql.template.PreparedStatementParameter;
-import normalsql.parse.*;
-import normalsql.grammar.NormalSQLLexer;
-import normalsql.grammar.NormalSQLParser;
-import normalsql.grammar.NormalSQLParser.*;
+import normalsql.grammar.PostgreSQLParser.TermColumnContext;
+import normalsql.grammar.PostgreSQLParser.TermContext;
+import normalsql.grammar.SQLiteLexer;
+import normalsql.grammar.SQLiteParser;
+import normalsql.knockout.*;
 import normalsql.template.JavaHelper;
+import normalsql.template.PreparedStatementParameter;
+import normalsql.template.ResultSetColumn;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -28,17 +26,21 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static normalsql.Glorp.inferGeneratedKeyType;
+import static java.sql.ParameterMetaData.parameterNoNulls;
+import static java.sql.ResultSetMetaData.columnNoNulls;
 import static normalsql.Glorp.getJavaClassName;
+import static normalsql.Glorp.inferGeneratedKeyType;
+import static normalsql.Tool.*;
 
 public class
-	Worker
+Worker
 {
 	          String _now;
 	      Connection _conn;
@@ -90,31 +92,28 @@ public class
 
 		// TODO attempt running statement before parsing
 
-		 var chars = CharStreams.fromString( unitOfWork.originalSQL );
-		 var lexer = new NormalSQLLexer( chars );
-		var tokens = new CommonTokenStream( lexer );
-		var parser = new NormalSQLParser( tokens );
-		var script = parser.parse();
+		      var chars = CharStreams.fromString( unitOfWork.originalSQL );
+		      var lexer = new SQLiteLexer( chars );
+		     var tokens = new CommonTokenStream( lexer );
+		     var parser = new SQLiteParser( tokens );
+		 var statements = parser.statements();
 
-		var visitor = new KnockoutVisitor();
-		visitor.parser = parser;
-		visitor.tokens = tokens;
-		visitor.visit( script );
+		Monkey monkey = new Monkey( tokens );
+		monkey.climb( statements );
 
-		unitOfWork.root = visitor.root;
+		unitOfWork.root = monkey.trunk;
 		if( unitOfWork.root == null || unitOfWork.root.isEmpty() )
 		{
 			WARN.log( "file contains no statements: " + unitOfWork.sourceFile ) ;
 			return;
 		}
 
-		for( var knockout : visitor.knockouts )
+		for( var knockout : monkey.knockouts )
 		{
-			// TODO this doesn't work yet because bugs in knockouts
-			if( !knockout.isMatched() )
-			{
-				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
-			}
+//			if( !knockout.isMatched() )
+//			{
+//				ERROR.log( "parameter expression not match(able): " + knockout.context.getText() );
+//			}
 
 			switch( knockout )
 			{
@@ -124,39 +123,35 @@ public class
 					{
 						case ColumnLiteralLiteral ->
 						{
-							var name = getColumnQname( b.test );
+							var name = b.testX;
 
-							var low = new PreparedStatementParameter( b.low );
+							var low = new PreparedStatementParameter( b.low, name );
 							_helper.signatures( low, name, "low" );
 							unitOfWork.params.add( low );
 
-							var high = new PreparedStatementParameter( b.high );
+							var high = new PreparedStatementParameter( b.high, name );
 							_helper.signatures( high, name, "high" );
 							unitOfWork.params.add( high );
 						}
 
 						case LiteralColumnColumn ->
 						{
-							var columnLow = getColumnQname( b.low );
-							var columnHigh = getColumnQname( b.high );
-							var test = new PreparedStatementParameter( b.test );
-							_helper.signatures( test, "between", columnLow, "and", columnHigh );
+							var test = new PreparedStatementParameter( b.test, b.testX );
+							_helper.signatures( test, "between", b.lowX, "and", b.highX );
 							unitOfWork.params.add( test );
 						}
 					}
 				}
 				case Comparison c ->
 				{
-					var column = getColumnQname( c.column );
-
-					var param = new PreparedStatementParameter( c.literal );
+					var param = new PreparedStatementParameter( c.literal, c.literal.getText() );
 					// TODO add operator to method signature
-					_helper.signatures( param, column );
+					_helper.signatures( param, c.column.getText() );
 					unitOfWork.params.add( param );
 				}
 				case IN in ->
 				{
-					var column = getColumnQname( in.column );
+					var column = in.column.getText();
 					for( int nth = 0; nth < in.literals.size(); nth++ )
 					{
 						var l = in.literals.get( nth );
@@ -168,7 +163,7 @@ public class
 				}
 				case LIKE like ->
 				{
-					var column = getColumnQname( like.column );
+					var column = like.column.getText();
 					var param = new PreparedStatementParameter( like.literal );
 					_helper.signatures( param, column );
 					unitOfWork.params.add( param );
@@ -206,9 +201,10 @@ public class
  		 */
 		for( var param : unitOfWork.params )
 		{
-			setStartTokenText( param.context(), "?" );
+			setStartTokenText( (ParserRuleContext) param.context3, "?" );
 		}
 		unitOfWork.preparedSQL = tokens.getText();
+//		if( true ) return;
 		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
 
 		// TODO move to PreparedStatementParameter, cuz I can't keep all these details straight in my head
@@ -252,7 +248,7 @@ public class
 		for( var param : unitOfWork.params )
 		{
 			var text = _helper.toPrintfConverter( param.sqlType() );
-			setStartTokenText( param.context(), text );
+			setStartTokenText( (ParserRuleContext) param.context3, text );
 		}
 		unitOfWork.printfSQL = tokens.getText();
 
@@ -292,7 +288,7 @@ public class
 			case Select ignored ->
 			{
                 // TODO foreach statement this, to support unions, multiple statements, and such
-                //				work.resultSetProperties = matchItemsToColumns( work.root.get(0).items, work.columns );
+                //				work.resultSetProperties = matchItemsToColumns( work.trunk.get(0).items, work.columns );
 				matchItemsToColumns( statement.items, unitOfWork.columns );
 			}
 			case Insert insert ->
@@ -313,6 +309,10 @@ public class
 		INFO.log( "processed: " + unitOfWork.sourceFile );
 
 		merge( unitOfWork );
+
+
+
+
 
 //		JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
 //		int compilationResult = javac.run(null, null, null, work.targetFile.toString());
@@ -346,16 +346,16 @@ public class
 		return name;
 	}
 
-	/**
-	 *
-	 * @param b
-	 * @return qname (qualified name) of a resultset column
-	 */
-	public String getColumnQname( SubtermContext b )
-	{
-		var column = ( (SubtermColumnContext) b ).qname();
-		return _helper.getTrimmedText( column );
-	}
+//	/**
+//	 *
+//	 * @param b
+//	 * @return qname (qualified name) of a resultset column
+//	 */
+//	public String getColumnQname( TermContext b )
+//	{
+//		var column = ( (TermColumnContext) b ).qname();
+//		return _helper.getTrimmedText( column );
+//	}
 
 	/**
 	 * Match SELECT items to ResultSet columns. When SELECT items use wildcard '*', there can be more
@@ -376,19 +376,19 @@ public class
 			// TODO eventually, account for locale, collation, etc. use IBM's ICU lib?
 			for( var item : items )
 			{
-				if( column.name().equalsIgnoreCase( item.localName ))
+				if( column.name().equalsIgnoreCase( item.qname ))
 				{
 					if( label.equalsIgnoreCase( item.alias ))
 					{
 						label = item.alias;
-						column.item( item );
+//						column.item( item );
 						break;
 					}
 					// TODO per best match idea above, this logic might be wrong for yet unknown edge cases. need test coverage.
-					else if( label.equalsIgnoreCase( item.localName ))
+					else if( label.equalsIgnoreCase( item.qname ))
 					{
-						label = item.localName;
-						column.item( item );
+						label = item.qname;
+//						column.item( item );
 						break;
 					}
 				}
@@ -441,11 +441,11 @@ public class
 	/**
 	 * <p>generate.</p>
 	 *
-	 * @param template a {@link org.apache.velocity.Template} object
-	 * @param vc a {@link org.apache.velocity.VelocityContext} object
-	 * @param targetDir a {@link java.nio.file.Path} object
-	 * @param name a {@link java.lang.String} object
-	 * @throws java.io.IOException if any.
+	 * @param template a {@link Template} object
+	 * @param vc a {@link VelocityContext} object
+	 * @param targetDir a {@link Path} object
+	 * @param name a {@link String} object
+	 * @throws IOException if any.
 	 */
 	public void generate( Template template, VelocityContext vc, Path targetDir, String name )
 		throws IOException

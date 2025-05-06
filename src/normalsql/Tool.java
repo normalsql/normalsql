@@ -4,16 +4,21 @@
 package normalsql;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
-import static java.nio.file.FileVisitResult.*;
-
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
+
 /*
+	TODO: Delete me. Clone of Tool just drive crawler strategy POC.
+
 	TODO:
 
 		parse all found files
@@ -33,15 +38,15 @@ import java.util.List;
 			https://franckpachot.medium.com/you-should-set-ocsid-clientid-e00cb81ed7e2
 
 			configurable
-			or maybe default to appname, if possible
+			or maybe default to app name, if possible
 
  */
-	
+
 public class
-	Tool
+Tool
 {
-	public static LogShim INFO  = new ConsoleLog( "info", System.out );
-	public static LogShim WARN  = new ConsoleLog( "warn", System.out );
+	public static LogShim INFO = new ConsoleLog( "info", System.out );
+	public static LogShim WARN = new ConsoleLog( "warn", System.out );
 	public static LogShim DEBUG = new ConsoleLog( "debug", System.out );
 	public static LogShim ERROR = new ConsoleLog( "error", System.err );
 
@@ -127,28 +132,29 @@ public class
 		)
 		{
 			var files = walkFileTree( config.cwd, config.sourcePath, config.extension );
-			var count = files.size();
-			INFO.log( "files found %d\n".formatted( count ));
+			INFO.log( "files found %d\n".formatted( files.size() ));
 
-			if( count > 0 )
+			// Playing with streams/lambdas. Meh.
+			var works = files.stream().map( f -> new UnitOfWork( f, config )).toList();
+
+			if( !works.isEmpty() )
 			{
 				var worker = new Worker( conn );
 
-				for( var file : files )
+				for( var unitOfWork : works )
 				{
-					UnitOfWork unitOfWork = resolvePaths( file, config );
 					worker.process( unitOfWork );
 				}
 			}
 		}
 	}
 
-
 	public List<Path> walkFileTree( Path cwd, Path sourcePath, String extension )
 		throws Exception
 	{
 		var paths = new ArrayList<Path>();
-		Files.walkFileTree( sourcePath,
+		Files.walkFileTree(
+			sourcePath,
 			new SimpleFileVisitor<>()
 			{
 				@Override
@@ -158,11 +164,11 @@ public class
 					// Skip "hidden" dotfiles
 					if( name.startsWith( "." ))
 					{
-						DEBUG.log(  "skipping hidden file: " + name );
+						DEBUG.log( "skipping hidden file: " + name );
 					}
 					else if( !name.toLowerCase().endsWith( extension ))
 					{
-						DEBUG.log(  "skipping unknown filetype: " + name );
+						DEBUG.log( "skipping unknown filetype: " + name );
 					}
 					else
 					{
@@ -199,34 +205,34 @@ public class
 	 * @param config
 	 * @return unit of work, representing a single SQL source file
 	 */
-	public static UnitOfWork resolvePaths( Path path, Config config )
-		throws IOException
-    {
-		var work = new UnitOfWork( path );
-		work.sourceDir = work.sourceFile.toAbsolutePath().getParent();
-
-		// Duplicate directory structure for output
-		var packagePath = config.sourcePath.relativize( work.sourceDir );
-		work.targetDir = config.targetPath.resolve( packagePath );
-		if( Files.notExists( work.targetDir ))
-		{
-			Files.createDirectories( work.targetDir );
-		}
-
-		// infers package name from directory structure, following javac's convention
-		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
-
-		var clazz = Glorp.getClassSimpleName( work.sourceFile );
-		work.statementClassName = clazz;
-
-		// TODO custom suffix for ResultSet
-		work.resultSetClassName = work.statementClassName + "ResultSet";
-
-		// TODO why isn't targetFile for ResultSet class also here?
-		work.targetFile = work.targetDir.resolve( clazz + ".java" );
-
-		return work;
-	}
+//	public static UnitOfWork resolvePaths( Path path, Config config )
+//		throws IOException
+//    {
+//		var work = new UnitOfWork( path );
+//		work.sourceDir = work.sourceFile.toAbsolutePath().getParent();
+//
+//		// Duplicate directory structure for output
+//		var packagePath = config.sourcePath.relativize( work.sourceDir );
+//		work.targetDir = config.targetPath.resolve( packagePath );
+//		if( Files.notExists( work.targetDir ))
+//		{
+//			Files.createDirectories( work.targetDir );
+//		}
+//
+//		// infers package name from directory structure, following javac's convention
+//		work.packageName = packagePath.toString().replace( File.separatorChar, '.' );
+//
+//		var clazz = Glorp.getClassSimpleName( work.sourceFile );
+//		work.statementClassName = clazz;
+//
+//		// TODO custom suffix for ResultSet
+//		work.resultSetClassName = work.statementClassName + "ResultSet";
+//
+//		// TODO why isn't targetFile for ResultSet class also here?
+//		work.targetFile = work.targetDir.resolve( clazz + ".java" );
+//
+//		return work;
+//	}
 
 
 

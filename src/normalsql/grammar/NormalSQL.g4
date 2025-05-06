@@ -45,7 +45,7 @@ options {
   contextSuperClass=org.antlr.v4.runtime.RuleContextWithAltNum;
 }
 
-@parser::header { import static normalsql.parse.Reserved.*; }
+@parser::header { import static normalsql.util.Reserved.*; }
 
 parse : statement? ( ';' statement? )* EOF ;
 

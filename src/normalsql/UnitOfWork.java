@@ -3,10 +3,13 @@
 
 package normalsql;
 
-import normalsql.template.ResultSetColumn;
+import normalsql.knockout.Statement;
 import normalsql.template.PreparedStatementParameter;
-import normalsql.parse.Statement;
+import normalsql.template.ResultSetColumn;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +25,42 @@ public class UnitOfWork
 {
 //	public UnitOfWork() {}
 
-	public UnitOfWork( Path file ) { sourceFile = file; }
+//	public UnitOfWork( Path file ) { sourceFile = file; }
+
+	public UnitOfWork( Path file, Config config )
+	{
+		this.sourceFile = file;
+		this.sourceDir = this.sourceFile.toAbsolutePath().getParent();
+
+		// Duplicate (mirror? clone?) directory structure for output
+		var packagePath = config.sourcePath.relativize( this.sourceDir );
+		this.targetDir = config.targetPath.resolve( packagePath );
+		if( Files.notExists( this.targetDir ))
+		{
+            try
+            {
+				// TODO move this to somewhere else
+                Files.createDirectories( this.targetDir );
+            }
+            catch( IOException e )
+            {
+				this.oops = e;
+//                throw new RuntimeException( e );
+            }
+        }
+
+		// infers package name from directory structure, following javac's convention
+		this.packageName = packagePath.toString().replace( File.separatorChar, '.' );
+
+		var clazz = Glorp.getClassSimpleName( this.sourceFile );
+		this.statementClassName = clazz;
+
+		// TODO custom suffix for ResultSet
+		this.resultSetClassName = this.statementClassName + "ResultSet";
+
+		// TODO why isn't targetFile for ResultSet class also here?
+		this.targetFile = this.targetDir.resolve( clazz + ".java" );
+	}
 
 	Statement root;
 
@@ -39,6 +77,9 @@ public class UnitOfWork
 
 	public List<PreparedStatementParameter> params = new ArrayList<>();
 	public List<ResultSetColumn> columns = new ArrayList<>();
+
+	public Exception oops;
+
 	/**
 	 * Class name of generated key returned by INSERT statements
 	 */

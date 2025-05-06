@@ -3,7 +3,7 @@
 
 package normalsql.template;
 
-import normalsql.parse.Item;
+import normalsql.knockout.Item;
 
 /**
  * POJO representing ResultSet column's metadata.
