@@ -1,6 +1,6 @@
 package test;
 
-import normalsql.jdbc.Dumper;
+import normalsql.util.Dumper;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class
 	BETWEEN
 extends
-        Knockout<BETWEEN.Pattern>
+	Knockout<BETWEEN.Pattern>
 {
 	/**
 	 * Various patterns of literals and columns which can be matched.
@@ -31,22 +31,22 @@ extends
 	}
 
 	public ParseTree test;
-	public String testX;
+//	public String testX;
 	public ParseTree low;
-	public String lowX;
+//	public String lowX;
 	public ParseTree high;
-	public String highX;
+//	public String highX;
 
 	public BETWEEN( GlobbingRuleContext context )
 	{
 		super( context );
 		var term = context.find( "term" );
 		test = term.get( 0 );
-		testX = high.getText();
+//		testX = high.getText();
 		low = term.get( 1 );
-		lowX = high.getText();
+//		lowX = high.getText();
 		high = term.get( 2 );
-		highX = high.getText();
+//		highX = high.getText();
 		pattern = valueOf( Pattern.class, test, low, high );
 	}
 }

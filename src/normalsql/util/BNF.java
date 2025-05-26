@@ -12,8 +12,9 @@ public class BNF
     {
         var sw = new StringWriter();
         int         b;
+        boolean     eof = false;
 //        var sr  = new StringReader( "CREATE ROLE name [ [ WITH ] option [ ... ] ]" );
-        while( ( b =  System.in.read() ) != -1 )
+        while( !eof && ( b =  System.in.read() ) != -1 )
 //        while( ( b =  sr.read() ) != -1 )
         {
 //            char c = (char) b ;
@@ -41,6 +42,7 @@ public class BNF
                 case ' ' -> " ";
                 case '|' -> "|";
                 case ',' -> "','";
+                case '/' -> { eof = true; yield ""; }
 
 //                case "::=" -> ":";
 //                case ",...n" -> "(',' '' )*";
@@ -59,6 +61,14 @@ public class BNF
                             {
                                 word.append( e );
                                 continue;
+                            }
+                            else if( e == ']' )
+                            {
+                                e = ')';
+                            }
+                            else if( e == '}' )
+                            {
+                                e = ')';
                             }
                             var g = word.toString();
                             if( g.toUpperCase().equals( g ))

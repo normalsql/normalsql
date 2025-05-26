@@ -1,5 +1,9 @@
 # NormalSQL
 
+Links
+
+Discord https://discord.gg/Pr8EQFDh 
+
 ~~Transform normal SQL statements into typesafe PreparedStatement and ResultSet wrappers.~~
 
 ~~Use normal SQL statements to generate typesafe wrappers.~~

@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class
 	Setter
 extends
-        Knockout<Setter.Pattern>
+	Knockout<Setter.Pattern>
 {
 	public enum Pattern
 	{

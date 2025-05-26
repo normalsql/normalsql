@@ -9,7 +9,7 @@ import java.util.List;
 public class
     IN
 extends
-        Knockout<IN.Pattern>
+    Knockout<IN.Pattern>
 {
     public enum Pattern
     {

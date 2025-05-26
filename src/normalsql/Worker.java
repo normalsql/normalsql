@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.WritableToken;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -123,7 +124,7 @@ Worker
 					{
 						case ColumnLiteralLiteral ->
 						{
-							var name = b.testX;
+							var name = b.test.getText();
 
 							var low = new PreparedStatementParameter( b.low, name );
 							_helper.signatures( low, name, "low" );
@@ -136,17 +137,26 @@ Worker
 
 						case LiteralColumnColumn ->
 						{
-							var test = new PreparedStatementParameter( b.test, b.testX );
-							_helper.signatures( test, "between", b.lowX, "and", b.highX );
+							var test = new PreparedStatementParameter( b.test, b.test.getText() );
+							_helper.signatures( test, "between", b.low.getText(), "and", b.high.getText() );
 							unitOfWork.params.add( test );
 						}
 					}
 				}
 				case Comparison c ->
 				{
-					var param = new PreparedStatementParameter( c.literal, c.literal.getText() );
+					ParseTree literal = null;
+					ParseTree column = null;
+
+					switch( c.pattern )
+					{
+						case LiteralColumn -> { literal = c.left; column = c.right; }
+						case ColumnLiteral -> { literal = c.right; column = c.left; }
+					}
+
+					var param = new PreparedStatementParameter( literal, literal.getText() );
 					// TODO add operator to method signature
-					_helper.signatures( param, c.column.getText() );
+					_helper.signatures( param, column.getText() );
 					unitOfWork.params.add( param );
 				}
 				case IN in ->

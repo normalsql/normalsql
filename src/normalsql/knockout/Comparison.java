@@ -53,7 +53,9 @@ extends
 		entry( "!~*", "MATCH" )
 	);
 
-	public String    op;
+	public ParseTree operator;
+	public ParseTree left;
+	public ParseTree right;
 	public ParseTree literal;
 	public ParseTree column;
 
@@ -61,18 +63,18 @@ extends
 	{
 		super( context );
 //		op = operatorMap.get( context.compare.getText() );
-		ParseTree left = context.getChild( 0 );
-		ParseTree operator = context.getChild( 1 );
-		ParseTree right = context.getChild( 2 );
+		left = context.getChild( 0 );
+		operator = context.getChild( 1 );
+		right = context.getChild( 2 );
 		pattern = valueOf( Pattern.class, left, right );
 
-		if( !isMatched() ) return;
-
-		// TODO: Move this logic to Worker, like for BETWEEN predicates
-		switch( pattern )
-		{
-			case LiteralColumn -> { literal = left; column = right; }
-			case ColumnLiteral -> { literal = right; column = left; }
-		}
+//		if( !isMatched() ) return;
+//
+//		// TODO: Move this logic to Worker, like for BETWEEN predicates
+//		switch( pattern )
+//		{
+//			case LiteralColumn -> { literal = left; column = right; }
+//			case ColumnLiteral -> { literal = right; column = left; }
+//		}
 	}
 }

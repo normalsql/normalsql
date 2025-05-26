@@ -6,7 +6,7 @@ import java.util.List;
 public class
     Row
 extends
-        Knockout<Row.Pattern>
+    Knockout<Row.Pattern>
 {
     public enum Pattern
     {

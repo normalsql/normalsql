@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class
 	LIKE
 extends
-        Knockout<LIKE.Pattern>
+	Knockout<LIKE.Pattern>
 {
 	public enum Pattern
 	{
