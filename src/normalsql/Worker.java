@@ -3,8 +3,6 @@
 
 package normalsql;
 
-import normalsql.grammar.PostgreSQLParser.TermColumnContext;
-import normalsql.grammar.PostgreSQLParser.TermContext;
 import normalsql.grammar.SQLiteLexer;
 import normalsql.grammar.SQLiteParser;
 import normalsql.knockout.*;
@@ -40,6 +38,7 @@ import static normalsql.Glorp.getJavaClassName;
 import static normalsql.Glorp.inferGeneratedKeyType;
 import static normalsql.Tool.*;
 
+@SuppressWarnings( "SqlSourceToSinkFlow" )
 public class
 Worker
 {
@@ -89,17 +88,17 @@ Worker
 	public void process( UnitOfWork unitOfWork )
 		throws IOException, SQLException
 	{
-		unitOfWork.originalSQL = new String( Files.readAllBytes( unitOfWork.sourceFile ));
+		unitOfWork.originalSQL = Files.readString( unitOfWork.sourceFile );
 
 		// TODO attempt running statement before parsing
 
-		      var chars = CharStreams.fromString( unitOfWork.originalSQL );
-		      var lexer = new SQLiteLexer( chars );
-		     var tokens = new CommonTokenStream( lexer );
-		     var parser = new SQLiteParser( tokens );
-		 var statements = parser.statements();
+		var chars = CharStreams.fromString( unitOfWork.originalSQL );
+		var lexer = new SQLiteLexer( chars );
+		var tokens = new CommonTokenStream( lexer );
+		var parser = new SQLiteParser( tokens );
+		var statements = parser.statements();
 
-		Monkey monkey = new Monkey( tokens );
+		Climber monkey = new Climber( parser, tokens );
 		monkey.climb( statements );
 
 		unitOfWork.root = monkey.trunk;
@@ -194,6 +193,7 @@ Worker
 					for( int nth = 0; nth < row.literals.size(); nth++ )
 					{
 						var l = row.literals.get( nth );
+//						var l = row.literals.toArray()[nth];
 						var col = row.insert.columns.get( nth ).getText();
 						var param = new PreparedStatementParameter( l );
 						_helper.signatures( param, col );

@@ -4,8 +4,9 @@
 package normalsql.knockout;
 
 
-import normalsql.grammar.SQLiteParser.QnameContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.Collection;
 import java.util.List;
 
 public class
@@ -13,7 +14,6 @@ public class
 extends
         Statement
 {
-	public QnameContext table;
-//	public List<QnameContext>        columns;
-	public List<GlobbingRuleContext>        columns;
+	public ParseTree       table;
+	public List<ParseTree> columns;
 }

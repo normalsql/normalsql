@@ -3,6 +3,7 @@
 
 package normalsql.knockout;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /*
@@ -22,12 +23,9 @@ extends
 	public ParseTree column;
 	public ParseTree literal;
 
-	public LIKE( GlobbingRuleContext context )
+	public LIKE( RuleContext context )
 	{
 		super( context );
-		var terms = context.find( "term" );
-		column  = terms.get( 0 );
-		literal = terms.get( 1 );
 
 		pattern = valueOf( Pattern.class, literal );
 	}
