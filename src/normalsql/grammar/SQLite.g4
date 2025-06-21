@@ -115,7 +115,7 @@ cte
 
 select
     : with?
-      selectCore (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
+      selectCore ( ( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
       orderBy? limit?
     ;
 
@@ -129,14 +129,10 @@ select
         | '(' select ')'
         ;
 
-        // TODO Alternate names might be 'keep', 'retain', 'dedupe'...? Feedback needed.
-        unique_
-             : 'ALL' | 'DISTINCT' ;
-
         item
-            : '*'
-            | qname
-            | term alias?
+            : '*'  # ItemAll
+            | qname alias?  # ItemColumn
+            | term alias?  # ItemTerm
             ;
 
         tables
@@ -161,7 +157,7 @@ select
             : 'WHERE' term ;
 
         groupBy
-            : 'GROUP' 'BY' terms ;
+            : 'GROUP' 'BY' term ( ',' term )* ;
 
         having
             : 'HAVING' term ;
@@ -170,7 +166,7 @@ select
             : name 'AS' windowSpec ;
 
             windowSpec
-                : '(' name? ( 'PARTITION' 'BY' terms )? orderBy?
+                : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
                   ( ( 'RANGE' | 'ROWS' | 'GROUPS' ) ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )? )?
                   ')'
                 ;
@@ -181,12 +177,16 @@ select
               | 'CURRENT' 'ROW'
               ;
 
+        values
+            : 'VALUES' term ( ',' term )* ;
+
+
 insert
     : with?
       ( 'INSERT' ( 'OR' action )?
       | 'REPLACE'
       )
-      'INTO' qname alias? ('(' name ( ',' name )* ')')?
+      'INTO' qname alias? ( '(' name ( ',' name )* ')' )?
       ( select upsert? | 'DEFAULT' 'VALUES' )
       returning?
     ;
@@ -215,16 +215,11 @@ update
     returning
         : 'RETURNING' item ( ',' item )* ;
 
-
-
-
 delete
   : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
 
 setVariables
     : 'SET' assign ( ',' assign )* ;
-
-
 
 alter
   : 'ALTER' 'TABLE' qname
@@ -341,16 +336,9 @@ foreign_key
 onConflict
   : 'ON' 'CONFLICT' action ;
 
-temp_
-  : 'TEMP' | 'TEMPORARY' ;
-
-terms
-  : term ( ',' term )* ;
-
 term
   : literal #TermLiteral
   | qname  #TermColumn
-
   | ( '~' | '+' | '-' ) term #TermIgnore
   | term 'COLLATE' qname #TermIgnore
   | term ( '||' | '->' | '->>' ) term #TermIgnore
@@ -364,22 +352,25 @@ term
   | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
   | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) #TermIgnore
   | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term #TermLIKE
-  | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? ) #TermIN
+  | term 'NOT'? 'IN' '(' term ( ',' term )* ')' #TermIN
+  | term 'NOT'? 'IN' '(' select? ')' # TermIgnore
+  | term 'NOT'? 'IN'  qname ( '(' ( term ( ',' term )* )? ')' )?  # TermIgnore
   | term 'NOT'? 'BETWEEN' term 'AND' term #TermBETWEEN
 
   | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' #TermIgnore
   | function filter? over? #TermIgnore
   | raise #TermIgnore
   | 'EXISTS'? '(' select ')' #TermIgnore
-  | row #TermIgnore
+  | '(' term ( ',' term )* ')' #TermRow
   | 'NOT' term #TermIgnore
   // workaround to ensure BETWEEN beats AND, building correct parse tree
-  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
+  | term 'AND' term #TermIgnore
+//  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
   | term 'OR' term #TermIgnore
   ;
 
     function
-      : name '(' ( ( unique_? terms orderBy? ) | '*'  )? ')'
+      : name '(' ( ( unique_? term ( ',' term )* orderBy? ) | '*'  )? ')'
       | 'CAST' '(' term 'AS' type ')'
       ;
 
@@ -392,12 +383,6 @@ orderBy
 
 raise
   : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
-
-values
-  : 'VALUES' terms ;
-
-row
-  : '(' term ( ',' term )* ')' ;
 
 assign
   : ( name | '(' name ( ',' name )* ')' ) '=' term ;
@@ -429,17 +414,24 @@ over
 limit
   : 'LIMIT' term ( ( 'OFFSET' | ',' ) term )? ;
 
-direction_
-  : 'ASC' | 'DESC' ;
-
 alias
   : 'AS'? name ;
 
 qname
   : name ( '.' name )* ;
 
+// TODO figure out when a string either name or literal
 name
   : ID | string | keyword ;
+
+direction_
+  : 'ASC' | 'DESC' ;
+
+temp_
+  : 'TEMP' | 'TEMPORARY' ;
+
+unique_
+     : 'ALL' | 'DISTINCT' ;
 
 keyword
   : 'ABORT'
@@ -599,6 +591,7 @@ literal
   | NUMBER
   | string
   | BLOB
+//  | qname
   ;
 
 string
