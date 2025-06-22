@@ -23,7 +23,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Stack;
 
 /**
@@ -164,7 +164,7 @@ public class
     {
         ArrayList<Knockout<?>> knockouts = new ArrayList<>();
 
-        var rowsX = XPath.findAll( parent, "/insert/select/selectCore/values/term", parser );
+        var rowsX = XPath.findAll( parent, "/insert/values/term", parser );
         for( var rowX : rowsX )
         {
             var literals = XPath.findAll( rowX, "/term/term/literal", parser );
@@ -178,9 +178,14 @@ public class
         if( knockouts.isEmpty() ) return null;
 
         Insert insert = new Insert();
-        insert.table = XPath.findAll( parent, "/insert/qname", parser ).iterator().next();
-        Collection<ParseTree> columns = XPath.findAll( parent, "/insert/name", parser );
-        insert.columns   = new ArrayList<>( columns );
+        Iterator<ParseTree> iterator = XPath.findAll( parent, "/insert/qname", parser ).iterator();
+        // First is table name, rest are column names.
+        insert.table = iterator.next();
+        while( iterator.hasNext() )
+        {
+            insert.columns.add( iterator.next() );
+        }
+
         insert.knockouts = knockouts;
 
         return insert;

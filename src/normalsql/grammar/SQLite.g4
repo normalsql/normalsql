@@ -111,7 +111,7 @@ with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
 
 cte
-  : name ('(' name ( ',' name )* ')')? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
+  : name ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
 
 select
     : with?
@@ -186,8 +186,8 @@ insert
       ( 'INSERT' ( 'OR' action )?
       | 'REPLACE'
       )
-      'INTO' qname alias? ( '(' name ( ',' name )* ')' )?
-      ( select upsert? | 'DEFAULT' 'VALUES' )
+      'INTO' qname alias? ( '(' qname ( ',' qname )* ')' )?
+      ( ( values | select ) upsert? | 'DEFAULT' 'VALUES' )
       returning?
     ;
 
@@ -203,7 +203,7 @@ upsert
 update
     : with? 'UPDATE' ( 'OR' action )? indexedBy
       setVariables
-      ('FROM' tables)?
+      ( 'FROM' tables )?
       where? returning?
     ;
 
@@ -262,7 +262,7 @@ createTrigger
   ;
 
 createView
-  : 'CREATE'? temp_? 'VIEW' ifNotExists? qname ('(' name ( ',' name )* ')')? 'AS' select ;
+  : 'CREATE'? temp_? 'VIEW' ifNotExists? qname ( '(' name ( ',' name )* ')' )? 'AS' select ;
 
 createVirtualTable
   : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
@@ -330,7 +330,7 @@ foreign_key
       ( 'SET' ( 'NULL' | 'DEFAULT' ) | 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION' )
       | 'MATCH' name
     )*
-    ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
+    ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ) )? )?
   ;
 
 onConflict
@@ -621,13 +621,13 @@ PARAM
   ;
 
 COMMENT
-  : '--' ~[\r\n]* (( '\r'? '\n' ) | EOF ) -> channel(HIDDEN) ;
+  : '--' ~[\r\n]* ( ( '\r'? '\n' ) | EOF ) -> channel( HIDDEN ) ;
 
 BLOCK_COMMENT
-  : '/*' .*? '*/' -> channel(HIDDEN) ;
+  : '/*' .*? '*/' -> channel( HIDDEN ) ;
 
 WHITESPACE
-  : [ \u000B\t\r\n] -> channel(HIDDEN) ;
+  : [ \u000B\t\r\n] -> channel( HIDDEN ) ;
 
 fragment DIGITS    : [0-9_]+;
 fragment HEX_DIGIT : [0-9A-F_];

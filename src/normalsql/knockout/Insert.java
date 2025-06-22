@@ -6,14 +6,14 @@ package normalsql.knockout;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
 public class
 	Insert
 extends
-        Statement
+	Statement
 {
 	public ParseTree       table;
-	public List<ParseTree> columns;
+	public List<ParseTree> columns = new ArrayList<>();
 }
