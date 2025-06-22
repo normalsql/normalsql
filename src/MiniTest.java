@@ -1,6 +1,12 @@
+import normalsql.grammar.SQLiteBaseListener;
 import normalsql.grammar.SQLiteLexer;
+import normalsql.grammar.SQLiteParser;
+import normalsql.grammar.SQLiteParser.*;
+import normalsql.knockout.Select;
+import normalsql.knockout.Statement;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import static java.lang.System.out;
@@ -19,9 +25,10 @@ void main() throws Exception
 
     String[] source =
     {
-        "/Users/jasonosgood/Projects/ScrapeMySQLTests/logs",
-        "./examples",
-        "/Users/jasonosgood/Projects/grammars-v4/sql/mysql/Positive-Technologies/examples"
+//        "/Users/jasonosgood/Projects/ScrapeMySQLTests/logs",
+//        "./examples",
+//        "/Users/jasonosgood/Projects/grammars-v4/sql/mysql/Positive-Technologies/examples"
+        "/Users/jasonosgood/Projects/normalsql/doc/classicmodels"
     };
 
     for( var src : source )
@@ -63,10 +70,37 @@ void parse( Path p ) throws Exception
     fileName = p.getFileName();
     out.println( fileName );
 
+    var tree   = toStatements( p );
+
+
+////    out.println( ugh.toStringTree( parser) );
+//    if ( parser.getNumberOfSyntaxErrors() > 0 ) {
+//        throw new Exception( "Syntax error" );
+//    }
+//    if ( parser.getNumberOfSyntaxErrors() == 0 ) {
+////        out.println( "OK" );
+//    } else {
+//        out.println( "Syntax error" );
+//        out.println( p.getFileName() );
+//    }
+
+    nodes = 0;
+    terminals = 0;
+    _level = 0;
+    dump( tree, 0 );
+//    out.println( "statements " + ugh.children.size() );
+//    out.println( "level " + _level );
+//    out.println( "nodes " + nodes );
+//    out.println( "terminals " + terminals );
+//    out.println( "##" );
+}
+
+ParserRuleContext toStatements( Path p ) throws IOException
+{
     var chars = CharStreams.fromPath( p );
     var lexer = new SQLiteLexer( chars );
     var tokens = new CommonTokenStream( lexer );
-    var parser = new MySQLParser( tokens );
+    var parser = new SQLiteParser( tokens );
     parser.removeErrorListeners( );
     parser.addErrorListener( new BaseErrorListener() {
         @Override
@@ -84,28 +118,9 @@ void parse( Path p ) throws Exception
 
 
     var ugh = parser.statements();
-
-
-////    out.println( ugh.toStringTree( parser) );
-//    if ( parser.getNumberOfSyntaxErrors() > 0 ) {
-//        throw new Exception( "Syntax error" );
-//    }
-//    if ( parser.getNumberOfSyntaxErrors() == 0 ) {
-////        out.println( "OK" );
-//    } else {
-//        out.println( "Syntax error" );
-//        out.println( p.getFileName() );
-//    }
-
-    nodes = 0;
-    terminals = 0;
-    _level = 0;
-    dump( ugh, 0 );
-//    out.println( "statements " + ugh.children.size() );
-//    out.println( "level " + _level );
-//    out.println( "nodes " + nodes );
-//    out.println( "terminals " + terminals );
-//    out.println( "##" );
+    MyListener extractor = new MyListener();
+    ParseTreeWalker.DEFAULT.walk(extractor, ugh);
+    return ugh;
 }
 
 int nodes = 0;
@@ -139,5 +154,28 @@ void dump( ParseTree parent, int level )
 
         }
 
+    }
+}
+
+class MyListener extends SQLiteBaseListener
+{
+    public Stack<Statement> stack = new Stack<>();
+    public Statement              trunk     = new Statement();
+    MyListener()
+    {
+        stack.push( trunk );
+    }
+
+    @Override
+    public void enterStatement( StatementContext ctx )
+    {
+        fudge(  new Select( ));
+    }
+
+    void fudge( Statement statement )
+    {
+        var top = stack.peek();
+        top.add( statement );
+        stack.push( statement );
     }
 }
