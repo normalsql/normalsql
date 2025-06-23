@@ -218,9 +218,6 @@ update
 delete
   : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
 
-setVariables
-    : 'SET' assign ( ',' assign )* ;
-
 alter
   : 'ALTER' 'TABLE' qname
     ( 'RENAME'
@@ -382,10 +379,13 @@ orderBy
 
 
 raise
-  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
+    : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
+
+setVariables
+    : 'SET' assign ( ',' assign )* ;
 
 assign
-  : ( name | '(' name ( ',' name )* ')' ) '=' term ;
+    : ( name | '(' name ( ',' name )* ')' ) '=' term ;
 
 pragma
   : 'PRAGMA' qname

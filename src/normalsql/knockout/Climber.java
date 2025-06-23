@@ -154,7 +154,6 @@ public class
                     top.knockouts.add( k );
                     knockouts.add( k );
                 }
-
             }
             climb( child );
         }
