@@ -26,7 +26,8 @@ extends
 	public LIKE( RuleContext context )
 	{
 		super( context );
-
+		column  = context.getChild( 0 );
+		literal  = context.getChild( 1 );
 		pattern = valueOf( Pattern.class, literal );
 	}
 }

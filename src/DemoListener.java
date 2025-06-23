@@ -198,14 +198,20 @@ class MyListener extends SQLiteBaseListener
     {
         var item = newItem( ctx );
         item.qname = ctx.qname().getText();
-        item.alias = ctx.alias().name().getText();
+        if( ctx.alias() != null )
+        {
+            item.alias = ctx.alias().name().getText();
+        }
     }
 
     @Override public void enterItemTerm( ItemTermContext ctx )
     {
-        var item = newItem( ctx );
         // TODO handle items without column name (eg expression) or alias. Use an index? Generate a column name?
-        item.alias = ctx.alias().name().getText();
+        var item = newItem( ctx );
+        if( ctx.alias() != null )
+        {
+            item.alias = ctx.alias().name().getText();
+        }
     }
 
     private Item newItem( ItemContext ctx )
@@ -260,7 +266,6 @@ class MyListener extends SQLiteBaseListener
         var knockouts = new ArrayList<Knockout<?>>();
         var terms     = ctx.term();
 
-//        var rowsX = XPath.findAll( ctx, "/values/term", parser );
         for( var term : terms )
         {
             var literals = XPath.findAll( term, "/term/term/literal", parser );

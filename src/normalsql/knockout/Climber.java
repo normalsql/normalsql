@@ -54,10 +54,7 @@ public class
         {
             ParseTree temp = parent.getChild( nth );
 
-            if( temp instanceof TerminalNode )
-            {
-                continue;
-            }
+            if( temp instanceof TerminalNode ) continue;
 
             RuleContext child = (RuleContext) temp;
 
