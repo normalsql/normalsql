@@ -196,6 +196,57 @@ statement
     | viewstmt
     ;
 
+with
+  : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
+
+cte
+  : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' query ')' ;
+
+select
+  : with?
+    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
+    orderBy?
+    ( limit | fetch | offset | locking )* ;
+
+  selectCore
+    : 'SELECT' unique? ( item ( ',' item )* ','? )?
+      ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
+      from? where? groupBy? having? window?
+    | values
+    | '(' select ')'
+    | 'TABLE' descendants
+    ;
+
+    item
+        : '*'  # ItemAll
+        | qname alias?  # ItemColumn
+        | term alias?  # ItemTerm
+        ;
+
+    tables
+      : tables ',' tables
+      | tables joinType? 'JOIN' tables ( 'ON' term | 'USING' columns )
+      | tables 'NATURAL' joinType? 'JOIN' tables
+      | tables 'CROSS' 'JOIN' tables
+      | 'LATERAL'? tableFunc
+      | 'LATERAL'? '(' select ')' aliasColumns?
+      | 'LATERAL'? function ( 'WITH' 'ORDINALITY' )? aliasColumns?
+      | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
+      | 'LATERAL'? xmltable aliasColumns?
+      | '(' tables ')' aliasColumns?
+      | descendants aliasColumns? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
+      ;
+
+    joinType
+      : 'INNER'
+      | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+      ;
+
+
+
+
+
+
 callstmt
     : 'CALL' genericFunction ;
 
@@ -1581,12 +1632,6 @@ declarecursorstmt
     : 'DECLARE' id ( 'NO'? 'SCROLL' | 'SCROLL' | 'BINARY' | 'INSENSITIVE' )* 'CURSOR' ( withers 'HOLD' )? 'FOR' select
     ;
 
-select
-  : with?
-    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
-    orderBy?
-    ( limit | fetch | offset | locking )* ;
-
     limit
       : 'LIMIT' term ;
 
@@ -1598,24 +1643,6 @@ select
 
     locking
       : 'FOR' ( ( 'NO' 'KEY' )? 'UPDATE' | 'KEY'? 'SHARE' ) ( 'OF' qnames )? ( 'NOWAIT' | 'SKIP' 'LOCKED' )? ;
-
-selectCore
-  : 'SELECT' unique? ( item ( ',' item )* ','? )?
-    ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
-    from? where? groupBy? having? window?
-  | values
-  | '(' select ')'
-  | 'TABLE' descendants
-  ;
-
-    item
-      : term alias? | '*' ;
-
-with
-  : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
-
-cte
-  : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' query ')' ;
 
 unique2
   : 'ALL' | 'DISTINCT' ;
@@ -1654,24 +1681,7 @@ values
 
 from
   : 'FROM' tables ( ',' tables )* ;
-
-tables
-  : tables joinType? 'JOIN' tables ( 'ON' term | 'USING' columns )
-  | tables 'NATURAL' joinType? 'JOIN' tables
-  | tables 'CROSS' 'JOIN' tables
-  | 'LATERAL'? tableFunc
-  | 'LATERAL'? '(' select ')' aliasColumns?
-  | 'LATERAL'? function ( 'WITH' 'ORDINALITY' )? aliasColumns?
-  | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
-  | 'LATERAL'? xmltable aliasColumns?
-  | '(' tables ')' aliasColumns?
-  | descendants aliasColumns? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
-  ;
-
-joinType
-  : 'INNER'
-  | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
-  ;
+//  : 'FROM' tables ( ',' tables )* ;
 
 genericFunction
   : qname '('
