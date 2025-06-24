@@ -211,7 +211,7 @@ select
   selectCore
     : 'SELECT' unique? ( item ( ',' item )* ','? )?
       ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
-      from? where? groupBy? having? window?
+      ( 'FROM' tables )? where? groupBy? having? window?
     | values
     | '(' select ')'
     | 'TABLE' descendants
@@ -229,18 +229,107 @@ select
       | tables 'NATURAL' joinType? 'JOIN' tables
       | tables 'CROSS' 'JOIN' tables
       | 'LATERAL'? tableFunc
-      | 'LATERAL'? '(' select ')' aliasColumns?
-      | 'LATERAL'? function ( 'WITH' 'ORDINALITY' )? aliasColumns?
-      | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? aliasColumns?
-      | 'LATERAL'? xmltable aliasColumns?
-      | '(' tables ')' aliasColumns?
-      | descendants aliasColumns? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
+      | 'LATERAL'? '(' select ')' tableAlias?
+      | 'LATERAL'? function ( 'WITH' 'ORDINALITY' )? tableAlias?
+      | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? tableAlias?
+      | 'LATERAL'? xmltable tableAlias?
+      | '(' tables ')' tableAlias?
+      | descendants tableAlias? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
       ;
 
-    joinType
-      : 'INNER'
-      | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+        joinType
+          : 'INNER'
+          | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+          ;
+
+        // TODO review func_expr_windowless
+        tableFunc
+          : function ( ( 'AS' | 'AS'? id ) '(' id type ( ',' id type )* ')' )? ;
+
+        xmltable
+          : 'XMLTABLE' '('
+            ( 'XMLNAMESPACES' '(' xmlNamespace ( ',' xmlNamespace )* ')' ',' )?
+             xmlPassings
+            'COLUMNS' xmlColumn ( ',' xmlColumn )* ')'
+          ;
+
+          xmlNamespace
+            : term 'AS' id
+            | 'DEFAULT' term
+            ;
+
+          xmlColumn
+            : id
+              ( type ( 'DEFAULT' term | id term | 'NOT'? 'NULL' )*
+              | 'FOR' 'ORDINALITY'
+              )
+            ;
+
+        descendants
+          : qname '*'?
+          | 'ONLY' qname
+          ;
+
+    tableAlias
+      : 'AS'? id ( '(' qname ( ',' qname )* ')' )? ;
+
+    where
+      : 'WHERE' term ;
+
+    groupBy
+      : 'GROUP' 'BY' groupByItem ( ',' groupByItem )* ;
+
+    groupByItem
+      : '(' ')'
+      | 'CUBE' '(' terms ')'
+      | 'ROLLUP' '(' terms ')'
+      | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
+      | term
       ;
+
+    having
+      : 'HAVING' term ;
+
+    window
+      : 'WINDOW' windowDef ( ',' windowDef )* ;
+
+    windowDef
+      : id 'AS' windowSpec ;
+
+    windowSpec
+      : '(' id? ( 'PARTITION' 'BY' terms )? orderBy? frame_clause_? ')' ;
+
+    frame_clause_
+      : ( 'RANGE' | 'ROWS' | 'GROUPS' )
+        ( frame_bound | 'BETWEEN' frame_bound 'AND' frame_bound )
+        ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ))?
+      ;
+
+    frame_bound
+      : 'UNBOUNDED' ( 'PRECEDING' | 'FOLLOWING' )
+      | 'CURRENT' 'ROW'
+      | term ( 'PRECEDING' | 'FOLLOWING' )
+      ;
+
+
+    values
+      : 'VALUES' terms ;
+
+    insert
+        : with? 'INSERT'
+          'INTO' qname alias?
+
+          ( columns? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
+    //      ( ( '(' qnames ')' )? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
+          | 'DEFAULT' 'VALUES'
+          )
+
+          ( 'ON' 'CONFLICT'
+            ( '(' index_params ')' where? | 'ON' 'CONSTRAINT' id )?
+            'DO' ( 'UPDATE' 'SET' setter ( ',' setter )* where? | 'NOTHING' )
+          )?
+          returning?
+        ;
 
 
 
@@ -645,7 +734,7 @@ usingIndexTablespaceID
   : 'USING' 'INDEX' 'TABLESPACE' id ;
 
 createstatsstmt
-  : 'CREATE' 'STATISTICS' ifNotExists? tableRef 'ON' terms from ;
+  : 'CREATE' 'STATISTICS' ifNotExists? tableRef 'ON' terms ( 'FROM' tables )? ;
 
 alterstatsstmt
   : 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal ;
@@ -1569,27 +1658,12 @@ deallocatestmt
     : 'DEALLOCATE' 'PREPARE'? ( id |  'ALL' )
     ;
 
-insert
-    : with? 'INSERT' 'INTO' qname ( 'AS' id )?
-
-      ( columns? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
-//      ( ( '(' qnames ')' )? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
-      | 'DEFAULT' 'VALUES'
-      )
-
-      ( 'ON' 'CONFLICT'
-        ( '(' index_params ')' where? | 'ON' 'CONSTRAINT' id )?
-        'DO' ( 'UPDATE' 'SET' setter ( ',' setter )* where? | 'NOTHING' )
-      )?
-      returning?
-    ;
-
 returning
   : 'RETURNING' ( item ( ',' item )* )? ;
 
 // https://www.postgresql.org/docs/current/sql-merge.html
 mergestmt
-    : 'MERGE' 'INTO'? qname aliasColumns? 'USING' ( '(' select ')' | qname ) aliasColumns? 'ON' term
+    : 'MERGE' 'INTO'? qname tableAlias? 'USING' ( '(' select ')' | qname ) tableAlias? 'ON' term
       ( merge_insert_clause merge_update_clause?
       | merge_update_clause merge_insert_clause?
       )
@@ -1620,7 +1694,7 @@ lockType
 update
   : with? 'UPDATE' descendants alias?
     'SET' setter ( ',' setter )*
-    from? whereCurrent? returning?
+    ( 'FROM' tables )? whereCurrent? returning?
   ;
 
 setter
@@ -1662,55 +1736,8 @@ rowRows
 firstNext
   : 'FIRST' | 'NEXT' ;
 
-groupBy
-  : 'GROUP' 'BY' groupByItem ( ',' groupByItem )* ;
-
-groupByItem
-  : '(' ')'
-  | 'CUBE' '(' terms ')'
-  | 'ROLLUP' '(' terms ')'
-  | 'GROUPING' 'SETS' '(' groupByItem ( ',' groupByItem )* ')'
-  | term
-  ;
-
-having
-  : 'HAVING' term ;
-
-values
-  : 'VALUES' terms ;
-
-from
-  : 'FROM' tables ( ',' tables )* ;
-//  : 'FROM' tables ( ',' tables )* ;
-
-genericFunction
-  : qname '('
-    ( ( args ( ',' 'VARIADIC' arg )?
-      | 'VARIADIC' arg
-      | unique2 args
-      ) orderBy?
-    | '*'
-    )?
-    ')'
-  ;
-
-// TODO review func_expr_windowless
-tableFunc
-  : function ( ( 'AS' | 'AS'? id ) '(' id type ( ',' id type )* ')' )? ;
-
-aliasColumns
-  : 'AS'? id columns? ;
-
-descendants
-  : qname '*'?
-  | 'ONLY' qname
-  ;
-
 alias
   : 'AS'? name ;
-
-where
-  : 'WHERE' term ;
 
 whereCurrent
   : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
@@ -1718,25 +1745,6 @@ whereCurrent
 tablefuncelement
     : id type collate?
     ;
-
-xmltable
-  : 'XMLTABLE' '('
-    ( 'XMLNAMESPACES' '(' xmlNamespace ( ',' xmlNamespace )* ')' ',' )?
-     xmlPassings
-    'COLUMNS' xmlColumn ( ',' xmlColumn )* ')'
-  ;
-
-xmlNamespace
-  : term 'AS' id
-  | 'DEFAULT' term
-  ;
-
-xmlColumn
-  : id
-    ( type ( 'DEFAULT' term | id term | 'NOT'? 'NULL' )*
-    | 'FOR' 'ORDINALITY'
-    )
-  ;
 
 type
   : 'SETOF'? scalarType
@@ -1842,7 +1850,7 @@ term
   // unary right
   | <assoc=right> term OPERATOR #TermIgnore
   | 'CASE' term? when+ ( 'ELSE' term )? 'END' #TermIgnore
-  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( window_specification | id ))?  #TermIgnore
+  | function ( 'WITHIN' 'GROUP' '(' orderBy ')' )? ( 'FILTER' '(' where ')' )? ( 'OVER' ( windowSpec | id ))?  #TermIgnore
   // TODO do these other nestings also need index suffix?
   | 'EXISTS' '(' select ')' #TermIgnore
   | 'ARRAY' ( '(' select ')' | array ) #TermIgnore
@@ -1893,6 +1901,18 @@ function
     | 'JSON_VALUE' '(' jsonValue ',' term jsonPassing? jsonReturning? jsonOnEmpty? jsonOnError? ')'
     ;
 
+genericFunction
+  : qname '('
+    ( ( args ( ',' 'VARIADIC' arg )?
+      | 'VARIADIC' arg
+      | unique2 args
+      ) orderBy?
+    | '*'
+    )?
+    ')'
+  ;
+
+
 xmlAttrib
   : term ( 'AS' id )? ;
 
@@ -1901,27 +1921,6 @@ root
 
 xmlPassings
   : term 'PASSING' ( 'BY' ( 'REF' | 'VALUE' ) )? term ( 'BY' ( 'REF' | 'VALUE' ) )? ;
-
-window
-  : 'WINDOW' window_definition ( ',' window_definition )* ;
-
-window_definition
-  : id 'AS' window_specification ;
-
-window_specification
-  : '(' id? ( 'PARTITION' 'BY' terms )? orderBy? frame_clause_? ')' ;
-
-frame_clause_
-  : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-    ( frame_bound | 'BETWEEN' frame_bound 'AND' frame_bound )
-    ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ))?
-  ;
-
-frame_bound
-  : 'UNBOUNDED' ( 'PRECEDING' | 'FOLLOWING' )
-  | 'CURRENT' 'ROW'
-  | term ( 'PRECEDING' | 'FOLLOWING' )
-  ;
 
 row
   : 'ROW' '(' ( term ( ',' term )* )? ')'

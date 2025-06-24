@@ -121,9 +121,7 @@ select
 
     selectCore
         : 'SELECT' unique_? ( item ( ',' item )* ','? )?
-          ( 'FROM' tables )?
-          where?
-          groupBy? having?
+          ( 'FROM' tables )? where? groupBy? having?
           ( 'WINDOW' windowDef ( ',' windowDef )* )?
         | values
         | '(' select ')'
@@ -183,9 +181,7 @@ select
 
 insert
     : with?
-      ( 'INSERT' ( 'OR' action )?
-      | 'REPLACE'
-      )
+      ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
       'INTO' qname alias? ( '(' qname ( ',' qname )* ')' )?
       ( ( values | select ) upsert? | 'DEFAULT' 'VALUES' )
       returning?
