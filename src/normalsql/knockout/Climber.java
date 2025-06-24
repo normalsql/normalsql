@@ -15,15 +15,12 @@
 
 package normalsql.knockout;
 
+import normalsql.grammar.SQLiteParser.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Stack;
 
 /**
@@ -35,7 +32,7 @@ public class
     Climber
 {
     Parser parser;
-    public Statement              trunk     = new Statement();
+    public Statement        trunk = new Statement();
     public Stack<Statement>       stack     = new Stack<>();
     public ArrayList<Knockout<?>> knockouts = new ArrayList<>();
     public CommonTokenStream      tokens;
@@ -47,24 +44,19 @@ public class
         stack.add( trunk );
     }
 
-    public void climb( ParseTree parent )
+    Statement top;
+
+    public void climb( GlobbingRuleContext parent )
     {
-        Statement top = stack.peek();
-        for( int nth = 0; nth < parent.getChildCount(); nth++ )
+        top = stack.peek();
+        for( var child : parent )
         {
-            ParseTree temp = parent.getChild( nth );
-
-            if( temp instanceof TerminalNode ) continue;
-
-            RuleContext child = (RuleContext) temp;
-
-            String name = child.getClass().getSimpleName();
-            Statement statement = switch( name )
+            Statement statement = switch( child )
             {
-                case "SelectContext" -> new Select();
-                case "InsertContext" -> climbInsert( child );
-                case "UpdateContext" -> new Update();
-                case "DeleteContext" -> new Delete();
+                case SelectContext ignore -> new Select();
+                case InsertContext ctx -> newInsert( ctx );
+                case UpdateContext ignored -> new Update();
+                case DeleteContext ignored -> new Delete();
                 default -> null;
             };
 
@@ -77,113 +69,107 @@ public class
                 continue;
             }
 
-            if( name.startsWith( "Item" ))
+            switch( child )
             {
-                // TODO: Could or should these be inlined into a climbSelect?
-                var item = new Item();
-                top.items.add( item );
-
-                item.context  = child;
-                item.verbatim = tokens.getText( child );
-
-                if( "ItemAllContext".equals( name ))
+                case ItemAllContext ctx -> newItem( ctx ).qname = "*";
+                case ItemColumnContext ctx ->
                 {
-                    item.qname = "*";
-                }
-                else if( "ItemColumnContext".equals( name ))
-                {
-                    // TODO extract local name from column's qname, instead of string processing
-//                    item.localName = getLocalName( qname );
-
-                    item.qname = child.getChild( 0 ).getText();
-                    if( child.getChildCount() > 1 )
+                    var item = newItem( ctx );
+                    item.qname = ctx.qname().getText();
+                    if( ctx.alias() != null )
                     {
-                        item.alias = child.getChild( 1 ).getText();
+                        item.alias = ctx.alias().name().getText();
                     }
                 }
-                else if( "ItemTermContext".equals( name ))
+                case ItemTermContext ctx ->
                 {
-                    // TODO handle items without column name (eg expression) or alias. Use an index? Generate a column name?
-                    if( child.getChildCount() > 1 )
+                    var item = newItem( ctx );
+                    if( ctx.alias() != null )
                     {
-                        item.alias = child.getChild( 1 ).getText();
+                        item.alias = ctx.alias().name().getText();
+                    }
+                }
+                case TermBETWEENContext ctx -> knockout( new BETWEEN( ctx, parser ));
+                case TermCompareContext ctx -> knockout( new Comparison( ctx ));
+                case TermINContext ctx -> knockout( new IN( ctx, parser ));
+                case TermLIKEContext ctx -> knockout( new LIKE( ctx ));
+
+                case ValuesContext ctx ->
+                {
+                    var knockouts = new ArrayList<Knockout<?>>();
+                    var rows      = ctx.term();
+
+                    for( var r : rows )
+                    {
+                        var literals = XPath.findAll( r, "/term/term/literal", parser );
+                        if( literals.isEmpty() ) continue;
+
+                        var row = new Row( ctx );
+                        row.literals = new ArrayList<>( literals );
+                        knockouts.add( row );
+                    }
+
+                    if( !knockouts.isEmpty() && top instanceof Insert insert )
+                    {
+                        insert.knockouts = knockouts;
                     }
                 }
 
+                default -> {}
             }
-            else
-            {
-                Knockout<?> k = switch( name )
-                {
-                    case "TermBETWEENContext" ->
-                    {
-                        yield new BETWEEN( child, parser );
-                    }
-                    case "TermCompareContext" -> new Comparison( child );
-                    case "TermINContext"  ->
-                    {
-                        yield new IN( child, parser );
-                    }
-                    case "TermLIKEContext"  ->
-                    {
-                        LIKE like = new LIKE( child );
-                        var terms = XPath.findAll( child, "/like/term", parser );
-                        var ick = new ArrayList<>( terms );
-                        like.column  = ick.get( 0 );
-                        like.literal  = ick.get( 1 );
-                        yield like;
-                    }
-                    case "SetterContext"  ->
-                    {
-                        Setter setter = new Setter( child );
-                        setter.qname = XPath.findAll( child, "/setter/qname", parser ).iterator().next();
-                        setter.literal = XPath.findAll( child, "/setter/literal", parser ).iterator().next();
 
-                        yield setter;
-                    }
-                    default -> null;
-                };
-
-//                // TODO to aid debugging, add all potential knockouts, filter matches later
-//                if( k != null )
-                if( k != null && k.isMatched() )
-                {
-                    top.knockouts.add( k );
-                    knockouts.add( k );
-                }
-            }
+//            {
+//                Knockout<?> k = switch( name )
+//                {
+//                    case "SetterContext"  ->
+//                    {
+//                        Setter setter = new Setter( child );
+//                        setter.qname = XPath.findAll( child, "/setter/qname", parser ).iterator().next();
+//                        setter.literal = XPath.findAll( child, "/setter/literal", parser ).iterator().next();
+//
+//                        yield setter;
+//                    }
+//                    default -> null;
+//                };
+//            }
             climb( child );
         }
     }
 
-    public Insert climbInsert( ParseTree parent )
+    public Insert newInsert( InsertContext parent )
     {
-        ArrayList<Knockout<?>> knockouts = new ArrayList<>();
-
-        var rowsX = XPath.findAll( parent, "/insert/values/term", parser );
-        for( var rowX : rowsX )
-        {
-            var literals = XPath.findAll( rowX, "/term/term/literal", parser );
-            if( literals.isEmpty() ) continue;
-
-            var row = new Row( parent );
-            row.literals = new ArrayList<>( literals );
-            knockouts.add( row );
-        }
-
-        if( knockouts.isEmpty() ) return null;
-
-        Insert insert = new Insert();
-        Iterator<ParseTree> iterator = XPath.findAll( parent, "/insert/qname", parser ).iterator();
+        var insert = new Insert();
+        var names  = parent.qname().iterator();
         // First is table name, rest are column names.
-        insert.table = iterator.next();
-        while( iterator.hasNext() )
+        insert.table = names.next();
+        while( names.hasNext() )
         {
-            insert.columns.add( iterator.next() );
+            insert.columns.add( names.next() );
         }
 
         insert.knockouts = knockouts;
-
         return insert;
     }
+
+    public Item newItem( ItemContext ctx )
+    {
+        var item = new Item();
+        top.items.add( item );
+
+        item.context  = ctx;
+        item.verbatim = tokens.getText( ctx );
+        return item;
+    }
+
+    public void knockout( Knockout<?> k )
+    {
+        if( k != null && k.isMatched() )
+        {
+//            var top = stack.peek();
+            top.knockouts.add( k );
+            knockouts.add( k );
+        }
+    }
+
+
 }
