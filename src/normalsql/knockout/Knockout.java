@@ -3,6 +3,7 @@
 
 package normalsql.knockout;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 // TODO Create subclasses for subterm and predicate rules. Specialize valueOf method accordingly.
@@ -25,13 +26,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 public abstract class Knockout<E extends Enum<E>>
 {
-	public GlobbingRuleContext context;
-//	public GlobbingRuleContext parent;
+	public ParseTree context;
 
-	public Knockout( GlobbingRuleContext context )
+	public Knockout( ParseTree context )
 	{
 		this.context = context;
-//		parent = (GlobbingRuleContext) context.parent;
 	}
 
 	public E pattern;

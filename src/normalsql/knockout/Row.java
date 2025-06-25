@@ -1,6 +1,8 @@
 package normalsql.knockout;
 
-import java.util.ArrayList;
+import org.antlr.v4.runtime.tree.ParseTree;
+
+import java.util.Collection;
 import java.util.List;
 
 public class
@@ -10,11 +12,11 @@ extends
 {
     public enum Pattern
     {
-        Literals
+        Literals;
     }
 
-    public Insert                   insert;
-    public List<GlobbingRuleContext> literals = new ArrayList<>();
+    public Insert          insert;
+    public List<ParseTree> literals;
 
 //    public Row( GlobbingRuleContext context, Insert insert )
 //    {
@@ -22,7 +24,7 @@ extends
 //        this.insert = insert;
 //        pattern = Pattern.Literals;
 //    }
-    public Row( GlobbingRuleContext context )
+    public Row( ParseTree context )
     {
         super( context );
 //        this.insert = insert;

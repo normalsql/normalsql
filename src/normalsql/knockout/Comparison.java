@@ -3,6 +3,7 @@
 
 package normalsql.knockout;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Map;
@@ -13,7 +14,7 @@ import static java.util.Map.ofEntries;
 public class
 	Comparison
 extends
-		Knockout<Comparison.Pattern>
+	Knockout<Comparison.Pattern>
 {
 	public enum Pattern
 	{
@@ -56,25 +57,13 @@ extends
 	public ParseTree operator;
 	public ParseTree left;
 	public ParseTree right;
-	public ParseTree literal;
-	public ParseTree column;
 
-	public Comparison( GlobbingRuleContext context )
+	public Comparison( RuleContext context )
 	{
 		super( context );
-//		op = operatorMap.get( context.compare.getText() );
 		left = context.getChild( 0 );
 		operator = context.getChild( 1 );
 		right = context.getChild( 2 );
 		pattern = valueOf( Pattern.class, left, right );
-
-//		if( !isMatched() ) return;
-//
-//		// TODO: Move this logic to Worker, like for BETWEEN predicates
-//		switch( pattern )
-//		{
-//			case LiteralColumn -> { literal = left; column = right; }
-//			case ColumnLiteral -> { literal = right; column = left; }
-//		}
 	}
 }

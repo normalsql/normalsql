@@ -16,8 +16,10 @@ package normalsql.knockout;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.WritableToken;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -27,19 +29,24 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class
-    GlobbingRuleContext
+GlobbingRuleContext
 extends
-    ParserRuleContext
+        ParserRuleContext
+        implements Iterable<GlobbingRuleContext>
 {
     /**
      * <p>Constructor for GlobbingRuleContext.</p>
      */
-    public GlobbingRuleContext() { }
+    public GlobbingRuleContext()
+    {
+    }
+
+
 
     /**
      * <p>Constructor for GlobbingRuleContext.</p>
      *
-     * @param parent a {@link org.antlr.v4.runtime.ParserRuleContext} object
+     * @param parent              a {@link org.antlr.v4.runtime.ParserRuleContext} object
      * @param invokingStateNumber a int
      */
     public GlobbingRuleContext( ParserRuleContext parent, int invokingStateNumber )
@@ -61,19 +68,20 @@ extends
     /**
      * <p>find.</p>
      *
-     * @param type a {@link java.lang.Class} object
+     * @param type  a {@link java.lang.Class} object
      * @param query a {@link java.lang.String} object
-     * @param <T> a T class
+     * @param <T>   a T class
      * @return a {@link java.util.List} object
      */
-    public <T extends GlobbingRuleContext> List<T> find( Class<? extends T> type, String query ) {
-        List<GlobbingRuleContext> found = find( query );
-        List<T> results = new ArrayList<>();
+    public <T extends GlobbingRuleContext> List<T> find( Class<? extends T> type, String query )
+    {
+        List<GlobbingRuleContext> found   = find( query );
+        List<T>                   results = new ArrayList<>();
         for( GlobbingRuleContext o : found )
         {
-            if( type.isInstance( o ))
+            if( type.isInstance( o ) )
             {
-                results.add( type.cast( o ));
+                results.add( type.cast( o ) );
             }
         }
         return results;
@@ -82,15 +90,15 @@ extends
     /**
      * <p>findFirst.</p>
      *
-     * @param type a {@link java.lang.Class} object
+     * @param type       a {@link java.lang.Class} object
      * @param expression a {@link java.lang.String} object
-     * @param <T> a T class
+     * @param <T>        a T class
      * @return a T object
      */
     public <T extends GlobbingRuleContext> T findFirst( Class<? extends T> type, String expression )
     {
-        T result = null;
-        List<T> found = find( type, expression );
+        T       result = null;
+        List<T> found  = find( type, expression );
         if( found.size() > 0 )
         {
             result = found.get( 0 );
@@ -99,6 +107,7 @@ extends
     }
 
     // TODO: validate globbing query expression
+
     /**
      * <p>find.</p>
      *
@@ -114,7 +123,7 @@ extends
         }
 
         ArrayList<String> split = new ArrayList<>();
-        for( String atom : query.split( "/" ))
+        for( String atom : query.split( "/" ) )
         {
             atom = atom.trim();
             if( atom.length() == 0 )
@@ -129,10 +138,10 @@ extends
         return result;
     }
 
-    private static void find( boolean first, ParserRuleContext parent, ArrayList<String> query, int nth, boolean seeking, ArrayList<GlobbingRuleContext> result  )
+    private static void find( boolean first, ParserRuleContext parent, ArrayList<String> query, int nth, boolean seeking, ArrayList<GlobbingRuleContext> result )
     {
         String spot = query.get( nth );
-        if( "**".equals( spot ))
+        if( "**".equals( spot ) )
         {
             find( first, parent, query, nth + 1, true, result );
         }
@@ -141,7 +150,7 @@ extends
             if( temp instanceof GlobbingRuleContext child )
             {
                 boolean wildcard = "*".equals( spot );
-                boolean match = child.getRuleName().equals( spot );
+                boolean match    = child.getRuleName().equals( spot );
 //                boolean match = false;
                 if( wildcard || match )
                 {
@@ -186,8 +195,8 @@ extends
      */
     public GlobbingRuleContext findFirst( String expression )
     {
-        GlobbingRuleContext result = null;
-        List<GlobbingRuleContext> found = find( expression, true );
+        GlobbingRuleContext       result = null;
+        List<GlobbingRuleContext> found  = find( expression, true );
         if( found.size() > 0 )
         {
             result = found.get( 0 );
@@ -235,6 +244,7 @@ extends
 //    }
 
     // TODO: Handle unary numbers, eg -100
+
     /**
      * <p>setStartTokenText.</p>
      *
@@ -252,5 +262,26 @@ extends
      *
      * @return a {@link java.lang.String} object
      */
-    public String toString() { return getText(); }
+    public String toString()
+    {
+        return getText();
+    }
+
+    /**
+     * @return 
+     */
+    @Override
+    public Iterator<GlobbingRuleContext> iterator()
+    {
+        ArrayList<GlobbingRuleContext> kids = new ArrayList<>();
+        for( ParseTree child : children )
+        {
+            if( child instanceof GlobbingRuleContext kid )
+            {
+                kids.add( kid );
+            }
+        }
+
+        return kids.iterator();
+    }
 }

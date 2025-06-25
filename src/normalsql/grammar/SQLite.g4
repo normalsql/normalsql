@@ -83,6 +83,10 @@ statements
 statement
   : ( 'EXPLAIN' ( 'QUERY' 'PLAN' )? )?
     ( alter
+    | select
+    | insert
+    | update ( orderBy? limit )?
+    | delete ( orderBy? limit )?
     | analyze
     | attach
     | begin
@@ -92,20 +96,123 @@ statement
     | createTrigger
     | createView
     | createVirtualTable
-    | delete ( orderBy? limit )?
     | detach
     | drop
-    | insert
     | pragma
     | reindex
     | release
     | rollback
     | savepoint
-    | select
-    | update ( orderBy? limit )?
     | vacuum
     )
   ;
+
+with
+  : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
+
+cte
+  : name ( '(' name ( ',' name )* ')' )? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
+
+select
+    : with?
+      selectCore ( ( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
+      orderBy? limit?
+    ;
+
+    selectCore
+        : 'SELECT' unique_? ( item ( ',' item )* ','? )?
+          ( 'FROM' tables )? where? groupBy? having?
+          ( 'WINDOW' windowDef ( ',' windowDef )* )?
+        | values
+        | '(' select ')'
+        ;
+
+        item
+            : '*'  # ItemAll
+            | qname alias?  # ItemColumn
+            | term alias?  # ItemTerm
+            ;
+
+        tables
+            : tables ',' tables
+            | tables joinType? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' ) indexedBy?
+            | tables 'NATURAL' joinType? 'JOIN' tables
+            | tables 'CROSS' 'JOIN' tables
+            | qname tableAlias? indexedBy?
+            | '(' select  ')' tableAlias?
+            | '(' tables ')' tableAlias?
+            ;
+
+        joinType
+            : 'INNER'
+            | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+            ;
+
+        tableAlias
+            : alias ( '(' name ( ',' name )* ')' )? ;
+
+        where
+            : 'WHERE' term ;
+
+        groupBy
+            : 'GROUP' 'BY' term ( ',' term )* ;
+
+        having
+            : 'HAVING' term ;
+
+        windowDef
+            : name 'AS' windowSpec ;
+
+            windowSpec
+                : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
+                  ( ( 'RANGE' | 'ROWS' | 'GROUPS' ) ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )? )?
+                  ')'
+                ;
+
+            windowFrameBounds
+    //          : ( 'UNBOUNDED'  | term  ) ( 'PRECEDING' | 'FOLLOWING' )
+              : literal ( 'PRECEDING' | 'FOLLOWING' )
+              | 'CURRENT' 'ROW'
+              ;
+
+        values
+            : 'VALUES' term ( ',' term )* ;
+
+
+insert
+    : with?
+      ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
+      'INTO' qname alias? ( '(' qname ( ',' qname )* ')' )?
+      ( ( values | select ) upsert? | 'DEFAULT' 'VALUES' )
+      returning?
+    ;
+
+    action
+        : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
+
+
+upsert
+  : 'ON' 'CONFLICT' ( columnIndexes where? )?
+    'DO' ( 'NOTHING' | 'UPDATE' setVariables where? )
+  ;
+
+update
+    : with? 'UPDATE' ( 'OR' action )? indexedBy
+      setVariables
+      ( 'FROM' tables )?
+      where? returning?
+    ;
+
+    indexedBy
+      : 'INDEXED' 'BY' name
+      | 'NOT' 'INDEXED'
+      ;
+
+    returning
+        : 'RETURNING' item ( ',' item )* ;
+
+delete
+  : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
 
 alter
   : 'ALTER' 'TABLE' qname
@@ -132,14 +239,14 @@ createIndex
   : 'CREATE' 'UNIQUE'? 'INDEX' ifNotExists? qname 'ON' name columnIndexes where? ;
 
 createTable
-  : 'CREATE' temp? 'TABLE' ifNotExists? qname
+  : 'CREATE' temp_? 'TABLE' ifNotExists? qname
     ( '(' columnDef ( ',' columnDef )*? ( ',' table_constraint )* ')' ( 'WITHOUT' ID )?
     | 'AS' select
     )
   ;
 
 createTrigger
-  : 'CREATE' temp? 'TRIGGER' ifNotExists? qname
+  : 'CREATE' temp_? 'TRIGGER' ifNotExists? qname
     ( 'BEFORE' | 'AFTER' | 'INSTEAD' 'OF' )?
     ( 'DELETE' | 'INSERT' | 'UPDATE' ( 'OF' name ( ',' name )* )? )
     'ON' qname ( 'FOR' 'EACH' 'ROW' )?
@@ -148,7 +255,7 @@ createTrigger
   ;
 
 createView
-  : 'CREATE'? temp? 'VIEW' ifNotExists? qname columns? 'AS' select ;
+  : 'CREATE'? temp_? 'VIEW' ifNotExists? qname ( '(' name ( ',' name )* ')' )? 'AS' select ;
 
 createVirtualTable
   : 'CREATE' 'VIRTUAL' 'TABLE' ifNotExists? qname
@@ -156,9 +263,6 @@ createVirtualTable
      // https://www.sqlite.org/fts3.html#creating_and_destroying_fts_tables
     'USING' name ( '(' columnDef ( ',' columnDef )* ')' )?
   ;
-
-delete
-  : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
 
 detach
   : 'DETACH' 'DATABASE'? name ;
@@ -179,7 +283,7 @@ columnIndexes
   : '(' columnIndex ( ',' columnIndex )* ')' ;
 
 columnIndex
-  : ( name | term ) ( 'COLLATE' name )? sortDir? ;
+  : ( name | term ) ( 'COLLATE' name )? direction_? ;
 
 ifNotExists
   : 'IF' 'NOT' 'EXISTS' ;
@@ -192,7 +296,7 @@ type
 
 constraint
   : ( 'CONSTRAINT' name )?
-    ( ( 'PRIMARY' 'KEY' sortDir? onConflict? 'AUTOINCREMENT'? )
+    ( ( 'PRIMARY' 'KEY' direction_? onConflict? 'AUTOINCREMENT'? )
     | ( 'NOT'? 'NULL' | 'UNIQUE' ) onConflict?
     | 'CHECK' '(' term ')'
     | 'DEFAULT' ( signed_number | literal | '(' term ')' )
@@ -209,38 +313,25 @@ table_constraint
   : ( 'CONSTRAINT' name )?
     ( ( 'PRIMARY' 'KEY' | 'UNIQUE' ) columnIndexes onConflict?
     | 'CHECK' '(' term ')'
-    | 'FOREIGN' 'KEY' columns foreign_key
+    | 'FOREIGN' 'KEY' '(' name ( ',' name )* ')' foreign_key
     )
   ;
 
 foreign_key
-  : 'REFERENCES' name columns?
+  : 'REFERENCES' name ( '(' name ( ',' name )* ')' )?
     ( 'ON' ( 'DELETE' | 'UPDATE' )
       ( 'SET' ( 'NULL' | 'DEFAULT' ) | 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION' )
       | 'MATCH' name
     )*
-    ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ))?)?
+    ( 'NOT'? 'DEFERRABLE' ( 'INITIALLY' ( 'DEFERRED' | 'IMMEDIATE' ) )? )?
   ;
 
 onConflict
   : 'ON' 'CONFLICT' action ;
 
-temp
-  : 'TEMP' | 'TEMPORARY' ;
-
-with
-  : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
-
-cte
-  : name columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' select ')' ;
-
-terms
-  : term ( ',' term )* ;
-
 term
   : literal #TermLiteral
   | qname  #TermColumn
-
   | ( '~' | '+' | '-' ) term #TermIgnore
   | term 'COLLATE' qname #TermIgnore
   | term ( '||' | '->' | '->>' ) term #TermIgnore
@@ -254,61 +345,43 @@ term
   | term 'IS' 'NOT'? ( 'DISTINCT' 'FROM' )? term #TermIgnore
   | term ( 'ISNULL' | 'NOTNULL' | 'NOT' 'NULL' ) #TermIgnore
   | term 'NOT'? ( 'LIKE' | 'GLOB' | 'REGEXP' | 'MATCH' ) term #TermLIKE
-  | term 'NOT'? 'IN' ( '(' ( select | terms )? ')' | qname ( '(' terms? ')' )? ) #TermIN
+  | term 'NOT'? 'IN' '(' term ( ',' term )* ')' #TermIN
+  | term 'NOT'? 'IN' '(' select? ')' # TermIgnore
+  | term 'NOT'? 'IN'  qname ( '(' ( term ( ',' term )* )? ')' )?  # TermIgnore
   | term 'NOT'? 'BETWEEN' term 'AND' term #TermBETWEEN
 
   | 'CASE' term? ( 'WHEN' term 'THEN' term )+ ( 'ELSE' term )? 'END' #TermIgnore
   | function filter? over? #TermIgnore
   | raise #TermIgnore
   | 'EXISTS'? '(' select ')' #TermIgnore
-  | row #TermIgnore
+  | '(' term ( ',' term )* ')' #TermRow
   | 'NOT' term #TermIgnore
   // workaround to ensure BETWEEN beats AND, building correct parse tree
-  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
+  | term 'AND' term #TermIgnore
+//  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
   | term 'OR' term #TermIgnore
   ;
 
-function
-  : name '(' ( ( unique? terms orderBy? ) | '*'  )? ')'
-  | 'CAST' '(' term 'AS' type ')'
-  ;
+    function
+      : name '(' ( ( unique_? term ( ',' term )* orderBy? ) | '*'  )? ')'
+      | 'CAST' '(' term 'AS' type ')'
+      ;
+
+orderBy
+    : 'ORDER' 'BY' orderTerm ( ',' orderTerm )* ;
+
+    orderTerm
+        : term ( 'COLLATE' name )? direction_? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
+
 
 raise
-  : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
+    : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;
 
-values
-  : 'VALUES' terms ;
-
-row
-  : '(' term ( ',' term )* ')' ;
-
-insert
-  : with?
-    ( 'INSERT'
-    | 'REPLACE'
-    | 'INSERT' 'OR' action
-    )
-    'INTO' qname alias? columns?
-    ( select upsert? | 'DEFAULT' 'VALUES' )
-    returning?
-  ;
-
-action
-  : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
-
-returning
-  : 'RETURNING' items ;
-
-upsert
-  : 'ON' 'CONFLICT' ( columnIndexes where? )?
-    'DO' ( 'NOTHING' | 'UPDATE' setter where? )
-  ;
-
-setter
-  : 'SET' assign ( ',' assign )* ;
+setVariables
+    : 'SET' assign ( ',' assign )* ;
 
 assign
-  : ( name | columns ) '=' term ;
+    : ( name | '(' name ( ',' name )* ')' ) '=' term ;
 
 pragma
   : 'PRAGMA' qname
@@ -325,74 +398,6 @@ pragma_value
 reindex
   : 'REINDEX' qname? ;
 
-select
-  : with?
-    selectCore (( 'UNION' 'ALL'? | 'INTERSECT' | 'EXCEPT' ) selectCore )*
-    orderBy? limit?
-  ;
-
-selectCore
-  : 'SELECT' unique? ( item ( ',' item )* ','? )?
-    from?
-    where?
-    // TODO decide between inlined or separate rules for GROUP BY and WINDOW
-    ( 'GROUP' 'BY' terms ( 'HAVING' term )? )?
-    ( 'WINDOW' window ( ',' window )* )?
-  | values
-  | '(' select ')'
-  ;
-
-// TODO Alternate names might be 'keep', 'retain', 'dedupe'...? Feedback needed.
-unique
-  : 'ALL' | 'DISTINCT' ;
-
-window
-  : name 'AS' windowDef ;
-
-items
-  : item ( ',' item )* ;
-
-item
-  : '*'
-  | qname '.' '*'
-  | term alias?
-  ;
-
-from
-  : 'FROM' tables ( ',' tables )* ;
-
-tables
-  : tables joinType? 'JOIN' tables ( 'ON' term | 'USING' columns ) indexedBy?
-  | tables 'NATURAL' joinType? 'JOIN' tables
-  | tables 'CROSS' 'JOIN' tables
-  | qname tableAlias? indexedBy?
-  | '(' select  ')' tableAlias?
-  | '(' tables ')' tableAlias?
-  ;
-
-joinType
-  : 'INNER'
-  | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
-  ;
-
-tableAlias
-  : alias columns? ;
-
-update
-  : with? 'UPDATE' ( 'OR' action )? indexedBy
-    setter
-    from?
-    where? returning?
-  ;
-
-where
-  : 'WHERE' term ;
-
-indexedBy
-  : 'INDEXED' 'BY' name
-  | 'NOT' 'INDEXED'
-  ;
-
 vacuum
   : 'VACUUM' name? ( 'INTO' name )? ;
 
@@ -400,53 +405,29 @@ filter
   : 'FILTER' '(' 'WHERE' term ')' ;
 
 over
-  : 'OVER' ( name | windowDef ) ;
-
-windowDef
-  : '(' name? ( 'PARTITION' 'BY' terms )? orderBy? windowFrame? ')' ;
-
-windowFrame
-  : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-    ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds
-    ( 'EXCLUDE' ( 'NO' 'OTHERS' | 'CURRENT' 'ROW' | 'GROUP' | 'TIES' ))?
-  ;
-
-windowFrameBounds
-  : ( 'UNBOUNDED'  | term  ) ( 'PRECEDING' | 'FOLLOWING' )
-//  : ( 'UNBOUNDED'   ) ( 'PRECEDING' | 'FOLLOWING' )
-  | 'CURRENT' 'ROW'
-  ;
+  : 'OVER' ( name | windowSpec ) ;
 
 limit
-  : 'LIMIT' term (( 'OFFSET' | ',' ) term )? ;
-
-orderBy
-  : 'ORDER' 'BY' orderingTerm ( ',' orderingTerm )* ;
-
-orderingTerm
-  : term ( 'COLLATE' name )? sortDir? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
-
-sortDir
-  : 'ASC' | 'DESC' ;
+  : 'LIMIT' term ( ( 'OFFSET' | ',' ) term )? ;
 
 alias
   : 'AS'? name ;
 
-columns
-  : '(' name ( ',' name )* ')' ;
-
 qname
   : name ( '.' name )* ;
 
+// TODO figure out when a string either name or literal
 name
   : ID | string | keyword ;
 
-// List of all the SQL keywords used in this grammar. SQLite reserved
-// keywords should be commented out (to disallow them as identifiers).
-//
-// Update keyword rule whenever grammar adds (or removes) SQL keywords.
-// My manual method is to copy SQLiteParser.tokens into SublimeText,
-// beat that list into shape, then paste result here.
+direction_
+  : 'ASC' | 'DESC' ;
+
+temp_
+  : 'TEMP' | 'TEMPORARY' ;
+
+unique_
+     : 'ALL' | 'DISTINCT' ;
 
 keyword
   : 'ABORT'
@@ -606,6 +587,7 @@ literal
   | NUMBER
   | string
   | BLOB
+//  | qname
   ;
 
 string
@@ -635,13 +617,13 @@ PARAM
   ;
 
 COMMENT
-  : '--' ~[\r\n]* (( '\r'? '\n' ) | EOF ) -> channel(HIDDEN) ;
+  : '--' ~[\r\n]* ( ( '\r'? '\n' ) | EOF ) -> channel( HIDDEN ) ;
 
 BLOCK_COMMENT
-  : '/*' .*? '*/' -> channel(HIDDEN) ;
+  : '/*' .*? '*/' -> channel( HIDDEN ) ;
 
 WHITESPACE
-  : [ \u000B\t\r\n] -> channel(HIDDEN) ;
+  : [ \u000B\t\r\n] -> channel( HIDDEN ) ;
 
 fragment DIGITS    : [0-9_]+;
 fragment HEX_DIGIT : [0-9A-F_];

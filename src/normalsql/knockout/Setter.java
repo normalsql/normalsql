@@ -3,6 +3,7 @@
 
 package normalsql.knockout;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
@@ -21,11 +22,10 @@ extends
 	public ParseTree qname;
 	public ParseTree literal;
 
-	public Setter( GlobbingRuleContext context )
+	// TODO wire up literal and qname
+	public Setter( RuleContext context )
 	{
 		super( context );
-		qname = context.findFirst( "qname" );
-		literal = context.findFirst( "literal" );
 		pattern = valueOf( Pattern.class, literal );
 	}
 }

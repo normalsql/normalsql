@@ -58,10 +58,10 @@ SQLiteWholeFile
 	{
 //		System.out.println( new File( ".").getAbsolutePath() );
 		String first ;
-//		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
+		first = "/Users/jasonosgood/Projects/grammars-v4/sql/sqlite/examples";
 //		first = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
 //		first = "/Users/jasonosgood/Projects/normalsql/examples";
-		first = "/Users/jasonosgood/Projects/normalsql/corpus/examples";
+//		first = "/Users/jasonosgood/Projects/normalsql/corpus/examples";
 //		first = "/Users/jasonosgood/Projects/normalsql/corpus/goofy";
 //		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
 //		first = "/Users/jasonosgood/Learn";
@@ -104,8 +104,8 @@ SQLiteWholeFile
 			names.sort( null );
 			for( String name : names )
 			{
-//				System.out.println( file );
-				var file = new File(  name );
+				System.out.println( name );
+				var file = new File( name );
 				Path path = file.toPath();
 				var sql = Files.readString( path );
 				int nth = 0;
@@ -151,12 +151,12 @@ SQLiteWholeFile
 	public static void parse( Path sourceFile, int nth, String sql )
 	{
 		var chars = CharStreams.fromString( sql );
-		var lexer = new PostgreSQLLexer( chars );
-//		var lexer = new SQLiteLexer( chars );
+//		var lexer = new PostgreSQLLexer( chars );
+		var lexer = new SQLiteLexer( chars );
 //		var lexer = new NormalSQLLexer( chars );
 		var tokens = new CommonTokenStream( lexer );
-		var parser = new PostgreSQLParser( tokens );
-//		var parser = new SQLiteParser( tokens );
+//		var parser = new PostgreSQLParser( tokens );
+		var parser = new SQLiteParser( tokens );
 //		var parser = new NormalSQLParser( tokens );
 
 		parser.removeErrorListeners();

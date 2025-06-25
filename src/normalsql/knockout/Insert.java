@@ -4,16 +4,16 @@
 package normalsql.knockout;
 
 
-import normalsql.grammar.SQLiteParser.QnameContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class
 	Insert
 extends
-        Statement
+	Statement
 {
-	public QnameContext table;
-//	public List<QnameContext>        columns;
-	public List<GlobbingRuleContext>        columns;
+	public ParseTree       table;
+	public List<ParseTree> columns = new ArrayList<>();
 }
