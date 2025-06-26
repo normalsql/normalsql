@@ -19,3 +19,9 @@ Open Questions
 
 - Relationship between SELECT ... FOR UPDATE and CONCURRENCY_UPDATE
 - figure out stored procedures, IN/OUT params
+
+TODO
+
+ - lex (vs parse) qname (?)
+ - converge postgresql's qname (move wildcard .* and indexes [])
+ - 

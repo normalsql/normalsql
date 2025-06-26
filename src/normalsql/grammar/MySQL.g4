@@ -1,4 +1,3 @@
-grammar MySQL;
 
 /*
   Copyright 2025 Jason Osgood
@@ -136,12 +135,77 @@ grammar MySQL;
 
 */
 
+grammar MySQL;
+
 options {
     caseInsensitive = true;
 }
 
 statements
     : statement? ( ( ';' | '#end' ) statement? )* EOF ;
+
+with
+    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
+
+cte
+    : name columns? 'AS' '(' select ')' ;
+
+select
+    : with?
+      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
+      orderBy? limit? into? locking* into?
+    ;
+
+    selectCore
+        : 'SELECT' modifier* item ( ',' item )* into?
+          ( 'FROM' tables )?
+          where? groupBy? having? window? qualify?
+        | values
+        | '(' select ')'
+        | 'TABLE' qname
+        ;
+
+        item
+            : ( qname '.' )? '*'  # ItemAll
+            | qname alias?  # ItemColumn
+            | term alias?  # ItemTerm
+            ;
+
+  tables
+      : tables ',' tables
+      | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
+      | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
+      | tables ( 'NATURAL' 'INNER'? 'JOIN' | 'NATURAL' ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' ) tables
+      | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
+      | 'LATERAL'? '(' select ')' tableAlias? columns?
+      | values tableAlias?
+      | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
+      | qname '(' term ( ',' term )* ')' tableAlias?
+      | '{' 'OJ' tables '}'
+      | '(' tables ')'
+      ;
+
+  alias
+      : 'AS'? name ;
+
+  tableAlias
+      : 'AS'? name ;
+
+  where
+      : 'WHERE' term ;
+
+
+  groupBy
+      : 'GROUP' 'BY' orderExpression ( ',' orderExpression )* ( 'WITH' 'ROLLUP' )?
+      | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
+      ;
+
+  orderBy
+      : 'ORDER' 'BY' orderExpression ( ',' orderExpression )* ;
+
+orderExpression
+    : term direction? ;
+
 
 comment
     : 'COMMENT' string ;
@@ -604,20 +668,6 @@ loadData
       ( 'SET' setter ( ',' setter )* )?
     ;
 
-select
-    : with? selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
-      orderBy? limit? into? locking* into?
-    ;
-
-selectCore
-    : 'SELECT' modifier* item ( ',' item )* into?
-      ( 'FROM' ( 'DUAL' | tables ) )?
-      where? groupBy? having? window? qualify?
-    | values
-    | '(' select ')'
-    | 'TABLE' qname
-    ;
-
 modifier
     : 'ALL'
     | 'DISTINCT'
@@ -691,42 +741,12 @@ windowFrameBound
 windowFrameBetween
     : 'BETWEEN' windowFrameBound 'AND' windowFrameBound ;
 
-with
-    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
-
-cte
-    : name columns? 'AS' '(' select ')' ;
-
-groupBy
-    : 'GROUP' 'BY' orderExpression ( ',' orderExpression )* ( 'WITH' 'ROLLUP' )?
-    | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
-    ;
-
-orderBy
-    : 'ORDER' 'BY' orderExpression ( ',' orderExpression )* ;
-
-orderExpression
-    : term direction? ;
-
 direction
     : 'ASC' | 'DESC' ;
 
 tableReferenceList
     : tables ( ',' tables )* ;
 
-tables
-    : tables ',' tables
-    | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
-    | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
-    | tables ( 'NATURAL' 'INNER'? 'JOIN' | 'NATURAL' ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' ) tables
-    | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
-    | 'LATERAL'? '(' select ')' tableAlias? columns?
-    | values tableAlias?
-    | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
-    | qname '(' term ( ',' term )* ')' tableAlias?
-    | '{' 'OJ' tables '}'
-    | '(' tables ')'
-    ;
 
 values
     : 'VALUES' term ( ',' term )* ;
@@ -735,18 +755,6 @@ locking
     : 'FOR' ( 'UPDATE' | 'SHARE' ) ( 'OF' qname ( ',' qname )* )? ( 'SKIP' 'LOCKED' | 'NOWAIT' )?
     | 'LOCK' 'IN' 'SHARE' 'MODE'
     ;
-
-item
-    : '*'
-    | term alias?
-    | qname ( '.'  '*' )?
-    ;
-
-alias
-    : 'AS'? name ;
-
-where
-    : 'WHERE' term ;
 
 jsonColumns
     : 'COLUMNS' '(' jsonColumn ( ',' jsonColumn )* ')' ;
@@ -759,9 +767,6 @@ jsonColumn
 
 jsonResponse
     : ( 'ERROR' | 'NULL' | 'DEFAULT' string ) 'ON' ( 'EMPTY' | 'ERROR' ) ;
-
-tableAlias
-    : 'AS'? name ;
 
 indexHint
     : 'USE' indexKey indexHintScope? '(' ( name ( ',' name )* )? ')'

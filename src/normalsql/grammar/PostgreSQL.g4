@@ -457,19 +457,19 @@ cte
   : id columns? 'AS' ( 'NOT'? 'MATERIALIZED' )? '(' query ')' ;
 
 select
-  : with?
-    selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
-    orderBy?
-    ( limit | fetch | offset | locking )* ;
-
-  selectCore
-    : 'SELECT' unique? ( item ( ',' item )* ','? )?
-      ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
-      ( 'FROM' tables )? where? groupBy? having? window?
-    | values
-    | '(' select ')'
-    | 'TABLE' descendants
+    : with?
+      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
+      orderBy? ( limit | fetch | offset | locking )*
     ;
+
+    selectCore
+        : 'SELECT' unique? ( item ( ',' item )* ','? )?
+          ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
+          ( 'FROM' tables )? where? groupBy? having? window?
+        | values
+        | '(' select ')'
+        | 'TABLE' descendants
+        ;
 
     item
         : '*'  # ItemAll

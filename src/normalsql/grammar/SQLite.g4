@@ -128,7 +128,7 @@ select
         ;
 
         item
-            : '*'  # ItemAll
+            : ( qname '.' )? '*'  # ItemAll
             | qname alias?  # ItemColumn
             | term alias?  # ItemTerm
             ;
