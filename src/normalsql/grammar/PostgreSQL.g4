@@ -458,12 +458,12 @@ cte
 
 select
     : with?
-      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique2? selectCore )*
+      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) unique_? selectCore )*
       orderBy? ( limit | fetch | offset | locking )*
     ;
 
     selectCore
-        : 'SELECT' unique? ( item ( ',' item )* ','? )?
+        : 'SELECT' uniqueOn? ( item ( ',' item )* ','? )?
           ( 'INTO' ( 'TEMPORARY' | 'TEMP' | 'UNLOGGED' )? 'TABLE'?  qname )?
           ( 'FROM' tables )? where? groupBy? having? window?
         | values
@@ -1315,10 +1315,7 @@ declareCursor
     locking
       : 'FOR' ( ( 'NO' 'KEY' )? 'UPDATE' | 'KEY'? 'SHARE' ) ( 'OF' qnames )? ( 'NOWAIT' | 'SKIP' 'LOCKED' )? ;
 
-unique2
-  : 'ALL' | 'DISTINCT' ;
-
-unique
+uniqueOn
   : 'ALL' | 'DISTINCT' ( 'ON' '(' terms ')' )? ;
 
 orderBy
@@ -1502,7 +1499,7 @@ genericFunction
   : qname '('
     ( ( args ( ',' 'VARIADIC' arg )?
       | 'VARIADIC' arg
-      | unique2 args
+      | unique_ args
       ) orderBy?
     | '*'
     )?
@@ -1640,6 +1637,9 @@ id
 
 boolean
   : 'TRUE' | 'FALSE' ;
+
+unique_
+  : 'ALL' | 'DISTINCT' ;
 
 // TODO disable (comment out) reserved keywords
 keyword

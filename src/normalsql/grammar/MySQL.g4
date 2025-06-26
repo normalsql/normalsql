@@ -1183,15 +1183,16 @@ function
     | 'UTC_TIMESTAMP' ( '(' DECIMAL? ')' )?
 
     | 'WEIGHT_STRING' '(' term ( 'AS' ( 'CHAR' | 'BINARY' ) '(' DECIMAL ')' )? ')'
-    | 'AVG' '(' 'DISTINCT'? 'ALL'? term ')'
+    | 'AVG' '(' 'DISTINCT'? term ')'
     | ( 'BIT_AND' | 'BIT_OR' | 'BIT_XOR' ) '(' 'ALL'? term ')'
-    | 'JSON_ARRAYAGG' '(' 'ALL'? term ')'
-    | 'JSON_OBJECTAGG' '(' 'ALL'? term ',' 'ALL'? term ')'
-    | 'ST_COLLECT' '(' 'DISTINCT'? 'ALL'? term ')'
+//    | 'JSON_ARRAYAGG' '(' 'ALL'? term ')'
+//    | 'JSON_OBJECTAGG' '(' 'ALL'? term ',' 'ALL'? term ')'
+//    | 'ST_COLLECT' '(' 'DISTINCT'? 'ALL'? term ')'
+    | 'ST_COLLECT' '(' 'DISTINCT'? term ')'
     | 'COUNT' '(' ( 'ALL'? '*' | 'ALL'? term | 'DISTINCT' term ( ',' term )* ) ')'
-    | ( 'MIN' | 'MAX' ) '(' 'DISTINCT'? 'ALL'? term ')'
-    | ( 'STD' | 'VARIANCE' | 'STDDEV_SAMP' | 'VAR_SAMP' | 'SUM' ) '(' 'ALL'? term ')'
-    | 'SUM' '(' 'DISTINCT' 'ALL'? term ')'
+    | ( 'MIN' | 'MAX' ) '(' 'DISTINCT'? term ')'
+    | ( 'STD' | 'VARIANCE' | 'STDDEV_SAMP' | 'VAR_SAMP' ) '(' 'ALL'? term ')'
+    | 'SUM' '(' 'DISTINCT'? term ')'
     | 'GROUP_CONCAT' '(' 'DISTINCT'? term ( ',' term )* orderBy? ( 'SEPARATOR' string )? ')'
     ;
 
