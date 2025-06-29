@@ -72,133 +72,133 @@ statements
   ;
 
 statement
-    : 'ALTER' 'EVENT' 'TRIGGER' id ( 'ENABLE' ( 'REPLICA' |  'ALWAYS' )? | 'DISABLE' )
-    | 'ALTER' 'COLLATION' qname 'REFRESH' 'VERSION'
-    | 'ALTER' 'DATABASE' id ( 'WITH'? createdb_opt_item* | 'SET' 'TABLESPACE' id )
-    | 'ALTER' 'DATABASE' id setresetclause
-    | 'ALTER' 'DEFAULT' 'PRIVILEGES'
-      ( 'IN' 'SCHEMA' ids | 'FOR' 'ROLE' ids | 'FOR' 'USER' ids )*
-      ( 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
-      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* cascade?
-      )
-    | 'ALTER' 'DOMAIN' qname
-      ( ( 'SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
-      | 'DROP' 'NOT' 'NULL'
-      | 'SET' 'NOT' 'NULL'
-      | 'ADD' tableconstraint
-      | 'DROP' 'CONSTRAINT' ifExists? id cascade?
-      | 'VALIDATE' 'CONSTRAINT' id
-      )
-    | 'ALTER' 'TYPE' qname 'ADD' 'VALUE' ifNotExists? string (( 'BEFORE' | 'AFTER' ) string )?
-    | 'ALTER' 'TYPE' qname 'RENAME' 'VALUE' string 'TO' string
-    | 'ALTER' 'EXTENSION' id 'UPDATE' ( 'TO' name )*
-    | 'ALTER' 'EXTENSION' id addDrop object_type_name id
-    | 'ALTER' 'EXTENSION' id addDrop object_type_any_name qname
-    | 'ALTER' 'EXTENSION' id addDrop 'AGGREGATE' aggregateSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'CAST' '(' type 'AS' type ')'
-    | 'ALTER' 'EXTENSION' id addDrop 'DOMAIN' type
-    | 'ALTER' 'EXTENSION' id addDrop 'FUNCTION' functionSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'PROCEDURE' functionSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'ROUTINE' functionSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' operatorSignature
-    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'CLASS' qname usingID
-    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'FAMILY' qname usingID
-    | 'ALTER' 'EXTENSION' id addDrop 'TRANSFORM' 'FOR' type 'LANGUAGE' id
-    | 'ALTER' 'EXTENSION' id addDrop 'TYPE' type
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ )
-    | 'ALTER' 'SERVER' id ( genericOptions | version genericOptions? )
-    | 'ALTER' routine functionSignature funcOptions+ 'RESTRICT'?
-    | 'ALTER' 'GROUP' id addDrop 'USER' ids
-    | 'ALTER' 'FUNCTION' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'PROCEDURE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'ROUTINE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
-    | ('ALTER' 'AGGREGATE' aggregateSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'COLLATION' qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'CONVERSION' qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'DOMAIN' qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'EXTENSION' id 'SET' 'SCHEMA' id
-
-
-    | 'ALTER' 'FUNCTION' functionSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'PROCEDURE' functionSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'ROUTINE' functionSignature 'SET' 'SCHEMA' id
-
-    | 'ALTER' 'OPERATOR' operatorSignature 'SET' 'SCHEMA' id
-    | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID 'SET' 'SCHEMA' id
-    | 'ALTER' 'OPERATOR'  qname usingID 'SET' 'SCHEMA' id
-    | 'ALTER' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
-    | 'ALTER' 'STATISTICS' qname 'SET' 'SCHEMA' id
-    | 'ALTER' textSearchConfig qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'SEQUENCE' ifExists? qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'TYPE' qname 'SET' 'SCHEMA' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id)
-    | ('ALTER' 'AGGREGATE' aggregateSignature 'OWNER' 'TO' id
-
-    | 'ALTER' 'FUNCTION' functionSignature 'OWNER' 'TO' id
-    | 'ALTER' 'PROCEDURE' functionSignature 'OWNER' 'TO' id
-    | 'ALTER' 'ROUTINE' functionSignature 'OWNER' 'TO' id
-
-    | 'ALTER' 'OPERATOR' operatorSignature 'OWNER' 'TO' id
-
-    | 'ALTER' 'COLLATION' qname 'OWNER' 'TO' id
-    | 'ALTER' 'CONVERSION' qname 'OWNER' 'TO' id
-    | 'ALTER' 'DATABASE' id 'OWNER' 'TO' id
-    | 'ALTER' 'DOMAIN' qname 'OWNER' 'TO' id
-    | 'ALTER' 'EVENT' 'TRIGGER' id 'OWNER' 'TO' id
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'OWNER' 'TO' id
-    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'OWNER' 'TO' id
-    | 'ALTER' 'PUBLICATION' id 'OWNER' 'TO' id
-    | 'ALTER' 'SCHEMA' id 'OWNER' 'TO' id
-    | 'ALTER' 'SERVER' id 'OWNER' 'TO' id
-    | 'ALTER' 'STATISTICS' qname 'OWNER' 'TO' id
-    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname 'OWNER' 'TO' id
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'OWNER' 'TO' id
-    | 'ALTER' 'TYPE' qname 'OWNER' 'TO' id
-
-    | 'ALTER' 'LARGE' 'OBJECT' number 'OWNER' 'TO' id
-    | 'ALTER' 'OPERATOR' 'CLASS' qname usingID 'OWNER' 'TO' id
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID 'OWNER' 'TO' id)
-    | 'ALTER' 'OPERATOR' operatorSignature 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
-    | 'ALTER' 'TYPE' qname 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
-    | 'ALTER' 'POLICY' id 'ON' qname ('TO' ids)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
-    | 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+
-    | 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) qname ( 'TO' | '=' ) ( 'DEFAULT' | value ( ',' value )* )
-    | 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname forValues | 'DETACH' 'PARTITION' qname ) )
-    | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
-    | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
-    | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname alter_table_cmds
-    | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' ids )? 'SET' 'TABLESPACE' id 'NOWAIT'?
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants alter_table_cmds
-    | 'ALTER' 'TABLESPACE' id ( 'SET' | 'RESET' ) definition
-    | 'ALTER' 'TABLESPACE' id 'OWNER' 'TO' id
-    | 'ALTER' 'TABLESPACE' id 'RENAME' 'TO' id
-    | 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )*
-    | 'ALTER' 'PUBLICATION' id 'SET' definition
-    | 'ALTER' 'PUBLICATION' id ( 'ADD' | 'SET' | 'DROP' ) 'TABLE' descendants ( ',' descendants )*
-    | 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ( 'IN' 'DATABASE' id )? setresetclause
-    | 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? alteroptroleelem*
-
-    | 'ALTER' 'SUBSCRIPTION' id 'SET' definition
-    | 'ALTER' 'SUBSCRIPTION' id 'CONNECTION' string
-    | 'ALTER' 'SUBSCRIPTION' id 'REFRESH' 'PUBLICATION' withDef?
-    | 'ALTER' 'SUBSCRIPTION' id 'SET' 'PUBLICATION' ids withDef?
-    | 'ALTER' 'SUBSCRIPTION' id 'ENABLE'
-    | 'ALTER' 'SUBSCRIPTION' id 'DISABLE'
-    | 'ALTER' 'SUBSCRIPTION' id 'OWNER' 'TO' id
-    | 'ALTER' 'SUBSCRIPTION' id 'RENAME' 'TO' id
-
-    | 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal
-    | ('ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ADD' 'MAPPING' 'FOR' ids 'WITH' qnames
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' ( 'FOR' ids )? ( 'REPLACE' qname )? 'WITH' qnames
-    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'DROP' 'MAPPING' ifExists? 'FOR' ids)
-    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname definition
-    | 'ALTER' 'USER' 'MAPPING' 'FOR' id 'SERVER' id genericOptions
+    : 'ALTER' 'EVENT' 'TRIGGER' id ( 'ENABLE' fireWhen? | 'DISABLE' )
+//    | 'ALTER' 'COLLATION' qname 'REFRESH' 'VERSION'
+//    | 'ALTER' 'DATABASE' id ( 'WITH'? createdb_opt_item* | 'SET' 'TABLESPACE' id )
+//    | 'ALTER' 'DATABASE' id setresetclause
+//    | 'ALTER' 'DEFAULT' 'PRIVILEGES'
+//      ( 'IN' 'SCHEMA' ids | 'FOR' 'ROLE' ids | 'FOR' 'USER' ids )*
+//      ( 'GRANT' privileges 'ON' defacl_privilege_target 'TO' grantee ( ',' grantee )* withGrantOption?
+//      | 'REVOKE' ('GRANT' 'OPTION' 'FOR')? privileges 'ON' defacl_privilege_target 'FROM' grantee ( ',' grantee )* cascade?
+//      )
+//    | 'ALTER' 'DOMAIN' qname
+//      ( ( 'SET' 'DEFAULT' term | 'DROP' 'DEFAULT' )
+//      | 'DROP' 'NOT' 'NULL'
+//      | 'SET' 'NOT' 'NULL'
+//      | 'ADD' tableconstraint
+//      | 'DROP' 'CONSTRAINT' ifExists? id cascade?
+//      | 'VALIDATE' 'CONSTRAINT' id
+//      )
+//    | 'ALTER' 'TYPE' qname 'ADD' 'VALUE' ifNotExists? string (( 'BEFORE' | 'AFTER' ) string )?
+//    | 'ALTER' 'TYPE' qname 'RENAME' 'VALUE' string 'TO' string
+//    | 'ALTER' 'EXTENSION' id 'UPDATE' ( 'TO' name )*
+//    | 'ALTER' 'EXTENSION' id addDrop object_type_name id
+//    | 'ALTER' 'EXTENSION' id addDrop object_type_any_name qname
+//    | 'ALTER' 'EXTENSION' id addDrop 'AGGREGATE' aggregateSignature
+//    | 'ALTER' 'EXTENSION' id addDrop 'CAST' '(' type 'AS' type ')'
+//    | 'ALTER' 'EXTENSION' id addDrop 'DOMAIN' type
+//    | 'ALTER' 'EXTENSION' id addDrop 'FUNCTION' functionSignature
+//    | 'ALTER' 'EXTENSION' id addDrop 'PROCEDURE' functionSignature
+//    | 'ALTER' 'EXTENSION' id addDrop 'ROUTINE' functionSignature
+//    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' operatorSignature
+//    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'CLASS' qname usingID
+//    | 'ALTER' 'EXTENSION' id addDrop 'OPERATOR' 'FAMILY' qname usingID
+//    | 'ALTER' 'EXTENSION' id addDrop 'TRANSFORM' 'FOR' type 'LANGUAGE' id
+//    | 'ALTER' 'EXTENSION' id addDrop 'TYPE' type
+//    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id ( genericOptions | handler+ )
+//    | 'ALTER' 'SERVER' id ( genericOptions | version genericOptions? )
+//    | 'ALTER' routine functionSignature funcOptions+ 'RESTRICT'?
+//    | 'ALTER' 'GROUP' id addDrop 'USER' ids
+//    | 'ALTER' 'FUNCTION' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | 'ALTER' 'PROCEDURE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | 'ALTER' 'ROUTINE' functionSignature 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | 'ALTER' 'TRIGGER' id 'ON' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | 'ALTER' 'MATERIALIZED' 'VIEW' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | 'ALTER' 'INDEX' qname 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
+//    | ('ALTER' 'AGGREGATE' aggregateSignature 'SET' 'SCHEMA' id
+//    | 'ALTER' 'COLLATION' qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'CONVERSION' qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'DOMAIN' qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'EXTENSION' id 'SET' 'SCHEMA' id
+//
+//
+//    | 'ALTER' 'FUNCTION' functionSignature 'SET' 'SCHEMA' id
+//    | 'ALTER' 'PROCEDURE' functionSignature 'SET' 'SCHEMA' id
+//    | 'ALTER' 'ROUTINE' functionSignature 'SET' 'SCHEMA' id
+//
+//    | 'ALTER' 'OPERATOR' operatorSignature 'SET' 'SCHEMA' id
+//    | 'ALTER' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID 'SET' 'SCHEMA' id
+//    | 'ALTER' 'OPERATOR'  qname usingID 'SET' 'SCHEMA' id
+//    | 'ALTER' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id
+//    | 'ALTER' 'STATISTICS' qname 'SET' 'SCHEMA' id
+//    | 'ALTER' textSearchConfig qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'SEQUENCE' ifExists? qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'TYPE' qname 'SET' 'SCHEMA' id
+//    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'SET' 'SCHEMA' id)
+//    | ('ALTER' 'AGGREGATE' aggregateSignature 'OWNER' 'TO' id
+//
+//    | 'ALTER' 'FUNCTION' functionSignature 'OWNER' 'TO' id
+//    | 'ALTER' 'PROCEDURE' functionSignature 'OWNER' 'TO' id
+//    | 'ALTER' 'ROUTINE' functionSignature 'OWNER' 'TO' id
+//
+//    | 'ALTER' 'OPERATOR' operatorSignature 'OWNER' 'TO' id
+//
+//    | 'ALTER' 'COLLATION' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'CONVERSION' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'DATABASE' id 'OWNER' 'TO' id
+//    | 'ALTER' 'DOMAIN' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'EVENT' 'TRIGGER' id 'OWNER' 'TO' id
+//    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'OWNER' 'TO' id
+//    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'OWNER' 'TO' id
+//    | 'ALTER' 'PUBLICATION' id 'OWNER' 'TO' id
+//    | 'ALTER' 'SCHEMA' id 'OWNER' 'TO' id
+//    | 'ALTER' 'SERVER' id 'OWNER' 'TO' id
+//    | 'ALTER' 'STATISTICS' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'OWNER' 'TO' id
+//    | 'ALTER' 'TYPE' qname 'OWNER' 'TO' id
+//
+//    | 'ALTER' 'LARGE' 'OBJECT' number 'OWNER' 'TO' id
+//    | 'ALTER' 'OPERATOR' 'CLASS' qname usingID 'OWNER' 'TO' id
+//    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID 'OWNER' 'TO' id)
+//    | 'ALTER' 'OPERATOR' operatorSignature 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
+//    | 'ALTER' 'TYPE' qname 'SET' '(' operator_def_elem ( ',' operator_def_elem )* ')'
+//    | 'ALTER' 'POLICY' id 'ON' qname ('TO' ids)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
+//    | 'ALTER' 'SEQUENCE' ifExists? qname seqoptelem+
+//    | 'ALTER' 'SYSTEM' ( 'SET' | 'RESET' ) qname ( 'TO' | '=' ) ( 'DEFAULT' | value ( ',' value )* )
+//    | 'ALTER' 'TABLE' ifExists? descendants ( alter_table_cmds | ('ATTACH' 'PARTITION' qname forValues | 'DETACH' 'PARTITION' qname ) )
+//    | 'ALTER' 'INDEX' ifExists? qname ( alter_table_cmds | 'ATTACH' 'PARTITION' qname )
+//    | 'ALTER' 'SEQUENCE' ifExists? qname alter_table_cmds
+//    | 'ALTER' 'VIEW' ifExists? qname alter_table_cmds
+//    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname alter_table_cmds
+//    | 'ALTER' ( 'INDEX' | 'TABLE' | 'MATERIALIZED' 'VIEW' ) 'ALL' 'IN' 'TABLESPACE' id ( 'OWNED' 'BY' ids )? 'SET' 'TABLESPACE' id 'NOWAIT'?
+//    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants alter_table_cmds
+//    | 'ALTER' 'TABLESPACE' id ( 'SET' | 'RESET' ) definition
+//    | 'ALTER' 'TABLESPACE' id 'OWNER' 'TO' id
+//    | 'ALTER' 'TABLESPACE' id 'RENAME' 'TO' id
+//    | 'ALTER' 'TYPE' qname alter_type_cmd ( ',' alter_type_cmd )*
+//    | 'ALTER' 'PUBLICATION' id 'SET' definition
+//    | 'ALTER' 'PUBLICATION' id ( 'ADD' | 'SET' | 'DROP' ) 'TABLE' descendants ( ',' descendants )*
+//    | 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ( 'IN' 'DATABASE' id )? setresetclause
+//    | 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? alteroptroleelem*
+//
+//    | 'ALTER' 'SUBSCRIPTION' id 'SET' definition
+//    | 'ALTER' 'SUBSCRIPTION' id 'CONNECTION' string
+//    | 'ALTER' 'SUBSCRIPTION' id 'REFRESH' 'PUBLICATION' withDef?
+//    | 'ALTER' 'SUBSCRIPTION' id 'SET' 'PUBLICATION' ids withDef?
+//    | 'ALTER' 'SUBSCRIPTION' id 'ENABLE'
+//    | 'ALTER' 'SUBSCRIPTION' id 'DISABLE'
+//    | 'ALTER' 'SUBSCRIPTION' id 'OWNER' 'TO' id
+//    | 'ALTER' 'SUBSCRIPTION' id 'RENAME' 'TO' id
+//
+//    | 'ALTER' 'STATISTICS' ifExists? qname 'SET' 'STATISTICS' signedDecimal
+//    | ('ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ADD' 'MAPPING' 'FOR' ids 'WITH' qnames
+//    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'ALTER' 'MAPPING' ( 'FOR' ids )? ( 'REPLACE' qname )? 'WITH' qnames
+//    | 'ALTER' 'TEXT' 'SEARCH' 'CONFIGURATION' qname 'DROP' 'MAPPING' ifExists? 'FOR' ids)
+//    | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname definition
+//    | 'ALTER' 'USER' 'MAPPING' 'FOR' id 'SERVER' id genericOptions
     | ANALYZE 'VERBOSE'? ( tableRef ( ',' tableRef )* )?
     | ANALYZE '(' optionElems ')' ( tableRef ( ',' tableRef )* )?
     | 'CALL' genericFunction
@@ -283,8 +283,7 @@ statement
       'AS' opclass_item_list
     | 'CREATE' 'OPERATOR' 'FAMILY' qname usingID
     | 'CREATE' 'PUBLICATION' id ('FOR' 'TABLE' descendants ( ',' descendants )* | 'FOR' 'ALL' 'TABLES')? withDef?
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID
-      ('ADD' opclass_item_list | 'DROP' opclass_drop ( ',' opclass_drop )*)
+    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID ( 'ADD' opclass_item_list | 'DROP' opclass_drop ( ',' opclass_drop )*)
     | 'CREATE' 'POLICY' id 'ON' qname ('AS' id)? rowsecuritydefaultforcmd? ('TO' ids)? rowsecurityoptionalexpr?
         rowsecurityoptionalwithcheck?
     | 'CREATE' orReplace_? 'TRUSTED'? 'PROCEDURAL'? 'LANGUAGE' id
@@ -317,6 +316,7 @@ statement
     | 'CREATE' orReplace_? 'AGGREGATE' aggregateSignature definition
     | 'CREATE' orReplace_? 'AGGREGATE' qname definition
     | 'CREATE' 'OPERATOR' operator definition
+
     | 'CREATE' 'TYPE' qname definition?
     | 'CREATE' 'TYPE' qname 'AS' '(' (tablefuncelement ( ',' tablefuncelement )*)? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'ENUM' '(' ( string ( ',' string )* )? ')'
@@ -378,43 +378,43 @@ statement
     | 'DROP' 'AGGREGATE' ifExists? aggregateSignature ( ',' aggregateSignature )* cascade?
     | 'DROP' routine ifExists? functionSignature ( ',' functionSignature )* cascade?
     | 'DROP' 'OPERATOR' ifExists? operatorSignature ( ',' operatorSignature )* cascade?
-    | 'ALTER' 'AGGREGATE' aggregateSignature 'RENAME' 'TO' id
-    | 'ALTER' 'COLLATION' qname 'RENAME' 'TO' id
-    | 'ALTER' 'CONVERSION' qname 'RENAME' 'TO' id
-    | 'ALTER' 'DATABASE' id 'RENAME' 'TO' id
-    | 'ALTER' 'DOMAIN' qname 'RENAME' ( 'CONSTRAINT' id )? 'TO' id
-    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'RENAME' 'TO' id
-    | 'ALTER' 'FUNCTION' functionSignature 'RENAME' 'TO' id
-    | 'ALTER' 'GROUP' id 'RENAME' 'TO' id
-    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'RENAME' 'TO' id
-    | 'ALTER' 'OPERATOR' 'CLASS' qname usingID 'RENAME' 'TO' id
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID 'RENAME' 'TO' id
-    | 'ALTER' 'POLICY' ifExists? id 'ON' qname 'RENAME' 'TO' id
-    | 'ALTER' 'PROCEDURE' functionSignature 'RENAME' 'TO' id
-    | 'ALTER' 'PUBLICATION' id 'RENAME' 'TO' id
-    | 'ALTER' 'ROUTINE' functionSignature 'RENAME' 'TO' id
-    | 'ALTER' 'SCHEMA' id 'RENAME' 'TO' id
-    | 'ALTER' 'SERVER' id 'RENAME' 'TO' id
-    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
-    | 'ALTER' 'SEQUENCE' ifExists? qname 'RENAME' 'TO' id
-    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'TO' id
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'TO' id
-    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
-    | 'ALTER' 'INDEX' ifExists? qname 'RENAME' 'TO' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
-    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
-    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
-    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'CONSTRAINT' id 'TO' id
-    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
-    | 'ALTER' 'RULE' id 'ON' qname 'RENAME' 'TO' id
-    | 'ALTER' 'TRIGGER' id 'ON' qname 'RENAME' 'TO' id
-    | 'ALTER' 'EVENT' 'TRIGGER' id 'RENAME' 'TO' id
-    | 'ALTER' 'ROLE' id 'RENAME' 'TO' id
-    | 'ALTER' 'USER' id 'RENAME' 'TO' id
-    | 'ALTER' 'STATISTICS' qname 'RENAME' 'TO' id
-    | 'ALTER' textSearchConfig qname 'RENAME' 'TO' id
-    | 'ALTER' 'TYPE' qname 'RENAME' 'TO' id
-    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' id 'TO' id cascade?
+//    | 'ALTER' 'AGGREGATE' aggregateSignature 'RENAME' 'TO' id
+//    | 'ALTER' 'COLLATION' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'CONVERSION' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'DATABASE' id 'RENAME' 'TO' id
+//    | 'ALTER' 'DOMAIN' qname 'RENAME' ( 'CONSTRAINT' id )? 'TO' id
+//    | 'ALTER' 'FOREIGN' 'DATA' 'WRAPPER' id 'RENAME' 'TO' id
+//    | 'ALTER' 'FUNCTION' functionSignature 'RENAME' 'TO' id
+//    | 'ALTER' 'GROUP' id 'RENAME' 'TO' id
+//    | 'ALTER' 'PROCEDURAL'? 'LANGUAGE' id 'RENAME' 'TO' id
+//    | 'ALTER' 'OPERATOR' 'CLASS' qname usingID 'RENAME' 'TO' id
+//    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID 'RENAME' 'TO' id
+//    | 'ALTER' 'POLICY' ifExists? id 'ON' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'PROCEDURE' functionSignature 'RENAME' 'TO' id
+//    | 'ALTER' 'PUBLICATION' id 'RENAME' 'TO' id
+//    | 'ALTER' 'ROUTINE' functionSignature 'RENAME' 'TO' id
+//    | 'ALTER' 'SCHEMA' id 'RENAME' 'TO' id
+//    | 'ALTER' 'SERVER' id 'RENAME' 'TO' id
+//    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
+//    | 'ALTER' 'SEQUENCE' ifExists? qname 'RENAME' 'TO' id
+//    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'TO' id
+//    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'TO' id
+//    | 'ALTER' 'MATERIALIZED' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
+//    | 'ALTER' 'INDEX' ifExists? qname 'RENAME' 'TO' id
+//    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'TO' id
+//    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
+//    | 'ALTER' 'VIEW' ifExists? qname 'RENAME' 'COLUMN'? id 'TO' id
+//    | 'ALTER' 'TABLE' ifExists? descendants 'RENAME' 'CONSTRAINT' id 'TO' id
+//    | 'ALTER' 'FOREIGN' 'TABLE' ifExists? descendants 'RENAME' 'COLUMN'? id 'TO' id
+//    | 'ALTER' 'RULE' id 'ON' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'TRIGGER' id 'ON' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'EVENT' 'TRIGGER' id 'RENAME' 'TO' id
+//    | 'ALTER' 'ROLE' id 'RENAME' 'TO' id
+//    | 'ALTER' 'USER' id 'RENAME' 'TO' id
+//    | 'ALTER' 'STATISTICS' qname 'RENAME' 'TO' id
+//    | 'ALTER' textSearchConfig qname 'RENAME' 'TO' id
+//    | 'ALTER' 'TYPE' qname 'RENAME' 'TO' id
+//    | 'ALTER' 'TYPE' qname 'RENAME' 'ATTRIBUTE' id 'TO' id cascade?
     | 'REVOKE' ( 'GRANT' 'OPTION' 'FOR' )? privileges 'ON' privilege_target 'FROM' grantee ( ',' grantee )* cascade?
     | 'REVOKE' ('ADMIN' 'OPTION' 'FOR')? privilege ( ',' privilege )* 'FROM' ids grantedBy? cascade?
     | 'CREATE' orReplace_? 'RULE' id 'AS' 'ON' ( 'SELECT' | 'UPDATE' | 'DELETE' | 'INSERT' ) 'TO' qname where? 'DO' ( 'INSTEAD' | 'ALSO' )? ( 'NOTHING' | actionable | '(' actionable? ( SEMI actionable? )* ')' )
@@ -622,7 +622,7 @@ set_rest_more
   | 'TIME' 'ZONE' ( string | id | interval | number | 'DEFAULT' | 'LOCAL' )
   | 'CATALOG' string
   | 'SCHEMA' string
-  | 'NAMES' (string | 'DEFAULT')?
+  | 'NAMES' ( string | 'DEFAULT' )?
   | 'ROLE' name
   | 'SESSION' 'AUTHORIZATION' name
   | 'XML' 'OPTION' root
@@ -688,12 +688,11 @@ alter_table_cmd
     | 'DROP' 'COLUMN'? ifExists? id cascade?
     | 'DROP' 'CONSTRAINT' ifExists? id cascade?
     | 'CLUSTER' 'ON' id
-    | ( 'DISABLE' | 'ENABLE' ) ( 'ALWAYS' | 'REPLICA' )? 'TRIGGER' id
+    | ( 'DISABLE' | 'ENABLE' ) fireWhen? 'TRIGGER' id
     | ( 'DISABLE' | 'ENABLE' ) 'TRIGGER' ( 'ALL' | 'USER' )
-    | 'ENABLE' ( 'ALWAYS' | 'REPLICA' )? 'RULE' id
+    | 'ENABLE' fireWhen? 'RULE' id
     | 'DISABLE' 'RULE' id
-    | 'INHERIT' qname
-    | noInherit qname
+    | 'NO'? 'INHERIT' qname
     | 'OF' qname
     | 'NOT' 'OF'
     | 'OWNER' 'TO' id
@@ -708,6 +707,9 @@ alter_table_cmd
     | ( 'DISABLE' | 'ENABLE' | 'NO'? 'FORCE' ) 'ROW' 'LEVEL' 'SECURITY'
     | genericOptions
     ;
+
+fireWhen
+    : 'ALWAYS' | 'REPLICA' ;
 
 noInherit
   : 'NO' 'INHERIT' ;
