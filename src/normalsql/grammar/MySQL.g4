@@ -1,4 +1,3 @@
-
 /*
   Copyright 2025 Jason Osgood
 
@@ -144,87 +143,13 @@ options {
 statements
     : statement? ( ( ';' | '#end' ) statement? )* EOF ;
 
-with
-    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
-
-cte
-    : name columns? 'AS' '(' select ')' ;
-
-select
-    : with?
-      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
-      orderBy? limit? into? locking* into?
-    ;
-
-    selectCore
-        : 'SELECT' modifier* item ( ',' item )* into?
-          ( 'FROM' tables )?
-          where? groupBy? having? window? qualify?
-        | values
-        | '(' select ')'
-        | 'TABLE' qname
-        ;
-
-        item
-            : ( qname '.' )? '*'  # ItemAll
-            | qname alias?  # ItemColumn
-            | term alias?  # ItemTerm
-            ;
-
-  tables
-      : tables ',' tables
-      | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
-      | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
-      | tables ( 'NATURAL' 'INNER'? 'JOIN' | 'NATURAL' ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' ) tables
-      | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
-      | 'LATERAL'? '(' select ')' tableAlias? columns?
-      | values tableAlias?
-      | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
-      | qname '(' term ( ',' term )* ')' tableAlias?
-      | '{' 'OJ' tables '}'
-      | '(' tables ')'
-      ;
-
-  alias
-      : 'AS'? name ;
-
-  tableAlias
-      : 'AS'? name ;
-
-  where
-      : 'WHERE' term ;
-
-
-  groupBy
-      : 'GROUP' 'BY' orderExpression ( ',' orderExpression )* ( 'WITH' 'ROLLUP' )?
-      | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
-      ;
-
-  orderBy
-      : 'ORDER' 'BY' orderExpression ( ',' orderExpression )* ;
-
-orderExpression
-    : term direction? ;
-
-
-comment
-    : 'COMMENT' string ;
-
-//attribute
-//    : 'ATTRIBUTE' string ;
-
-database_
-    : 'DATABASE' | 'SCHEMA' ;
-
 statement
     : 'CREATE' database_ notExists? name databaseOption*
     | 'ALTER' database_ qname databaseOption+
     | 'DROP' database_ exists? qname
 
-    | 'CREATE' definer? 'EVENT' notExists? qname
-      'ON' 'SCHEDULE' schedule ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? 'DO' compoundStatement
-    | 'ALTER' definer? 'EVENT' qname
-       ( 'ON' 'SCHEDULE' schedule )? ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'RENAME' 'TO' qname )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? ( 'DO' compoundStatement )?
+    | 'CREATE' definer? 'EVENT' notExists? qname 'ON' 'SCHEDULE' schedule ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? 'DO' compoundStatement
+    | 'ALTER' definer? 'EVENT' qname ( 'ON' 'SCHEDULE' schedule )? ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'RENAME' 'TO' qname )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? ( 'DO' compoundStatement )?
     | 'DROP' 'EVENT' exists? qname
 
     | 'CREATE' definer? 'FUNCTION' notExists? qname '(' ( functionParameter ( ',' functionParameter )* )? ')' 'RETURNS' dataType collate? routineCreateOption* storedRoutineBody
@@ -236,8 +161,7 @@ statement
     | 'ALTER' 'PROCEDURE' qname routineCreateOption*
     | 'DROP' 'PROCEDURE' exists? qname
 
-    | 'CREATE' ( 'UNIQUE' | 'FULLTEXT' | 'SPATIAL' )? 'INDEX' qname indexType? 'ON' qname
-      '(' keyPart ( ',' keyPart )* ')' indexOption* commonIndexOption*
+    | 'CREATE' ( 'UNIQUE' | 'FULLTEXT' | 'SPATIAL' )? 'INDEX' qname indexType? 'ON' qname '(' keyPart ( ',' keyPart )* ')' indexOption* commonIndexOption*
 
     | 'DROP' onlineOption? 'INDEX' qname 'ON' qname commonIndexOption*
 
@@ -296,8 +220,7 @@ statement
     | 'DROP' 'USER' exists? user ( ',' user )*
     | 'RENAME' 'USER' user 'TO' user ( ',' user 'TO' user )*
 
-    | 'CREATE' orReplace_? viewAlgorithm? definer? security?
-      'VIEW' notExists?  qname columns? 'AS' select viewCheckOption?
+    | 'CREATE' orReplace_? viewAlgorithm? definer? security? 'VIEW' notExists?  qname columns? 'AS' select viewCheckOption?
     | 'ALTER' viewAlgorithm? definer? security? 'VIEW' qname columns? 'AS' select viewCheckOption?
     | 'DROP' 'VIEW' exists? qname ( ',' qname )* ( 'RESTRICT' | 'CASCADE' )?
 
@@ -317,7 +240,7 @@ statement
     | 'CALL' qname ( '(' ( term ( ',' term )* )? ')' )?
     | delete
     | 'DO' item ( ',' item )*
-    | 'HANDLER' qname 'OPEN' tableAlias?
+    | 'HANDLER' qname 'OPEN' alias?
     | 'HANDLER' qname ( 'CLOSE' | 'READ' handlerReadOrScan where? limit? )
     | insert
     | loadData
@@ -464,6 +387,155 @@ statement
     | beginWork
     ;
 
+with
+    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
+
+cte
+    : name columns? 'AS' '(' select ')' ;
+
+select
+    : with?
+      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
+      orderBy? limit? into? locking* into?
+    ;
+
+    into
+        : 'INTO'
+          ( 'OUTFILE' string charsetName? fieldHandling? lineHandling?
+          | 'DUMPFILE' string
+          | qname ( ',' qname )*
+          )
+        ;
+
+    selectCore
+        : 'SELECT' modifier* item ( ',' item )* into?
+          ( 'FROM' tables )? where? groupBy? having?
+          ( 'WINDOW' window ( ',' window )* )?
+          ( 'QUALIFY' term )?
+        | values
+        | '(' select ')'
+        | 'TABLE' qname
+        ;
+
+        modifier
+    : 'ALL'
+    | 'DISTINCT'
+    | 'DISTINCTROW'
+    | 'HIGH_PRIORITY'
+    | 'STRAIGHT_JOIN'
+    | 'SQL_SMALL_RESULT'
+    | 'SQL_BIG_RESULT'
+    | 'SQL_BUFFER_RESULT'
+    | 'SQL_CALC_FOUND_ROWS'
+    | 'SQL_NO_CACHE'
+    ;
+
+        item
+            : ( qname '.' )? '*'  # ItemAll
+            | qname alias?  # ItemColumn
+            | term alias?  # ItemTerm
+            ;
+
+        tables
+            : tables ',' tables
+            | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
+            | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
+            | tables ( 'NATURAL' ( 'INNER' | ( 'LEFT' | 'RIGHT' ) 'OUTER'? )? 'JOIN' ) tables
+            | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
+            | 'LATERAL'? '(' select ')' tableAlias? columns?
+            | values tableAlias?
+            | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
+            | qname '(' term ( ',' term )* ')' tableAlias?
+            | '{' 'OJ' tables '}'
+            | '(' tables ')'
+            ;
+
+            tableAlias
+                    : 'AS'? name ;
+
+        where
+            : 'WHERE' term ;
+
+        groupBy
+            : 'GROUP' 'BY' orderTerm ( ',' orderTerm )* ( 'WITH' 'ROLLUP' )?
+            | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
+            ;
+
+        orderBy
+            : 'ORDER' 'BY' orderTerm ( ',' orderTerm )* ;
+
+        orderTerm
+            : term direction_? ;
+
+        having
+            : 'HAVING' term ;
+
+        window
+            : name 'AS' windowDef ;
+/*
+//        windowDef
+//            : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
+//              ( ( 'ROWS' | 'RANGE' | 'GROUPS' ) windowFrameExtent
+//              ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
+//              )?
+//              ')'
+//            ;
+//
+//        windowFrameExtent
+//            : windowFrameStart
+//            | windowFrameBetween
+//            ;
+//
+//        windowFrameStart
+//            : literal 'PRECEDING'
+//        //    : 'UNBOUNDED' 'PRECEDING'
+//        //    | INTEGER 'PRECEDING'
+//        //    | PARAM 'PRECEDING'
+//        //    | 'INTERVAL' term interval 'PRECEDING'
+//            | 'CURRENT' 'ROW'
+//            ;
+//
+//        windowFrameBound
+//            : windowFrameStart
+//            | literal 'FOLLOWING'
+//        //    | 'UNBOUNDED' 'FOLLOWING'
+//        //    | INTEGER 'FOLLOWING'
+//        //    | PARAM 'FOLLOWING'
+//        //    | 'INTERVAL' term interval 'FOLLOWING'
+//            ;
+//
+//        windowFrameBetween
+//            : 'BETWEEN' windowFrameBound 'AND' windowFrameBound ;
+*/
+            windowDef
+                : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
+                    ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                      ( 'BETWEEN' frameBounds 'AND' )?
+                      frameBounds
+                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
+                    )?
+                  ')'
+                ;
+
+            frameBounds
+                :  term  ( 'PRECEDING' | 'FOLLOWING' )
+                | 'CURRENT' 'ROW'
+                ;
+
+
+    alias
+      : 'AS'? name ;
+
+
+comment
+    : 'COMMENT' string ;
+
+//attribute
+//    : 'ATTRIBUTE' string ;
+
+database_
+    : 'DATABASE' | 'SCHEMA' ;
+
 commonIndexOption
     : 'ALGORITHM' '='? name
     | 'LOCK' '='? name
@@ -600,7 +672,7 @@ srsAttribute
 
 delete
     : with? 'DELETE' 'LOW_PRIORITY'? 'QUICK'? 'IGNORE'?
-      ( 'FROM' qname tableAlias? ( 'PARTITION' '(' name ( ',' name )* ')' )? where? orderBy? limitCount?
+      ( 'FROM' qname alias? ( 'PARTITION' '(' name ( ',' name )* ')' )? where? orderBy? limitCount?
       | wild ( ',' wild )* 'FROM' tableReferenceList where?
       | 'FROM' wild ( ',' wild )* 'USING' tableReferenceList where?
       )
@@ -668,80 +740,13 @@ loadData
       ( 'SET' setter ( ',' setter )* )?
     ;
 
-modifier
-    : 'ALL'
-    | 'DISTINCT'
-    | 'DISTINCTROW'
-    | 'HIGH_PRIORITY'
-    | 'STRAIGHT_JOIN'
-    | 'SQL_SMALL_RESULT'
-    | 'SQL_BIG_RESULT'
-    | 'SQL_BUFFER_RESULT'
-    | 'SQL_CALC_FOUND_ROWS'
-    | 'SQL_NO_CACHE'
-    ;
-
 limit
     : 'LIMIT' literal ( ( ',' | 'OFFSET' ) literal )? ;
 
 limitCount
     : 'LIMIT' DECIMAL ;
 
-into
-    : 'INTO'
-      ( 'OUTFILE' string charsetName? fieldHandling? lineHandling?
-      | 'DUMPFILE' string
-      | qname ( ',' qname )*
-      )
-    ;
-
-having
-    : 'HAVING' term ;
-
-qualify
-    : 'QUALIFY' term ;
-
-window
-    : 'WINDOW' windowDefinition ( ',' windowDefinition )* ;
-
-windowDefinition
-    : name 'AS' windowSpec ;
-
-windowSpec
-    : '(' name? ( 'PARTITION' 'BY' orderExpression ( ',' orderExpression )* )? orderBy?
-      ( ( 'ROWS' | 'RANGE' | 'GROUPS' ) windowFrameExtent
-      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
-      )?
-      ')'
-    ;
-
-windowFrameExtent
-    : windowFrameStart
-    | windowFrameBetween
-    ;
-
-windowFrameStart
-    : literal 'PRECEDING'
-//    : 'UNBOUNDED' 'PRECEDING'
-//    | INTEGER 'PRECEDING'
-//    | PARAM 'PRECEDING'
-//    | 'INTERVAL' term interval 'PRECEDING'
-    | 'CURRENT' 'ROW'
-    ;
-
-windowFrameBound
-    : windowFrameStart
-    | literal 'FOLLOWING'
-//    | 'UNBOUNDED' 'FOLLOWING'
-//    | INTEGER 'FOLLOWING'
-//    | PARAM 'FOLLOWING'
-//    | 'INTERVAL' term interval 'FOLLOWING'
-    ;
-
-windowFrameBetween
-    : 'BETWEEN' windowFrameBound 'AND' windowFrameBound ;
-
-direction
+direction_
     : 'ASC' | 'DESC' ;
 
 tableReferenceList
@@ -790,7 +795,7 @@ beginWork
     : 'BEGIN' 'WORK'? ;
 
 lockItem
-    : qname tableAlias? ( 'READ' 'LOCAL'? | 'WRITE' ) ;
+    : qname alias? ( 'READ' 'LOCAL'? | 'WRITE' ) ;
 
 xid
     : string ( ',' string ( ',' ( DECIMAL | string ) )? )? ;
@@ -1147,7 +1152,7 @@ windowFunctionCall
     ;
 
 over
-    : 'OVER' ( name | windowSpec ) ;
+    : 'OVER' ( name | windowDef ) ;
 
 nullTreatment
     : ( 'RESPECT' | 'IGNORE' ) 'NULLS' ;
@@ -1466,7 +1471,7 @@ now
     : ( 'NOW' | 'CURRENT_TIMESTAMP' | 'LOCALTIME' | 'LOCALTIMESTAMP' ) ( '(' DECIMAL? ')' )? ;
 
 keyPart
-    : ( name typeLength? | '(' term ')' ) direction? ;
+    : ( name typeLength? | '(' term ')' ) direction_? ;
 
 visibility
     : 'VISIBLE' | 'INVISIBLE' ;

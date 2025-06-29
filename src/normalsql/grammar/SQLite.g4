@@ -53,7 +53,6 @@
  *     Mike Lische, mike@lischke-online.de
  */
 
-
 grammar SQLite;
 
 options {
@@ -122,7 +121,7 @@ select
     selectCore
         : 'SELECT' unique_? ( item ( ',' item )* ','? )?
           ( 'FROM' tables )? where? groupBy? having?
-          ( 'WINDOW' windowDef ( ',' windowDef )* )?
+          ( 'WINDOW' window ( ',' window )* )?
         | values
         | '(' select ')'
         ;
@@ -143,13 +142,13 @@ select
             | '(' tables ')' tableAlias?
             ;
 
-        joinType
-            : 'INNER'
-            | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
-            ;
+            joinType
+                : 'INNER'
+                | ( 'FULL' | 'LEFT' | 'RIGHT' ) 'OUTER'?
+                ;
 
-        tableAlias
-            : alias ( '(' name ( ',' name )* ')' )? ;
+            tableAlias
+              : alias ( '(' name ( ',' name )* ')' )? ;
 
         where
             : 'WHERE' term ;
@@ -160,20 +159,23 @@ select
         having
             : 'HAVING' term ;
 
-        windowDef
-            : name 'AS' windowSpec ;
+        window
+            : name 'AS' windowDef ;
 
-            windowSpec
+            windowDef
                 : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
-                  ( ( 'RANGE' | 'ROWS' | 'GROUPS' ) ( 'BETWEEN' windowFrameBounds 'AND' )? windowFrameBounds ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )? )?
+                    ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                      ( 'BETWEEN' frameBounds 'AND' )?
+                      frameBounds
+                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
+                    )?
                   ')'
                 ;
 
-            windowFrameBounds
-    //          : ( 'UNBOUNDED'  | term  ) ( 'PRECEDING' | 'FOLLOWING' )
-              : literal ( 'PRECEDING' | 'FOLLOWING' )
-              | 'CURRENT' 'ROW'
-              ;
+            frameBounds
+                :  term  ( 'PRECEDING' | 'FOLLOWING' )
+                | 'CURRENT' 'ROW'
+                ;
 
         values
             : 'VALUES' term ( ',' term )* ;
@@ -405,7 +407,7 @@ filter
   : 'FILTER' '(' 'WHERE' term ')' ;
 
 over
-  : 'OVER' ( name | windowSpec ) ;
+  : 'OVER' ( name | windowDef ) ;
 
 limit
   : 'LIMIT' term ( ( 'OFFSET' | ',' ) term )? ;
