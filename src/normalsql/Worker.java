@@ -98,7 +98,7 @@ Worker
 		var parser = new SQLiteParser( tokens );
 		var statements = parser.statements();
 
-		Climber monkey = new Climber( parser, tokens );
+		SQLiteClimber monkey = new SQLiteClimber( parser, tokens );
 		monkey.climb( statements );
 
 		unitOfWork.root = monkey.trunk;
@@ -339,6 +339,7 @@ Worker
 
 	}
 
+	// TODO use switch pattern matching?
 	private static String toScalarClassName( String name )
 	{
 		name = switch( name )

@@ -49,6 +49,7 @@ grammar PostgreSQL;
 
 options {
   caseInsensitive=true;
+  contextSuperClass = normalsql.knockout.GlobbingRuleContext;
 }
 
 @parser::members
@@ -598,8 +599,8 @@ select
                 | 'CURRENT' 'ROW'
                 ;
 
-          values
-            : 'VALUES' terms ;
+        values
+            : 'VALUES' term ( ',' term )* ;
 
     insert
         : with? 'INSERT'
