@@ -1414,6 +1414,10 @@ term
   | <assoc=right> term '^' term #TermIgnore
   | term ( '*' | '/' | '%' ) term #TermIgnore
   | term ( '+' | '-' ) term #TermIgnore
+  // TODO disable this alt when '||' == 'OR'
+  // TODO verify precedence of concat
+  // TODO does PostgreSQL have concat keyword that should be explicit here?
+  | term ( '||' ) term #TermConcat
   // TODO instances of OPERATOR need to be qualitified?
   | term OPERATOR term?  #TermCompare
   | term ( '<<' | '>>' | '&' | '|' ) term #TermIgnore
@@ -1444,8 +1448,8 @@ term
   | ( 'ANY' | 'SOME' | 'ALL' )? '(' ( select | term ) ')' index* #TermIgnore
   | 'NOT' term #TermIgnore
   // workaround to ensure BETWEEN beats AND, building correct parse tree
-  | term { notBETWEEN( $ctx ) }? 'AND' term #TermIgnore
-  | term 'OR' term #TermIgnore
+  | term { notBETWEEN( $ctx ) }? ( 'AND' | '&&' ) term #TermIgnore
+  | term ( 'OR' | '||' ) term #TermIgnore
   ;
 
 literal
