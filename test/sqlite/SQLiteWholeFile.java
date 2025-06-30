@@ -62,6 +62,7 @@ SQLiteWholeFile
 //		first = "/Users/jasonosgood/Projects/normalsql/src/test/sql.disabled/sqlite";
 //		first = "/Users/jasonosgood/Projects/normalsql/examples";
 		first = "/Users/jasonosgood/Projects/normalsql/corpus/examples";
+//		first = "/Users/jasonosgood/Projects/grammars-v4/sql/postgresql/examples";
 //		first = "/Users/jasonosgood/Projects/normalsql/corpus/goofy";
 //		first = "/Users/jasonosgood/Projects/normalsql-resources/grammars-v4/sql/sqlite/resources";
 //		first = "/Users/jasonosgood/Learn";

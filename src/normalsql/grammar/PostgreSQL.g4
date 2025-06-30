@@ -187,7 +187,7 @@ ddl
     | 'ALTER' 'PUBLICATION' id 'SET' definition
     | 'ALTER' 'PUBLICATION' id ( 'ADD' | 'SET' | 'DROP' ) 'TABLE' descendants ( ',' descendants )*
     | 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ( 'IN' 'DATABASE' id )? setresetclause
-    | 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? // alteroptroleelem*
+    | 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? alteroptroleelem*
 
     | 'ALTER' 'SUBSCRIPTION'
       ( id 'SET' definition
@@ -208,30 +208,7 @@ ddl
     | 'ALTER' 'TEXT' 'SEARCH' 'DICTIONARY' qname definition
     | 'ALTER' 'USER' 'MAPPING' 'FOR' id 'SERVER' id genericOptions
 
-    | 'ALTER'
-      ( 'AGGREGATE' aggregateSignature
-      | 'COLLATION' qname
-      | 'CONVERSION' qname
-      | 'DATABASE' id
-      | fdw_ id
-      | 'GROUP' id
-      | 'PROCEDURAL'? 'LANGUAGE' id
-      | 'OPERATOR' ( 'CLASS' | 'OPERATOR' )? qname usingID
-      | 'PUBLICATION' id
-      | fpr functionSig
-      | 'SCHEMA' id
-      | 'SERVER' id
-      | 'SEQUENCE' exists? qname
-      | 'TABLESPACE' id
-      | 'INDEX' exists? qname
-      | 'EVENT' 'TRIGGER' id
-      | 'ROLE' id
-      | 'USER' id
-      | 'STATISTICS' qname
-      | textSearchConfig qname
-      | alterRenameOn
-      )
-      'RENAME' 'TO' id
+    | alterRename
 
 
     | 'ALTER' 'FOREIGN' 'TABLE' exists? ( descendants | qname | qname ) 'RENAME' ( 'COLUMN'? id )? 'TO' id
@@ -326,7 +303,7 @@ ddl
     | 'CREATE' 'OPERATOR' operator definition
 
     | 'CREATE' 'TYPE' qname definition?
-    | 'CREATE' 'TYPE' qname 'AS' '(' ( tablefuncelement ( ',' tablefuncelement )*)? ')'
+    | 'CREATE' 'TYPE' qname 'AS' '(' ( attribType ( ',' attribType )* )? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'ENUM' '(' ( string ( ',' string )* )? ')'
     | 'CREATE' 'TYPE' qname 'AS' 'RANGE' definition
     | 'CREATE' textSearchConfig qname definition
@@ -447,6 +424,42 @@ ddl
     | resetVariable
     | 'SET' ( 'LOCAL' | 'SESSION' )? set_rest
     ;
+
+
+alteroptroleelem
+    : ( 'ENCRYPTED' | 'UNENCRYPTED' )? 'PASSWORD' string
+    | 'INHERIT'
+    | 'CONNECTION' 'LIMIT' signedDecimal
+    | 'VALID' 'UNTIL' string
+    | 'USER' ids
+    | id
+    ;
+
+alterRename : 'ALTER'
+      ( 'AGGREGATE' aggregateSignature
+      | 'COLLATION' qname
+      | 'CONVERSION' qname
+      | 'DATABASE' id
+      | fdw_ id
+      | 'GROUP' id
+      | 'PROCEDURAL'? 'LANGUAGE' id
+      | 'OPERATOR' ( 'CLASS' | 'FAMILY' )? qname usingID
+      | 'PUBLICATION' id
+      | fpr functionSig
+      | 'SCHEMA' id
+      | 'SERVER' id
+      | 'SEQUENCE' exists? qname
+      | 'TABLESPACE' id
+      | 'INDEX' exists? qname
+      | 'EVENT' 'TRIGGER' id
+      | 'ROLE' id
+      | 'USER' id
+      | 'VIEW' id
+      | 'STATISTICS' qname
+      | textSearchConfig qname
+      | alterRenameOn
+      )
+      'RENAME' 'TO' id ;
 
 
       alterRenameOn
@@ -736,7 +749,7 @@ alter_identity_column_option
   ;
 
 alter_type_cmd
-  : 'ADD' 'ATTRIBUTE' tablefuncelement cascade?
+  : 'ADD' 'ATTRIBUTE' attribType cascade?
   | 'DROP' 'ATTRIBUTE' exists? id cascade?
   | 'ALTER' 'ATTRIBUTE' id ( 'SET' 'DATA' )? 'TYPE' type collate? cascade?
   ;
@@ -1313,9 +1326,8 @@ alias
 whereCurrent
   : 'WHERE' ( 'CURRENT' 'OF' id | term ) ;
 
-tablefuncelement
-    : id type collate?
-    ;
+attribType
+    : id type collate? ;
 
 type
   : 'SETOF'? scalarType
