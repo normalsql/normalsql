@@ -29,17 +29,16 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class
-GlobbingRuleContext
+    GlobbingRuleContext
 extends
-        ParserRuleContext
-        implements Iterable<GlobbingRuleContext>
+    ParserRuleContext
+implements
+    Iterable<GlobbingRuleContext>
 {
     /**
      * <p>Constructor for GlobbingRuleContext.</p>
      */
-    public GlobbingRuleContext()
-    {
-    }
+    public GlobbingRuleContext() { }
 
 
 

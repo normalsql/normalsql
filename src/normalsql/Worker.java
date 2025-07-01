@@ -3,14 +3,10 @@
 
 package normalsql;
 
-import normalsql.grammar.SQLiteLexer;
-import normalsql.grammar.SQLiteParser;
 import normalsql.knockout.*;
 import normalsql.template.JavaHelper;
 import normalsql.template.PreparedStatementParameter;
 import normalsql.template.ResultSetColumn;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.WritableToken;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -40,7 +36,7 @@ import static normalsql.Tool.*;
 
 @SuppressWarnings( "SqlSourceToSinkFlow" )
 public class
-Worker
+	Worker
 {
 	          String _now;
 	      Connection _conn;
@@ -92,14 +88,10 @@ Worker
 
 		// TODO attempt running statement before parsing
 
-		var chars = CharStreams.fromString( unitOfWork.originalSQL );
-		var lexer = new SQLiteLexer( chars );
-		var tokens = new CommonTokenStream( lexer );
-		var parser = new SQLiteParser( tokens );
-		var statements = parser.statements();
+//		var monkey = new SQLiteClimber();
+		var monkey = new PostgreSQLClimber();
 
-		SQLiteClimber monkey = new SQLiteClimber( parser, tokens );
-		monkey.climb( statements );
+		var ko = monkey.go( unitOfWork.sourceFile );
 
 		unitOfWork.root = monkey.trunk;
 		if( unitOfWork.root == null || unitOfWork.root.isEmpty() )
@@ -213,7 +205,7 @@ Worker
 		{
 			setStartTokenText( (ParserRuleContext) param.context3, "?" );
 		}
-		unitOfWork.preparedSQL = tokens.getText();
+		unitOfWork.preparedSQL = monkey.tokens.getText();
 //		if( true ) return;
 		var ps = _conn.prepareStatement( unitOfWork.preparedSQL );
 
@@ -260,7 +252,7 @@ Worker
 			var text = _helper.toPrintfConverter( param.sqlType() );
 			setStartTokenText( (ParserRuleContext) param.context3, text );
 		}
-		unitOfWork.printfSQL = tokens.getText();
+		unitOfWork.printfSQL = monkey.tokens.getText();
 
 
 		// TODO move to ResultSetColumn, cuz I can't keep all these details straight in my head
@@ -316,7 +308,7 @@ Worker
 			}
     	}
 
-		INFO.log( "processed: " + unitOfWork.sourceFile );
+		INFO.log( "source: " + unitOfWork.sourceFile );
 
 		merge( unitOfWork );
 
@@ -467,7 +459,7 @@ Worker
 		{
 			template.merge( vc, writer );
 			writer.flush();
-			INFO.log( "generated: " + resolved );
+			INFO.log( "target: " + resolved );
 		}
 	}
 }

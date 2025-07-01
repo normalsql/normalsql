@@ -15,12 +15,19 @@
 
 package normalsql.knockout;
 
+import normalsql.grammar.SQLiteLexer;
+import normalsql.grammar.SQLiteParser;
 import normalsql.grammar.SQLiteParser.*;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -29,22 +36,46 @@ import java.util.Stack;
  */
 
 public class
-    Climber
+    SQLiteClimber
 {
-    Parser parser;
-    public Statement        trunk = new Statement();
-    public Stack<Statement>       stack     = new Stack<>();
-    public ArrayList<Knockout<?>> knockouts = new ArrayList<>();
-    public CommonTokenStream      tokens;
 
-    public Climber( Parser parser, CommonTokenStream tokens )
+    public static void main( String[] args )
+        throws Exception
     {
-        this.parser = parser;
-        this.tokens = tokens;
-        stack.add( trunk );
+        var path = Paths.get( "/Users/jasonosgood/Projects/normalsql/doc/classicmodels/InsertOops.sql" );
+        var monkey = new SQLiteClimber();
+        var ko = monkey.go( path );
+        System.out.println( ko.size() );
+
+    }
+
+    public Parser parser;
+    public CommonTokenStream tokens;
+    public Statement         trunk     = new Statement();
+    public Stack<Statement>  stack     = new Stack<>();
+    public List<Knockout<?>> knockouts = new ArrayList<>();
+
+    public SQLiteClimber()
+    {
+        stack.push( trunk );
     }
 
     Statement top;
+
+    public List<Knockout<?>> go( Path path )
+        throws IOException
+    {
+        var chars = CharStreams.fromPath( path );
+		var lexer = new SQLiteLexer( chars );
+        tokens = new CommonTokenStream( lexer );
+        var parser = new SQLiteParser( tokens );
+        this.parser = parser;
+		var statements = parser.statements();
+
+        climb( statements );
+
+        return knockouts;
+    }
 
     public void climb( GlobbingRuleContext parent )
     {
@@ -165,7 +196,6 @@ public class
     {
         if( k != null && k.isMatched() )
         {
-//            var top = stack.peek();
             top.knockouts.add( k );
             knockouts.add( k );
         }

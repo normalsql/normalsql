@@ -77,15 +77,17 @@ boolean notBETWEEN( ParserRuleContext ctx )
 }
 
 statements
-  : statement? ( ';' statement? )* EOF ;
+  : ( dml | ddl | explain )? ( ';' ( dml | ddl | explain )? )* EOF ;
 
-statement
-  : ( 'EXPLAIN' ( 'QUERY' 'PLAN' )? )?
-    ( alter
-    | select
+dml
+    : select
     | insert
     | update ( orderBy? limit )?
     | delete ( orderBy? limit )?
+    ;
+
+ddl
+    : alter
     | analyze
     | attach
     | begin
@@ -103,8 +105,10 @@ statement
     | rollback
     | savepoint
     | vacuum
-    )
-  ;
+    ;
+
+explain
+    : 'EXPLAIN' ( 'QUERY' 'PLAN' )? ( dml | ddl ) ;
 
 with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
@@ -193,10 +197,10 @@ insert
         : 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE' | 'ROLLBACK' ;
 
 
-upsert
-  : 'ON' 'CONFLICT' ( columnIndexes where? )?
-    'DO' ( 'NOTHING' | 'UPDATE' setVariables where? )
-  ;
+    upsert
+        : 'ON' 'CONFLICT' ( columnIndexes where? )?
+          'DO' ( 'NOTHING' | 'UPDATE' setVariables where? )
+        ;
 
 update
     : with? 'UPDATE' ( 'OR' action )? indexedBy
