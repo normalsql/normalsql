@@ -181,7 +181,6 @@ replace
       )?
     ;
 
-why doesn't this have a FROM clause?
 update
     : with? 'UPDATE' 'LOW_PRIORITY'? 'IGNORE'? tableReferenceList
       'SET' setter ( ',' setter )*
@@ -396,7 +395,7 @@ ddl
     | 'SHOW' 'PROCEDURE' 'CODE' qname
 
     | 'SHOW' 'GRANTS' ( 'FOR' user ( 'USING' user ( ',' user )* )? )?
-    | 'SHOW' 'PARSE_TREE' ddl
+    | 'SHOW' 'PARSE_TREE' ( dml | ddl )
     | 'SHOW' 'PLUGINS'
     | 'SHOW' 'PRIVILEGES'
     | 'SHOW' 'FULL'? 'PROCESSLIST'
@@ -431,7 +430,7 @@ ddl
 
     | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' ) qname qname ?
 
-    | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC ')
+    | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' )
       'ANALYZE'?
       ( 'FORMAT' '=' ( 'TRADITIONAL' | 'JSON' | 'TREE' | string ) )?
       ( 'INTO' qname )?
@@ -1094,7 +1093,7 @@ term
     | term '|' term
     | term ( '=' | ':=' | '!=' | '<>' | '<=>' | '>=' | '>' | '<=' | '<' ) term
 
-    | function over?
+    | function
     | windowFunctionCall
     | 'GROUPING' terms
     | '{' name term '}'
@@ -1143,8 +1142,7 @@ fulltextOptions
 
 function
     : ID '(' ( udfExpr ( ',' udfExpr )* )? ')'
-    // TODO embue with essence of windowing
-    | qname '(' ( term ( ',' term )* )? ')'
+    | qname '(' ( term ( ',' term )* )? ')' over?
 
     | 'CHAR' '(' term ( ',' term )* ( 'USING' name )? ')'
     | 'CURRENT_USER' ( '(' ')' )?
@@ -1152,30 +1150,22 @@ function
     | 'TRIM' '(' ( term ( 'FROM' term )? | 'LEADING' term? 'FROM' term | 'TRAILING' term? 'FROM' term | 'BOTH' term? 'FROM' term ) ')'
 
     | 'CURDATE' ( '(' ')' )?
-    | 'CURTIME' ( '(' DECIMAL? ')' )?
+    | 'UTC_DATE' ( '(' ')' )?
+    | now
+    | ( 'CURTIME' | 'SYSDATE' | 'UTC_TIME' | 'UTC_TIMESTAMP' ) ( '(' DECIMAL? ')' )?
     | ( 'DATE_ADD' | 'DATE_SUB' ) '(' term ',' interval ')'
+    | ( 'TIMESTAMPADD' | 'TIMESTAMPDIFF' ) '(' timeUnit ',' term ',' term ')'
+
     | 'EXTRACT' '(' timeUnitToo 'FROM' term ')'
     | 'GET_FORMAT' '(' ( 'DATE' | 'TIME' | 'DATETIME' | 'TIMESTAMP' ) ',' term ')'
-    | now
     | 'POSITION' '(' term 'IN' term ')'
     | 'SUBSTRING' '(' term ( ',' term ( ',' term )? | 'FROM' term ( 'FOR' term )? ) ')'
-    | 'SYSDATE' ( '(' DECIMAL? ')' )?
-    | ( 'TIMESTAMPADD' | 'TIMESTAMPDIFF' ) '(' timeUnit ',' term ',' term ')'
-    | 'UTC_DATE' ( '(' ')' )?
-    | 'UTC_TIME' ( '(' DECIMAL? ')' )?
-    | 'UTC_TIMESTAMP' ( '(' DECIMAL? ')' )?
 
     | 'WEIGHT_STRING' '(' term ( 'AS' ( 'CHAR' | 'BINARY' ) '(' DECIMAL ')' )? ')'
-    | 'AVG' '(' 'DISTINCT'? term ')'
-    | ( 'BIT_AND' | 'BIT_OR' | 'BIT_XOR' ) '(' 'ALL'? term ')'
-//    | 'JSON_ARRAYAGG' '(' 'ALL'? term ')'
-//    | 'JSON_OBJECTAGG' '(' 'ALL'? term ',' 'ALL'? term ')'
-//    | 'ST_COLLECT' '(' 'DISTINCT'? 'ALL'? term ')'
-    | 'ST_COLLECT' '(' 'DISTINCT'? term ')'
-    | 'COUNT' '(' ( 'ALL'? '*' | 'ALL'? term | 'DISTINCT' term ( ',' term )* ) ')'
-    | ( 'MIN' | 'MAX' ) '(' 'DISTINCT'? term ')'
-    | ( 'STD' | 'VARIANCE' | 'STDDEV_SAMP' | 'VAR_SAMP' ) '(' 'ALL'? term ')'
-    | 'SUM' '(' 'DISTINCT'? term ')'
+
+    | 'COUNT' '(' ( 'ALL'? '*' | 'ALL'? term | 'DISTINCT' term ( ',' term )* ) ')' over?
+    | ( 'AVG' | 'ST_COLLECT' | 'MIN' | 'MAX' | 'SUM' ) '(' 'DISTINCT'? 'ALL'? term ')' over?
+    | ( 'BIT_AND' | 'BIT_OR' | 'BIT_XOR' | 'STD' | 'VARIANCE' | 'STDDEV_SAMP' | 'VAR_SAMP' ) '(' 'ALL'? term ')'
     | 'GROUP_CONCAT' '(' 'DISTINCT'? term ( ',' term )* orderBy? ( 'SEPARATOR' string )? ')'
     ;
 
@@ -1315,7 +1305,7 @@ channel
     : 'FOR' 'CHANNEL' string ;
 
 compoundStatement
-    : ddl
+    : dml | ddl
     | 'RETURN' term
     | 'IF' ifBody 'END' 'IF'
     | 'CASE' term? ( 'WHEN' term thenStatement )+ ( 'ELSE' ( compoundStatement ';' )+ )? 'END' 'CASE'
@@ -1418,7 +1408,8 @@ tableConstraintDef
     ;
 
 createDef
-    : qname dataType columnAttribute* ;
+    : qname dataType columnAttribute*
+    ;
 
 // TODO refactor this and table constraint defs to better match docs
 // https://dev.mysql.com/doc/refman/9.3/en/create-table.html
@@ -1491,8 +1482,8 @@ tableCreateOption
     | 'START' 'TRANSACTION'
     | 'STATS_AUTO_RECALC' '='? decimalDefault
     | 'STATS_PERSISTENT' '='? decimalDefault
-    | 'STATS_SAMPLE_PAGES' '='? ( FLOAT | DECIMAL | 'DEFAULT ')
-    | 'STORAGE' ( 'DISK' | 'MEMORY ')
+    | 'STATS_SAMPLE_PAGES' '='? ( FLOAT | DECIMAL | 'DEFAULT' )
+    | 'STORAGE' ( 'DISK' | 'MEMORY' )
     | 'TABLESPACE' '='? name
     | 'TABLE_TYPE' '='? name
     | 'TRANSACTIONAL' '='? DECIMAL
