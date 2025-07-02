@@ -86,30 +86,6 @@ dml
     | delete ( orderBy? limit )?
     ;
 
-ddl
-    : alter
-    | analyze
-    | attach
-    | begin
-    | commit
-    | createIndex
-    | createTable
-    | createTrigger
-    | createView
-    | createVirtualTable
-    | detach
-    | drop
-    | pragma
-    | reindex
-    | release
-    | rollback
-    | savepoint
-    | vacuum
-    ;
-
-explain
-    : 'EXPLAIN' ( 'QUERY' 'PLAN' )? ( dml | ddl ) ;
-
 with
   : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
 
@@ -188,8 +164,11 @@ select
 insert
     : with?
       ( 'INSERT' ( 'OR' action )? | 'REPLACE' )
-      'INTO' qname alias? ( '(' qname ( ',' qname )* ')' )?
-      ( ( values | select ) upsert? | 'DEFAULT' 'VALUES' )
+      'INTO' qname alias?
+      ( '(' qname ( ',' qname )* ')' )?
+      ( ( values | select ) upsert?
+      | 'DEFAULT' 'VALUES'
+      )
       returning?
     ;
 
@@ -218,7 +197,34 @@ update
         : 'RETURNING' item ( ',' item )* ;
 
 delete
-  : with? 'DELETE' 'FROM' qname indexedBy? where? returning? ;
+    : with? 'DELETE' 'FROM' qname indexedBy?
+      where? returning? ;
+
+ddl
+    : alter
+    | analyze
+    | attach
+    | begin
+    | commit
+    | createIndex
+    | createTable
+    | createTrigger
+    | createView
+    | createVirtualTable
+    | detach
+    | drop
+    | pragma
+    | reindex
+    | release
+    | rollback
+    | savepoint
+    | vacuum
+    ;
+
+explain
+    : 'EXPLAIN' ( 'QUERY' 'PLAN' )? ( dml | ddl ) ;
+
+
 
 alter
   : 'ALTER' 'TABLE' qname
@@ -378,7 +384,6 @@ orderBy
 
     orderTerm
         : term ( 'COLLATE' name )? direction_? ( 'NULLS' ( 'FIRST' | 'LAST' ))? ;
-
 
 raise
     : 'RAISE' '(' ( 'IGNORE' | ( 'ROLLBACK' | 'ABORT' | 'FAIL' ) ',' string ) ')' ;

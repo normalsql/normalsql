@@ -74,14 +74,14 @@ statements
 
 dml
     : select
-    | delete
-    | update
     | insert
+    | update
     | 'MERGE' 'INTO'? qname tableAlias? 'USING' ( '(' select ')' | qname ) tableAlias? 'ON' term
       ( merge_insert_clause merge_update_clause?
       | merge_update_clause merge_insert_clause?
       )
       ( 'WHEN' 'MATCHED' 'THEN'? 'DELETE' )?
+    | delete
     ;
 
 
@@ -182,23 +182,7 @@ select
 
         window
           : id 'AS' windowDef ;
-/*
-//        windowDef
-//          : '(' id? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
-//            frame_clause_? ')' ;
-//
-//        frame_clause_
-//          : ( 'RANGE' | 'ROWS' | 'GROUPS' )
-//            ( frame_bound | 'BETWEEN' frame_bound 'AND' frame_bound )
-//            ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ))?
-//          ;
-//
-//        frame_bound
-//            : 'UNBOUNDED' ( 'PRECEDING' | 'FOLLOWING' )
-//            | 'CURRENT' 'ROW'
-//            | term ( 'PRECEDING' | 'FOLLOWING' )
-//            ;
-*/
+
             windowDef
                 : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
                     ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
@@ -217,21 +201,31 @@ select
         values
             : 'VALUES' term ( ',' term )* ;
 
-    insert
-        : with? 'INSERT'
-          'INTO' qname alias?
+insert
+    : with? 'INSERT'
+      'INTO' qname alias?
+      ( ( '(' qname ( ',' qname )* ')' )? ( 'OVERRIDING' ( 'USER' | 'SYSTEM' ) 'VALUE' )? select
+      | 'DEFAULT' 'VALUES'
+      )
 
-          ( columns? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
-    //      ( ( '(' qnames ')' )? ( 'OVERRIDING' ('USER' | 'SYSTEM') 'VALUE' )? select
-          | 'DEFAULT' 'VALUES'
-          )
+      ( 'ON' 'CONFLICT'
+        ( '(' indexItem ( ',' indexItem )* ')' where? | 'ON' 'CONSTRAINT' id )?
+        'DO' ( 'UPDATE' 'SET' setter ( ',' setter )* where? | 'NOTHING' )
+      )?
+      returning?
+    ;
 
-          ( 'ON' 'CONFLICT'
-            ( '(' indexItem ( ',' indexItem )* ')' where? | 'ON' 'CONSTRAINT' id )?
-            'DO' ( 'UPDATE' 'SET' setter ( ',' setter )* where? | 'NOTHING' )
-          )?
-          returning?
-        ;
+update
+    : with? 'UPDATE' descendants alias?
+      'SET' setter ( ',' setter )*
+      ( 'FROM' tables )? whereCurrent? returning?
+    ;
+
+delete
+      : with? 'DELETE' 'FROM' descendants alias?
+         ( 'USING' tables ( ',' tables )* )?
+        whereCurrent? returning? ;
+
 
 ddl
     : 'ALTER' 'EVENT' 'TRIGGER' id ( 'ENABLE' fireWhen? | 'DISABLE' )
@@ -1271,19 +1265,10 @@ merge_update_clause
   : 'WHEN' 'MATCHED' ( 'AND' term )? 'THEN'? 'UPDATE' 'SET' setter ( ',' setter )*
   ;
 
-delete
-  : with? 'DELETE' 'FROM' descendants alias? ( 'USING' tables ( ',' tables )* )? whereCurrent? returning? ;
-
 lockType
   : ( 'ACCESS' | 'ROW' ) ( 'SHARE' | 'EXCLUSIVE' )
   | 'SHARE' ( ( 'UPDATE' | 'ROW' ) 'EXCLUSIVE' )?
   | 'EXCLUSIVE'
-  ;
-
-update
-  : with? 'UPDATE' descendants alias?
-    'SET' setter ( ',' setter )*
-    ( 'FROM' tables )? whereCurrent? returning?
   ;
 
 setter

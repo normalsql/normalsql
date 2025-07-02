@@ -141,9 +141,67 @@ options {
 }
 
 statements
-    : statement? ( ( ';' | '#end' ) statement? )* EOF ;
+    : ( dml | ddl )? ( ( ';' | '#end' ) ( dml | ddl )? )* EOF ;
 
-statement
+dml
+    : select
+    | insert
+    | replace
+    | update
+    | delete
+    ;
+
+insert
+    : 'INSERT' ( 'LOW_PRIORITY' | 'DELAYED' | 'HIGH_PRIORITY' )?
+      'IGNORE'?
+      'INTO'? qname partition?
+      ( insertFromConstructor valuesAlias?
+      | 'SET' setter ( ',' setter )* valuesAlias?
+      | insertQueryExpression
+      )
+      ( 'ON' 'DUPLICATE' 'KEY' 'UPDATE' setter ( ',' setter )* )?
+    ;
+
+    insertFromConstructor
+        : ( '(' ( wild ( ',' wild )* )? ')' )? ( 'VALUES' | 'VALUE' ) term  ( ',' term )* ;
+
+    insertQueryExpression
+        : with? selectCore orderBy? limit?
+        | '(' select ')'
+        | ( '(' ( wild ( ',' wild )* )? ')' )? select
+        ;
+
+// TODO fold rule replace into rule insert?
+replace
+    : 'REPLACE' ( 'LOW_PRIORITY' | 'DELAYED' )?
+      'INTO'? qname partition?
+      ( insertFromConstructor
+      | 'SET' setter ( ',' setter )*
+      | insertQueryExpression
+      )?
+    ;
+
+why doesn't this have a FROM clause?
+update
+    : with? 'UPDATE' 'LOW_PRIORITY'? 'IGNORE'? tableReferenceList
+      'SET' setter ( ',' setter )*
+      where?
+      orderBy? limitCount?
+    ;
+
+delete
+    : with? 'DELETE' 'LOW_PRIORITY'? 'QUICK'? 'IGNORE'?
+      ( 'FROM' qname alias? partition? where? orderBy? limitCount?
+      | wild ( ',' wild )* 'FROM' tableReferenceList where?
+      | 'FROM' wild ( ',' wild )* 'USING' tableReferenceList where?
+      )
+    ;
+
+    wild : qname ( '.' '*' )? ;
+
+
+
+ddl
     : 'CREATE' database_ notExists? name databaseOption*
     | 'ALTER' database_ qname databaseOption+
     | 'DROP' database_ exists? qname
@@ -238,15 +296,15 @@ statement
 
 
     | 'CALL' qname ( '(' ( term ( ',' term )* )? ')' )?
-    | delete
+//    | delete
     | 'DO' item ( ',' item )*
     | 'HANDLER' qname 'OPEN' alias?
     | 'HANDLER' qname ( 'CLOSE' | 'READ' handlerReadOrScan where? limit? )
-    | insert
+//    | insert
     | loadData
-    | replace
-    | select
-    | update
+//    | replace
+//    | select
+//    | update
     | 'COMMIT' 'WORK'? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
     | 'SAVEPOINT' qname
     | 'ROLLBACK' 'WORK'? ( 'TO' 'SAVEPOINT'? name | ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )? )
@@ -299,11 +357,6 @@ statement
 
     | 'SHOW' 'BINARY' 'LOG' 'STATUS'
     | 'SHOW' 'BINARY' 'LOGS'
-    // TODO verify FROM & IN
-    | 'SHOW' 'BINLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' DECIMAL )? limit?
-    | 'SHOW' charset_ like?
-    | 'SHOW' 'COLLATION' like?
-    | 'SHOW' ( 'FULL' | 'EXTENDED' 'FULL'? )? ( 'FIELDS' | 'COLUMNS' ) inDb inDb? like?
     | 'SHOW' 'COUNT' '(' '*' ')' ( 'WARNINGS' | 'ERRORS' )
 
     | 'SHOW' 'CREATE' database_ notExists? qname
@@ -315,26 +368,37 @@ statement
     | 'SHOW' 'CREATE' 'PROCEDURE' 'CODE' qname
     | 'SHOW' 'CREATE' 'TABLE' qname
     | 'SHOW' 'CREATE' 'TRIGGER' qname
-    | 'SHOW' 'CREATE' 'USER' user
     | 'SHOW' 'CREATE' 'VIEW' qname
 
-    | 'SHOW' 'DATABASES' like?
+    | 'SHOW' 'CREATE' 'USER' user
+
     | 'SHOW' 'ENGINE' qname ( 'LOGS' | 'MUTEX' | 'STATUS' )
     | 'SHOW' 'STORAGE'? 'ENGINES'
-    | 'SHOW' 'ERRORS' limit?
+
+    | 'SHOW' charset_ like?
+    | 'SHOW' 'COLLATION' like?
+    | 'SHOW' 'DATABASES' like?
+    | 'SHOW' 'LIBRARY' 'STATUS' like?
+    | 'SHOW' 'FUNCTION' 'STATUS' like?
+    | 'SHOW' 'PROCEDURE' 'STATUS' like?
+    | 'SHOW' scope? 'STATUS' like?
+    | 'SHOW' scope? 'VARIABLES' like?
+
     | 'SHOW' 'EVENTS' inDb? like?
+    | 'SHOW' ( 'FULL' | 'EXTENDED' 'FULL'? )? ( 'FIELDS' | 'COLUMNS' ) inDb inDb? like?
+    | 'SHOW' 'TABLE' 'STATUS' inDb? like?
+    | 'SHOW' 'OPEN' 'TABLES' inDb? like?
+    | 'SHOW' ( 'FULL' | 'EXTENDED' 'FULL'? )? 'TABLES' inDb? like?
+    | 'SHOW' 'FULL'? 'TRIGGERS' inDb? like?
+    | 'SHOW' 'EXTENDED'? ( 'KEYS' | 'INDEX' | 'INDEXES' ) inDb inDb? where?
 
     | 'SHOW' 'FUNCTION' 'CODE' qname
-    | 'SHOW' 'FUNCTION' 'STATUS' like?
+    | 'SHOW' 'PROCEDURE' 'CODE' qname
+
     | 'SHOW' 'GRANTS' ( 'FOR' user ( 'USING' user ( ',' user )* )? )?
-    | 'SHOW' 'EXTENDED'? ( 'KEYS' | 'INDEX' | 'INDEXES' ) inDb inDb? where?
-    | 'SHOW' 'LIBRARY' 'STATUS' like?
-    | 'SHOW' 'OPEN' 'TABLES' inDb? like?
-    | 'SHOW' 'PARSE_TREE' statement
+    | 'SHOW' 'PARSE_TREE' ddl
     | 'SHOW' 'PLUGINS'
     | 'SHOW' 'PRIVILEGES'
-    | 'SHOW' 'PROCEDURE' 'CODE' qname
-    | 'SHOW' 'PROCEDURE' 'STATUS' like?
     | 'SHOW' 'FULL'? 'PROCESSLIST'
     | 'SHOW' 'PROFILE' ( profileDef ( ',' profileDef )* )? ( 'FOR' 'QUERY' DECIMAL )? limit?
     | 'SHOW' 'PROFILES'
@@ -342,11 +406,10 @@ statement
     | 'SHOW' 'REPLICA' 'STATUS' channel?
     | 'SHOW' 'REPLICAS'
     | 'SHOW' 'REPLICA' 'HOSTS'
-    | 'SHOW' scope? 'STATUS' like?
-    | 'SHOW' 'TABLE' 'STATUS' inDb? like?
-    | 'SHOW' ( 'FULL' | 'EXTENDED' 'FULL'? )? 'TABLES' inDb? like?
-    | 'SHOW' 'FULL'? 'TRIGGERS' inDb? like?
-    | 'SHOW' scope? 'VARIABLES' like?
+
+    // TODO verify FROM & IN
+    | 'SHOW' 'BINLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' DECIMAL )? limit?
+    | 'SHOW' 'ERRORS' limit?
     | 'SHOW' 'WARNINGS' limit?
 
 
@@ -372,7 +435,7 @@ statement
       'ANALYZE'?
       ( 'FORMAT' '=' ( 'TRADITIONAL' | 'JSON' | 'TREE' | string ) )?
       ( 'INTO' qname )?
-      ( ( 'FOR' database_ name )? explainable
+      ( ( 'FOR' database_ name )? ( select | delete | insert | replace | update )
       | 'FOR' 'CONNECTION' DECIMAL
       )
 
@@ -472,41 +535,7 @@ select
 
         window
             : name 'AS' windowDef ;
-/*
-//        windowDef
-//            : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
-//              ( ( 'ROWS' | 'RANGE' | 'GROUPS' ) windowFrameExtent
-//              ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
-//              )?
-//              ')'
-//            ;
-//
-//        windowFrameExtent
-//            : windowFrameStart
-//            | windowFrameBetween
-//            ;
-//
-//        windowFrameStart
-//            : literal 'PRECEDING'
-//        //    : 'UNBOUNDED' 'PRECEDING'
-//        //    | INTEGER 'PRECEDING'
-//        //    | PARAM 'PRECEDING'
-//        //    | 'INTERVAL' term interval 'PRECEDING'
-//            | 'CURRENT' 'ROW'
-//            ;
-//
-//        windowFrameBound
-//            : windowFrameStart
-//            | literal 'FOLLOWING'
-//        //    | 'UNBOUNDED' 'FOLLOWING'
-//        //    | INTEGER 'FOLLOWING'
-//        //    | PARAM 'FOLLOWING'
-//        //    | 'INTERVAL' term interval 'FOLLOWING'
-//            ;
-//
-//        windowFrameBetween
-//            : 'BETWEEN' windowFrameBound 'AND' windowFrameBound ;
-*/
+
             windowDef
                 : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
                     ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
@@ -543,14 +572,6 @@ commonIndexOption
 
 replaceString
     : 'REPLACE' string ;
-
-explainable
-    : select
-    | delete
-    | insert
-    | replace
-    | update
-    ;
 
 startTransactionMode
     : ( 'WITH' 'CONSISTENT' 'SNAPSHOT' | 'READ' ( 'WRITE' | 'ONLY' ) ) ;
@@ -670,16 +691,6 @@ srsAttribute
     | 'DESCRIPTION' 'TEXT' string
     ;
 
-delete
-    : with? 'DELETE' 'LOW_PRIORITY'? 'QUICK'? 'IGNORE'?
-      ( 'FROM' qname alias? ( 'PARTITION' '(' name ( ',' name )* ')' )? where? orderBy? limitCount?
-      | wild ( ',' wild )* 'FROM' tableReferenceList where?
-      | 'FROM' wild ( ',' wild )* 'USING' tableReferenceList where?
-      )
-    ;
-
-    wild : qname ( '.' '*' )? ;
-
 handlerReadOrScan
     : ( 'FIRST' | 'NEXT' )
     | name
@@ -688,36 +699,10 @@ handlerReadOrScan
       )
     ;
 
-replace
-    : 'REPLACE' ( 'LOW_PRIORITY' | 'DELAYED' )?
-      'INTO'? qname partition?
-      ( insertFromConstructor | 'SET' setter ( ',' setter )* | insertQueryExpression )?
-    ;
-
-insert
-    : 'INSERT' ( 'LOW_PRIORITY' | 'DELAYED' | 'HIGH_PRIORITY' )?
-      'IGNORE'?
-      'INTO'? qname partition?
-      ( insertFromConstructor valuesReference?
-      | 'SET' setter ( ',' setter )* valuesReference?
-      | insertQueryExpression
-      )
-      ( 'ON' 'DUPLICATE' 'KEY' 'UPDATE' setter ( ',' setter )* )?
-    ;
-
-insertFromConstructor
-    : ( '(' ( wild ( ',' wild )* )? ')' )? ( 'VALUES' | 'VALUE' ) term  ( ',' term )* ;
-
-insertQueryExpression
-    : with? selectCore orderBy? limit?
-    | '(' select ')'
-    | ( '(' ( wild ( ',' wild )* )? ')' )? select
-    ;
-
 terms
     : '(' term  ( ',' term )* ')' ;
 
-valuesReference
+valuesAlias
     : 'AS' name columns? ;
 
 loadData
@@ -783,13 +768,6 @@ indexKey
 
 indexHintScope
     : 'FOR' ( 'JOIN' | 'ORDER' 'BY' | 'GROUP' 'BY' ) ;
-
-update
-    : with? 'UPDATE' 'LOW_PRIORITY'? 'IGNORE'? tableReferenceList
-      'SET' setter ( ',' setter )*
-      where?
-      orderBy? limitCount?
-    ;
 
 beginWork
     : 'BEGIN' 'WORK'? ;
@@ -1337,7 +1315,7 @@ channel
     : 'FOR' 'CHANNEL' string ;
 
 compoundStatement
-    : statement
+    : ddl
     | 'RETURN' term
     | 'IF' ifBody 'END' 'IF'
     | 'CASE' term? ( 'WHEN' term thenStatement )+ ( 'ELSE' ( compoundStatement ';' )+ )? 'END' 'CASE'
