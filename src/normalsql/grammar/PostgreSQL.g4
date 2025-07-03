@@ -69,8 +69,8 @@ boolean notBETWEEN( ParserRuleContext ctx )
 }
 
 statements
-  : ( dml | ddl )? ( SEMI ( dml | ddl )? )* EOF
-  ;
+    : ( dml | ddl )? ( SEMI ( dml | ddl )? )* EOF
+    ;
 
 dml
     : select
@@ -124,7 +124,7 @@ select
             | 'LATERAL'? 'ROWS' 'FROM' '(' tableFunc? ( ',' tableFunc? )* ')'  ( 'WITH' 'ORDINALITY' )? tableAlias?
             | 'LATERAL'? xmltable tableAlias?
             | '(' tables ')' tableAlias?
-            | descendants tableAlias? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
+            | ( qname '*'? | 'ONLY' qname ) tableAlias? ( 'TABLESAMPLE' qname '(' terms ')' ( 'REPEATABLE' '(' term ')' )? )?
             ;
 
             joinType
@@ -161,7 +161,7 @@ select
                 ;
 
             tableAlias
-                : 'AS'? id ( '(' qname ( ',' qname )* ')' )? ;
+                : 'AS'? tableRef ;
 
         where
             : 'WHERE' term ;
@@ -254,11 +254,11 @@ ddl
     | 'ALTER' 'EXTENSION' id ( 'ADD' | 'DROP' )
       ( object_type_name id
       | object_type_any_name qname
-      | 'AGGREGATE' aggregateSignature
+      | 'AGGREGATE' aggregateSig
       | 'CAST' '(' type 'AS' type ')'
       | 'DOMAIN' type
       | fpr functionSig
-      | 'OPERATOR' operatorSignature
+      | 'OPERATOR' operatorSig
       | 'OPERATOR' ( 'CLASS' | 'FAMILY' )? qname usingID
       | 'TRANSFORM' 'FOR' type 'LANGUAGE' id
       | 'TYPE' type
@@ -272,9 +272,9 @@ ddl
     | 'ALTER' ( ( 'INDEX'  |  materialized_  | 'TRIGGER' id 'ON' ) qname  | fpr functionSig ) 'NO'? 'DEPENDS' 'ON' 'EXTENSION' id
 
     | 'ALTER'
-      ( 'AGGREGATE' aggregateSignature
+      ( 'AGGREGATE' aggregateSig
       | fpr functionSig
-      | 'OPERATOR' operatorSignature
+      | 'OPERATOR' operatorSig
       | 'OPERATOR' ( 'CLASS' | 'FAMILY' )? qname usingID
       | 'COLLATION' qname
       | 'CONVERSION' qname
@@ -289,9 +289,9 @@ ddl
       'SET' 'SCHEMA' id
 
     | 'ALTER'
-      ( 'AGGREGATE' aggregateSignature
+      ( 'AGGREGATE' aggregateSig
       | fpr functionSig
-      | 'OPERATOR' operatorSignature
+      | 'OPERATOR' operatorSig
       | 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID
       | 'COLLATION' qname
       | 'CONVERSION' qname
@@ -307,12 +307,10 @@ ddl
       | 'STATISTICS' qname
       | 'TABLESPACE' id
       | textSearchConfig qname
-//      | 'TEXT' 'SEARCH' 'CONFIGURATION' qname
-//      | 'TEXT' 'SEARCH' 'DICTIONARY' qname
       | 'TYPE' qname
       ) 'OWNER' 'TO' id
 
-    | 'ALTER' 'OPERATOR' operatorSignature 'SET' '(' setDuck ( ',' setDuck )* ')'
+    | 'ALTER' 'OPERATOR' operatorSig 'SET' '(' setDuck ( ',' setDuck )* ')'
     | 'ALTER' 'TYPE' qname 'SET' '(' setDuck ( ',' setDuck )* ')'
     | 'ALTER' 'POLICY' id 'ON' qname ('TO' ids)? rowsecurityoptionalexpr? rowsecurityoptionalwithcheck?
     | 'ALTER' 'SEQUENCE' exists? qname seqoptelem+
@@ -333,8 +331,8 @@ ddl
     | 'ALTER' ( 'ROLE' | 'USER' ) 'ALL'? id ( 'IN' 'DATABASE' id )? setresetclause
     | 'ALTER' ( 'ROLE' | 'USER' ) id 'WITH'? alteroptroleelem*
 
-    | 'ALTER' 'SUBSCRIPTION'
-      ( id 'SET' definition
+    | 'ALTER' 'SUBSCRIPTION' id
+      ( 'SET' definition
       | 'CONNECTION' string
       | 'REFRESH' 'PUBLICATION' withDef?
       | 'SET' 'PUBLICATION' ids withDef?
@@ -355,12 +353,12 @@ ddl
     | alterRename
 
 
-    | 'ALTER' 'FOREIGN' 'TABLE' exists? ( descendants | qname | qname ) 'RENAME' ( 'COLUMN'? id )? 'TO' id
+    | 'ALTER' ( 'FOREIGN'? 'TABLE' | 'VIEW' ) exists? descendants 'RENAME' ( 'COLUMN'? id )? 'TO' id
 
-    | 'ALTER' ( 'DOMAIN' qname | 'TABLE' exists? descendants )? 'RENAME' ( 'CONSTRAINT' id )? 'TO' id
-    | 'ALTER' 'TYPE' qname 'RENAME' ('ATTRIBUTE' id)? 'TO' id cascade?
+    | 'ALTER' ( 'DOMAIN' qname | 'TABLE' exists? descendants ) 'RENAME' ( 'CONSTRAINT' id )? 'TO' id
+    | 'ALTER' 'TYPE' qname 'RENAME' ( 'ATTRIBUTE' id )? 'TO' id cascade?
 
-    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID ( 'ADD' opAddItem ( ',' opAddItem )* | 'DROP' opDropItem ( ',' opDropItem )*)
+    | 'ALTER' 'OPERATOR' 'FAMILY' qname usingID ( 'ADD' opAddItem ( ',' opAddItem )* | 'DROP' opDropItem ( ',' opDropItem )* )
 
 
     | 'CALL' genericFunction
@@ -399,12 +397,6 @@ ddl
     | 'CREATE' 'EXTENSION' notExists? id 'WITH'? ( 'SCHEMA' id | 'VERSION' name | 'FROM' name | 'CASCADE' )*
     | 'CREATE' fdw_ id ( genericOptions | handler+ )?
     | 'CREATE' 'SERVER' notExists? id ( 'TYPE' string )? version? fdw_ id genericOptions?
-    | 'CREATE' 'FOREIGN' 'TABLE' notExists? qname
-      ( '(' ( column ( ',' column )* )? ')' inherit?
-      | 'PARTITION' 'OF' parentTable forValues
-      )
-      'SERVER' id genericOptions?
-
     | 'CREATE' orReplace_? ( 'FUNCTION' | 'PROCEDURE' ) qname '(' ( paramDef ( ',' paramDef )* )? ')'
       ( 'RETURNS' ( type | 'TABLE' '(' id type ( ',' id type )* ')' ) )?
       ( 'AS' string ( ',' string )?
@@ -443,7 +435,7 @@ ddl
 
     | 'CREATE' 'USER' 'MAPPING' notExists? 'FOR' id 'SERVER' id genericOptions?
     | 'CREATE' 'DATABASE' id 'WITH'? databaseItem*
-    | 'CREATE' orReplace_? 'AGGREGATE' ( qname | aggregateSignature )? definition
+    | 'CREATE' orReplace_? 'AGGREGATE' ( qname | aggregateSig )? definition
     | 'CREATE' 'OPERATOR' operator definition
 
     | 'CREATE' 'TYPE' qname definition?
@@ -462,12 +454,13 @@ ddl
     | 'DISCARD' ( 'ALL' | 'TEMP' | 'TEMPORARY' | 'PLANS' | 'SEQUENCES' )
     | 'DO' ( 'LANGUAGE'? name )+
 
-    | 'DROP' 'AGGREGATE' exists? aggregateSignature ( ',' aggregateSignature )* cascade?
+    | 'DROP' 'AGGREGATE' exists? aggregateSig ( ',' aggregateSig )* cascade?
     | 'DROP' fpr exists? functionSig ( ',' functionSig )* cascade?
-    | 'DROP' 'OPERATOR' exists? operatorSignature ( ',' operatorSignature )* cascade?
-
     | 'DROP' 'CAST' exists? '(' type 'AS' type ')' cascade?
+
+    | 'DROP' 'OPERATOR' exists? operatorSig ( ',' operatorSig )* cascade?
     | 'DROP' 'OPERATOR' ( 'CLASS' | 'FAMILY' ) exists? qname usingID cascade?
+
     | 'DROP' ( 'POLICY' | 'RULE' | 'TRIGGER' ) exists? id 'ON' qname cascade?
     | 'DROP' ( 'TYPE' | 'DOMAIN' ) exists? type ( ',' type )* cascade?
     | 'DROP' 'SUBSCRIPTION' exists? id cascade?
@@ -521,7 +514,7 @@ ddl
     | 'SECURITY' 'LABEL' ( 'FOR' name )? 'ON'
       ( object_type_any_name qname
       | object_type_name id
-      | 'AGGREGATE' aggregateSignature
+      | 'AGGREGATE' aggregateSig
       | 'COLUMN' qname
       | 'DOMAIN' type
       | 'LARGE' 'OBJECT' number
@@ -533,14 +526,14 @@ ddl
     | 'COMMENT' 'ON'
       ( object_type_any_name qname
       | object_type_name id
-      | 'AGGREGATE' aggregateSignature
+      | 'AGGREGATE' aggregateSig
       | 'TYPE' type
       | 'CAST' '(' type 'AS' type ')'
       | 'COLUMN' qname
       | 'CONSTRAINT' id 'ON' 'DOMAIN'? qname?
       | 'DOMAIN' type
       | 'LARGE' 'OBJECT' number
-      | 'OPERATOR' operatorSignature
+      | 'OPERATOR' operatorSig
       | 'OPERATOR' ( 'CLASS' | 'FAMILY' ) qname usingID
       | ( 'POLICY' | 'RULE' | 'TRIGGER' ) id 'ON' qname
       | fpr functionSig
@@ -579,8 +572,9 @@ alteroptroleelem
     | id
     ;
 
-alterRename : 'ALTER'
-      ( 'AGGREGATE' aggregateSignature
+alterRename
+    : 'ALTER'
+      ( 'AGGREGATE' aggregateSig
       | 'COLLATION' qname
       | 'CONVERSION' qname
       | 'DATABASE' id
@@ -598,12 +592,14 @@ alterRename : 'ALTER'
       | 'EVENT' 'TRIGGER' id
       | 'ROLE' id
       | 'USER' id
-      | 'VIEW' id
+//      | 'VIEW' id
       | 'STATISTICS' qname
       | textSearchConfig qname
       | alterRenameOn
       )
-      'RENAME' 'TO' id ;
+      'RENAME' 'TO' id
+//      | 'ALTER' 'TABLE' 'RENAME' id 'TO' id
+      ;
 
 
       alterRenameOn
@@ -781,6 +777,12 @@ createTable
     )
     ( 'PARTITION' 'BY' id '(' part_elem ( ',' part_elem )* ')' )?
     fixme
+
+    | 'CREATE' 'FOREIGN' 'TABLE' notExists? qname
+      ( '(' ( column ( ',' column )* )? ')' inherit?
+      | 'PARTITION' 'OF' parentTable forValues
+      )
+      'SERVER' id genericOptions?
   ;
 
 // TODO better name
@@ -790,6 +792,8 @@ createTable
        ( 'ON' 'COMMIT' ( 'DROP' | 'DELETE' 'ROWS' | 'PRESERVE' 'ROWS' ))?
        tablespaceID?
      ;
+
+
 
 forValues
   : 'FOR' 'VALUES' 'WITH' '(' 'modulus' number ','  'remainder' number ')'
@@ -1009,7 +1013,7 @@ def_elem
 
 
 opAddItem
-    : 'OPERATOR' integer operatorSignature? ( 'FOR' ( 'SEARCH' |  'ORDER' 'BY' qname ) )? 'RECHECK'?
+    : 'OPERATOR' integer operatorSig? ( 'FOR' ( 'SEARCH' |  'ORDER' 'BY' qname ) )? 'RECHECK'?
     | 'FUNCTION' integer functionSig
     | 'FUNCTION' integer '(' type ( ',' type )* ')' functionSig
     | 'STORAGE' type
@@ -1125,7 +1129,7 @@ paramDef
 functionSig
     : qname ( '(' aggregateArgs? ')' )? ;
 
-aggregateSignature
+aggregateSig
   : qname '(' ( '*' | ( aggregateArgs? 'ORDER' 'BY' )? aggregateArgs ) ')' ;
 
 aggregateArgs
@@ -1172,13 +1176,13 @@ operator
     : ( id '.' )*
       ( OPERATOR
       // Include all implicitly defined operator tokens (in this grammar) here
-      | '+' | '-' | '*' | '/' | '&' | '%' | '^' | '<' | '>' | '=' | '<=' | '>=' | '<>'
+      | '+' | '-' | '*' | '/' | '&' | '%' | '^' | '<' | '>' | '=' | '<=' | '>=' | '<>' | '||' | '&&'
       )
     | 'OPERATOR' '(' operator ')'
     ;
 
-operatorSignature
-    : operator '(' type ( ',' type )? ')' ;
+operatorSig
+    : operator ( '(' type ( ',' type )? ')' )? ;
 
 sqlWith
     : ( 'TO' | 'FROM' ) 'SQL' 'WITH' 'FUNCTION' functionSig ;
@@ -1231,7 +1235,7 @@ databaseItem
     ;
 
 tableRef
-  : qname columns? ;
+    : qname ( '(' qname ( ',' qname )* ')' )? ;
 
 explainable
     : select
