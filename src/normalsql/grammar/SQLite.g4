@@ -82,6 +82,8 @@ statements
 dml
     : select
     | insert
+    // ORDER BY & LIMIT only supported for top-level statements
+    // https://www.sqlite.org/compile.html#enable_update_delete_limit
     | update ( orderBy? limit )?
     | delete ( orderBy? limit )?
     ;
@@ -182,7 +184,7 @@ insert
         ;
 
 update
-    : with? 'UPDATE' ( 'OR' action )? indexedBy
+    : with? 'UPDATE' ( 'OR' action )? qname indexedBy?
       setVariables
       ( 'FROM' tables )?
       where? returning?
