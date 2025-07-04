@@ -151,6 +151,112 @@ dml
     | delete
     ;
 
+with
+    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
+
+cte
+    : name columns? 'AS' '(' select ')' ;
+
+select
+    : with?
+      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
+      orderBy? limit? into? locking* into?
+    ;
+
+    into
+        : 'INTO'
+          ( 'OUTFILE' string charsetName? fieldHandling? lineHandling?
+          | 'DUMPFILE' string
+          | qname ( ',' qname )*
+          )
+        ;
+
+    selectCore
+        : 'SELECT' modifier* item ( ',' item )* into?
+          ( 'FROM' tables )? where? groupBy? having?
+          ( 'WINDOW' window ( ',' window )* )?
+          ( 'QUALIFY' term )?
+        | values
+        | '(' select ')'
+        | 'TABLE' qname
+        ;
+
+        modifier
+    : 'ALL'
+    | 'DISTINCT'
+    | 'DISTINCTROW'
+    | 'HIGH_PRIORITY'
+    | 'STRAIGHT_JOIN'
+    | 'SQL_SMALL_RESULT'
+    | 'SQL_BIG_RESULT'
+    | 'SQL_BUFFER_RESULT'
+    | 'SQL_CALC_FOUND_ROWS'
+    | 'SQL_NO_CACHE'
+    ;
+
+        item
+            : ( qname '.' )? '*'  # ItemAll
+            | qname alias?  # ItemColumn
+            | term alias?  # ItemTerm
+            ;
+
+        tables
+            : tables ',' tables
+            | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
+            | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
+            | tables ( 'NATURAL' ( 'INNER' | ( 'LEFT' | 'RIGHT' ) 'OUTER'? )? 'JOIN' ) tables
+            | 'LATERAL'? '(' select ')' tableAlias? columns?
+            | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
+            | values tableAlias?
+            | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
+            | qname '(' term ( ',' term )* ')' tableAlias?
+            | '{' 'OJ' tables '}'
+            | '(' tables ')'
+            ;
+
+            tableAlias
+                    : 'AS'? name ;
+
+        where
+            : 'WHERE' term ;
+
+        groupBy
+            : 'GROUP' 'BY' orderTerm ( ',' orderTerm )* ( 'WITH' 'ROLLUP' )?
+            | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
+            ;
+
+        orderBy
+            : 'ORDER' 'BY' orderTerm ( ',' orderTerm )* ;
+
+        orderTerm
+            : term direction_? ;
+
+        having
+            : 'HAVING' term ;
+
+        window
+            : name 'AS' windowDef ;
+
+            windowDef
+                : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
+                    ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
+                      ( 'BETWEEN' frameBounds 'AND' )?
+                      frameBounds
+                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
+                    )?
+                  ')'
+                ;
+
+            frameBounds
+                :  term  ( 'PRECEDING' | 'FOLLOWING' )
+                | 'CURRENT' 'ROW'
+                ;
+
+
+    alias
+      : 'AS'? name ;
+
+
 insert
     : 'INSERT' ( 'LOW_PRIORITY' | 'DELAYED' | 'HIGH_PRIORITY' )?
       'IGNORE'?
@@ -255,7 +361,7 @@ ddl
     | 'CREATE' definer? 'TRIGGER' notExists? qname ( 'BEFORE' | 'AFTER' ) ( 'INSERT' | 'UPDATE' | 'DELETE' ) 'ON' qname 'FOR' 'EACH' 'ROW' ( ( 'FOLLOWS' | 'PRECEDES' ) qname )? compoundStatement
     | 'DROP' 'TRIGGER' exists? qname
 
-    | 'CREATE' 'USER' notExists? userAuthID ( ',' userAuthID )*
+    | 'CREATE' 'USER' notExists? createAuthOption ( ',' createAuthOption )*
       ( 'DEFAULT' 'ROLE' roleList )?
       require?
       resourceWith?
@@ -448,111 +554,6 @@ ddl
 
     | beginWork
     ;
-
-with
-    : 'WITH' 'RECURSIVE'? cte ( ',' cte )* ;
-
-cte
-    : name columns? 'AS' '(' select ')' ;
-
-select
-    : with?
-      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
-      orderBy? limit? into? locking* into?
-    ;
-
-    into
-        : 'INTO'
-          ( 'OUTFILE' string charsetName? fieldHandling? lineHandling?
-          | 'DUMPFILE' string
-          | qname ( ',' qname )*
-          )
-        ;
-
-    selectCore
-        : 'SELECT' modifier* item ( ',' item )* into?
-          ( 'FROM' tables )? where? groupBy? having?
-          ( 'WINDOW' window ( ',' window )* )?
-          ( 'QUALIFY' term )?
-        | values
-        | '(' select ')'
-        | 'TABLE' qname
-        ;
-
-        modifier
-    : 'ALL'
-    | 'DISTINCT'
-    | 'DISTINCTROW'
-    | 'HIGH_PRIORITY'
-    | 'STRAIGHT_JOIN'
-    | 'SQL_SMALL_RESULT'
-    | 'SQL_BIG_RESULT'
-    | 'SQL_BUFFER_RESULT'
-    | 'SQL_CALC_FOUND_ROWS'
-    | 'SQL_NO_CACHE'
-    ;
-
-        item
-            : ( qname '.' )? '*'  # ItemAll
-            | qname alias?  # ItemColumn
-            | term alias?  # ItemTerm
-            ;
-
-        tables
-            : tables ',' tables
-            | tables ( ( 'INNER' | 'CROSS' )? 'JOIN' | 'STRAIGHT_JOIN' ) tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )?
-            | tables ( 'LEFT' | 'RIGHT' ) 'OUTER'? 'JOIN' tables ( 'ON' term | 'USING' '(' name ( ',' name )* ')' )
-            | tables ( 'NATURAL' ( 'INNER' | ( 'LEFT' | 'RIGHT' ) 'OUTER'? )? 'JOIN' ) tables
-            | qname partition? tableAlias? indexHint* ( 'TABLESAMPLE' ( 'SYSTEM' | 'BERNOULLI' ) '(' literal ')' )?
-            | 'LATERAL'? '(' select ')' tableAlias? columns?
-            | values tableAlias?
-            | 'JSON_TABLE' '(' term ',' string jsonColumns ')' tableAlias?
-            | qname '(' term ( ',' term )* ')' tableAlias?
-            | '{' 'OJ' tables '}'
-            | '(' tables ')'
-            ;
-
-            tableAlias
-                    : 'AS'? name ;
-
-        where
-            : 'WHERE' term ;
-
-        groupBy
-            : 'GROUP' 'BY' orderTerm ( ',' orderTerm )* ( 'WITH' 'ROLLUP' )?
-            | 'GROUP' 'BY' ( 'ROLLUP' | 'CUBE' ) terms
-            ;
-
-        orderBy
-            : 'ORDER' 'BY' orderTerm ( ',' orderTerm )* ;
-
-        orderTerm
-            : term direction_? ;
-
-        having
-            : 'HAVING' term ;
-
-        window
-            : name 'AS' windowDef ;
-
-            windowDef
-                : '(' name? ( 'PARTITION' 'BY' term ( ',' term )* )? orderBy?
-                    ( ( 'RANGE' | 'ROWS' | 'GROUPS' )
-                      ( 'BETWEEN' frameBounds 'AND' )?
-                      frameBounds
-                      ( 'EXCLUDE' ( 'CURRENT' 'ROW' | 'GROUP' | 'TIES' | 'NO' 'OTHERS' ) )?
-                    )?
-                  ')'
-                ;
-
-            frameBounds
-                :  term  ( 'PRECEDING' | 'FOLLOWING' )
-                | 'CURRENT' 'ROW'
-                ;
-
-
-    alias
-      : 'AS'? name ;
 
 
 comment
@@ -1631,10 +1632,11 @@ fieldHandling
 lineHandling
     : 'LINES' ( ( 'STARTING' | 'TERMINATED' ) 'BY' string )+ ;
 
-userAuthID
+createAuthOption
     : user ( identified ( 'AND' identified ( 'AND' identified )? )? )? ;
 
 identified
+    // TODO missing initial auth option clause https://dev.mysql.com/doc/refman/9.3/en/create-user.html
     : 'IDENTIFIED' 'WITH' qname ( 'AS' qname )?
     | 'IDENTIFIED' ( 'WITH' qname )? ( 'BY' ( qname | 'RANDOM' 'PASSWORD' ))
     ;

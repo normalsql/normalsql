@@ -140,7 +140,8 @@ select
                 : 'XMLTABLE' '('
                   ( 'XMLNAMESPACES' '(' xmlNamespace ( ',' xmlNamespace )* ')' ',' )?
                    xmlPassings
-                  'COLUMNS' xmlColumn ( ',' xmlColumn )* ')'
+                  'COLUMNS' xmlColumn ( ',' xmlColumn )*
+                  ')'
                 ;
 
             xmlNamespace
