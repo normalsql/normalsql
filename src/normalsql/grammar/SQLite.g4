@@ -77,7 +77,7 @@ boolean notBETWEEN( ParserRuleContext ctx )
 }
 
 statements
-  : ( dml | ddl | explain )? ( ';' ( dml | ddl | explain )? )* EOF ;
+  : ( ( dml | ddl | explain )? ';' )* EOF;
 
 dml
     : select
@@ -225,7 +225,6 @@ ddl
 
 explain
     : 'EXPLAIN' ( 'QUERY' 'PLAN' )? ( dml | ddl ) ;
-
 
 
 alter

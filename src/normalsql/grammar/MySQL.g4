@@ -165,7 +165,7 @@ select
 
     into
         : 'INTO'
-          ( 'OUTFILE' string charsetName? fieldHandling? lineHandling?
+          ( 'OUTFILE' string namedCharset? fieldHandling? lineHandling?
           | 'DUMPFILE' string
           | qname ( ',' qname )*
           )
@@ -182,17 +182,17 @@ select
         ;
 
         modifier
-    : 'ALL'
-    | 'DISTINCT'
-    | 'DISTINCTROW'
-    | 'HIGH_PRIORITY'
-    | 'STRAIGHT_JOIN'
-    | 'SQL_SMALL_RESULT'
-    | 'SQL_BIG_RESULT'
-    | 'SQL_BUFFER_RESULT'
-    | 'SQL_CALC_FOUND_ROWS'
-    | 'SQL_NO_CACHE'
-    ;
+            : 'ALL'
+            | 'DISTINCT'
+            | 'DISTINCTROW'
+            | 'HIGH_PRIORITY'
+            | 'STRAIGHT_JOIN'
+            | 'SQL_SMALL_RESULT'
+            | 'SQL_BIG_RESULT'
+            | 'SQL_BUFFER_RESULT'
+            | 'SQL_CALC_FOUND_ROWS'
+            | 'SQL_NO_CACHE'
+            ;
 
         item
             : ( qname '.' )? '*'  # ItemAll
@@ -215,7 +215,7 @@ select
             ;
 
             tableAlias
-                    : 'AS'? name ;
+                : 'AS'? name ;
 
         where
             : 'WHERE' term ;
@@ -304,8 +304,6 @@ delete
 
     wild : qname ( '.' '*' )? ;
 
-
-
 ddl
     : 'CREATE' database_ notExists? name databaseOption*
     | 'ALTER' database_ qname databaseOption+
@@ -314,14 +312,14 @@ ddl
     | 'CREATE' definer? 'EVENT' notExists? qname 'ON' 'SCHEDULE' schedule ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? 'DO' compoundStatement
     | 'ALTER' definer? 'EVENT' qname ( 'ON' 'SCHEDULE' schedule )? ( 'ON' 'COMPLETION' 'NOT'? 'PRESERVE' )? ( 'RENAME' 'TO' qname )? ( 'ENABLE' | 'DISABLE' ( 'ON' 'REPLICA' )? )? comment? ( 'DO' compoundStatement )?
     | 'DROP' 'EVENT' exists? qname
+    | 'CREATE' 'AGGREGATE'? 'FUNCTION' notExists? qname 'RETURNS' ( 'STRING' | integer_ | 'REAL' | decimal_ ) 'SONAME' string
 
-    | 'CREATE' definer? 'FUNCTION' notExists? qname '(' ( functionParameter ( ',' functionParameter )* )? ')' 'RETURNS' dataType collate? routineCreateOption* storedRoutineBody
-    | 'CREATE' 'AGGREGATE'? 'FUNCTION' notExists? qname 'RETURNS' ( 'STRING' | int_ | 'REAL' | dec_ ) 'SONAME' string
-    | 'ALTER' 'FUNCTION' qname routineCreateOption*
+    | 'CREATE' definer? 'FUNCTION' notExists? qname '(' ( functionParameter ( ',' functionParameter )* )? ')' 'RETURNS' dataType collate? characteristic* storedRoutineBody
+    | 'ALTER' 'FUNCTION' qname characteristic*
     | 'DROP' 'FUNCTION' exists? qname
 
-    | 'CREATE' definer? 'PROCEDURE' notExists? qname '(' ( procedureParameter ( ',' procedureParameter )* )? ')' routineCreateOption* storedRoutineBody
-    | 'ALTER' 'PROCEDURE' qname routineCreateOption*
+    | 'CREATE' definer? 'PROCEDURE' notExists? qname '(' ( procedureParameter ( ',' procedureParameter )* )? ')' characteristic* storedRoutineBody
+    | 'ALTER' 'PROCEDURE' qname characteristic*
     | 'DROP' 'PROCEDURE' exists? qname
 
     | 'CREATE' ( 'UNIQUE' | 'FULLTEXT' | 'SPATIAL' )? 'INDEX' qname indexType? 'ON' qname '(' keyPart ( ',' keyPart )* ')' indexOption* commonIndexOption*
@@ -398,18 +396,11 @@ ddl
 
     | 'CREATE' orReplace_? 'SPATIAL' 'REFERENCE' 'SYSTEM' notExists? DECIMAL srsAttribute*
     | 'DROP' 'SPATIAL' 'REFERENCE' 'SYSTEM' exists? DECIMAL
-
-
     | 'CALL' qname ( '(' ( term ( ',' term )* )? ')' )?
-//    | delete
     | 'DO' item ( ',' item )*
     | 'HANDLER' qname 'OPEN' alias?
     | 'HANDLER' qname ( 'CLOSE' | 'READ' handlerReadOrScan where? limit? )
-//    | insert
     | loadData
-//    | replace
-//    | select
-//    | update
     | 'COMMIT' 'WORK'? ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )?
     | 'SAVEPOINT' qname
     | 'ROLLBACK' 'WORK'? ( 'TO' 'SAVEPOINT'? name | ( 'AND' 'NO'? 'CHAIN' )? ( 'NO'? 'RELEASE' )? )
@@ -452,7 +443,7 @@ ddl
     | 'INSTALL' 'COMPONENT' string ( ',' string )* ( 'SET' setter ( ',' setter )* )?
 
     | 'SET' setter ( ',' setter )*
-    | 'SET' 'NAMES' ( equal term | qname collate? | 'DEFAULT' )
+    | 'SET' 'NAMES' ( equal term | qname collate? | 'DEFAULT' | 'BINARY' )
     | 'SET' ( 'GLOBAL' | 'SESSION' )? 'TRANSACTION' transactionCharacteristics ( ',' transactionCharacteristics )*
     | 'SET' 'PASSWORD' ( 'FOR' user )? ( equal string | 'TO' 'RANDOM' ) replaceString? retainCurrentPassword?
     | 'SET' charset_ qname
@@ -477,7 +468,7 @@ ddl
 
     | 'SHOW' 'CREATE' 'USER' user
 
-    | 'SHOW' 'ENGINE' qname ( 'LOGS' | 'MUTEX' | 'STATUS' )
+    | 'SHOW' 'ENGINE' ( qname | 'ALL' ) ( 'LOGS' | 'MUTEX' | 'STATUS' )
     | 'SHOW' 'STORAGE'? 'ENGINES'
 
     | 'SHOW' charset_ like?
@@ -525,7 +516,8 @@ ddl
     | 'STOP' 'REPLICA' replicaThreadOptions? channel?
 
     | 'BINLOG' string
-    | 'CACHE' 'INDEX' keyCacheListOrParts 'IN' qname
+    | 'CACHE' 'INDEX' tableIndexList ( ',' tableIndexList )* 'IN' ( name | 'DEFAULT' )
+    | 'CACHE' 'INDEX' qname 'PARTITION' '(' partitionList ')' cacheKeyList? 'IN' ( name | 'DEFAULT' )
     | 'FLUSH' noLogging? ( flushTables | flushOption ( ',' flushOption )* )
     | 'KILL' ( 'CONNECTION' | 'QUERY' )? term
     | 'LOAD' 'INDEX' 'INTO' 'CACHE' preloadKeys ( ',' preloadKeys )*
@@ -559,15 +551,12 @@ ddl
 comment
     : 'COMMENT' string ;
 
-//attribute
-//    : 'ATTRIBUTE' string ;
-
 database_
     : 'DATABASE' | 'SCHEMA' ;
 
 commonIndexOption
-    : 'ALGORITHM' '='? name
-    | 'LOCK' '='? name
+    : 'ALGORITHM' '='? ( name | 'DEFAULT' )
+    | 'LOCK' '='? ( name | 'DEFAULT' )
     ;
 
 replaceString
@@ -603,7 +592,7 @@ logfileDropOption
 place
     : 'AFTER' name | 'FIRST' ;
 
-allOrPartitionNameList
+partitionList
     : 'ALL'
     | name ( ',' name )*
     ;
@@ -612,8 +601,8 @@ viewCheckOption
     : 'WITH' ( 'CASCADED' | 'LOCAL' )? 'CHECK' 'OPTION' ;
 
 databaseOption
-    : 'DEFAULT'? charset_ '='? name
-    | 'DEFAULT'? 'COLLATE' '='? name
+    : 'DEFAULT'? charset_ '='? nameOr
+    | 'DEFAULT'? 'COLLATE' '='? nameOr
     | 'DEFAULT'? 'ENCRYPTION' '='? string
     | 'READ' 'ONLY' '='? decimalDefault
     ;
@@ -623,14 +612,14 @@ storedRoutineBody
     | 'AS' string
     ;
 
-routineCreateOption
+characteristic
     : comment
-    | 'LANGUAGE' name
+    | 'LANGUAGE' ( name | 'SQL' )
+    // Only used for CREATE
     | 'NOT'? 'DETERMINISTIC'
-    | 'CONTAINS' 'SQL'
-    | 'NO' 'SQL'
-    | 'READS' 'SQL' 'DATA'
-    | 'MODIFIES' 'SQL' 'DATA'
+    | ( 'CONTAINS' | 'NO' ) 'SQL'
+    | ( 'READS'
+    | 'MODIFIES' ) 'SQL' 'DATA'
     | security
     | 'USING' '(' qname ( ',' qname )*')'
     ;
@@ -712,7 +701,7 @@ loadData
       ( 'IN' 'PRIMARY' 'KEY' 'ORDER' )?
       ( 'REPLACE' | 'IGNORE' )?
       'INTO' 'TABLE' qname partition?
-      charsetName?
+      namedCharset?
 
       ( 'ROWS' 'IDENTIFIED' 'BY' string )?
 
@@ -759,8 +748,8 @@ jsonResponse
     : ( 'ERROR' | 'NULL' | 'DEFAULT' string ) 'ON' ( 'EMPTY' | 'ERROR' ) ;
 
 indexHint
-    : 'USE' indexKey indexHintScope? '(' ( name ( ',' name )* )? ')'
-    | ( 'IGNORE' | 'FORCE' ) indexKey indexHintScope? '(' ( name ( ',' name )* ) ')'
+    : 'USE' indexKey indexHintScope? '(' ( indexName ( ',' indexName )* )? ')'
+    | ( 'IGNORE' | 'FORCE' ) indexKey indexHintScope? '(' ( indexName ( ',' indexName )* ) ')'
     ;
 
 indexKey
@@ -768,6 +757,9 @@ indexKey
 
 indexHintScope
     : 'FOR' ( 'JOIN' | 'ORDER' 'BY' | 'GROUP' 'BY' ) ;
+
+indexName
+    : name | 'PRIMARY' ;
 
 beginWork
     : 'BEGIN' 'WORK'? ;
@@ -798,7 +790,7 @@ sourceDefinition
     | 'SOURCE_SSL_CAPATH' '=' string
     | 'SOURCE_TLS_VERSION' '=' string
     | 'SOURCE_SSL_CERT' '=' string
-    | 'SOURCE_TLS_CIPHERSUITES' '=' name
+    | 'SOURCE_TLS_CIPHERSUITES' '=' ( name | 'NULL' )
     | 'SOURCE_SSL_CIPHER' '=' string
     | 'SOURCE_SSL_KEY' '=' string
     | 'SOURCE_SSL_VERIFY_SERVER_CERT' '=' DECIMAL
@@ -914,11 +906,6 @@ grantStatement
     | 'GRANT' roleOrPrivilegesList 'TO' user ( ',' user )* ( 'WITH' 'ADMIN' 'OPTION' )?
     ;
 
-//grantTargetList
-//    : createUser ( ',' createuser )*
-//    | user ( ',' user )*
-//    ;
-
 grantTargetList
     :  user ( ',' user )* ;
 
@@ -1027,16 +1014,14 @@ profileDef
     | 'ALL'
     ;
 
-keyCacheListOrParts
-    : assignToKeycache ( ',' assignToKeycache )*
-    | qname 'PARTITION' '(' allOrPartitionNameList ')' cacheKeyList?
-    ;
-
-assignToKeycache
+tableIndexList
     : qname cacheKeyList? ;
 
 cacheKeyList
-    : indexKey '(' ( name ( ',' name )* )? ')' ;
+    : indexKey '(' ( namePrimary ( ',' namePrimary )* )? ')' ;
+
+namePrimary
+    : name | 'PRIMARY' ;
 
 flushOption
     : ( 'HOSTS' | 'PRIVILEGES' | 'STATUS' | 'USER_RESOURCES' )
@@ -1056,7 +1041,7 @@ table_
     : 'TABLE' | 'TABLES' ;
 
 preloadKeys
-    : qname ( 'PARTITION' '(' allOrPartitionNameList ')' )? cacheKeyList? ( 'IGNORE' 'LEAVES' )? ;
+    : qname ( 'PARTITION' '(' partitionList ')' )? cacheKeyList? ( 'IGNORE' 'LEAVES' )? ;
 
 resourceGroupVcpuList
     : 'VCPU' equal? range ( ','? range )* ;
@@ -1071,8 +1056,7 @@ enable_
     : 'ENABLE' | 'DISABLE' ;
 
 term
-    : 'ROW'? '(' ( term ( ',' term )* )? ')'
-    | qname
+    : qname
     | literal
     | term ( '->' | '->>' ) string
     | term 'AT' 'LOCAL'
@@ -1080,9 +1064,7 @@ term
     | 'CAST' '(' term 'AS' castType 'ARRAY'? ')'
     | 'CAST' '(' term 'AT' 'TIME' 'ZONE' 'INTERVAL'? string 'AS' 'DATETIME' ( '(' DECIMAL ')' )? ')'
     | 'CONVERT' '(' term ',' castType ')'
-    | 'CONVERT' '(' term ',' dataType ')'
-    | 'CONVERT' '(' term 'USING' name ')'
-
+    | 'CONVERT' '(' term 'USING' nameOr ')'
     | term 'COLLATE' name
     | '!' term
     | ( '+' | '-' | '~' ) term
@@ -1101,7 +1083,8 @@ term
     | 'MATCH' ( qname ( ',' qname )* | '(' qname ( ',' qname )* ')' ) 'AGAINST' '(' term fulltextOptions? ')'
     | 'DEFAULT' '(' qname ')'
     | term 'IS' 'NOT'? ( 'TRUE' | 'FALSE' | 'UNKNOWN' | null )
-    | term 'NOT'? 'LIKE' term ( 'ESCAPE' term )?
+    | term 'NOT'? 'LIKE' term // ( 'ESCAPE' term )?
+    | term 'ESCAPE' term
     | term 'NOT'? ( 'REGEXP' | 'RLIKE' ) term
     | term 'NOT'? 'IN' ( '(' select ')' | terms )
     | term 'MEMBER' 'OF'? '(' term ')'
@@ -1115,8 +1098,13 @@ term
     | term ( 'AND' | '&&' ) term
     | term 'XOR' term
     | term ( 'OR' | '||' ) term
+    | 'ROW'? '(' ( term ( ',' term )* )? ')'
+    | values
     | qname ':=' term
     ;
+
+nameOr
+    : name | 'BINARY' | 'DEFAULT' ;
 
 interval
     : 'INTERVAL' term timeUnitToo ;
@@ -1145,7 +1133,18 @@ function
     : ID '(' ( udfExpr ( ',' udfExpr )* )? ')'
     | qname '(' ( term ( ',' term )* )? ')' over?
 
-    | 'CHAR' '(' term ( ',' term )* ( 'USING' name )? ')'
+    | 'IF' '(' term ',' term ',' term ')'
+    | 'REPLACE' '(' term ',' term ',' term ')'
+    | 'INSERT' '(' term ',' term ',' term ',' term ')'
+    | 'INTERVAL' '(' term ',' term ( ',' term )* ')'
+    | 'LEFT' '(' term ',' term ')'
+    | 'RIGHT' '(' term ',' term ')'
+    | 'MOD' '(' term ',' term ')'
+    | 'USER' '(' ')'
+    | 'DATABASE' '(' ')'
+    | 'SCHEMA' '(' ')'
+
+    | 'CHAR' '(' term ( ',' term )* ( 'USING' nameOr )? ')'
     | 'CURRENT_USER' ( '(' ')' )?
     | 'JSON_VALUE' '(' term ',' string ( 'RETURNING' castType )? ( jsonResponse jsonResponse? )? ')'
     | 'TRIM' '(' ( term ( 'FROM' term )? | 'LEADING' term? 'FROM' term | 'TRAILING' term? 'FROM' term | 'BOTH' term? 'FROM' term ) ')'
@@ -1173,46 +1172,39 @@ function
 udfExpr
     : term alias? ;
 
-int_
+integer_
     : 'INT' | 'INTEGER' ;
 
-dec_
+decimal_
     : 'DEC' | 'DECIMAL' ;
 
 castType
     : 'BINARY' ( '(' DECIMAL ')' )?
-    | 'CHAR' ( '(' DECIMAL ')' )? ( charset_ name )? 'BINARY'?
-    | ( 'NCHAR' | 'NATIONAL' 'CHAR' ) ( '(' DECIMAL ')' )?
-    | ( 'SIGNED' | 'UNSIGNED' )? int_?
+    | 'CHAR' ( '(' DECIMAL ')' )? ( charset_ name )?
+    | 'CHAR' ( '(' DECIMAL ')' )? charset_? ( 'BINARY' | 'ASCII' | 'UNICODE' )+
     | 'DATE'
-    | 'YEAR'
-    | 'TIME' ( '(' DECIMAL ')' )?
     | 'DATETIME' ( '(' DECIMAL ')' )?
-    | dec_ floatOptions?
-    | 'JSON'
-    | 'REAL'
+    | decimal_ floatOptions?
     | 'DOUBLE' 'PRECISION'?
-
     | 'FLOAT' floatOptions?
-    | 'POINT'
-    | 'LINESTRING'
-    | 'POLYGON'
-    | 'MULTIPOINT'
-    | 'MULTILINESTRING'
-    | 'MULTIPOLYGON'
-    | 'GEOMETRYCOLLECTION'
-    | 'GEOMCOLLECTION'
+    | 'JSON'
+    | ( 'NCHAR' | 'NATIONAL' 'CHAR' ) ( '(' DECIMAL ')' )?
+    | 'REAL'
+    | ( 'SIGNED' | 'UNSIGNED' )? integer_?
+    | spatialType
+    | 'TIME' ( '(' DECIMAL ')' )?
+    | 'YEAR'
     ;
 
 dataType
-    : ( int_ | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'BIGINT' ) typeLength? fieldOptions*
+    : ( integer_ | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'BIGINT' ) typeLength? fieldOptions*
     | ( 'REAL' | 'DOUBLE' 'PRECISION'? ) typePrecision? fieldOptions*
-    | ( 'FLOAT' | dec_ | 'NUMERIC' | 'FIXED' ) floatOptions? fieldOptions*
+    | ( 'FLOAT' | decimal_ | 'NUMERIC' | 'FIXED' ) floatOptions? fieldOptions*
     | 'BIT' typeLength?
     | 'BOOL'
     | 'BOOLEAN'
-    | ( char_ 'VARYING'?
-      | 'NATIONAL' char_ 'VARYING'?
+    | ( character_ 'VARYING'?
+      | 'NATIONAL' character_ 'VARYING'?
       | 'NATIONAL'? 'VARCHAR'
       | 'NVARCHAR'
       | 'NCHAR' ( 'VARCHAR' | 'VARYING' )?
@@ -1231,15 +1223,7 @@ dataType
     | 'TINYBLOB'
     | 'BLOB' typeLength?
 
-    | 'GEOMETRY'
-    | 'GEOMETRYCOLLECTION'
-    | 'GEOMCOLLECTION'
-    | 'POINT'
-    | 'MULTIPOINT'
-    | 'LINESTRING'
-    | 'MULTILINESTRING'
-    | 'POLYGON'
-    | 'MULTIPOLYGON'
+    | spatialType
 
     | 'MEDIUMBLOB'
     | 'LONGBLOB'
@@ -1266,13 +1250,25 @@ dataType
       ) fieldOptions*
     ;
 
-charsetName
-    : charset_ name ;
+spatialType
+    : 'POINT'
+    | 'LINESTRING'
+    | 'POLYGON'
+    | 'MULTIPOINT'
+    | 'MULTILINESTRING'
+    | 'MULTIPOLYGON'
+    | 'GEOMETRY'
+    | 'GEOMETRYCOLLECTION'
+    | 'GEOMCOLLECTION'
+    ;
+
+namedCharset
+    : charset_ nameOr ;
 
 charset_
-    : ( char_ 'SET' | 'CHARSET' ) ;
+    : ( character_ 'SET' | 'CHARSET' ) ;
 
-char_
+character_
     : 'CHAR' | 'CHARACTER' ;
 
 timeUnitToo
@@ -1372,7 +1368,7 @@ conditionInformationItem
     : qname '=' ( signalName | 'RETURNED_SQLSTATE' ) ;
 
 signalItem
-    : signalName '=' ( qname | DECIMAL ) ;
+    : signalName '=' ( qname | 'NULL' | DECIMAL ) ;
 
 signalName
     : 'CLASS_ORIGIN'
@@ -1451,8 +1447,8 @@ fieldOptions
 
 characterType
     : 'BYTE'
-    | 'BINARY' ( 'ASCII' | charsetName | 'UNICODE' )?
-    | 'BINARY'? ( 'ASCII' | charsetName | 'UNICODE' )
+    | 'BINARY' ( 'ASCII' | namedCharset | 'UNICODE' )?
+    | 'BINARY'? ( 'ASCII' | namedCharset | 'UNICODE' )
     ;
 
 tableCreateOption
@@ -1460,12 +1456,12 @@ tableCreateOption
     | 'AUTO_INCREMENT' '='? DECIMAL
     | 'AVG_ROW_LENGTH' '='? DECIMAL
     | 'CHECKSUM' '='? DECIMAL
-    | 'COLLATE' '='? name
+    | 'COLLATE' '='? nameOr
     | 'COMMENT' '='? string
     | 'COMPRESSION' '='? string
     | 'CONNECTION' '='? string
     | 'DATA' 'DIRECTORY' '='? string
-    | 'DEFAULT'? charset_ '='? name
+    | 'DEFAULT'? charset_ '='? nameOr
     | 'DELAY_KEY_WRITE' '='? DECIMAL
     | 'ENCRYPTION' '='? string
     | 'ENGINE' '='? name
@@ -1541,7 +1537,7 @@ tableAlterOption
     | 'RENAME' 'COLUMN' name 'TO' name
     | 'RENAME' ( 'TO' | 'AS' )? qname
     | 'RENAME' indexKey qname 'TO' name
-    | 'CONVERT' 'TO' charsetName collate?
+    | 'CONVERT' 'TO' namedCharset collate?
     | 'FORCE'
     | orderBy
     | tableCreateOption
@@ -1551,17 +1547,17 @@ tableAlterOption
     | 'IMPORT' 'TABLESPACE'
     | 'ADD' 'PARTITION' ( noLogging? ( '(' partitionDef ( ',' partitionDef )* ')' | 'PARTITIONS' DECIMAL ) )?
     | 'DROP' 'PARTITION' name ( ',' name )*
-    | 'REBUILD' 'PARTITION' noLogging? allOrPartitionNameList
-    | 'OPTIMIZE' 'PARTITION' noLogging? allOrPartitionNameList noLogging?
-    | 'ANALYZE' 'PARTITION' noLogging? allOrPartitionNameList
-    | 'CHECK' 'PARTITION' allOrPartitionNameList checkOption*
-    | 'REPAIR' 'PARTITION' noLogging? allOrPartitionNameList repairType*
+    | 'REBUILD' 'PARTITION' noLogging? partitionList
+    | 'OPTIMIZE' 'PARTITION' noLogging? partitionList noLogging?
+    | 'ANALYZE' 'PARTITION' noLogging? partitionList
+    | 'CHECK' 'PARTITION' partitionList checkOption*
+    | 'REPAIR' 'PARTITION' noLogging? partitionList repairType*
     | 'COALESCE' 'PARTITION' noLogging? DECIMAL
-    | 'TRUNCATE' 'PARTITION' allOrPartitionNameList
+    | 'TRUNCATE' 'PARTITION' partitionList
     | 'REORGANIZE' 'PARTITION' noLogging? ( name ( ',' name )* 'INTO' '(' partitionDef ( ',' partitionDef )* ')' )?
     | 'EXCHANGE' 'PARTITION' name 'WITH' 'TABLE' qname validation_?
-    | 'DISCARD' 'PARTITION' allOrPartitionNameList 'TABLESPACE'
-    | 'IMPORT' 'PARTITION' allOrPartitionNameList 'TABLESPACE'
+    | 'DISCARD' 'PARTITION' partitionList 'TABLESPACE'
+    | 'IMPORT' 'PARTITION' partitionList 'TABLESPACE'
     | 'SECONDARY_LOAD'
     | 'SECONDARY_UNLOAD'
     ;
@@ -1592,7 +1588,7 @@ hash
 partitionDef
     : 'PARTITION' name
         ( 'VALUES'
-            ( 'LESS' 'THAN' ( terms | 'MAXVALUE' )
+            ( 'LESS' 'THAN' term
             | 'IN' terms
             )
         )?
@@ -1619,10 +1615,11 @@ functionParameter
     : name dataType collate? ;
 
 collate
-    : 'COLLATE' name ;
+    : 'COLLATE' nameOr ;
 
+// TODO allow any ID or keyword
 setter
-    : scope? qname equal? term ;
+    : scope? ( qname | charset_ ) equal? ( term | 'ALL' | 'BINARY' | 'ROW' ) ;
 
 fieldHandling
     : ( 'FIELDS' | 'COLUMNS' )
@@ -1680,7 +1677,9 @@ columns
     : '(' name ( ',' name )* ')' ;
 
 qname
-    : ( '.'? name | LOCAL | GLOBAL ) ( '.' name ( '.' name )? )? ;
+    : ( '.'? name | LOCAL | GLOBAL | 'DEFAULT' )
+      // TODO allow any ID or keyword
+      ( '.' name ( '.' name )? )? ;
 
 literal
     : ID
@@ -1692,6 +1691,12 @@ literal
     | SIZE
     | datetime
     | null
+    | 'TRUE'
+    | 'FALSE'
+    | 'ON'
+    | 'OFF'
+    | 'DEFAULT'
+    | 'MAXVALUE'
     | PARAM
     // TODO is this needed? mooted by rule qname?
     | LOCAL
@@ -1729,6 +1734,7 @@ name
     | string
     // TODO remove this after lexer rule CHARSET is fixed
     | CHARSET
+//    | 'RANK'
     ;
 
 byteSize
@@ -1745,7 +1751,7 @@ scope
     | 'SESSION'
     ;
 
-// TODO comment out reserved words
+// Comment out reserved words
 keyword
     : 'ACCOUNT'
     | 'ACTION'
@@ -1757,15 +1763,15 @@ keyword
     | 'AGAINST'
     | 'AGGREGATE'
     | 'ALGORITHM'
-    | 'ALL'
-    | 'ALTER'
+//    | 'ALL'
+//    | 'ALTER'
     | 'ALWAYS'
-    | 'ANALYZE'
-    | 'AND'
+//    | 'ANALYZE'
+//    | 'AND'
     | 'ANY'
     | 'ARRAY'
-    | 'AS'
-    | 'ASC'
+//    | 'AS'
+//    | 'ASC'
     | 'ASCII'
     | 'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS'
     | 'AT'
@@ -1777,43 +1783,43 @@ keyword
     | 'AVG'
     | 'AVG_ROW_LENGTH'
     | 'BACKUP'
-    | 'BEFORE'
+//    | 'BEFORE'
     | 'BEGIN'
     | 'BERNOULLI'
-    | 'BETWEEN'
-    | 'BIGINT'
-    | 'BINARY'
+//    | 'BETWEEN'
+//    | 'BIGINT'
+//    | 'BINARY'
     | 'BINLOG'
     | 'BIT'
     | 'BIT_AND'
     | 'BIT_OR'
     | 'BIT_XOR'
-    | 'BLOB'
+//    | 'BLOB'
     | 'BLOCK'
     | 'BOOL'
     | 'BOOLEAN'
-    | 'BOTH'
+//    | 'BOTH'
     | 'BTREE'
     | 'BUCKETS'
     | 'BULK'
-    | 'BY'
+//    | 'BY'
     | 'BYTE'
     | 'CACHE'
-    | 'CALL'
-    | 'CASCADE'
+//    | 'CALL'
+//    | 'CASCADE'
     | 'CASCADED'
-    | 'CASE'
+//    | 'CASE'
     | 'CAST'
     | 'CATALOG_NAME'
     | 'CHAIN'
     | 'CHALLENGE_RESPONSE'
-    | 'CHANGE'
+//    | 'CHANGE'
     | 'CHANGED'
     | 'CHANNEL'
-    | 'CHAR'
-    | 'CHARACTER'
+//    | 'CHAR'
+//    | 'CHARACTER'
     | 'CHARSET'
-    | 'CHECK'
+//    | 'CHECK'
     | 'CHECKSUM'
     | 'CIPHER'
     | 'CLASS_ORIGIN'
@@ -1823,9 +1829,9 @@ keyword
     | 'CLUSTERING'
     | 'COALESCE'
     | 'CODE'
-    | 'COLLATE'
+//    | 'COLLATE'
     | 'COLLATION'
-    | 'COLUMN'
+//    | 'COLUMN'
     | 'COLUMN_FORMAT'
     | 'COLUMN_NAME'
     | 'COLUMNS'
@@ -1838,78 +1844,78 @@ keyword
     | 'COMPRESSED'
     | 'COMPRESSION'
     | 'CONCURRENT'
-    | 'CONDITION'
+//    | 'CONDITION'
     | 'CONNECTION'
     | 'CONSISTENT'
-    | 'CONSTRAINT'
+//    | 'CONSTRAINT'
     | 'CONSTRAINT_CATALOG'
     | 'CONSTRAINT_NAME'
     | 'CONSTRAINT_SCHEMA'
     | 'CONTAINS'
     | 'CONTEXT'
-    | 'CONTINUE'
-    | 'CONVERT'
+//    | 'CONTINUE'
+//    | 'CONVERT'
     | 'COUNT'
     | 'CPU'
-    | 'CREATE'
-    | 'CROSS'
-    | 'CUBE'
-    | 'CUME_DIST'
+//    | 'CREATE'
+//    | 'CROSS'
+//    | 'CUBE'
+//    | 'CUME_DIST'
     | 'CURDATE'
     | 'CURRENT'
-    | 'CURRENT_TIMESTAMP'
-    | 'CURRENT_USER'
-    | 'CURSOR'
+//    | 'CURRENT_TIMESTAMP'
+//    | 'CURRENT_USER'
+//    | 'CURSOR'
     | 'CURSOR_NAME'
     | 'CURTIME'
     | 'DATA'
-    | 'DATABASE'
-    | 'DATABASES'
+//    | 'DATABASE'
+//    | 'DATABASES'
     | 'DATAFILE'
     | 'DATE'
     | 'DATE_ADD'
     | 'DATE_SUB'
     | 'DATETIME'
     | 'DAY'
-    | 'DAY_HOUR'
-    | 'DAY_MICROSECOND'
-    | 'DAY_MINUTE'
-    | 'DAY_SECOND'
+//    | 'DAY_HOUR'
+//    | 'DAY_MICROSECOND'
+//    | 'DAY_MINUTE'
+//    | 'DAY_SECOND'
     | 'DEALLOCATE'
-    | 'DEC'
-    | 'DECIMAL'
-    | 'DECLARE'
-    | 'DEFAULT'
+//    | 'DEC'
+//    | 'DECIMAL'
+//    | 'DECLARE'
+//    | 'DEFAULT'
     | 'DEFAULT_AUTH'
     | 'DEFINER'
     | 'DEFINITION'
     | 'DELAY_KEY_WRITE'
-    | 'DELAYED'
-    | 'DELETE'
-    | 'DENSE_RANK'
-    | 'DESC'
-    | 'DESCRIBE'
+//    | 'DELAYED'
+//    | 'DELETE'
+//    | 'DENSE_RANK'
+//    | 'DESC'
+//    | 'DESCRIBE'
     | 'DESCRIPTION'
-    | 'DETERMINISTIC'
+//    | 'DETERMINISTIC'
     | 'DIAGNOSTICS'
     | 'DIRECTORY'
     | 'DISABLE'
     | 'DISCARD'
     | 'DISK'
-    | 'DISTINCT'
-    | 'DISTINCTROW'
-    | 'DIV'
+//    | 'DISTINCT'
+//    | 'DISTINCTROW'
+//    | 'DIV'
     | 'DO'
-    | 'DOUBLE'
-    | 'DROP'
-    | 'DUAL'
+//    | 'DOUBLE'
+//    | 'DROP'
+//    | 'DUAL'
     | 'DUMPFILE'
     | 'DUPLICATE'
     | 'DYNAMIC'
-    | 'EACH'
-    | 'ELSE'
-    | 'ELSEIF'
-    | 'EMPTY'
+//    | 'EACH'
+//    | 'ELSE'
+//    | 'ELSEIF'
+//    | 'EMPTY'
     | 'ENABLE'
     | 'ENCLOSED'
     | 'ENCRYPTION'
@@ -1923,169 +1929,169 @@ keyword
     | 'ERROR'
     | 'ERRORS'
     | 'ESCAPE'
-    | 'ESCAPED'
+//    | 'ESCAPED'
     | 'EVENT'
     | 'EVENTS'
     | 'EVERY'
-    | 'EXCEPT'
+//    | 'EXCEPT'
     | 'EXCHANGE'
     | 'EXCLUDE'
     | 'EXECUTE'
-    | 'EXISTS'
-    | 'EXIT'
+//    | 'EXISTS'
+//    | 'EXIT'
     | 'EXPANSION'
     | 'EXPIRE'
-    | 'EXPLAIN'
+//    | 'EXPLAIN'
     | 'EXPORT'
     | 'EXTENDED'
     | 'EXTENT_SIZE'
     | 'EXTRACT'
     | 'FACTOR'
     | 'FAILED_LOGIN_ATTEMPTS'
-    | 'FALSE'
+//    | 'FALSE'
     | 'FAST'
     | 'FAULTS'
-    | 'FETCH'
+//    | 'FETCH'
     | 'FIELDS'
     | 'FILE'
     | 'FILE_BLOCK_SIZE'
     | 'FILTER'
     | 'FINISH'
     | 'FIRST'
-    | 'FIRST_VALUE'
+//    | 'FIRST_VALUE'
     | 'FIXED'
-    | 'FLOAT'
-    | 'FLOAT4'
-    | 'FLOAT8'
+//    | 'FLOAT'
+//    | 'FLOAT4'
+//    | 'FLOAT8'
     | 'FLUSH'
     | 'FOLLOWING'
     | 'FOLLOWS'
-    | 'FOR'
-    | 'FORCE'
-    | 'FOREIGN'
+//    | 'FOR'
+//    | 'FORCE'
+//    | 'FOREIGN'
     | 'FORMAT'
     | 'FOUND'
-    | 'FROM'
+//    | 'FROM'
     | 'FULL'
-    | 'FULLTEXT'
-    | 'FUNCTION'
+//    | 'FULLTEXT'
+//    | 'FUNCTION'
     | 'GENERAL'
     | 'GENERATE'
-    | 'GENERATED'
+//    | 'GENERATED'
     | 'GEOMCOLLECTION'
     | 'GEOMETRY'
     | 'GEOMETRYCOLLECTION'
-    | 'GET'
+//    | 'GET'
     | 'GET_FORMAT'
     | 'GET_SOURCE_PUBLIC_KEY'
     | 'GLOBAL'
-    | 'GRANT'
+//    | 'GRANT'
     | 'GRANTS'
-    | 'GROUP'
+//    | 'GROUP'
     | 'GROUP_CONCAT'
     | 'GROUP_REPLICATION'
-    | 'GROUPING'
-    | 'GROUPS'
+//    | 'GROUPING'
+//    | 'GROUPS'
     | 'GTID_ONLY'
     | 'GTIDS'
     | 'HANDLER'
     | 'HASH'
-    | 'HAVING'
+//    | 'HAVING'
     | 'HELP'
-    | 'HIGH_PRIORITY'
+//    | 'HIGH_PRIORITY'
     | 'HISTOGRAM'
     | 'HISTORY'
     | 'HOST'
     | 'HOSTS'
     | 'HOUR'
-    | 'HOUR_MICROSECOND'
-    | 'HOUR_MINUTE'
-    | 'HOUR_SECOND'
+//    | 'HOUR_MICROSECOND'
+//    | 'HOUR_MINUTE'
+//    | 'HOUR_SECOND'
     | 'IDENTIFIED'
-    | 'IF'
-    | 'IGNORE'
+//    | 'IF'
+//    | 'IGNORE'
     | 'IGNORE_SERVER_IDS'
     | 'IMPORT'
-    | 'IN'
+//    | 'IN'
     | 'INACTIVE'
-    | 'INDEX'
+//    | 'INDEX'
     | 'INDEXES'
-    | 'INFILE'
+//    | 'INFILE'
     | 'INITIAL'
     | 'INITIAL_SIZE'
     | 'INITIATE'
-    | 'INNER'
+//    | 'INNER'
     | 'INNODB'
-    | 'INOUT'
-    | 'INSERT'
+//    | 'INOUT'
+//    | 'INSERT'
     | 'INSERT_METHOD'
     | 'INSTALL'
     | 'INSTANCE'
-    | 'INT'
-    | 'INT1'
-    | 'INT2'
-    | 'INT3'
-    | 'INT4'
-    | 'INT8'
-    | 'INTEGER'
-    | 'INTERSECT'
-    | 'INTERVAL'
-    | 'INTO'
+//    | 'INT'
+//    | 'INT1'
+//    | 'INT2'
+//    | 'INT3'
+//    | 'INT4'
+//    | 'INT8'
+//    | 'INTEGER'
+//    | 'INTERSECT'
+//    | 'INTERVAL'
+//    | 'INTO'
     | 'INVISIBLE'
     | 'INVOKER'
     | 'IO'
     | 'IPC'
-    | 'IS'
+//    | 'IS'
     | 'ISOLATION'
     | 'ISSUER'
-    | 'ITERATE'
-    | 'JOIN'
+//    | 'ITERATE'
+//    | 'JOIN'
     | 'JSON'
     | 'JSON_ARRAYAGG'
     | 'JSON_OBJECTAGG'
-    | 'JSON_TABLE'
+//    | 'JSON_TABLE'
     | 'JSON_VALUE'
-    | 'KEY'
+//    | 'KEY'
     | 'KEY_BLOCK_SIZE'
     | 'KEYRING'
-    | 'KEYS'
-    | 'KILL'
-    | 'LAG'
+//    | 'KEYS'
+//    | 'KILL'
+//    | 'LAG'
     | 'LANGUAGE'
     | 'LAST'
-    | 'LAST_VALUE'
-    | 'LATERAL'
-    | 'LEAD'
-    | 'LEADING'
-    | 'LEAVE'
+//    | 'LAST_VALUE'
+//    | 'LATERAL'
+//    | 'LEAD'
+//    | 'LEADING'
+//    | 'LEAVE'
     | 'LEAVES'
-    | 'LEFT'
+//    | 'LEFT'
     | 'LESS'
     | 'LEVEL'
     | 'LIBRARY'
-    | 'LIKE'
-    | 'LIMIT'
-    | 'LINEAR'
-    | 'LINES'
+//    | 'LIKE'
+//    | 'LIMIT'
+//    | 'LINEAR'
+//    | 'LINES'
     | 'LINESTRING'
     | 'LIST'
-    | 'LOAD'
+//    | 'LOAD'
     | 'LOCAL'
-    | 'LOCALTIME'
-    | 'LOCALTIMESTAMP'
-    | 'LOCK'
+//    | 'LOCALTIME'
+//    | 'LOCALTIMESTAMP'
+//    | 'LOCK'
     | 'LOCKED'
     | 'LOG'
     | 'LOGFILE'
     | 'LOGS'
     | 'LONG'
-    | 'LONGBLOB'
-    | 'LONGTEXT'
-    | 'LOOP'
-    | 'LOW_PRIORITY'
-    | 'MANUAL'
+//    | 'LONGBLOB'
+//    | 'LONGTEXT'
+//    | 'LOOP'
+//    | 'LOW_PRIORITY'
+//    | 'MANUAL'
     | 'MASTER'
-    | 'MATCH'
+//    | 'MATCH'
     | 'MAX'
     | 'MAX_CONNECTIONS_PER_HOUR'
     | 'MAX_QUERIES_PER_HOUR'
@@ -2093,26 +2099,26 @@ keyword
     | 'MAX_SIZE'
     | 'MAX_UPDATES_PER_HOUR'
     | 'MAX_USER_CONNECTIONS'
-    | 'MAXVALUE'
+//    | 'MAXVALUE'
     | 'MEDIUM'
-    | 'MEDIUMBLOB'
-    | 'MEDIUMINT'
-    | 'MEDIUMTEXT'
+//    | 'MEDIUMBLOB'
+//    | 'MEDIUMINT'
+//    | 'MEDIUMTEXT'
     | 'MEMBER'
     | 'MEMORY'
     | 'MERGE'
     | 'MESSAGE_TEXT'
     | 'MICROSECOND'
-    | 'MIDDLEINT'
+//    | 'MIDDLEINT'
     | 'MIGRATE'
     | 'MIN'
     | 'MIN_ROWS'
     | 'MINUTE'
-    | 'MINUTE_MICROSECOND'
-    | 'MINUTE_SECOND'
-    | 'MOD'
+//    | 'MINUTE_MICROSECOND'
+//    | 'MINUTE_SECOND'
+//    | 'MOD'
     | 'MODE'
-    | 'MODIFIES'
+//    | 'MODIFIES'
     | 'MODIFY'
     | 'MONTH'
     | 'MULTILINESTRING'
@@ -2125,7 +2131,7 @@ keyword
     | 'NAME'
     | 'NAMES'
     | 'NATIONAL'
-    | 'NATURAL'
+//    | 'NATURAL'
     | 'NCHAR'
     | 'NESTED'
     | 'NETWORK_NAMESPACE'
@@ -2133,59 +2139,59 @@ keyword
     | 'NEXT'
     | 'NO'
     | 'NO_WAIT'
-    | 'NO_WRITE_TO_BINLOG'
+//    | 'NO_WRITE_TO_BINLOG'
     | 'NODEGROUP'
     | 'NONE'
-    | 'NOT'
+//    | 'NOT'
     | 'NOW'
     | 'NOWAIT'
-    | 'NTH_VALUE'
-    | 'NTILE'
-    | 'NULL'
+//    | 'NTH_VALUE'
+//    | 'NTILE'
+//    | 'NULL'
     | 'NULLS'
     | 'NUMBER'
-    | 'NUMERIC'
+//    | 'NUMERIC'
     | 'NVARCHAR'
-    | 'OF'
+//    | 'OF'
     | 'OFF'
     | 'OFFLINE'
     | 'OFFSET'
     | 'OJ'
     | 'OLD'
-    | 'ON'
+//    | 'ON'
     | 'ONE'
     | 'ONLINE'
     | 'ONLY'
     | 'OPEN'
-    | 'OPTIMIZE'
-    | 'OPTIMIZER_COSTS'
-    | 'OPTION'
+//    | 'OPTIMIZE'
+//    | 'OPTIMIZER_COSTS'
+//    | 'OPTION'
     | 'OPTIONAL'
-    | 'OPTIONALLY'
+//    | 'OPTIONALLY'
     | 'OPTIONS'
-    | 'OR'
-    | 'ORDER'
+//    | 'OR'
+//    | 'ORDER'
     | 'ORDINALITY'
     | 'ORGANIZATION'
     | 'OTHERS'
-    | 'OUT'
-    | 'OUTER'
-    | 'OUTFILE'
-    | 'OVER'
+//    | 'OUT'
+//    | 'OUTER'
+//    | 'OUTFILE'
+//    | 'OVER'
     | 'OWNER'
     | 'PACK_KEYS'
     | 'PAGE'
-    | 'PARALLEL'
+//    | 'PARALLEL'
     | 'PARSE_TREE'
     | 'PARSER'
     | 'PARTIAL'
-    | 'PARTITION'
+//    | 'PARTITION'
     | 'PARTITIONING'
     | 'PARTITIONS'
     | 'PASSWORD'
     | 'PASSWORD_LOCK_TIME'
     | 'PATH'
-    | 'PERCENT_RANK'
+//    | 'PERCENT_RANK'
     | 'PERSIST'
     | 'PERSIST_ONLY'
     | 'PHASE'
@@ -2198,55 +2204,55 @@ keyword
     | 'POSITION'
     | 'PRECEDES'
     | 'PRECEDING'
-    | 'PRECISION'
+//    | 'PRECISION'
     | 'PREPARE'
     | 'PRESERVE'
     | 'PREV'
-    | 'PRIMARY'
+//    | 'PRIMARY'
     | 'PRIVILEGE_CHECKS_USER'
     | 'PRIVILEGES'
-    | 'PROCEDURE'
+//    | 'PROCEDURE'
     | 'PROCESS'
     | 'PROCESSLIST'
     | 'PROFILE'
     | 'PROFILES'
     | 'PROXY'
-    | 'PURGE'
-    | 'QUALIFY'
+//    | 'PURGE'
+//    | 'QUALIFY'
     | 'QUARTER'
     | 'QUERY'
     | 'QUICK'
     | 'RANDOM'
-    | 'RANGE'
+//    | 'RANGE'
     | 'RANK'
-    | 'READ'
-    | 'READS'
-    | 'REAL'
+//    | 'READ'
+//    | 'READS'
+//    | 'REAL'
     | 'REBUILD'
     | 'RECOVER'
-    | 'RECURSIVE'
+//    | 'RECURSIVE'
     | 'REDO_BUFFER_SIZE'
     | 'REDO_LOG'
     | 'REDUNDANT'
     | 'REFERENCE'
-    | 'REFERENCES'
-    | 'REGEXP'
+//    | 'REFERENCES'
+//    | 'REGEXP'
     | 'REGISTRATION'
     | 'RELAY'
     | 'RELAY_LOG_FILE'
     | 'RELAY_LOG_POS'
     | 'RELAY_THREAD'
     | 'RELAYLOG'
-    | 'RELEASE'
+//    | 'RELEASE'
     | 'RELOAD'
     | 'REMOTE'
     | 'REMOVE'
-    | 'RENAME'
+//    | 'RENAME'
     | 'REORGANIZE'
     | 'REPAIR'
     | 'REPEAT'
     | 'REPEATABLE'
-    | 'REPLACE'
+//    | 'REPLACE'
     | 'REPLICA'
     | 'REPLICAS'
     | 'REPLICATE_DO_DB'
@@ -2257,66 +2263,66 @@ keyword
     | 'REPLICATE_WILD_DO_TABLE'
     | 'REPLICATE_WILD_IGNORE_TABLE'
     | 'REPLICATION'
-    | 'REQUIRE'
+//    | 'REQUIRE'
     | 'REQUIRE_ROW_FORMAT'
     | 'REQUIRE_TABLE_PRIMARY_KEY_CHECK'
     | 'RESET'
-    | 'RESIGNAL'
+//    | 'RESIGNAL'
     | 'RESOURCE'
     | 'RESPECT'
     | 'RESTART'
-    | 'RESTRICT'
+//    | 'RESTRICT'
     | 'RESUME'
     | 'RETAIN'
-    | 'RETURN'
+//    | 'RETURN'
     | 'RETURNED_SQLSTATE'
-    | 'RETURNING'
+//    | 'RETURNING'
     | 'RETURNS'
     | 'REUSE'
     | 'REVERSE'
-    | 'REVOKE'
-    | 'RIGHT'
-    | 'RLIKE'
+//    | 'REVOKE'
+//    | 'RIGHT'
+//    | 'RLIKE'
     | 'ROLE'
     | 'ROLLBACK'
     | 'ROLLUP'
     | 'ROTATE'
     | 'ROUTINE'
-    | 'ROW'
+//    | 'ROW'
     | 'ROW_COUNT'
     | 'ROW_FORMAT'
-    | 'ROW_NUMBER'
-    | 'ROWS'
+//    | 'ROW_NUMBER'
+//    | 'ROWS'
     | 'RTREE'
     | 'S3'
     | 'SAVEPOINT'
     | 'SCHEDULE'
-    | 'SCHEMA'
+//    | 'SCHEMA'
     | 'SCHEMA_NAME'
     | 'SECOND'
-    | 'SECOND_MICROSECOND'
+//    | 'SECOND_MICROSECOND'
     | 'SECONDARY'
     | 'SECONDARY_ENGINE'
     | 'SECONDARY_ENGINE_ATTRIBUTE'
     | 'SECONDARY_LOAD'
     | 'SECONDARY_UNLOAD'
     | 'SECURITY'
-    | 'SELECT'
-    | 'SEPARATOR'
+//    | 'SELECT'
+//    | 'SEPARATOR'
     | 'SERIAL'
     | 'SERIALIZABLE'
     | 'SERVER'
     | 'SESSION'
-    | 'SET'
+//    | 'SET'
     | 'SHARE'
-    | 'SHOW'
+//    | 'SHOW'
     | 'SHUTDOWN'
-    | 'SIGNAL'
+//    | 'SIGNAL'
     | 'SIGNED'
     | 'SIMPLE'
     | 'SKIP'
     | 'SLOW'
-    | 'SMALLINT'
+//    | 'SMALLINT'
     | 'SNAPSHOT'
     | 'SOCKET'
     | 'SOME'
@@ -2350,26 +2356,26 @@ keyword
     | 'SOURCE_TLS_VERSION'
     | 'SOURCE_USER'
     | 'SOURCE_ZSTD_COMPRESSION_LEVEL'
-    | 'SPATIAL'
-    | 'SQL'
+//    | 'SPATIAL'
+//    | 'SQL'
     | 'SQL_AFTER_GTIDS'
     | 'SQL_AFTER_MTS_GAPS'
     | 'SQL_BEFORE_GTIDS'
-    | 'SQL_BIG_RESULT'
+//    | 'SQL_BIG_RESULT'
     | 'SQL_BUFFER_RESULT'
-    | 'SQL_CALC_FOUND_ROWS'
+//    | 'SQL_CALC_FOUND_ROWS'
     | 'SQL_NO_CACHE'
-    | 'SQL_SMALL_RESULT'
+//    | 'SQL_SMALL_RESULT'
     | 'SQL_THREAD'
-    | 'SQLEXCEPTION'
-    | 'SQLSTATE'
-    | 'SQLWARNING'
+//    | 'SQLEXCEPTION'
+//    | 'SQLSTATE'
+//    | 'SQLWARNING'
     | 'SRID'
-    | 'SSL'
+//    | 'SSL'
     | 'ST_COLLECT'
     | 'STACKED'
     | 'START'
-    | 'STARTING'
+//    | 'STARTING'
     | 'STARTS'
     | 'STATS_AUTO_RECALC'
     | 'STATS_PERSISTENT'
@@ -2379,8 +2385,8 @@ keyword
     | 'STDDEV_SAMP'
     | 'STOP'
     | 'STORAGE'
-    | 'STORED'
-    | 'STRAIGHT_JOIN'
+//    | 'STORED'
+//    | 'STRAIGHT_JOIN'
     | 'STREAM'
     | 'STRING'
     | 'SUBCLASS_ORIGIN'
@@ -2395,104 +2401,104 @@ keyword
     | 'SWAPS'
     | 'SWITCHES'
     | 'SYSDATE'
-    | 'SYSTEM'
-    | 'TABLE'
+//    | 'SYSTEM'
+//    | 'TABLE'
     | 'TABLE_CHECKSUM'
     | 'TABLE_NAME'
     | 'TABLE_TYPE'
     | 'TABLES'
-    | 'TABLESAMPLE'
+//    | 'TABLESAMPLE'
     | 'TABLESPACE'
     | 'TEMPORARY'
     | 'TEMPTABLE'
-    | 'TERMINATED'
+//    | 'TERMINATED'
     | 'TEXT'
     | 'THAN'
-    | 'THEN'
+//    | 'THEN'
     | 'THREAD_PRIORITY'
     | 'TIES'
     | 'TIME'
     | 'TIMESTAMP'
     | 'TIMESTAMPADD'
     | 'TIMESTAMPDIFF'
-    | 'TINYBLOB'
-    | 'TINYINT'
-    | 'TINYTEXT'
+//    | 'TINYBLOB'
+//    | 'TINYINT'
+//    | 'TINYTEXT'
     | 'TLS'
-    | 'TO'
+//    | 'TO'
     | 'TRADITIONAL'
-    | 'TRAILING'
+//    | 'TRAILING'
     | 'TRANSACTION'
     | 'TRANSACTIONAL'
     | 'TREE'
-    | 'TRIGGER'
+//    | 'TRIGGER'
     | 'TRIGGERS'
     | 'TRIM'
-    | 'TRUE'
+//    | 'TRUE'
     | 'TRUNCATE'
     | 'TYPE'
     | 'UNBOUNDED'
     | 'UNCOMMITTED'
     | 'UNDEFINED'
-    | 'UNDO'
+//    | 'UNDO'
     | 'UNDO_BUFFER_SIZE'
     | 'UNDOFILE'
     | 'UNICODE'
     | 'UNINSTALL'
-    | 'UNION'
-    | 'UNIQUE'
+//    | 'UNION'
+//    | 'UNIQUE'
     | 'UNKNOWN'
-    | 'UNLOCK'
+//    | 'UNLOCK'
     | 'UNREGISTER'
-    | 'UNSIGNED'
+//    | 'UNSIGNED'
     | 'UNTIL'
-    | 'UPDATE'
+//    | 'UPDATE'
     | 'UPGRADE'
     | 'URL'
-    | 'USAGE'
-    | 'USE'
+//    | 'USAGE'
+//    | 'USE'
     | 'USE_FRM'
     | 'USER'
     | 'USER_RESOURCES'
-    | 'USING'
-    | 'UTC_DATE'
-    | 'UTC_TIME'
-    | 'UTC_TIMESTAMP'
+//    | 'USING'
+//    | 'UTC_DATE'
+//    | 'UTC_TIME'
+//    | 'UTC_TIMESTAMP'
     | 'VALIDATION'
     | 'VALUE'
-    | 'VALUES'
+//    | 'VALUES'
     | 'VAR_SAMP'
-    | 'VARBINARY'
-    | 'VARCHAR'
+//    | 'VARBINARY'
+//    | 'VARCHAR'
     | 'VARIABLES'
     | 'VARIANCE'
-    | 'VARYING'
+//    | 'VARYING'
     | 'VCPU'
     | 'VECTOR'
     | 'VIEW'
-    | 'VIRTUAL'
+//    | 'VIRTUAL'
     | 'VISIBLE'
     | 'WAIT'
     | 'WARNINGS'
     | 'WEEK'
     | 'WEIGHT_STRING'
-    | 'WHEN'
-    | 'WHERE'
-    | 'WHILE'
-    | 'WINDOW'
-    | 'WITH'
+//    | 'WHEN'
+//    | 'WHERE'
+//    | 'WHILE'
+//    | 'WINDOW'
+//    | 'WITH'
     | 'WITHOUT'
     | 'WORK'
     | 'WRAPPER'
-    | 'WRITE'
+//    | 'WRITE'
     | 'X509'
     | 'XA'
     | 'XID'
     | 'XML'
-    | 'XOR'
+//    | 'XOR'
     | 'YEAR'
-    | 'YEAR_MONTH'
-    | 'ZEROFILL'
+//    | 'YEAR_MONTH'
+//    | 'ZEROFILL'
     | 'ZONE'
     ;
 
