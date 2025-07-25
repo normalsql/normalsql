@@ -326,17 +326,17 @@ ddl
 
     | 'DROP' onlineOption? 'INDEX' qname 'ON' qname commonIndexOption*
 
-    | 'ALTER' 'LOGFILE' 'GROUP' qname 'ADD' 'UNDOFILE' string ( logfileCreateOptions ( ','? logfileCreateOptions )* )?
     | 'CREATE' 'LOGFILE' 'GROUP' qname 'ADD' 'UNDOFILE' string ( logfileAlterOption ( ','? logfileAlterOption )* )?
+    | 'ALTER' 'LOGFILE' 'GROUP' qname 'ADD' 'UNDOFILE' string ( logfileCreateOptions ( ','? logfileCreateOptions )* )?
     | 'DROP' 'LOGFILE' 'GROUP' qname ( logfileDropOption ( ','? logfileDropOption )* )?
 
     | 'CREATE' 'RESOURCE' 'GROUP' qname 'TYPE' equal? ( 'USER' | 'SYSTEM' ) resourceGroupVcpuList? resourceGroupPriority? enable_?
     | 'ALTER' 'RESOURCE' 'GROUP' qname resourceGroupVcpuList? resourceGroupPriority? enable_? 'FORCE'?
-    | 'SET' 'RESOURCE' 'GROUP' qname ( 'FOR' INTEGER ( ','? INTEGER )* )?
     | 'DROP' 'RESOURCE' 'GROUP' qname 'FORCE'?
+    | 'SET' 'RESOURCE' 'GROUP' qname ( 'FOR' INTEGER ( ','? INTEGER )* )?
 
-    | 'CREATE' 'ROLE' notExists? roleList
-    | 'DROP' 'ROLE' exists? roleList
+    | 'CREATE' 'ROLE' notExists? user ( ',' user )*
+    | 'DROP' 'ROLE' exists? user ( ',' user )*
 
     | 'CREATE' 'SERVER' qname 'FOREIGN' 'DATA' 'WRAPPER' qname 'OPTIONS' '(' serverOption ( ',' serverOption )* ')'
     | 'ALTER' 'SERVER' qname 'OPTIONS' '(' serverOption ( ',' serverOption )* ')'
@@ -346,11 +346,10 @@ ddl
     | 'CREATE' 'TEMPORARY'? 'TABLE' notExists? qname
       ( '(' ( createDef  | tableConstraintDef ) ( ',' ( createDef  | tableConstraintDef ) )* ')' )?
       ( tableCreateOption ( ','? tableCreateOption )* )? partitionBy? ( ( 'REPLACE' | 'IGNORE' )? 'AS'? select )?
-
     | 'CREATE' 'TEMPORARY'? 'TABLE' notExists? qname ( 'LIKE' qname | '(' 'LIKE' qname ')' )
     | 'ALTER' onlineOption? 'TABLE' qname ( tableAlterOption ( ','? tableAlterOption )* )?
-    | 'RENAME' table_ qname 'TO' qname ( ',' qname 'TO' qname )*
     | 'DROP' 'TEMPORARY'? table_ exists? qname ( ',' qname )* ( 'RESTRICT' | 'CASCADE' )?
+    | 'RENAME' table_ qname 'TO' qname ( ',' qname 'TO' qname )*
 
     | 'CREATE' 'UNDO'? 'TABLESPACE' qname ( tablespaceOption ( ','? tablespaceOption )* )?
     | 'ALTER' 'UNDO'? 'TABLESPACE' qname tablespaceOption ( ','? tablespaceOption )*
@@ -360,7 +359,7 @@ ddl
     | 'DROP' 'TRIGGER' exists? qname
 
     | 'CREATE' 'USER' notExists? createAuthOption ( ',' createAuthOption )*
-      ( 'DEFAULT' 'ROLE' roleList )?
+      ( 'DEFAULT' roles )?
       require?
       resourceWith?
       passwordOption*
@@ -373,10 +372,8 @@ ddl
       ( comment | 'ATTRIBUTE' string )*
 
     | 'ALTER' 'USER' exists? 'USER' '(' ')' alterAuthOption
-
     | 'ALTER' 'USER' exists? ( 'USER' '(' ')' | user ) ( INTEGER 'FACTOR' )?
-
-    | 'ALTER' 'USER' exists? user 'DEFAULT' 'ROLE' ( 'ALL' | 'NONE' | roleList )
+    | 'ALTER' 'USER' exists? user 'DEFAULT' roles
 
     | 'DROP' 'USER' exists? user ( ',' user )*
     | 'RENAME' 'USER' user 'TO' user ( ',' user 'TO' user )*
@@ -901,25 +898,13 @@ grantStatement
     : 'GRANT' ( roleOrPrivilegesList | 'ALL' 'PRIVILEGES'? ) 'ON' aclType? grantIdentifier
       'TO' grantTargetList ( 'WITH' 'GRANT' 'OPTION' )?
       // require? grantOptions?
-      ( 'AS' user withRoles? )?
+      ( 'AS' user ( 'WITH' roles )? )?
     | 'GRANT' 'PROXY' 'ON' user 'TO' grantTargetList
     | 'GRANT' roleOrPrivilegesList 'TO' user ( ',' user )* ( 'WITH' 'ADMIN' 'OPTION' )?
     ;
 
 grantTargetList
     :  user ( ',' user )* ;
-
-exceptRoleList
-    : 'EXCEPT' roleList ;
-
-withRoles
-    : 'WITH' 'ROLE'
-      ( roleList
-      | 'ALL' exceptRoleList?
-      | 'NONE'
-      | 'DEFAULT'
-      )
-    ;
 
 revokeStatement
     : 'REVOKE' exists?
@@ -962,14 +947,18 @@ grantIdentifier
     : ( '*' | name ) ( '.' ( '*' | name ) )? ;
 
 setRoleStatement
-    : 'SET' 'ROLE' roleList
-    | 'SET' 'ROLE' ( 'NONE' | 'DEFAULT' )
-    | 'SET' 'ROLE' 'ALL' ( 'EXCEPT' roleList )?
-    | 'SET' 'DEFAULT' 'ROLE' ( roleList | 'NONE' | 'ALL' ) 'TO' roleList
+    : 'SET' roles
+    | 'SET' 'DEFAULT' roles 'TO' user ( ',' user )*
     ;
 
-roleList
-    : user ( ',' user )* ;
+roles
+    : 'ROLE'
+      ( user ( ',' user )*
+      | 'ALL' ( 'EXCEPT' user ( ',' user )* )?
+      | 'NONE'
+      | 'DEFAULT'
+      )
+    ;
 
 histogram
     : 'UPDATE' 'HISTOGRAM' 'ON' name
