@@ -159,7 +159,8 @@ cte
 
 select
     : with?
-      selectCore ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
+      selectCore
+      ( ( 'UNION' | 'EXCEPT' | 'INTERSECT' ) ( 'DISTINCT' | 'ALL' )? selectCore )*
       orderBy? limit? into? locking* into?
     ;
 
@@ -341,7 +342,6 @@ ddl
     | 'CREATE' 'SERVER' qname 'FOREIGN' 'DATA' 'WRAPPER' qname 'OPTIONS' '(' serverOption ( ',' serverOption )* ')'
     | 'ALTER' 'SERVER' qname 'OPTIONS' '(' serverOption ( ',' serverOption )* ')'
     | 'DROP' 'SERVER' exists? name
-
 
     | 'CREATE' 'TEMPORARY'? 'TABLE' notExists? qname
       ( '(' ( createDef  | tableConstraintDef ) ( ',' ( createDef  | tableConstraintDef ) )* ')' )?
