@@ -650,15 +650,15 @@ indexNameAndType
 indexType
     : ( 'USING' | 'TYPE' ) ( 'BTREE' | 'HASH' | 'RTREE' ) ;
 
-referenceDef
+references
     : 'REFERENCES' qname ( '(' name ( ',' name )* ')' )?
       ( 'MATCH' ( 'FULL' | 'PARTIAL' | 'SIMPLE' ) )?
-      ( referenceOption referenceOption? )?
+      ( onUpdateDelete onUpdateDelete? )?
     ;
 
-referenceOption
+onUpdateDelete
     : 'ON' ( 'UPDATE' | 'DELETE' )
-      ( 'RESTRICT' | 'CASCADE' | 'SET' null | 'SET' 'DEFAULT' | 'NO' 'ACTION' )
+      ( 'RESTRICT' | 'CASCADE' | 'SET' ( null | 'DEFAULT' ) | 'NO' 'ACTION' )
     ;
 
 serverOption
