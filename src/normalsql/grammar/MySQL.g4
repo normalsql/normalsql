@@ -1179,28 +1179,28 @@ decimal_
     : 'DEC' | 'DECIMAL' ;
 
 castType
-    : 'BINARY' ( '(' DECIMAL ')' )?
-    | 'CHAR' ( '(' DECIMAL ')' )? ( charset_ name )?
-    | 'CHAR' ( '(' DECIMAL ')' )? charset_? ( 'BINARY' | 'ASCII' | 'UNICODE' )+
+    : 'BINARY' fieldLength?
+    | 'CHAR' fieldLength? ( charset_ name )?
+    | 'CHAR' fieldLength? charset_? ( 'BINARY' | 'ASCII' | 'UNICODE' )+
     | 'DATE'
-    | 'DATETIME' ( '(' DECIMAL ')' )?
-    | decimal_ floatOptions?
+    | 'DATETIME' fieldLength?
+    | decimal_ floatPrecision?
+    | 'FLOAT' floatPrecision?
     | 'DOUBLE' 'PRECISION'?
-    | 'FLOAT' floatOptions?
-    | 'JSON'
-    | ( 'NCHAR' | 'NATIONAL' 'CHAR' ) ( '(' DECIMAL ')' )?
     | 'REAL'
+    | 'JSON'
+    | ( 'NCHAR' | 'NATIONAL' 'CHAR' ) fieldLength?
     | ( 'SIGNED' | 'UNSIGNED' )? integer_?
     | spatialType
-    | 'TIME' ( '(' DECIMAL ')' )?
+    | 'TIME' fieldLength?
     | 'YEAR'
     ;
 
 dataType
-    : ( integer_ | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'BIGINT' ) typeLength? fieldOptions*
-    | ( 'REAL' | 'DOUBLE' 'PRECISION'? ) typePrecision? fieldOptions*
-    | ( 'FLOAT' | decimal_ | 'NUMERIC' | 'FIXED' ) floatOptions? fieldOptions*
-    | 'BIT' typeLength?
+    : ( integer_ | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'BIGINT' ) fieldLength? fieldOptions*
+    | ( 'REAL' | 'DOUBLE' 'PRECISION'? ) floatPrecision? fieldOptions*
+    | ( 'FLOAT' | decimal_ | 'NUMERIC' | 'FIXED' ) floatPrecision? fieldOptions*
+    | 'BIT' fieldLength?
     | 'BOOL'
     | 'BOOLEAN'
     | ( character_ 'VARYING'?
@@ -1208,37 +1208,31 @@ dataType
       | 'NATIONAL'? 'VARCHAR'
       | 'NVARCHAR'
       | 'NCHAR' ( 'VARCHAR' | 'VARYING' )?
-      ) typeLength? characterType*
-
-    | 'BINARY' typeLength?
-
-    | 'VARBINARY' typeLength
-    | 'VECTOR' ( '(' DECIMAL ')' )?
-
-    | 'YEAR' typeLength? fieldOptions*
+      ) fieldLength? characterType*
+    | 'BINARY' fieldLength?
+    | 'VARBINARY' fieldLength
+    | 'VECTOR' fieldLength?
+    | 'YEAR' fieldLength?
     | 'DATE'
-    | 'TIME' ( '(' DECIMAL ')' )?
-    | 'TIMESTAMP' ( '(' DECIMAL ')' )?
-    | 'DATETIME' ( '(' DECIMAL ')' )?
+    | 'TIME' fieldLength?
+    | 'TIMESTAMP' fieldLength?
+    | 'DATETIME' fieldLength?
     | 'TINYBLOB'
-    | 'BLOB' typeLength?
-
+    | 'BLOB' fieldLength?
     | spatialType
-
     | 'MEDIUMBLOB'
     | 'LONGBLOB'
     | 'LONG' 'VARBINARY'
-    | 'LONG' ( 'CHAR' 'VARYING' | 'VARCHAR' )? characterType?
-    | 'TINYTEXT' characterType?
-    | 'TEXT' typeLength? characterType?
-    | 'MEDIUMTEXT' characterType?
-    | 'LONGTEXT' characterType?
-    | 'ENUM' '(' term ( ',' term )* ')' characterType?
-    | 'SET' '(' string ( ',' string )* ')' characterType?
-    | 'LONG' characterType?
+    | 'LONG' ( 'CHAR' 'VARYING' | 'VARCHAR' )? characterType*
+    | 'TINYTEXT' characterType*
+    | 'TEXT' fieldLength? characterType*
+    | 'MEDIUMTEXT' characterType*
+    | 'LONGTEXT' characterType*
+    | 'ENUM' '(' name ( ',' name )* ')' characterType*
+    | 'SET' '(' name ( ',' name )* ')' characterType*
+    | 'LONG'
     | 'SERIAL'
     | 'JSON'
-
     | ( 'FLOAT4'
       | 'FLOAT8'
       | 'INT1'
@@ -1269,7 +1263,7 @@ charset_
     : ( character_ 'SET' | 'CHARSET' ) ;
 
 character_
-    : 'CHAR' | 'CHARACTER' ;
+    : 'CHARACTER' | 'CHAR' ;
 
 timeUnitToo
     : timeUnit
@@ -1437,7 +1431,7 @@ now
     : ( 'NOW' | 'CURRENT_TIMESTAMP' | 'LOCALTIME' | 'LOCALTIMESTAMP' ) ( '(' DECIMAL? ')' )? ;
 
 keyPart
-    : ( name typeLength? | '(' term ')' ) direction_? ;
+    : ( name fieldLength? | '(' term ')' ) direction_? ;
 
 visibility
     : 'VISIBLE' | 'INVISIBLE' ;
@@ -1446,9 +1440,11 @@ fieldOptions
     : 'SIGNED' | 'UNSIGNED' | 'ZEROFILL' ;
 
 characterType
-    : 'BYTE'
-    | 'BINARY' ( 'ASCII' | namedCharset | 'UNICODE' )?
-    | 'BINARY'? ( 'ASCII' | namedCharset | 'UNICODE' )
+    : 'ASCII'
+    | 'BINARY'
+    | 'BYTE'
+    | namedCharset
+    | 'UNICODE'
     ;
 
 tableCreateOption
@@ -1719,14 +1715,11 @@ null
 datetime
     : ( 'DATE' | 'TIME' | 'TIMESTAMP' ) string ;
 
-floatOptions
-    : typeLength | typePrecision ;
+fieldLength
+    : '(' DECIMAL ')' ;
 
-typePrecision
-    : '(' DECIMAL ',' DECIMAL ')' ;
-
-typeLength
-    : '(' ( DECIMAL | FLOAT ) ')' ;
+floatPrecision
+    : '(' ( DECIMAL | FLOAT | DECIMAL ',' DECIMAL ) ')' ;
 
 name
     : ID
@@ -1734,7 +1727,6 @@ name
     | string
     // TODO remove this after lexer rule CHARSET is fixed
     | CHARSET
-//    | 'RANK'
     ;
 
 byteSize
