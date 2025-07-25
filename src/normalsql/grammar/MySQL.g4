@@ -344,7 +344,7 @@ ddl
     | 'DROP' 'SERVER' exists? name
 
     | 'CREATE' 'TEMPORARY'? 'TABLE' notExists? qname
-      ( '(' ( createDef  | tableConstraintDef ) ( ',' ( createDef  | tableConstraintDef ) )* ')' )?
+      ( '(' columnContraintDef ( ',' columnContraintDef )* ')' )?
       ( tableCreateOption ( ','? tableCreateOption )* )? partitionBy? ( ( 'REPLACE' | 'IGNORE' )? 'AS'? select )?
     | 'CREATE' 'TEMPORARY'? 'TABLE' notExists? qname ( 'LIKE' qname | '(' 'LIKE' qname ')' )
     | 'ALTER' onlineOption? 'TABLE' qname ( tableAlterOption ( ','? tableAlterOption )* )?
@@ -1368,7 +1368,10 @@ schedule
 constraintEnforcement
     : 'NOT'? 'ENFORCED' ;
 
-tableConstraintDef
+columnContraintDef
+    : columnDef | constraintDef ;
+
+constraintDef
     : keyIndex_ name? indexType? '(' keyPart ( ',' keyPart )* ')' indexOption*
     | ( 'FULLTEXT' | 'SPATIAL' ) keyIndex_? name? '(' keyPart ( ',' keyPart )* ')' indexOption*
     | ( 'CONSTRAINT' name? )?
@@ -1378,15 +1381,13 @@ tableConstraintDef
         )
     ;
 
-createDef
+columnDef
     : qname dataType
       ( collate? ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'VIRTUAL' | 'STORED' )? )?
       columnAttribute*
       references?
     ;
 
-// TODO refactor this and table constraint defs to better match docs
-// https://dev.mysql.com/doc/refman/9.3/en/create-table.html
 columnAttribute
     : 'NOT'? null
     | 'NOT' 'SECONDARY'
@@ -1406,10 +1407,6 @@ columnAttribute
     | 'ENGINE_ATTRIBUTE' '='? string
     | 'SECONDARY_ENGINE_ATTRIBUTE' '='? string
     | visibility
-//    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'VIRTUAL' | 'STORED' )?
-
-//    | referenceDef
-
     ;
 
 now
@@ -1502,12 +1499,12 @@ tableAlterOption
     : commonIndexOption
     | validation_
 
-    | 'ADD' 'COLUMN'?  createDef  place?
-    | 'CHANGE' 'COLUMN'? name createDef place?
-    | 'MODIFY' 'COLUMN'? createDef place?
+    | 'ADD' 'COLUMN'? columnDef place?
+    | 'CHANGE' 'COLUMN'? name columnDef place?
+    | 'MODIFY' 'COLUMN'? columnDef place?
 
-    | 'ADD' 'COLUMN'? '(' ( createDef | tableConstraintDef ) ( ',' ( createDef | tableConstraintDef ) )* ')'
-    | 'ADD' tableConstraintDef
+    | 'ADD' 'COLUMN'? '(' columnContraintDef ( ',' columnContraintDef )* ')'
+    | 'ADD' constraintDef
 
     | 'DROP' ( 'COLUMN'? name ( 'RESTRICT' | 'CASCADE' )? | 'FOREIGN' 'KEY' name | 'PRIMARY' 'KEY' | keyIndex_ qname | 'CHECK' name | 'CONSTRAINT' name )
     | enable_ 'KEYS'
