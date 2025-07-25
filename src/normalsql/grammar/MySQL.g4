@@ -520,15 +520,15 @@ ddl
     | 'LOAD' 'INDEX' 'INTO' 'CACHE' preloadKeys ( ',' preloadKeys )*
 
     | 'CREATE' 'LIBRARY' notExists? qname ( 'LANGUAGE' name | comment )+ 'AS' string
-    | 'DROP' 'LIBRARY' exists? qname
     | 'ALTER' 'LIBRARY' exists? qname comment?
+    | 'DROP' 'LIBRARY' exists? qname
 
     | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' ) qname qname ?
 
     | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' ) 'ANALYZE'?
       ( 'FORMAT' '=' ( 'TRADITIONAL' | 'JSON' | 'TREE' | string ) )?
       ( 'INTO' qname )?
-      ( ( 'FOR' database_ name )? ( select | delete | insert | replace | update )
+      ( ( 'FOR' database_ name )? dml
       | 'FOR' 'CONNECTION' INTEGER
       )
 
