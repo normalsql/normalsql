@@ -641,12 +641,6 @@ indexOption
     | 'SECONDARY_ENGINE_ATTRIBUTE' '='? string
     ;
 
-// TODO verify how this is used. there's overlap with
-indexNameAndType
-    : name indexType?
-    | name? indexType
-    ;
-
 indexType
     : ( 'USING' | 'TYPE' ) ( 'BTREE' | 'HASH' | 'RTREE' ) ;
 
@@ -751,12 +745,12 @@ jsonResponse
     : ( 'ERROR' | 'NULL' | 'DEFAULT' string ) 'ON' ( 'EMPTY' | 'ERROR' ) ;
 
 indexHint
-    : 'USE' indexKey indexHintScope? '(' ( indexName ( ',' indexName )* )? ')'
-    | ( 'IGNORE' | 'FORCE' ) indexKey indexHintScope? '(' ( indexName ( ',' indexName )* ) ')'
+    : 'USE' keyIndex_ indexHintScope? '(' ( indexName ( ',' indexName )* )? ')'
+    | ( 'IGNORE' | 'FORCE' ) keyIndex_ indexHintScope? '(' ( indexName ( ',' indexName )* ) ')'
     ;
 
-indexKey
-    : 'INDEX' | 'KEY' ;
+keyIndex_
+    : 'KEY' | 'INDEX' ;
 
 indexHintScope
     : 'FOR' ( 'JOIN' | 'ORDER' 'BY' | 'GROUP' 'BY' ) ;
@@ -1005,7 +999,7 @@ tableIndexList
     : qname cacheKeyList? ;
 
 cacheKeyList
-    : indexKey '(' ( namePrimary ( ',' namePrimary )* )? ')' ;
+    : keyIndex_ '(' ( namePrimary ( ',' namePrimary )* )? ')' ;
 
 namePrimary
     : name | 'PRIMARY' ;
@@ -1375,18 +1369,20 @@ constraintEnforcement
     : 'NOT'? 'ENFORCED' ;
 
 tableConstraintDef
-    : indexKey indexNameAndType? '(' keyPart ( ',' keyPart )* ')' indexOption*
-    | 'FULLTEXT' indexKey? name? '(' keyPart ( ',' keyPart )* ')' indexOption*
-    | 'SPATIAL' indexKey? name? '(' keyPart ( ',' keyPart )* ')' indexOption*
-    | ( 'CONSTRAINT' name?)?
-        ( ( 'CLUSTERING' 'KEY' | 'PRIMARY' 'KEY' | 'UNIQUE' indexKey? ) indexNameAndType? '(' keyPart ( ',' keyPart )* ')' indexOption*
-        | 'FOREIGN' 'KEY' name? '(' keyPart ( ',' keyPart )* ')' referenceDef
+    : keyIndex_ name? indexType? '(' keyPart ( ',' keyPart )* ')' indexOption*
+    | ( 'FULLTEXT' | 'SPATIAL' ) keyIndex_? name? '(' keyPart ( ',' keyPart )* ')' indexOption*
+    | ( 'CONSTRAINT' name? )?
+        ( ( 'CLUSTERING' 'KEY' | 'PRIMARY' 'KEY' | 'UNIQUE' keyIndex_? ) name? indexType? '(' keyPart ( ',' keyPart )* ')' indexOption*
+        | 'FOREIGN' 'KEY' name? '(' keyPart ( ',' keyPart )* ')' references
         | 'CHECK' '(' term ')' constraintEnforcement?
         )
     ;
 
 createDef
-    : qname dataType columnAttribute*
+    : qname dataType
+      ( collate? ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'VIRTUAL' | 'STORED' )? )?
+      columnAttribute*
+      references?
     ;
 
 // TODO refactor this and table constraint defs to better match docs
@@ -1401,6 +1397,7 @@ columnAttribute
     | 'PRIMARY'? 'KEY'
     | 'UNIQUE' 'KEY'?
     | comment
+    | collate
     | 'COLUMN_FORMAT' ( 'FIXED' | 'DYNAMIC' | 'DEFAULT' )
     | 'STORAGE' ( 'DISK' | 'MEMORY' | 'DEFAULT' )
     | 'SRID' INTEGER
@@ -1409,9 +1406,10 @@ columnAttribute
     | 'ENGINE_ATTRIBUTE' '='? string
     | 'SECONDARY_ENGINE_ATTRIBUTE' '='? string
     | visibility
-    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'VIRTUAL' | 'STORED' )?
-    | referenceDef
-    | collate
+//    | ( 'GENERATED' 'ALWAYS' )? 'AS' '(' term ')' ( 'VIRTUAL' | 'STORED' )?
+
+//    | referenceDef
+
     ;
 
 now
@@ -1511,7 +1509,7 @@ tableAlterOption
     | 'ADD' 'COLUMN'? '(' ( createDef | tableConstraintDef ) ( ',' ( createDef | tableConstraintDef ) )* ')'
     | 'ADD' tableConstraintDef
 
-    | 'DROP' ( 'COLUMN'? name ( 'RESTRICT' | 'CASCADE' )? | 'FOREIGN' 'KEY' name | 'PRIMARY' 'KEY' | indexKey qname | 'CHECK' name | 'CONSTRAINT' name )
+    | 'DROP' ( 'COLUMN'? name ( 'RESTRICT' | 'CASCADE' )? | 'FOREIGN' 'KEY' name | 'PRIMARY' 'KEY' | keyIndex_ qname | 'CHECK' name | 'CONSTRAINT' name )
     | enable_ 'KEYS'
     | 'ALTER' 'COLUMN'? name ( 'SET' 'DEFAULT' ( '(' term ')' | literal ) | 'DROP' 'DEFAULT' | 'SET' visibility )
     | 'ALTER' 'INDEX' qname visibility
@@ -1519,7 +1517,7 @@ tableAlterOption
     | 'ALTER' 'CONSTRAINT' name constraintEnforcement
     | 'RENAME' 'COLUMN' name 'TO' name
     | 'RENAME' ( 'TO' | 'AS' )? qname
-    | 'RENAME' indexKey qname 'TO' name
+    | 'RENAME' keyIndex_ qname 'TO' name
     | 'CONVERT' 'TO' namedCharset collate?
     | 'FORCE'
     | orderBy
