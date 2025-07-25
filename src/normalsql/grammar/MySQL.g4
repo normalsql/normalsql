@@ -332,7 +332,7 @@ ddl
 
     | 'CREATE' 'RESOURCE' 'GROUP' qname 'TYPE' equal? ( 'USER' | 'SYSTEM' ) resourceGroupVcpuList? resourceGroupPriority? enable_?
     | 'ALTER' 'RESOURCE' 'GROUP' qname resourceGroupVcpuList? resourceGroupPriority? enable_? 'FORCE'?
-    | 'SET' 'RESOURCE' 'GROUP' qname ( 'FOR' DECIMAL ( ','? DECIMAL )* )?
+    | 'SET' 'RESOURCE' 'GROUP' qname ( 'FOR' INTEGER ( ','? INTEGER )* )?
     | 'DROP' 'RESOURCE' 'GROUP' qname 'FORCE'?
 
     | 'CREATE' 'ROLE' notExists? roleList
@@ -374,7 +374,7 @@ ddl
 
     | 'ALTER' 'USER' exists? 'USER' '(' ')' alterAuthOption
 
-    | 'ALTER' 'USER' exists? ( 'USER' '(' ')' | user ) ( DECIMAL 'FACTOR' )?
+    | 'ALTER' 'USER' exists? ( 'USER' '(' ')' | user ) ( INTEGER 'FACTOR' )?
 
     | 'ALTER' 'USER' exists? user 'DEFAULT' 'ROLE' ( 'ALL' | 'NONE' | roleList )
 
@@ -394,8 +394,8 @@ ddl
         | 'RELOAD' 'KEYRING'
         )
 
-    | 'CREATE' orReplace_? 'SPATIAL' 'REFERENCE' 'SYSTEM' notExists? DECIMAL srsAttribute*
-    | 'DROP' 'SPATIAL' 'REFERENCE' 'SYSTEM' exists? DECIMAL
+    | 'CREATE' orReplace_? 'SPATIAL' 'REFERENCE' 'SYSTEM' notExists? INTEGER srsAttribute*
+    | 'DROP' 'SPATIAL' 'REFERENCE' 'SYSTEM' exists? INTEGER
     | 'CALL' qname ( '(' ( term ( ',' term )* )? ')' )?
     | 'DO' item ( ',' item )*
     | 'HANDLER' qname 'OPEN' alias?
@@ -428,7 +428,7 @@ ddl
 
     | 'CLONE' 'LOCAL' 'DATA' 'DIRECTORY' equal? string
     | 'CLONE' 'REMOTE' ( 'FOR' 'REPLICATION' )?
-    | 'CLONE' 'INSTANCE' 'FROM' user ':' DECIMAL 'IDENTIFIED' 'BY' name ( ssl | 'DATA' 'DIRECTORY' equal? string ssl? )?
+    | 'CLONE' 'INSTANCE' 'FROM' user ':' INTEGER 'IDENTIFIED' 'BY' name ( ssl | 'DATA' 'DIRECTORY' equal? string ssl? )?
 
     | grantStatement
     | revokeStatement
@@ -496,15 +496,15 @@ ddl
     | 'SHOW' 'PLUGINS'
     | 'SHOW' 'PRIVILEGES'
     | 'SHOW' 'FULL'? 'PROCESSLIST'
-    | 'SHOW' 'PROFILE' ( profileDef ( ',' profileDef )* )? ( 'FOR' 'QUERY' DECIMAL )? limit?
+    | 'SHOW' 'PROFILE' ( profileDef ( ',' profileDef )* )? ( 'FOR' 'QUERY' INTEGER )? limit?
     | 'SHOW' 'PROFILES'
-    | 'SHOW' 'RELAYLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' DECIMAL )? limit? channel?
+    | 'SHOW' 'RELAYLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' INTEGER )? limit? channel?
     | 'SHOW' 'REPLICA' 'STATUS' channel?
     | 'SHOW' 'REPLICAS'
     | 'SHOW' 'REPLICA' 'HOSTS'
 
     // TODO verify FROM & IN
-    | 'SHOW' 'BINLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' DECIMAL )? limit?
+    | 'SHOW' 'BINLOG' 'EVENTS' ( 'IN' string )? ( 'FROM' INTEGER )? limit?
     | 'SHOW' 'ERRORS' limit?
     | 'SHOW' 'WARNINGS' limit?
 
@@ -533,7 +533,7 @@ ddl
       ( 'FORMAT' '=' ( 'TRADITIONAL' | 'JSON' | 'TREE' | string ) )?
       ( 'INTO' qname )?
       ( ( 'FOR' database_ name )? ( select | delete | insert | replace | update )
-      | 'FOR' 'CONNECTION' DECIMAL
+      | 'FOR' 'CONNECTION' INTEGER
       )
 
     | 'HELP' name
@@ -567,14 +567,14 @@ startTransactionMode
 
 signalCondition
     : name
-    | 'SQLSTATE' 'VALUE'? ( name | DECIMAL )
+    | 'SQLSTATE' 'VALUE'? ( name | INTEGER )
     ;
 
 logfileAlterOption
     : logfileCreateOptions
     | 'UNDO_BUFFER_SIZE' '='? byteSize
     | 'REDO_BUFFER_SIZE' '='? byteSize
-    | 'NODEGROUP' '='? DECIMAL
+    | 'NODEGROUP' '='? INTEGER
     | 'COMMENT' '='? string
     ;
 
@@ -625,7 +625,7 @@ characteristic
     ;
 
 indexOption
-    : 'KEY_BLOCK_SIZE' '='? DECIMAL
+    : 'KEY_BLOCK_SIZE' '='? INTEGER
     | indexType
     | 'WITH' 'PARSER' name
     | comment
@@ -661,7 +661,7 @@ serverOption
     | 'PASSWORD' string
     | 'SOCKET' string
     | 'OWNER' string
-    | 'PORT' DECIMAL
+    | 'PORT' INTEGER
     ;
 
 viewAlgorithm
@@ -676,7 +676,7 @@ orReplace_
 srsAttribute
     : 'NAME' 'TEXT' string
     | 'DEFINITION' 'TEXT' string
-    | 'ORGANIZATION' string 'IDENTIFIED' 'BY' DECIMAL
+    | 'ORGANIZATION' string 'IDENTIFIED' 'BY' INTEGER
     | 'DESCRIPTION' 'TEXT' string
     ;
 
@@ -697,7 +697,7 @@ valuesAlias
 loadData
     : 'LOAD' ( 'DATA' | 'XML' ) ( 'LOW_PRIORITY' | 'CONCURRENT' )? 'FROM'?
       'LOCAL'? ( 'INFILE' | 'URL' | 'S3' ) string
-      ( 'COUNT' DECIMAL )?
+      ( 'COUNT' INTEGER )?
       ( 'IN' 'PRIMARY' 'KEY' 'ORDER' )?
       ( 'REPLACE' | 'IGNORE' )?
       'INTO' 'TABLE' qname partition?
@@ -708,7 +708,7 @@ loadData
       fieldHandling?
       lineHandling?
 
-      ( 'IGNORE' DECIMAL ( 'LINES' | 'ROWS' ) )?
+      ( 'IGNORE' INTEGER ( 'LINES' | 'ROWS' ) )?
 
       ( '(' ( qname ( ',' qname )* )? ')' )?
       ( 'SET' setter ( ',' setter )* )?
@@ -718,7 +718,7 @@ limit
     : 'LIMIT' literal ( ( ',' | 'OFFSET' ) literal )? ;
 
 limitCount
-    : 'LIMIT' DECIMAL ;
+    : 'LIMIT' INTEGER ;
 
 direction_
     : 'ASC' | 'DESC' ;
@@ -768,10 +768,10 @@ lockItem
     : qname alias? ( 'READ' 'LOCAL'? | 'WRITE' ) ;
 
 xid
-    : string ( ',' string ( ',' ( DECIMAL | string ) )? )? ;
+    : string ( ',' string ( ',' ( INTEGER | string ) )? )? ;
 
 resetOption
-    : 'BINARY' 'LOGS' 'AND' 'GTIDS' ( 'TO' DECIMAL )?
+    : 'BINARY' 'LOGS' 'AND' 'GTIDS' ( 'TO' INTEGER )?
     | 'REPLICA' 'ALL'? channel?
     ;
 
@@ -781,11 +781,11 @@ sourceDefinition
     | 'SOURCE_BIND' '=' string
     | 'SOURCE_USER' '=' string
     | 'SOURCE_PASSWORD' '=' string
-    | 'SOURCE_PORT' '=' DECIMAL
-    | 'SOURCE_CONNECT_RETRY' '=' DECIMAL
-    | 'SOURCE_RETRY_COUNT' '=' DECIMAL
-    | 'SOURCE_DELAY' '=' DECIMAL
-    | 'SOURCE_SSL' '=' DECIMAL
+    | 'SOURCE_PORT' '=' INTEGER
+    | 'SOURCE_CONNECT_RETRY' '=' INTEGER
+    | 'SOURCE_RETRY_COUNT' '=' INTEGER
+    | 'SOURCE_DELAY' '=' INTEGER
+    | 'SOURCE_SSL' '=' INTEGER
     | 'SOURCE_SSL_CA' '=' string
     | 'SOURCE_SSL_CAPATH' '=' string
     | 'SOURCE_TLS_VERSION' '=' string
@@ -793,30 +793,30 @@ sourceDefinition
     | 'SOURCE_TLS_CIPHERSUITES' '=' ( name | 'NULL' )
     | 'SOURCE_SSL_CIPHER' '=' string
     | 'SOURCE_SSL_KEY' '=' string
-    | 'SOURCE_SSL_VERIFY_SERVER_CERT' '=' DECIMAL
+    | 'SOURCE_SSL_VERIFY_SERVER_CERT' '=' INTEGER
     | 'SOURCE_SSL_CRL' '=' string
     | 'SOURCE_SSL_CRLPATH' '=' string
     | 'SOURCE_PUBLIC_KEY_PATH' '=' string
-    | 'GET_SOURCE_PUBLIC_KEY' '=' DECIMAL
+    | 'GET_SOURCE_PUBLIC_KEY' '=' INTEGER
     | 'SOURCE_HEARTBEAT_PERIOD' '=' literal
-    | 'IGNORE_SERVER_IDS' '=' '(' ( DECIMAL ( ',' DECIMAL )* )? ')'
+    | 'IGNORE_SERVER_IDS' '=' '(' ( INTEGER ( ',' INTEGER )* )? ')'
     | 'SOURCE_COMPRESSION_ALGORITHM' '=' string
-    | 'SOURCE_ZSTD_COMPRESSION_LEVEL' '=' DECIMAL
-    | 'SOURCE_AUTO_POSITION' '=' DECIMAL
+    | 'SOURCE_ZSTD_COMPRESSION_LEVEL' '=' INTEGER
+    | 'SOURCE_AUTO_POSITION' '=' INTEGER
     | 'PRIVILEGE_CHECKS_USER' '=' user
-    | 'REQUIRE_ROW_FORMAT' '=' DECIMAL
+    | 'REQUIRE_ROW_FORMAT' '=' INTEGER
     | 'REQUIRE_TABLE_PRIMARY_KEY_CHECK' '=' ( 'STREAM' | 'ON' | 'OFF' | 'GENERATE' )
-    | 'SOURCE_CONNECTION_AUTO_FAILOVER' '=' DECIMAL
+    | 'SOURCE_CONNECTION_AUTO_FAILOVER' '=' INTEGER
     | 'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS' '=' ( 'OFF' | 'LOCAL' | string )
-    | 'GTID_ONLY' '=' DECIMAL
+    | 'GTID_ONLY' '=' INTEGER
     | sourceFileDef
     ;
 
 sourceFileDef
     : 'SOURCE_LOG_FILE' '=' string
-    | 'SOURCE_LOG_POS' '=' DECIMAL
+    | 'SOURCE_LOG_POS' '=' INTEGER
     | 'RELAY_LOG_FILE' '=' string
-    | 'RELAY_LOG_POS' '=' DECIMAL
+    | 'RELAY_LOG_POS' '=' INTEGER
     ;
 
 // TODO use qname (vs name, string) for all?
@@ -875,7 +875,7 @@ resourceWith
         | 'MAX_UPDATES_PER_HOUR'
         | 'MAX_CONNECTIONS_PER_HOUR'
         | 'MAX_USER_CONNECTIONS'
-        ) DECIMAL
+        ) INTEGER
       )+ ;
 
 require
@@ -888,12 +888,12 @@ tlsOption
     ;
 
 passwordOption
-    : 'PASSWORD' 'EXPIRE' ( 'DEFAULT' | 'NEVER' | 'INTERVAL' DECIMAL 'DAY' )?
-    | 'PASSWORD' 'HISTORY' ( 'DEFAULT' | DECIMAL )
-    | 'PASSWORD' 'REUSE' 'INTERVAL' ( 'DEFAULT' | DECIMAL 'DAY' )
+    : 'PASSWORD' 'EXPIRE' ( 'DEFAULT' | 'NEVER' | 'INTERVAL' INTEGER 'DAY' )?
+    | 'PASSWORD' 'HISTORY' ( 'DEFAULT' | INTEGER )
+    | 'PASSWORD' 'REUSE' 'INTERVAL' ( 'DEFAULT' | INTEGER 'DAY' )
     | 'PASSWORD' 'REQUIRE' 'CURRENT' ( 'DEFAULT' | 'OPTIONAL' )?
-    | 'FAILED_LOGIN_ATTEMPTS' DECIMAL
-    | 'PASSWORD_LOCK_TIME' ( DECIMAL | 'UNBOUNDED' )
+    | 'FAILED_LOGIN_ATTEMPTS' INTEGER
+    | 'PASSWORD_LOCK_TIME' ( INTEGER | 'UNBOUNDED' )
     | 'ACCOUNT' ( 'LOCK' | 'UNLOCK' )
     ;
 
@@ -973,7 +973,7 @@ roleList
 
 histogram
     : 'UPDATE' 'HISTOGRAM' 'ON' name
-      ( ( ',' name )* ( 'WITH' DECIMAL 'BUCKETS' )? ( ( 'MANUAL' | 'AUTO' )? 'UPDATE' )?
+      ( ( ',' name )* ( 'WITH' INTEGER 'BUCKETS' )? ( ( 'MANUAL' | 'AUTO' )? 'UPDATE' )?
       | ( 'USING' 'DATA' string )?
       )
     | 'DROP' 'HISTOGRAM' 'ON' name ( ',' name )*
@@ -1047,10 +1047,10 @@ resourceGroupVcpuList
     : 'VCPU' equal? range ( ','? range )* ;
 
 range
-    : DECIMAL ( '-' DECIMAL )? ;
+    : INTEGER ( '-' INTEGER )? ;
 
 resourceGroupPriority
-    : 'THREAD_PRIORITY' equal? DECIMAL ;
+    : 'THREAD_PRIORITY' equal? INTEGER ;
 
 enable_
     : 'ENABLE' | 'DISABLE' ;
@@ -1062,7 +1062,7 @@ term
     | term 'AT' 'LOCAL'
     | 'BINARY' term
     | 'CAST' '(' term 'AS' castType 'ARRAY'? ')'
-    | 'CAST' '(' term 'AT' 'TIME' 'ZONE' 'INTERVAL'? string 'AS' 'DATETIME' ( '(' DECIMAL ')' )? ')'
+    | 'CAST' '(' term 'AT' 'TIME' 'ZONE' 'INTERVAL'? string 'AS' 'DATETIME' ( '(' INTEGER ')' )? ')'
     | 'CONVERT' '(' term ',' castType ')'
     | 'CONVERT' '(' term 'USING' nameOr ')'
     | term 'COLLATE' name
@@ -1111,7 +1111,7 @@ interval
 
 windowFunctionCall
     : ( 'ROW_NUMBER' | 'RANK' | 'DENSE_RANK' | 'CUME_DIST' | 'PERCENT_RANK' ) '(' ')' over
-    | 'NTILE' ( '(' DECIMAL ')' | '(' term ')' ) over
+    | 'NTILE' ( '(' INTEGER ')' | '(' term ')' ) over
     | ( 'LEAD' | 'LAG' ) '(' term ( ',' term ( ',' term )? )? ')' nullTreatment? over
     | ( 'FIRST_VALUE' | 'LAST_VALUE' ) '(' term ')' nullTreatment? over
     | 'NTH_VALUE' '(' term ',' term ')' ( 'FROM' ( 'FIRST' | 'LAST' ) )? nullTreatment? over
@@ -1152,7 +1152,7 @@ function
     | 'CURDATE' ( '(' ')' )?
     | 'UTC_DATE' ( '(' ')' )?
     | now
-    | ( 'CURTIME' | 'SYSDATE' | 'UTC_TIME' | 'UTC_TIMESTAMP' ) ( '(' DECIMAL? ')' )?
+    | ( 'CURTIME' | 'SYSDATE' | 'UTC_TIME' | 'UTC_TIMESTAMP' ) ( '(' INTEGER? ')' )?
     | ( 'DATE_ADD' | 'DATE_SUB' ) '(' term ',' interval ')'
     | ( 'TIMESTAMPADD' | 'TIMESTAMPDIFF' ) '(' timeUnit ',' term ',' term ')'
 
@@ -1161,7 +1161,7 @@ function
     | 'POSITION' '(' term 'IN' term ')'
     | 'SUBSTRING' '(' term ( ',' term ( ',' term )? | 'FROM' term ( 'FOR' term )? ) ')'
 
-    | 'WEIGHT_STRING' '(' term ( 'AS' ( 'CHAR' | 'BINARY' ) '(' DECIMAL ')' )? ')'
+    | 'WEIGHT_STRING' '(' term ( 'AS' ( 'CHAR' | 'BINARY' ) '(' INTEGER ')' )? ')'
 
     | 'COUNT' '(' ( 'ALL'? '*' | 'ALL'? term | 'DISTINCT' term ( ',' term )* ) ')' over?
     | ( 'AVG' | 'ST_COLLECT' | 'MIN' | 'MAX' | 'SUM' ) '(' 'DISTINCT'? 'ALL'? term ')' over?
@@ -1180,19 +1180,18 @@ decimal_
 
 castType
     : 'BINARY' fieldLength?
-    | 'CHAR' fieldLength? ( charset_ name )?
-    | 'CHAR' fieldLength? charset_? ( 'BINARY' | 'ASCII' | 'UNICODE' )+
-    | 'DATE'
-    | 'DATETIME' fieldLength?
-    | decimal_ floatPrecision?
-    | 'FLOAT' floatPrecision?
+    | ( decimal_ | 'FLOAT' ) floatPrecision?
     | 'DOUBLE' 'PRECISION'?
     | 'REAL'
-    | 'JSON'
+    | 'CHAR' fieldLength? ( charset_ name )?
+    | 'CHAR' fieldLength? charset_? ( 'BINARY' | 'ASCII' | 'UNICODE' )+
     | ( 'NCHAR' | 'NATIONAL' 'CHAR' ) fieldLength?
+    | 'DATE'
+    | 'DATETIME' fieldLength?
+    | 'TIME' fieldLength?
+    | 'JSON'
     | ( 'SIGNED' | 'UNSIGNED' )? integer_?
     | spatialType
-    | 'TIME' fieldLength?
     | 'YEAR'
     ;
 
@@ -1296,7 +1295,8 @@ channel
     : 'FOR' 'CHANNEL' string ;
 
 compoundStatement
-    : dml | ddl
+    : dml
+    | ddl
     | 'RETURN' term
     | 'IF' ifBody 'END' 'IF'
     | 'CASE' term? ( 'WHEN' term thenStatement )+ ( 'ELSE' ( compoundStatement ';' )+ )? 'END' 'CASE'
@@ -1343,7 +1343,7 @@ spDeclaration
     ;
 
 spCondition
-    : DECIMAL
+    : INTEGER
     | 'SQLSTATE' 'VALUE'? string
     ;
 
@@ -1362,7 +1362,7 @@ conditionInformationItem
     : qname '=' ( signalName | 'RETURNED_SQLSTATE' ) ;
 
 signalItem
-    : signalName '=' ( qname | 'NULL' | DECIMAL ) ;
+    : signalName '=' ( qname | 'NULL' | INTEGER ) ;
 
 signalName
     : 'CLASS_ORIGIN'
@@ -1416,7 +1416,7 @@ columnAttribute
     | comment
     | 'COLUMN_FORMAT' ( 'FIXED' | 'DYNAMIC' | 'DEFAULT' )
     | 'STORAGE' ( 'DISK' | 'MEMORY' | 'DEFAULT' )
-    | 'SRID' DECIMAL
+    | 'SRID' INTEGER
     | ( 'CONSTRAINT' name? )? 'CHECK' '(' term ')' ( 'NOT'? 'ENFORCED' )?
     | constraintEnforcement
     | 'ENGINE_ATTRIBUTE' '='? string
@@ -1428,7 +1428,7 @@ columnAttribute
     ;
 
 now
-    : ( 'NOW' | 'CURRENT_TIMESTAMP' | 'LOCALTIME' | 'LOCALTIMESTAMP' ) ( '(' DECIMAL? ')' )? ;
+    : ( 'NOW' | 'CURRENT_TIMESTAMP' | 'LOCALTIME' | 'LOCALTIMESTAMP' ) ( '(' INTEGER? ')' )? ;
 
 keyPart
     : ( name fieldLength? | '(' term ')' ) direction_? ;
@@ -1449,24 +1449,24 @@ characterType
 
 tableCreateOption
     : 'AUTOEXTEND_SIZE' '='? byteSize
-    | 'AUTO_INCREMENT' '='? DECIMAL
-    | 'AVG_ROW_LENGTH' '='? DECIMAL
-    | 'CHECKSUM' '='? DECIMAL
+    | 'AUTO_INCREMENT' '='? INTEGER
+    | 'AVG_ROW_LENGTH' '='? INTEGER
+    | 'CHECKSUM' '='? INTEGER
     | 'COLLATE' '='? nameOr
     | 'COMMENT' '='? string
     | 'COMPRESSION' '='? string
     | 'CONNECTION' '='? string
     | 'DATA' 'DIRECTORY' '='? string
     | 'DEFAULT'? charset_ '='? nameOr
-    | 'DELAY_KEY_WRITE' '='? DECIMAL
+    | 'DELAY_KEY_WRITE' '='? INTEGER
     | 'ENCRYPTION' '='? string
     | 'ENGINE' '='? name
     | 'ENGINE_ATTRIBUTE' '='? string
     | 'INDEX' 'DIRECTORY' '='? string
     | 'INSERT_METHOD' '='? ( 'NO' | 'FIRST' | 'LAST' )
-    | 'KEY_BLOCK_SIZE' '='? DECIMAL
-    | 'MAX_ROWS' '='? DECIMAL
-    | 'MIN_ROWS' '='? DECIMAL
+    | 'KEY_BLOCK_SIZE' '='? INTEGER
+    | 'MAX_ROWS' '='? INTEGER
+    | 'MIN_ROWS' '='? INTEGER
     | 'PACK_KEYS' '='? decimalDefault
     | 'PASSWORD' '='? string
     | 'ROW_FORMAT' '='? ( ID | 'DEFAULT' | 'DYNAMIC' | 'FIXED' | 'COMPRESSED' | 'REDUNDANT' | 'COMPACT' )
@@ -1475,26 +1475,26 @@ tableCreateOption
     | 'START' 'TRANSACTION'
     | 'STATS_AUTO_RECALC' '='? decimalDefault
     | 'STATS_PERSISTENT' '='? decimalDefault
-    | 'STATS_SAMPLE_PAGES' '='? ( FLOAT | DECIMAL | 'DEFAULT' )
+    | 'STATS_SAMPLE_PAGES' '='? ( FLOAT | INTEGER | 'DEFAULT' )
     | 'STORAGE' ( 'DISK' | 'MEMORY' )
     | 'TABLESPACE' '='? name
     | 'TABLE_TYPE' '='? name
-    | 'TRANSACTIONAL' '='? DECIMAL
+    | 'TRANSACTIONAL' '='? INTEGER
     | 'UNION' '='? '(' ( qname ( ',' qname )* )? ')'
     ;
 
 partitionOption
     : 'COMMENT' '='? string
     | 'DEFAULT'? 'ENGINE' '='? name
-    | 'NODEGROUP' '='? DECIMAL
+    | 'NODEGROUP' '='? INTEGER
     | 'TABLESPACE' '='? name
     | 'DATA' 'DIRECTORY' '='? string
     | 'INDEX' 'DIRECTORY' '='? string
-    | ( 'MAX_ROWS' | 'MIN_ROWS' ) '='? DECIMAL
+    | ( 'MAX_ROWS' | 'MIN_ROWS' ) '='? INTEGER
     ;
 
 tablespaceOption
-    : 'AUTOEXTEND_SIZE' '='? DECIMAL
+    : 'AUTOEXTEND_SIZE' '='? INTEGER
     | 'COMMENT' '='? string
     | 'ENCRYPTION' '='? string
     | 'ENGINE' '='? name
@@ -1502,7 +1502,7 @@ tablespaceOption
     | 'FILE_BLOCK_SIZE' '='? byteSize
     | 'INITIAL_SIZE' '='? byteSize
     | 'MAX_SIZE' '='? byteSize
-    | 'NODEGROUP' '='? DECIMAL
+    | 'NODEGROUP' '='? INTEGER
     | 'RENAME' 'TO' name
     | 'SET' ( 'ACTIVE' | 'INACTIVE' )
     | 'USE' 'LOGFILE' 'GROUP' name
@@ -1511,7 +1511,7 @@ tablespaceOption
     ;
 
 decimalDefault
-    : DECIMAL | 'DEFAULT' ;
+    : INTEGER | 'DEFAULT' ;
 
 tableAlterOption
     : commonIndexOption
@@ -1541,14 +1541,14 @@ tableAlterOption
     | 'REMOVE' 'PARTITIONING'
     | 'DISCARD' 'TABLESPACE'
     | 'IMPORT' 'TABLESPACE'
-    | 'ADD' 'PARTITION' ( noLogging? ( '(' partitionDef ( ',' partitionDef )* ')' | 'PARTITIONS' DECIMAL ) )?
+    | 'ADD' 'PARTITION' ( noLogging? ( '(' partitionDef ( ',' partitionDef )* ')' | 'PARTITIONS' INTEGER ) )?
     | 'DROP' 'PARTITION' name ( ',' name )*
     | 'REBUILD' 'PARTITION' noLogging? partitionList
     | 'OPTIMIZE' 'PARTITION' noLogging? partitionList noLogging?
     | 'ANALYZE' 'PARTITION' noLogging? partitionList
     | 'CHECK' 'PARTITION' partitionList checkOption*
     | 'REPAIR' 'PARTITION' noLogging? partitionList repairType*
-    | 'COALESCE' 'PARTITION' noLogging? DECIMAL
+    | 'COALESCE' 'PARTITION' noLogging? INTEGER
     | 'TRUNCATE' 'PARTITION' partitionList
     | 'REORGANIZE' 'PARTITION' noLogging? ( name ( ',' name )* 'INTO' '(' partitionDef ( ',' partitionDef )* ')' )?
     | 'EXCHANGE' 'PARTITION' name 'WITH' 'TABLE' qname validation_?
@@ -1569,15 +1569,15 @@ partitionBy
           | 'COLUMNS' '(' ( name ( ',' name )* )? ')'
           )
       )
-      ( 'PARTITIONS' DECIMAL )?
-      ( 'SUBPARTITION' 'BY' hash ( 'SUBPARTITIONS' DECIMAL )? )?
+      ( 'PARTITIONS' INTEGER )?
+      ( 'SUBPARTITION' 'BY' hash ( 'SUBPARTITIONS' INTEGER )? )?
       ( '(' partitionDef ( ',' partitionDef )* ')' )?
     ;
 
 hash
     : 'LINEAR'?
       ( 'HASH' '(' term ')'
-      | 'KEY' ( 'ALGORITHM' '=' DECIMAL )? '(' ( name ( ',' name )* )? ')'
+      | 'KEY' ( 'ALGORITHM' '=' INTEGER )? '(' ( name ( ',' name )* )? ')'
       )
       ;
 
@@ -1649,7 +1649,7 @@ userRegistration
     ;
 
 factor
-    : DECIMAL 'FACTOR' ;
+    : INTEGER 'FACTOR' ;
 
 user
     : name ( '@' | qname )?
@@ -1681,7 +1681,7 @@ literal
     : ID
     | keyword
     | string
-    | ( '+' | '-' )? DECIMAL
+    | ( '+' | '-' )? INTEGER
     | ( '+' | '-' )? FLOAT
     | BINARY
     | SIZE
@@ -1716,10 +1716,10 @@ datetime
     : ( 'DATE' | 'TIME' | 'TIMESTAMP' ) string ;
 
 fieldLength
-    : '(' DECIMAL ')' ;
+    : '(' INTEGER ')' ;
 
 floatPrecision
-    : '(' ( DECIMAL | FLOAT | DECIMAL ',' DECIMAL ) ')' ;
+    : '(' ( INTEGER | FLOAT | INTEGER ',' INTEGER ) ')' ;
 
 name
     : ID
@@ -1730,7 +1730,7 @@ name
     ;
 
 byteSize
-    : DECIMAL | SIZE ;
+    : INTEGER | SIZE ;
 
 equal
     : '=' | ':=' ;
@@ -2500,7 +2500,7 @@ PARAM
 HEXADECIMAL
     : '0x' BASE16 ;
 
-DECIMAL
+INTEGER
     : BASE10 ;
 
 BINARY
