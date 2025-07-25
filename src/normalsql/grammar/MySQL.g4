@@ -427,10 +427,10 @@ ddl
     | 'CLONE' 'REMOTE' ( 'FOR' 'REPLICATION' )?
     | 'CLONE' 'INSTANCE' 'FROM' user ':' INTEGER 'IDENTIFIED' 'BY' name ( ssl | 'DATA' 'DIRECTORY' equal? string ssl? )?
 
-    | grantStatement
-    | revokeStatement
-    | setRoleStatement
-    | 'ANALYZE' noLogging? table_ qname ( ',' qname )* histogram?
+    | grant
+    | revoke
+    | setRole
+    | analyze
     | 'CHECK' table_ qname ( ',' qname )* checkOption*
     | 'CHECKSUM' 'TABLE' qname ( ',' qname )* ( 'QUICK' | 'EXTENDED' )?
     | 'OPTIMIZE' noLogging? table_ qname ( ',' qname )*
@@ -525,8 +525,7 @@ ddl
 
     | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' ) qname qname ?
 
-    | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' )
-      'ANALYZE'?
+    | ( 'EXPLAIN' | 'DESCRIBE' | 'DESC' ) 'ANALYZE'?
       ( 'FORMAT' '=' ( 'TRADITIONAL' | 'JSON' | 'TREE' | string ) )?
       ( 'INTO' qname )?
       ( ( 'FOR' database_ name )? ( select | delete | insert | replace | update )
@@ -540,13 +539,18 @@ ddl
        ( statementInformationItem ( ',' statementInformationItem )*
        | 'CONDITION' literal conditionInformationItem ( ',' conditionInformationItem )*
        )
-
     | beginWork
     ;
 
-
-comment
-    : 'COMMENT' string ;
+analyze
+    : 'ANALYZE' noLogging? table_ qname ( ',' qname )*
+      ( 'UPDATE' 'HISTOGRAM' 'ON' name
+      ( ( ',' name )* ( 'WITH' INTEGER 'BUCKETS' )? ( ( 'MANUAL' | 'AUTO' )? 'UPDATE' )?
+      | 'USING' 'DATA' string
+      )
+      | 'DROP' 'HISTOGRAM' 'ON' name ( ',' name )*
+      )?
+    ;
 
 database_
     : 'DATABASE' | 'SCHEMA' ;
@@ -609,6 +613,12 @@ storedRoutineBody
     | 'AS' string
     ;
 
+comment
+    : 'COMMENT' string ;
+
+security
+    : 'SQL' 'SECURITY' ( 'DEFINER' | 'INVOKER' ) ;
+
 characteristic
     : comment
     | 'LANGUAGE' ( name | 'SQL' )
@@ -663,9 +673,6 @@ serverOption
 
 viewAlgorithm
     : 'ALGORITHM' '=' ( 'UNDEFINED' | 'MERGE' | 'TEMPTABLE' ) ;
-
-security
-    : 'SQL' 'SECURITY' ( 'DEFINER' | 'INVOKER' ) ;
 
 orReplace_
     : 'OR' 'REPLACE' ;
@@ -722,7 +729,6 @@ direction_
 
 tableReferenceList
     : tables ( ',' tables )* ;
-
 
 values
     : 'VALUES' term ( ',' term )* ;
@@ -894,7 +900,7 @@ passwordOption
     | 'ACCOUNT' ( 'LOCK' | 'UNLOCK' )
     ;
 
-grantStatement
+grant
     : 'GRANT' ( roleOrPrivilegesList | 'ALL' 'PRIVILEGES'? ) 'ON' aclType? grantIdentifier
       'TO' grantTargetList ( 'WITH' 'GRANT' 'OPTION' )?
       // require? grantOptions?
@@ -906,7 +912,7 @@ grantStatement
 grantTargetList
     :  user ( ',' user )* ;
 
-revokeStatement
+revoke
     : 'REVOKE' exists?
       ( roleOrPrivilegesList 'FROM' user ( ',' user )*
       | roleOrPrivilegesList 'ON' aclType? grantIdentifier 'FROM' user ( ',' user )*
@@ -946,7 +952,7 @@ roleOrPrivilege
 grantIdentifier
     : ( '*' | name ) ( '.' ( '*' | name ) )? ;
 
-setRoleStatement
+setRole
     : 'SET' roles
     | 'SET' 'DEFAULT' roles 'TO' user ( ',' user )*
     ;
@@ -958,14 +964,6 @@ roles
       | 'NONE'
       | 'DEFAULT'
       )
-    ;
-
-histogram
-    : 'UPDATE' 'HISTOGRAM' 'ON' name
-      ( ( ',' name )* ( 'WITH' INTEGER 'BUCKETS' )? ( ( 'MANUAL' | 'AUTO' )? 'UPDATE' )?
-      | ( 'USING' 'DATA' string )?
-      )
-    | 'DROP' 'HISTOGRAM' 'ON' name ( ',' name )*
     ;
 
 checkOption
