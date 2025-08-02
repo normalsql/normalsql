@@ -22,7 +22,7 @@ void main() throws Exception
     {
         "/Users/jasonosgood/Projects/ScrapeMySQLTests/logs",
 //        "./examples",
-//        "/Users/jasonosgood/Projects/grammars-v4/sql/mysql/Positive-Technologies/examples"
+        "/Users/jasonosgood/Projects/grammars-v4/sql/mysql/Positive-Technologies/examples"
     };
 
     for( var src : source )
